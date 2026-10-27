@@ -1,0 +1,1336 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>モンスターエディター</title>
+<style>
+:root{--bg:#f4f8ff;--panel:#ffffff;--line:#c3d5f0;--text:#1e293b;--muted:#5a6b85;--accent:#2563eb;--good:#15803d;--bad:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#dbeafe 0%,#f4f8ff 45%,#ffffff 100%);font-family:system-ui,"Yu Gothic",sans-serif;color:var(--text)}
+main{max-width:1240px;margin:auto;padding:28px 18px 60px}
+h1{margin:0 0 6px;font-size:1.7rem}
+.lead{color:var(--muted);margin:0 0 18px;line-height:1.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.panel{background:rgba(255,255,255,.98);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 8px 24px rgba(37,99,235,.13)}
+.panel.full{grid-column:1/-1}
+h2{font-size:1.05rem;margin:0 0 14px;color:#1d4ed8}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.fields.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.wide{grid-column:1/-1}
+label{display:block;font-size:.82rem;color:var(--muted)}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;margin-top:5px;padding:9px;border-radius:8px;border:1px solid var(--line);background:#ffffff;color:var(--text)}
+input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:middle}
+textarea{min-height:72px;resize:vertical}
+.effect{margin:10px 0;padding:12px;border:1px solid #bcd0ee;border-radius:10px;background:#eef4ff}
+.effect-top{display:flex;gap:8px;align-items:center}
+.effect-top select{margin:0;flex:1}
+.effect .fields{margin-top:10px}
+.small{font-size:.78rem;color:var(--muted);margin:6px 0 0}
+button{border:0;border-radius:8px;padding:9px 13px;background:var(--accent);color:#ffffff;font-weight:800;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+.remove{background:#64748b;color:#ffffff;padding:6px 9px}
+.add{background:#dbeafe;color:#1e40af;margin-top:4px}
+.sub{background:#dbeafe;color:#1e40af}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 14px;align-items:center}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#eef4ff;border:1px solid var(--line);padding:14px;border-radius:10px;min-height:220px;max-height:560px;overflow:auto;color:#1e3a8a;font-size:.82rem}
+.notice{color:#15803d;font-size:.86rem;min-height:1.3em}
+.notice.err{color:var(--bad)}
+.hint{font-size:.85rem;color:var(--muted);line-height:1.6;margin:8px 0 0}
+.topbar{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.topbar label{flex:1;min-width:220px}
+.preview{width:100%;border-collapse:collapse;margin-top:12px;font-size:.85rem}
+.preview th,.preview td{border:1px solid var(--line);padding:6px 8px;text-align:right}
+.preview th{background:#eef4ff;color:#1d4ed8;font-weight:600}
+.preview td:first-child,.preview th:first-child{text-align:left}
+.evo{border:1px solid #bcd0ee;border-radius:10px;padding:10px;margin:10px 0;background:#eef4ff}
+.mat{display:flex;gap:8px;align-items:end;margin-top:6px}
+.mat label{flex:1}
+.lib{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.lib h3{margin:0 0 8px;font-size:.9rem;color:#1d4ed8}
+.liblist{max-height:260px;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:10px;background:#ffffff}
+.libitem{display:flex;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid #dbe6f5}
+.libitem:last-child{border-bottom:0}
+.libitem .info{flex:1;min-width:0}
+.libitem .nm{font-weight:700;font-size:.9rem}
+.libitem .ds{font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.libitem .sp{font-size:.76rem;color:#15803d;white-space:nowrap}
+.libitem button{padding:6px 10px}
+code{background:#eef4ff;padding:1px 5px;border-radius:4px}
+@media(max-width:780px){.grid{grid-template-columns:1fr}.fields,.fields.three{grid-template-columns:1fr}.panel.full{grid-column:auto}}
+
+[hidden]{display:none!important}
+.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap;position:sticky;top:0;z-index:20;padding:8px 0;background:rgba(244,248,255,.94);backdrop-filter:blur(6px)}
+.tabbtn{background:#ffffff;color:#1d4ed8;border:1px solid var(--line);padding:11px 18px;border-radius:10px}
+.tabbtn.on{background:var(--accent);color:#ffffff;border-color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:4px;margin:3px 6px 3px 0;padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:#eef4ff;color:var(--text);font-size:.8rem;cursor:pointer}
+.chip input{margin:0 4px 0 0}
+.libitem.pick{cursor:pointer}
+.libitem.pick:hover{background:#eef4ff}
+.libitem.sel{background:#dbeafe}
+.libitem .cnt{font-size:.78rem;color:#b45309;white-space:nowrap}
+.tag{display:inline-block;font-size:.68rem;margin-left:6px;padding:1px 6px;border-radius:6px;background:#fef3c7;color:#92400e;font-weight:600}
+.unsaved{color:#d97706;font-size:.86rem;font-weight:700}
+.stwrap{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:10px;background:#ffffff}
+.sttable{border-collapse:separate;border-spacing:0;width:100%;font-size:.85rem;min-width:640px}
+.sttable th{position:sticky;top:0;z-index:2;background:#eef4ff;color:#1d4ed8;font-weight:700;padding:8px 6px;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid var(--line);text-align:right}
+.sttable th.l,.sttable td.l{text-align:left}
+.sttable th.on{color:#b45309}
+.sttable td{padding:3px 6px;border-bottom:1px solid #dbe6f5;white-space:nowrap;text-align:right}
+.sttable tr:hover td{background:#eef4ff}
+.sttable input{width:100px;margin:0;padding:6px 8px;text-align:right;-moz-appearance:textfield;appearance:textfield}
+.sttable input::-webkit-outer-spin-button,.sttable input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sttable input.chg{border-color:#d97706;background:#fef3c7}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:baseline}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.filters label{flex:1;min-width:130px}
+</style></head>
+<body><main>
+<h1>モンスターエディター</h1>
+<p class="lead">モンスターの基本情報・最大レベル・ステータス・スキル・リーダースキル・進化先をここで作れます。<br>
+使い方：① <code>js/data/monsters.js</code> を読み込む → ② 編集したいモンスターを選ぶ（新規も可。既存モンスターをテンプレートにしてコピー作成もできます）→ ③ 下の「monsters.js を保存」で書き出し、元のファイルと置き換えます。</p>
+
+<nav class="tabs" role="tablist">
+  <button type="button" class="tabbtn on" data-tab="single">個別編集</button>
+  <button type="button" class="tabbtn" data-tab="leader">リーダースキル一括編集</button>
+  <button type="button" class="tabbtn" data-tab="stats">ステータス一覧</button>
+</nav>
+
+<div id="tabSingle">
+<div class="grid">
+
+<section class="panel full">
+  <h2>データの読み込み・選択</h2>
+  <div class="topbar">
+    <label>monsters.js を読み込む<input id="fileMonsters" type="file" accept=".js,text/javascript"></label>
+    <label>items.js を読み込む（進化素材の候補表示・任意）<input id="fileItems" type="file" accept=".js,text/javascript"></label>
+    <label>編集するモンスター<select id="monSelect"></select></label>
+  </div>
+  <p class="notice" id="loadNotice"></p>
+  <div class="lib">
+    <h3>既存モンスターをテンプレートにして新規作成（元のモンスターは上書きされません）</h3>
+    <input id="tplSearch" placeholder="ID・名前・属性・タイプ・スキル名で絞り込み（例: フシギ / 木 / 120）">
+    <label style="margin-top:8px"><input type="checkbox" id="tplEvo">進化先・進化素材もコピーする（通常はオフ）</label>
+    <div id="tplList" class="liblist"></div>
+    <p class="small">「テンプレートにする」を押すと、新しいID・名前「○○（コピー）」で下のフォームに展開されます。画像は新しいIDから自動で決まります（m{ID}.png）ので、その名前の画像を用意してください。</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>基本情報</h2>
+  <div class="fields">
+    <label>モンスターID<input id="monId" type="number" min="1" value="100"></label>
+    <label>名前<input id="monName" value="新モンスター"></label>
+    <label>レアリティ（★の数）<input id="monRarity" type="number" min="1" max="10" value="3"></label>
+    <label>属性<select id="monAttr"></select></label>
+    <label>タイプ<input id="monType" list="typeList" value="バランス"><datalist id="typeList"></datalist></label>
+    <div class="hint" id="imgHint" style="margin:0"></div>
+    <label>最大レベル（空欄＝レアリティ既定）<input id="monMaxLevel" type="number" min="1" max="99" placeholder="自動"></label>
+    <label>経験値（強化合成の素材にした時のLvあたり経験値）<input id="monBaseExp" type="number" min="0" value="100"></label>
+  </div>
+  <p class="hint" id="maxLvHint"></p>
+</section>
+
+<section class="panel">
+  <h2>ステータス</h2>
+  <div class="fields three">
+    <label>HP（Lv1）<input id="hpMin" type="number" min="0" value="500"></label>
+    <label>攻撃（Lv1）<input id="atkMin" type="number" min="0" value="200"></label>
+    <label>回復（Lv1）<input id="recMin" type="number" min="0" value="50"></label>
+    <label>HP（最大Lv）<input id="hpMax" type="number" min="0" value="1500"></label>
+    <label>攻撃（最大Lv）<input id="atkMax" type="number" min="0" value="600"></label>
+    <label>回復（最大Lv）<input id="recMax" type="number" min="0" value="150"></label>
+  </div>
+  <p class="hint">レベルに応じて、Lv1〜最大Lvの間を直線的に増えます（ゲーム本体と同じ計算）。</p>
+  <table class="preview" id="statPreview"></table>
+</section>
+
+<section class="panel">
+  <h2>アクティブスキル</h2>
+  <div class="fields">
+    <label class="wide">スキル名<input id="skName" value="スキル名"></label>
+    <label class="wide">必要スキルポイント（SP）<input id="skSp" type="number" min="1" max="10" step="1" value="1"></label>
+    <label class="wide">説明（ゲーム内表示用）<textarea id="skDesc"></textarea></label>
+  </div>
+  <div id="activeEffects"></div>
+  <p class="small" id="skDup" style="color:#b45309"></p>
+  <div class="actions"><button class="add" data-add="active">＋ アクティブ効果を追加</button><button class="sub" id="autoSkDesc" type="button">効果から説明文を自動生成</button></div>
+  <p class="hint">必要SPはスキル発動時にパーティ共有SPから消費される量です（上限10）。</p>
+  <div class="lib">
+    <h3>登録済みスキルから選んで使い回す</h3>
+    <input id="skLibSearch" placeholder="スキル名・説明で絞り込み（例: つるのムチ）">
+    <div id="skLibList" class="liblist"></div>
+    <p class="small">「使う」を押すと、スキル名・必要SP・説明・効果がこのモンスターにコピーされます（コピー後は自由に編集可）。他のモンスターで編集中のスキルも、一覧に反映されます。</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>リーダースキル</h2>
+  <div class="fields">
+    <label class="wide">リーダースキル名<input id="lsName" value="リーダースキル名"></label>
+    <label class="wide">説明（ゲーム内表示用）<textarea id="lsDesc"></textarea></label>
+  </div>
+  <div id="leaderEffects"></div>
+  <div class="actions"><button class="add" data-add="leader">＋ リーダー効果を追加</button><button class="sub" id="autoLsDesc" type="button">効果から説明文を自動生成</button></div>
+  <p class="hint">例：「火属性の攻撃1.2倍」→ 効果「属性の攻撃倍率」で属性＝火、倍率＝1.2。複数の効果を重ねられます。</p>
+  <p class="small" id="lsDup" style="color:#b45309"></p>
+  <div class="lib">
+    <h3>登録済みのリーダースキルから選ぶ</h3>
+    <input id="lsLibSearch" placeholder="リーダースキル名・説明・モンスター名で絞り込み">
+    <div id="lsLibList" class="liblist"></div>
+  </div>
+</section>
+
+<section class="panel full">
+  <h2>進化先</h2>
+  <div id="evoList"></div>
+  <button class="add" id="addEvo" type="button">＋ 進化先を追加</button>
+  <p class="hint">進化素材のアイテムIDは <code>js/data/items.js</code> のIDです（上で items.js を読み込むと候補が出ます）。進化しないなら空のままで構いません。</p>
+  <datalist id="itemList"></datalist>
+</section>
+
+<section class="panel full">
+  <h2>書き出し</h2>
+  <div class="actions">
+    <button id="saveAll" type="button">monsters.js を保存（全モンスター）</button>
+    <button id="copyOne" class="sub" type="button">このモンスターのコードをコピー</button>
+    <button id="dupMon" class="sub" type="button">このモンスターを複製して新規作成</button>
+    <button id="deleteMon" class="remove" type="button">このモンスターを一覧から削除</button>
+    <span class="notice" id="notice"></span>
+  </div>
+  <pre id="output"></pre>
+</section>
+
+</div>
+</div>
+
+<!-- ===== リーダースキル一括編集 ===== -->
+<div id="tabLeader" hidden>
+<div class="grid">
+  <section class="panel">
+    <h2>① リーダースキルを選ぶ（同じスキルのモンスターをまとめて扱います）</h2>
+    <p class="notice" id="blInfo"></p>
+    <input id="blSearch" placeholder="スキル名・説明・モンスター名で絞り込み（例: 火のソウル / 火炎）">
+    <div id="blList" class="liblist" style="max-height:600px"></div>
+    <p class="small">同じ名前で効果が違うものは別々の行になり、「効果違い」と表示されます。</p>
+  </section>
+  <section class="panel">
+    <h2>② 内容を変えて、まとめて適用</h2>
+    <p class="hint" id="blEmpty" style="margin:0">左の一覧からリーダースキルを選んでください。</p>
+    <div id="blForm" hidden>
+      <div class="fields">
+        <label class="wide">リーダースキル名（変えると全員の名前が変わります）<input id="blName"></label>
+        <label class="wide">説明（ゲーム内表示用）<textarea id="blDesc"></textarea></label>
+      </div>
+      <label style="margin-top:8px"><input type="checkbox" id="blAuto">説明文を効果から自動で作る（倍率を変えると説明の数字も一緒に変わります）</label>
+      <div id="blEffects"></div>
+      <div class="actions"><button class="add" data-add="bulk" type="button">＋ 効果を追加</button><button class="sub" id="blGen" type="button">効果から説明文を自動生成</button></div>
+      <div class="lib">
+        <h3>適用するモンスター（<span id="blCount"></span>）</h3>
+        <div class="actions" style="margin-bottom:6px"><button class="sub" id="blAll" type="button" style="padding:5px 9px">全員を選ぶ</button><button class="sub" id="blNone" type="button" style="padding:5px 9px">全員を外す</button></div>
+        <div id="blMembers"></div>
+        <p class="small">チェックを外したモンスターは変更されず、元のリーダースキルのまま残ります。</p>
+      </div>
+      <div class="actions" style="margin-top:14px"><button id="blApply" type="button">適用</button><span class="notice" id="blNotice"></span></div>
+    </div>
+  </section>
+  <section class="panel full">
+    <h2>書き出し</h2>
+    <div class="actions"><button type="button" data-savedb="1">monsters.js を保存（全モンスター）</button><span class="unsaved bulkState"></span><span class="notice" id="blSaveNotice"></span></div>
+    <p class="hint" style="margin:0">「適用」しただけではファイルは変わりません。保存して js/data/monsters.js と置き換えると反映されます（個別編集タブの保存と同じファイルです）。</p>
+  </section>
+</div>
+</div>
+
+<!-- ===== ステータス一覧 ===== -->
+<div id="tabStats" hidden>
+<div class="grid">
+  <section class="panel full">
+    <h2>ステータス一覧（数字を直接書き換えられます）</h2>
+    <p class="notice" id="stLoad"></p>
+    <div class="filters">
+      <label>並び順<select id="stSort"></select></label>
+      <label>方向<select id="stDir"><option value="asc">小さい順（昇順）</option><option value="desc">大きい順（降順）</option></select></label>
+      <label>属性<select id="stAttr"></select></label>
+      <label>★<select id="stRarity"></select></label>
+      <label>タイプ<select id="stType"></select></label>
+      <label style="flex:2;min-width:200px">絞り込み<input id="stSearch" placeholder="ID・名前・スキル名（例: フシギ / 120）"></label>
+    </div>
+    <p class="small" id="stInfo" style="margin:0 0 8px"></p>
+    <div class="stwrap"><table class="sttable" id="stTable"></table></div>
+    <p class="small">列の見出しをクリックでも並べ替えできます。変更した欄は黄色になります。Enter／↑↓で上下の欄に移動できます。ここで編集する数字は「最大Lvのときの値」です（Lv1の値は変更されません）。</p>
+    <div class="actions" style="margin-top:12px"><button type="button" data-savedb="1">monsters.js を保存（全モンスター）</button><span class="unsaved bulkState"></span><span class="notice" id="stSaveNotice"></span></div>
+  </section>
+</div>
+</div>
+</main>
+
+<script src="js/data/monsters.js"></script>
+<script src="js/data/items.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+// ---------- 定数 ----------
+const ATTRS = [['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['poison','毒']];
+const ATTR_NAME = Object.fromEntries(ATTRS);
+const DEFAULT_TYPES = ['バランス','こうげき','たいりょく','かいふく','回復','バード','マター','悪魔'];
+const KNOWN_KEYS = ['id','name','img','rarity','attr','type','maxLevel','baseExp','stats','skill','leaderSkill','evolutions'];
+const EXP_TABLE_LEN = 99; // js/data/exp.js の長さ。これより上の最大レベルは設定できない
+const DEFAULT_HEADER = `// ============================================================
+// ★ モンスターデータ ★
+//   モンスターエディターで生成しました。
+//   maxLevel を書くとそのモンスターの最大Lvになります（省略時はレアリティ別: ★1=25 / ★2=50 / ★3=75 / ★4以上=99）。
+//   画像は m{id}.png が自動で使われる（img を書いた古いデータはそのまま有効）。
+// ============================================================
+`;
+const DEFAULT_TAIL = `
+
+Object.values(MONSTER_DATA).forEach(m => { if (m.baseExp === undefined) m.baseExp = 100; });
+`;
+
+// ゲーム本体 getMaxLevel と同じ
+function rarityMaxLevel(r){ if(!r||r<=1) return 25; if(r===2) return 50; if(r===3) return 75; return 99; }
+
+// ---------- 効果テンプレート ----------
+const numF = (key,label)=>[key,label,'number'];
+const attrF = (key,label)=>[key,label,'attr'];
+const typeF = (key,label)=>[key,label,'type'];
+const activeTemplates = {
+  damageAll:{label:'敵に固定ダメージ（全体/単体）',data:{type:'damageAll',target:'all',value:2000},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダメージ')]},
+  damageSelfAtkMult:{label:'自分の攻撃力×倍率の属性ダメージ（全体/単体）',data:{type:'damageSelfAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
+  damageAttrAtkMult:{label:'○属性の攻撃力×倍率の属性ダメージ（全体/単体）',data:{type:'damageAttrAtkMult',target:'all',value:10,srcAttr:'fire',attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('srcAttr','参照する味方の属性（その属性の攻撃力合計）'),attrF('attr','攻撃の属性')]},
+  damagePartyAtkMult:{label:'（旧）味方全員の攻撃力合計×倍率',data:{type:'damagePartyAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
+  atkBuff:{label:'攻撃エンハンス（属性/タイプの攻撃を○ターン○倍）',data:{type:'atkBuff',attr:'water',monType:'',value:1.5,turns:1},fields:[['attr','属性（指定なし=全属性）','attrAny'],typeF('monType','タイプ（空欄=指定なし）'),numF('value','攻撃倍率'),numF('turns','ターン数')]},
+  defenseDown:{label:'敵の防御力を○ターン○%ダウン（全体/単体）',data:{type:'defenseDown',target:'all',value:0.5,turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダウン率（50%=0.5）'),numF('turns','ターン数')]},
+  selfDamage:{label:'【自傷系】HPを減らす（○%減少／HPが1になる）',data:{type:'selfDamage',mode:'percent',value:0.2},fields:[['mode','種類','select','percent:最大HPの○%減少|toOne:HPが1になる'],numF('value','減少割合（20%=0.2。「HPが1になる」の時は無視）')]},
+  heal:{label:'最大HP割合を回復',data:{type:'heal',value:0.2},fields:[numF('value','割合（20%=0.2）')]},
+  orbChangeRandom:{label:'ランダムにドロップ生成',data:{type:'orbChangeRandom',attr:'light',count:3},fields:[attrF('attr','生成属性'),numF('count','個数')]},
+  orbChangeLine:{label:'列を変換（横○列／縦○列）',data:{type:'orbChangeLine',dir:'row',index:0,count:1,attr:'fire'},fields:[['dir','方向','select','row:横（行）|col:縦（列）'],numF('index','開始位置（横=上から0〜4／縦=左から0〜5）'),numF('count','列数（1〜）'),attrF('attr','属性')]},
+  orbChangeCross:{label:'十字の形に生成',data:{type:'orbChangeCross',row:1,col:1,attr:'fire'},fields:[numF('row','中心の行（0〜4）'),numF('col','中心の列（0〜5）'),attrF('attr','属性')]},
+  orbChangeReverseL:{label:'左上に逆L字で生成',data:{type:'orbChangeReverseL',attr:'wood'},fields:[attrF('attr','属性')]},
+  orbChange5ColorHeal:{label:'全ドロップを5属性＋回復に変化（各3個以上）',data:{type:'orbChange5ColorHeal'},fields:[]},
+  orbChangeMulti:{label:'全ドロップを選んだ色に変化（各3個以上。例：火,水,回復）',data:{type:'orbChangeMulti',orb_fire:true,orb_water:true,orb_heal:true},fields:[['orb_fire','火ドロップ','bool'],['orb_water','水ドロップ','bool'],['orb_wood','木ドロップ','bool'],['orb_light','光ドロップ','bool'],['orb_dark','闇ドロップ','bool'],['orb_heal','回復ドロップ','bool']]},
+  orbConvert:{label:'ドロップを一括変換',data:{type:'orbConvert',from:'fire',to:'heal'},fields:[attrF('from','変換元'),attrF('to','変換先')]},
+  enemyDelay:{label:'敵の行動を遅延（全体/単体）',data:{type:'enemyDelay',target:'all',turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('turns','ターン')]},
+  dmgReductionBuff:{label:'○ターンの間、ダメージを○%軽減',data:{type:'dmgReductionBuff',turns:1,value:0.5},fields:[numF('turns','ターン数'),numF('value','軽減率（50%=0.5、100%=1）')]},
+  recMult:{label:'○ターンの間、回復力が○倍（0倍＝回復力0）',data:{type:'recMult',turns:1,value:0},fields:[numF('turns','ターン数'),numF('value','回復力の倍率（0=回復できない／2=2倍／0.5=半分）')]},
+  moveTimeBuff:{label:'○ターンの間、操作時間を○秒延長＋○倍（短縮も可）',data:{type:'moveTimeBuff',turns:1,seconds:2,mult:1},fields:[numF('turns','ターン数'),numF('mult','操作時間の倍率（1=変えない／1.5=1.5倍／0.5=半分）'),numF('seconds','延長する秒数（短縮はマイナス、0=変えない）')]},
+  allAttackBuff:{label:'○ターンの間、敵全体に攻撃',data:{type:'allAttackBuff',turns:1},fields:[numF('turns','ターン数')]},
+  damageHalfHp:{label:'敵のHPを半分にする',data:{type:'damageHalfHp'},fields:[]},
+  timeStop:{label:'○秒間、時を止める',data:{type:'timeStop',seconds:5},fields:[numF('seconds','時間停止の秒数（0.5など小数もOK。時計の針・カチカチ音・演出の長さもこの秒数に合わせて変わる）')]},
+  transformRandom:{label:'ランダムで他のモンスターに変身（そのダンジョン中）',data:{type:'transformRandom',ids:[1,8]},fields:[['ids','変身先のモンスターID（カンマ区切り。例: 1,8 → フシギダネかカメールのどれかに変身）','idlist']]},
+  bindRecover:{label:'バインドを○ターン回復',data:{type:'bindRecover',turns:1},fields:[numF('turns','回復するターン数（大きい数で全回復）')]},
+  roulette:{label:'○ターンの間、ルーレットを○つ生成（速さ：低速／標準／高速／超高速）',data:{type:'roulette',turns:3,count:3,sec:'1'},fields:[numF('turns','ターン数'),numF('count','ルーレットの数（盤面のランダムなマスに生成）'),['sec','ルーレットの速さ（針が1周する時間。1周するたびにドロップが 火→水→木→光→闇→回復 の順に変化）','select','2:2秒（低速ルーレット）|1:1秒（ルーレット）|0.5:0.5秒（高速ルーレット）|0.2:0.2秒（超高速ルーレット）']]},
+  custom:{label:'カスタムJSON（上にない効果）',data:{type:'note'},fields:[['$json','効果JSON','json']]}
+};
+// 「攻撃倍率」か「ダメージ軽減」かを選べる条件付き効果
+const effSel=['type','効果','select','atk:攻撃倍率|dmgReduction:ダメージ軽減'];
+const effVal=numF('value','効果値（攻撃倍率、または軽減率 35%=0.35）');
+const isAtkOrRed=e=>e.type==='atk'||e.type==='dmgReduction';
+// 攻撃倍率・ダメージ軽減・コンボ加算：0や空欄は保存しない（攻撃倍率が空で軽減／加算だけある時は1倍）
+const cleanEff = d=>{
+  if(d.type!=='atk') return d;
+  d=structuredClone(d);
+  if(!(d.reduce>0)) delete d.reduce;
+  if(!(d.comboAdd>0)) delete d.comboAdd;
+  if(!d.needHeal) delete d.needHeal;
+  if(!(d.value>0) && (d.reduce||d.comboAdd)) d.value=1;
+  return d;
+};
+const leaderTemplates = {
+  attrAtk:{label:'属性の攻撃倍率（例: 火属性の攻撃1.2倍）',data:{type:'atk',attr:'fire',value:1.2},fields:[attrF('attr','属性'),numF('value','攻撃倍率')]},
+  typeAtk:{label:'タイプの攻撃倍率',data:{type:'atk',condition:'type',attr:'回復',value:2},fields:[typeF('attr','対象タイプ'),numF('value','攻撃倍率')]},
+  allAtk:{label:'全属性の攻撃倍率',data:{type:'atk',value:1.5},fields:[numF('value','攻撃倍率')]},
+  attrHp:{label:'属性のHP倍率',data:{type:'hp',attr:'fire',value:1.5},fields:[attrF('attr','属性'),numF('value','HP倍率')]},
+  typeHp:{label:'タイプのHP倍率',data:{type:'hp',condition:'type',attr:'回復',value:1.5},fields:[typeF('attr','対象タイプ'),numF('value','HP倍率')]},
+  allHp:{label:'全属性のHP倍率',data:{type:'hp',value:1.2},fields:[numF('value','HP倍率')]},
+  allStatAll:{label:'全パラメータ倍率（HP・攻撃・回復力すべて）',data:{type:'allStat',value:1.5},fields:[numF('value','全パラメータ倍率（HP・攻撃・回復力が全部この倍率）')]},
+  attrAllStat:{label:'属性の全パラメータ倍率（例: 光属性の全パラメータ1.2倍）',data:{type:'allStat',attr:'light',value:1.2},fields:[attrF('attr','属性'),numF('value','全パラメータ倍率')]},
+  typeAllStat:{label:'タイプの全パラメータ倍率（例: 回復タイプの全パラメータ1.5倍）',data:{type:'allStat',condition:'type',attr:'回復',value:1.5},fields:[typeF('attr','対象タイプ'),numF('value','全パラメータ倍率')]},
+  attrRec:{label:'属性の回復力倍率',data:{type:'rec',attr:'light',value:1.5},fields:[attrF('attr','属性'),numF('value','回復力倍率')]},
+  typeRec:{label:'タイプの回復力倍率',data:{type:'rec',condition:'type',attr:'回復',value:2},fields:[typeF('attr','対象タイプ'),numF('value','回復力倍率')]},
+  allRec:{label:'全属性の回復力倍率',data:{type:'rec',value:1.5},fields:[numF('value','回復力倍率')]},
+  dmgReduction:{label:'ダメージ軽減',data:{type:'dmgReduction',value:0.35},fields:[numF('value','軽減率（35%=0.35）')]},
+  attrCombos:{label:'○属性ドロップの○コンボ以上で',data:{type:'atk',condition:'attrCombos',attr:'light',count:2,value:2},fields:[attrF('attr','属性（火・水・木・光・闇・回復・毒）'),numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  combo:{label:'○コンボ以上で',data:{type:'atk',condition:'combo',count:7,value:2},fields:[numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  orbConnect:{label:'属性を○個以上つなげて（2属性を同時につなげるも可）',data:{type:'atk',condition:'orbConnect',attr:'fire',count:5,value:2},fields:[attrF('attr','属性（1つ目）'),['attr2','同時につなげる2つ目の属性（指定なし＝1属性のみ）','attrAny'],numF('count','必要個数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  hpCond:{label:'HP○%以上／以下で',data:{type:'atk',condition:'hpAbove',threshold:0.8,value:2},fields:[['condition','HPの条件','select','hpAbove:HP○%以上|hpBelow:HP○%以下'],numF('threshold','HP割合（80%=0.8）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&['hpAbove','hpBelow'].includes(e.condition)},
+  colorCountCond:{label:'○色以上同時に消すと（回復は数えない／5色＋回復も可）',data:{type:'atk',condition:'colorCount',count:4,value:2},fields:[numF('count','必要な色数（火・水・木・光・闇のうち3個以上消した色の数。2〜5）'),['needHeal','回復ドロップも消すことが必要（5色＋回復など）','bool'],numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&(e.condition==='colorCount'||e.condition==='fourColors')},
+  colorCountHealCond:{label:'○色（回復含む）以上同時に消すと',data:{type:'atk',condition:'colorCountHeal',count:5,value:2},fields:[numF('count','必要な色数（回復も1色に数える。2〜6　※6＝5色＋回復）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='colorCountHeal'},
+  colorRampCond:{label:'色が増えるほど攻撃倍率アップ（5色＋回復で最大○倍）',data:{type:'atk',condition:'colorRamp',count:3,healCounts:true,value:2,maxValue:4},fields:[numF('count','最低限必要な色数（この色数で「最低倍率」）'),['healCounts','回復も1色に数える（ONなら最大＝5色＋回復／OFFなら最大＝5色）','bool'],numF('value','最低倍率（最低色数のとき）'),numF('maxValue','最大倍率（最大の色数のとき。間は色数に応じて段階的に上がる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>e.type==='atk'&&e.condition==='colorRamp'},
+  remainingCond:{label:'残りドロップ○個以下で',data:{type:'atk',condition:'remainingOrbs',threshold:3,value:4},fields:[numF('threshold','残りドロップ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='remainingOrbs'},
+  crossCond:{label:'十字消しで',data:{type:'atk',condition:'cross',value:2},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!e.shapeAttr},
+  hpFullAtk:{label:'HP満タンで',data:{type:'atk',condition:'hpFull',value:1.5},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')]},
+  lShapeAtk:{label:'L字消しで',data:{type:'atk',condition:'lShapes',value:1.2},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!e.shapeAttr},
+  crossAttrCond:{label:'○属性の十字消しで',data:{type:'atk',condition:'cross',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップで十字を作ると発動）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!!e.shapeAttr},
+  lShapeAttrAtk:{label:'○属性のL字消しで',data:{type:'atk',condition:'lShapes',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップでL字を作ると発動）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!!e.shapeAttr},
+  skillUsedAtk:{label:'スキル使用時に',data:{type:'atk',condition:'skillUsed',value:1.3},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')]},
+  poisonAtk:{label:'毒ドロップを消して',data:{type:'atk',condition:'poison',value:1.5},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  exact4Atk:{label:'ちょうど4個消しで',data:{type:'atk',condition:'exact4',value:1.5},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','4個消しの数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')]},
+  exactCountAtk:{label:'属性をちょうど○個消して',data:{type:'atk',condition:'exactCount',attr:'fire',count:4,value:2},fields:[attrF('attr','属性'),numF('count','ちょうどの個数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')]},
+  noDrop:{label:'落ちコンなし',data:{type:'noDrop',value:true},fields:[]},
+  poisonImmune:{label:'毒ダメージを無効にする',data:{type:'poisonImmune',value:true},fields:[]},
+  moveTimeFixed:{label:'操作時間固定',data:{type:'moveTimeFixed',value:3000},fields:[numF('value','ミリ秒（3秒=3000）')]},
+  moveTimeAdd:{label:'操作時間を○秒延長／短縮（マイナスで短縮）',data:{type:'moveTimeAdd',value:1},fields:[numF('value','秒数（延長＝1、短縮＝-1。0.5などもOK。「操作時間固定」があればそちらが優先）')]},
+  hpRecovery:{label:'消した時にHP回復',data:{type:'hpRecovery',value:0.2},fields:[numF('value','最大HP割合')]},
+  custom:{label:'カスタムJSON（上にない効果）',data:{type:'note'},fields:[['$json','効果JSON','json']]}
+};
+
+// 旧形式のバフ（type:'buff' や moveTimeMult/moveTimeAdjust）→ 個別の新効果に変換して読み込む
+function normActiveEffs(effs){
+  const out=[];
+  for(const e0 of (effs||[])){
+    const e=structuredClone(e0), t=e.turns||1, msg=e.message?{message:e.message}:{};
+    if(e.type==='moveTimeMult'){ out.push({type:'moveTimeBuff',turns:1,mult:e.value,seconds:0}); continue; }
+    if(e.type==='moveTimeAdjust'){ out.push({type:'moveTimeBuff',turns:1,mult:1,seconds:e.seconds||0}); continue; }
+    if(e.type!=='buff'){ out.push(e); continue; }
+    switch(e.flag){
+      case 'buffAllAttack': out.push({type:'allAttackBuff',turns:t,...msg}); break;
+      case 'buffDamageReduction': { let v=Number(e.value); if(!(v>0)) v=0.5; if(v>1) v/=100; out.push({type:'dmgReductionBuff',turns:t,value:v,...msg}); break; }
+      case 'buffRecZero': out.push({type:'recMult',turns:t,value:0,...msg}); break;
+      case 'buffMoveTime': out.push({type:'moveTimeBuff',turns:t,mult:1.5,seconds:0,...msg}); break;
+      case 'buffWaterEnhance': out.push({type:'atkBuff',monType:'バランス',value:1.5,turns:t,...msg}); break;
+      case 'buffSpeedCall': out.push({type:'atkBuff',value:1.5,turns:t,...msg},{type:'moveTimeBuff',turns:t,mult:1,seconds:-2}); break;
+      case 'buffSkillAtk': out.push({type:'atkBuff',value:1.3,turns:t,...msg}); break;
+      case 'buffDevilAtk': out.push({type:'atkBuff',monType:'悪魔',value:2,turns:t,...msg}); break;
+      default: out.push(e);
+    }
+  }
+  return out;
+}
+
+// 旧形式（火/闇/回復のコンボ専用条件）→「属性ドロップの○コンボ以上」に統一
+const LEGACY_COMBO={fireCombos:'fire',darkCombos:'dark',healCombos:'heal'};
+function normLeaderEff(e){
+  e=structuredClone(e);
+  // 旧：4色以上（fourColors）→「○色以上」（colorCount, count:4）
+  if((e.type==='atk'||e.type==='dmgReduction')&&e.condition==='fourColors'){ e.condition='colorCount'; e.count=4; }
+  if(e.type==='atk'&&LEGACY_COMBO[e.condition]){ e.attr=LEGACY_COMBO[e.condition]; e.condition='attrCombos'; }
+  // 旧：条件つきの「ダメージ軽減」は、同じ条件の効果の「ダメージ軽減」欄にまとめる
+  if(e.type==='dmgReduction'&&['hpAbove','hpBelow','colorCount','colorCountHeal','remainingOrbs','cross'].includes(e.condition)&&!e.attr){
+    const o={type:'atk',condition:e.condition}; if(e.shapeAttr) o.shapeAttr=e.shapeAttr; if(e.threshold!==undefined) o.threshold=e.threshold; if(e.count!==undefined) o.count=e.count; if(e.needHeal) o.needHeal=true;
+    o.value=1; o.reduce=e.value; return o;
+  }
+  return e;
+}
+// 読み込んだ効果に一番近いテンプレートを探す（なければ custom）
+function matchTemplate(templates, eff){
+  for(const [k,t] of Object.entries(templates)){
+    if(k==='custom') continue;
+    if(t.match){ if(t.match(eff)) return k; continue; }
+    const d=t.data;
+    if(d.type!==eff.type) continue;
+    if((d.condition||null)!==(eff.condition||null)) continue;
+    if(['atk','hp','rec','allStat'].includes(d.type) && !d.condition && (d.attr!==undefined)!==(eff.attr!==undefined)) continue;
+    return k;
+  }
+  return 'custom';
+}
+
+// ---------- 状態 ----------
+let db = {};                 // 読み込んだ MONSTER_DATA（編集中のものは含めない）
+let fileHeader = DEFAULT_HEADER, fileTail = DEFAULT_TAIL;
+let currentId = null;        // 選択中のID（null=新規）
+let imgKeep = '';            // 既存モンスターに元から付いていた img 指定（なければ自動）
+let extraKeys = {};          // エディターが知らないキー（そのまま保持）
+let activeEffects = [], leaderEffects = [], evolutions = [];
+
+// ---------- 画面部品 ----------
+const attrOptions = ATTRS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
+$('monAttr').innerHTML = attrOptions;
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function allTypes(){
+  const set = new Set(DEFAULT_TYPES);
+  Object.values(db).forEach(m=>m.type&&set.add(m.type));
+  if($('monType').value) set.add($('monType').value);
+  return [...set];
+}
+function refreshTypeList(){ $('typeList').innerHTML = allTypes().map(t=>`<option value="${esc(t)}">`).join(''); }
+
+function fieldHtml(kind, i, f, data){
+  const [key,label,type,choices]=f;
+  const val = key==='$json' ? JSON.stringify(data,null,2) : data[key];
+  const at = `data-kind="${kind}" data-i="${i}" data-field="${key}"`;
+  if(type==='attr') return `<label>${label}<select ${at}>${ATTRS.map(([v,n])=>`<option value="${v}"${val===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
+  if(type==='attrAny') return `<label>${label}<select ${at}><option value=""${!val?' selected':''}>指定なし</option>${ATTRS.map(([v,n])=>`<option value="${v}"${val===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
+  if(type==='type') return `<label>${label}<input ${at} list="typeList" value="${esc(val??'')}"></label>`;
+  if(type==='select') return `<label>${label}<select ${at}>${choices.split('|').map(x=>{const[a,b]=x.split(':');return `<option value="${a}"${val===a?' selected':''}>${b}</option>`}).join('')}</select></label>`;
+  if(type==='bool') return `<label><input type="checkbox" ${at}${val?' checked':''}>${label}</label>`;
+  if(type==='idlist') return `<label class="wide">${label}<input type="text" ${at} data-idlist="1" placeholder="例: 1,8" value="${esc(Array.isArray(val)?val.join(','):(val??''))}"><span class="small idnames"></span></label>`;
+  if(type==='json') return `<label class="wide">${label}<textarea ${at}>${esc(val)}</textarea></label>`;
+  return `<label>${label}<input type="number" step="any" ${at} value="${esc(val??'')}"></label>`;
+}
+function renderEffects(kind){
+  const list = getList(kind);
+  const templates = kind==='active'?activeTemplates:leaderTemplates;
+  const host = $({active:'activeEffects',leader:'leaderEffects',bulk:'blEffects'}[kind]);
+  host.innerHTML = list.map((e,i)=>{
+    const t = templates[e.key];
+    const fields = t.fields.map(f=>fieldHtml(kind,i,f,e.data)).join('');
+    return `<div class="effect"><div class="effect-top">
+      <select data-kind="${kind}" data-i="${i}" data-role="kind">${Object.entries(templates).map(([k,v])=>`<option value="${k}"${k===e.key?' selected':''}>${v.label}</option>`).join('')}</select>
+      <button class="remove" type="button" data-kind="${kind}" data-i="${i}" data-role="remove">削除</button></div>
+      ${fields?`<div class="fields">${fields}</div>`:'<p class="small">追加設定はありません。</p>'}</div>`;
+  }).join('');
+  refreshIdNames();
+}
+function renderEvos(){
+  $('evoList').innerHTML = evolutions.map((ev,i)=>`<div class="evo">
+    <div class="fields"><label>進化後モンスターID<input type="number" data-evo="${i}" data-f="to" value="${esc(ev.to??'')}"></label>
+    <div style="display:flex;align-items:end;justify-content:flex-end"><button class="remove" type="button" data-evo-remove="${i}">この進化先を削除</button></div></div>
+    ${ev.materials.map((m,j)=>`<div class="mat"><label>素材アイテムID<input list="itemList" data-evo="${i}" data-mat="${j}" data-f="item" value="${esc(m.item)}"></label>
+      <label>個数<input type="number" min="1" data-evo="${i}" data-mat="${j}" data-f="count" value="${esc(m.count)}"></label>
+      <button class="remove" type="button" data-mat-remove="${i}:${j}">×</button></div>`).join('')}
+    <button class="add" type="button" data-mat-add="${i}">＋ 素材を追加</button></div>`).join('') || '<p class="small">進化先なし</p>';
+}
+
+// ---------- 値の読み書き ----------
+const num = (id, d=0)=>{ const v=$(id).value; return v===''?d:Number(v); };
+function buildMonster(){
+  const m = {};
+  m.id = num('monId');
+  m.name = $('monName').value;
+  if(imgKeep) m.img = imgKeep;   // 既存の画像指定だけ保持（新規は自動で m{ID}.png）
+  m.rarity = num('monRarity',1);
+  m.attr = $('monAttr').value;
+  m.type = $('monType').value;
+  if($('monMaxLevel').value!=='') m.maxLevel = Math.max(1,Math.min(EXP_TABLE_LEN,Math.floor(num('monMaxLevel'))));
+  m.baseExp = num('monBaseExp',100);
+  m.stats = { hp:{min:num('hpMin'),max:num('hpMax')}, atk:{min:num('atkMin'),max:num('atkMax')}, rec:{min:num('recMin'),max:num('recMax')} };
+  m.skill = { name:$('skName').value, sp:Math.max(1,Math.floor(num('skSp',1))), desc:$('skDesc').value, effects:activeEffects.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))))) };
+  m.leaderSkill = { name:$('lsName').value, desc:$('lsDesc').value, effects:leaderEffects.map(e=>cleanEff(e.data)) };
+  const evos = evolutions.filter(e=>e.to!==''&&e.to!=null).map(e=>({to:Number(e.to),materials:e.materials.filter(x=>x.item).map(x=>({item:x.item,count:Number(x.count)||1}))}));
+  if(evos.length) m.evolutions = evos;
+  Object.assign(m, Object.fromEntries(Object.entries(extraKeys).filter(([k])=>!(k in m))));
+  return m;
+}
+function loadMonsterToForm(m){
+  $('monId').value = m.id ?? '';
+  $('monName').value = m.name ?? '';
+  imgKeep = m.img ?? '';
+  $('monRarity').value = m.rarity ?? 1;
+  $('monAttr').value = m.attr ?? 'fire';
+  $('monType').value = m.type ?? '';
+  $('monMaxLevel').value = m.maxLevel ?? '';
+  $('monBaseExp').value = m.baseExp ?? 100;
+  const s = m.stats||{};
+  const g=(k,w)=>s[k]&&s[k][w]!==undefined?s[k][w]:0;
+  $('hpMin').value=g('hp','min'); $('hpMax').value=g('hp','max');
+  $('atkMin').value=g('atk','min'); $('atkMax').value=g('atk','max');
+  $('recMin').value=g('rec','min'); $('recMax').value=g('rec','max');
+  const sk = m.skill||{};
+  $('skName').value = sk.name ?? '';
+  $('skSp').value = sk.sp ?? 1;
+  $('skDesc').value = sk.desc ?? '';
+  const ls = m.leaderSkill||{};
+  $('lsName').value = ls.name ?? ''; $('lsDesc').value = ls.desc ?? '';
+  const toEff=(templates,e)=>{ e=templates===leaderTemplates?normLeaderEff(e):structuredClone(e); if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; } if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; } return {key:matchTemplate(templates,e),data:e}; };
+  activeEffects = normActiveEffs(sk.effects).map(e=>toEff(activeTemplates,e));
+  leaderEffects = (ls.effects||[]).map(e=>toEff(leaderTemplates,e));
+  evolutions = (m.evolutions||[]).map(e=>({to:e.to,materials:(e.materials||[]).map(x=>({item:x.item,count:x.count}))}));
+  extraKeys = Object.fromEntries(Object.entries(m).filter(([k])=>!KNOWN_KEYS.includes(k)));
+  renderEffects('active'); renderEffects('leader'); renderEvos();
+}
+
+// ---------- JS シリアライザ（monsters.js と同じ見た目） ----------
+const isIdent = k=>/^[A-Za-z_$][\w$]*$/.test(k);
+const q = s=>"'"+String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n')+"'";
+function ser(v, ind){
+  const pad = '  '.repeat(ind);
+  if(v===null) return 'null';
+  if(typeof v==='string') return q(v);
+  if(typeof v!=='object') return String(v);
+  const inline = Array.isArray(v) ? '[ '+v.map(x=>ser(x,0)).join(', ')+' ]'
+    : '{ '+Object.entries(v).map(([k,x])=>(isIdent(k)?k:q(k))+': '+ser(x,0)).join(', ')+' }';
+  if(!inline.includes('\n') && inline.length + ind*2 <= 118) return Array.isArray(v)&&!v.length?'[]':inline;
+  if(Array.isArray(v)) return '[\n'+v.map(x=>pad+'  '+ser(x,ind+1)).join(',\n')+'\n'+pad+']';
+  return '{\n'+Object.entries(v).map(([k,x])=>pad+'  '+(isIdent(k)?k:q(k))+': '+ser(x,ind+1)).join(',\n')+'\n'+pad+'}';
+}
+function serMonster(m){
+  const order = [...KNOWN_KEYS, ...Object.keys(m).filter(k=>!KNOWN_KEYS.includes(k))].filter(k=>k in m);
+  return `  ${m.id}: {\n`+order.map(k=>`    ${isIdent(k)?k:q(k)}: ${ser(m[k],2)}`).join(',\n')+`\n  }`;
+}
+function fullFile(){
+  const all = {...db};
+  const cur = buildMonster();
+  if(currentId!==null && String(currentId)!==String(cur.id)) delete all[currentId];
+  all[cur.id] = cur;
+  const ids = Object.keys(all).map(Number).sort((a,b)=>a-b);
+  return fileHeader+'const MONSTER_DATA = {\n'+ids.map(id=>serMonster(all[id])).join(',\n')+'\n};'+fileTail;
+}
+
+// ---------- 説明文の自動生成 ----------
+const fmt = n=>String(Math.round(n*100)/100);
+const pct = n=>fmt(n*100)+'%';
+// 色数条件の文章（5色＝回復は数えない／＋回復＝回復も必要）
+const colorCountText = e=>{ const n=e.count||4; return e.needHeal ? `${n>=5?'5色':n+'色以上'}＋回復を` : `${n>=5?'5色':n+'色以上'}`; };
+// 回復も1色に数える条件（6＝5色＋回復）
+const colorHealText = n=> n>=6 ? '5色＋回復を' : `${n}色（回復含む）以上`;
+// 同じ属性・同じ倍率の HP／攻撃／回復力 が3つそろったら「全パラメータ」に、十字とL字が同じ内容なら「十字/L字消し」にまとめる
+function mergeLeaderEffs(effs){
+  const list=effs.filter(Boolean).map(e=>({...e}));
+  const used=new Set();
+  const res=[];
+  for(let i=0;i<list.length;i++){
+    if(used.has(i)) continue;
+    const e=list[i];
+    if(['hp','atk','rec'].includes(e.type)&&(!e.condition||e.condition==='type')&&!e.reduce&&!e.comboAdd){
+      const same=t=>list.findIndex((x,k)=>!used.has(k)&&k!==i&&x.type===t&&(x.condition||null)===(e.condition||null)&&x.attr===e.attr&&x.value===e.value&&!x.reduce&&!x.comboAdd);
+      const need=['hp','atk','rec'].filter(t=>t!==e.type);
+      const idx=need.map(same);
+      if(idx.every(k=>k>=0)){ idx.forEach(k=>used.add(k)); const m={type:'allStat',value:e.value}; if(e.condition) m.condition=e.condition; if(e.attr!==undefined) m.attr=e.attr; res.push(m); continue; }
+    }
+    if(e.type==='atk'&&e.condition==='cross'&&!e.shapeAttr){
+      const k=list.findIndex((x,n)=>!used.has(n)&&n!==i&&x.type==='atk'&&x.condition==='lShapes'&&!x.shapeAttr&&x.value===e.value&&!!x.exponential===!!e.exponential&&(x.reduce||0)===(e.reduce||0)&&(x.comboAdd||0)===(e.comboAdd||0));
+      if(k>=0){ used.add(k); res.push({...e,condition:'crossL'}); continue; }
+    }
+    res.push(e);
+  }
+  return res;
+}
+function describeLeader(effs){
+  effs=mergeLeaderEffs(effs);
+  const out=[]; const pre=[];
+  for(const e of effs){
+    const _n=out.length;
+    const a = ATTR_NAME[e.attr]||e.attr||'';
+    const mult = fmt(e.value)+'倍';
+    switch(e.type){
+      case 'noDrop': pre.push('【落ちコンなし】'); break;
+      case 'poisonImmune': out.push('毒ダメージを無効化'); break;
+      case 'moveTimeFixed': pre.push(`【操作時間${fmt(e.value/1000)}秒固定】`); break;
+      case 'moveTimeAdd': { const v=Number(e.value)||0; if(v) pre.push(`【操作時間${fmt(Math.abs(v))}秒${v>0?'延長':'短縮'}】`); break; }
+      case 'hpRecovery': out.push(`ドロップを消すと最大HPの${pct(e.value)}回復`); break;
+      case 'allStat': {
+        const targ = e.condition==='type' ? `${e.attr}タイプの` : (e.attr ? `${a}属性の` : '');
+        out.push(`${targ}全パラメータが${mult}`); break;
+      }
+      case 'atk': case 'hp': case 'rec': {
+        const w = {atk:'攻撃',hp:'HP',rec:'回復力'}[e.type];
+        const targ = e.condition==='type' ? `${e.attr}タイプの` : (e.attr&&!e.condition ? `${a}属性の` : (!e.condition ? '全属性の' : ''));
+        const shp = e.shapeAttr ? `${ATTR_NAME[e.shapeAttr]||e.shapeAttr}属性の` : '';
+        switch(e.condition){
+          case 'attrCombos': out.push(`${a}ドロップの${e.count}コンボ以上で${w}${mult}`); break;
+          case 'combo': out.push(`${e.count}コンボ以上で${w}${mult}`); break;
+          case 'orbConnect': out.push(e.attr2?`${a}と${ATTR_NAME[e.attr2]||e.attr2}のドロップを同時に${e.count}個以上つなげて消すと${w}${mult}`:`${a}を${e.count}個以上つなげて消すと${w}${mult}`); break;
+          case 'hpAbove': out.push(e.threshold>=1 ? `HP満タン時、${w}${mult}` : `HP${pct(e.threshold)}以上で${w}${mult}`); break;
+          case 'hpBelow': out.push(`HP${pct(e.threshold)}以下で${w}${mult}`); break;
+          case 'hpFull': out.push(`HP満タン時、${w}${mult}`); break;
+          case 'cross': out.push(`${shp}十字消し${e.exponential?'する度に':'をすると'}${w}${mult}`); break;
+          case 'crossL': out.push(`十字/L字消し${e.exponential?'する度に':'をすると'}${w}${mult}`); break;
+          case 'lShapes': out.push(`${shp}L字消し${e.exponential?'する度に':'をすると'}${w}${mult}`); break;
+          case 'fourColors': out.push(`4色以上同時に消すと${w}${mult}`); break;
+          case 'colorCount': out.push(`${colorCountText(e)}同時に消すと${w}${mult}`); break;
+          case 'colorCountHeal': out.push(`${colorHealText(e.count||5)}同時に消すと${w}${mult}`); break;
+          case 'colorRamp': { const hc=e.healCounts!==false, n=e.count||3;
+            out.push(`${hc?colorHealText(n):`${n}色以上`}同時に消すと${w}${mult}、色が増えるほど倍率が上がり、${hc?'5色＋回復':'5色'}で最大${fmt(e.maxValue||e.value)}倍`); break; }
+          case 'remainingOrbs': out.push(`残りドロップ${e.threshold}個以下で${w}${mult}`); break;
+          case 'skillUsed': out.push(`スキル使用時、${w}${mult}`); break;
+          case 'poison': out.push(`毒ドロップを消すと${w}${mult}`); break;
+          case 'fireCombos': out.push(`火の${e.count}コンボ以上で${w}${mult}`); break;
+          case 'darkCombos': out.push(`闇の${e.count}コンボ以上で${w}${mult}`); break;
+          case 'healCombos': out.push(`回復の${e.count}コンボ以上で${w}${mult}`); break;
+          case 'exact4': out.push(`ドロップをちょうど4個消${e.exponential?'す度に':'すと'}${w}${mult}`); break;
+          case 'exactCount': out.push(`${a}をちょうど${e.count}個消すと${w}${mult}`); break;
+          case 'waterDarkConnect': out.push(`水と闇を5個以上つなげて消すと${w}${mult}`); break;
+          default: out.push(`${targ}${w}${mult}`);
+        }
+        break;
+      }
+      case 'dmgReduction': {
+        const c = {hpFull:'HP満タン時、',hpAbove:e.threshold>=1?'HP満タン時、':`HP${pct(e.threshold)}以上で`,hpBelow:`HP${pct(e.threshold)}以下で`,fourColors:'4色以上同時に消すと',colorCount:`${colorCountText(e)}同時に消すと`,colorCountHeal:`${colorHealText(e.count||5)}同時に消すと`,remainingOrbs:`残りドロップ${e.threshold}個以下で`,cross:`${e.shapeAttr?(ATTR_NAME[e.shapeAttr]||e.shapeAttr)+'属性の':''}十字消し${e.exponential?'する度に':'をすると'}`}[e.condition]||'';
+        out.push(`${c}受けるダメージ${pct(e.value)}軽減`); break;
+      }
+    }
+    if(e.type==='atk'&&(e.reduce>0||e.comboAdd>0)&&out.length>_n){
+      let t=out[out.length-1];
+      if(!(e.value>0&&e.value!==1)) t=t.replace(/(攻撃|)[01]倍$/,'').replace(/攻撃$/,'');   // 攻撃倍率なし（軽減・コンボ加算だけ）
+      t=t.replace(/、+$/,'、');
+      const sep=(s)=>t&&!/(と|で|、)$/.test(t)?'、'+s:s;
+      if(e.reduce>0) t+=sep(`受けるダメージ${pct(e.reduce)}軽減`);
+      if(e.comboAdd>0) t+=sep(`${fmt(e.comboAdd)}コンボ加算`);
+      out[out.length-1]=t;
+    }
+  }
+  return pre.join('')+out.join('。\n')+(out.length?'。':'');
+}
+function describeActiveOne(e0){
+  const out=[];
+  for(const e of [e0]){
+    const a = ATTR_NAME[e.attr]||e.attr||'';
+    switch(e.type){
+      case 'damageAll': case 'damageSingle': out.push(`敵${(e.target==='single'||e.type==='damageSingle')?'単体':'全体'}に${Number(e.value).toLocaleString()}の固定ダメージ`); break;
+      case 'atkBuff': out.push(`${e.turns||1}ターンの間、${e.monType?e.monType+'タイプ':(e.attr?ATTR_NAME[e.attr]+'属性':'全属性')}の攻撃が${fmt(e.value)}倍`); break;
+      case 'defenseDown': out.push(`${e.turns||1}ターンの間、敵${e.target==='single'?'単体':'全体'}の防御力を${pct(e.value)}ダウン`); break;
+      case 'damageSelfAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に攻撃力×${fmt(e.value)}倍の${a}属性攻撃`); break;
+      case 'damageAttrAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に${ATTR_NAME[e.srcAttr]||''}属性の攻撃力×${fmt(e.value)}倍の${a}属性攻撃`); break;
+      case 'damagePartyAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に味方全員の攻撃力合計×${fmt(e.value)}倍の${a}属性攻撃`); break;
+      case 'heal': out.push(`HPを最大HPの${pct(e.value)}回復`); break;
+      case 'orbChangeRandom': out.push(`${a}ドロップをランダムで${e.count}つ生成`); break;
+      case 'orbChangeRow': out.push(`${e.row===0?'最上段':`上から${e.row+1}段目`}の横1列を${a}ドロップに変化`); break;
+      case 'orbChangeLine': { const i=Math.max(0,Math.floor(Number(e.index)||0)), n=Math.max(1,Math.floor(Number(e.count)||1)); const col=e.dir==='col';
+        const pos = col ? (i===0?'最左':`左から${i+1}列目`) : (i===0?'最上段':`上から${i+1}段目`);
+        out.push(`${pos}${n>1?'から':'の'}${col?'縦':'横'}${n}列を${a}ドロップに変化`); break; }
+      case 'selfDamage': out.push(e.mode==='toOne'?'HPが1になる':`HPが最大HPの${pct(e.value)}減る`); break;
+      case 'orbChangeCross': out.push(`${a}ドロップを十字の形に生成`); break;
+      case 'orbChangeReverseL': out.push(`左上に${a}を逆L字型に生成`); break;
+      case 'orbChange5ColorHeal': out.push('ドロップを5属性＋回復ドロップに変化（各3個以上）'); break;
+      case 'orbChangeMulti': { const ks=[['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復']].filter(([k])=>e['orb_'+k]).map(x=>x[1]); out.push(`ドロップを${(ks.length?ks:['火']).join('・')}ドロップに変化${ks.length>1?'（各3個以上）':''}`); break; }
+      case 'orbConvert': out.push(`${ATTR_NAME[e.from]}ドロップを${ATTR_NAME[e.to]}ドロップに変化`); break;
+      case 'enemyDelay': out.push(`敵${e.target==='single'?'単体':'全体'}の行動を${e.turns}ターン遅らせる`); break;
+      case 'dmgReductionBuff': out.push(`${e.turns||1}ターンの間、ダメージを${pct(e.value)}軽減`); break;
+      case 'recMult': out.push(Number(e.value)===0?`${e.turns||1}ターンの間、回復力が0になる`:`${e.turns||1}ターンの間、回復力が${fmt(e.value)}倍`); break;
+      case 'moveTimeBuff': { const p=[]; if(e.mult!==undefined&&Number(e.mult)!==1) p.push(`${fmt(e.mult)}倍`); if(Number(e.seconds)) p.push(`${Math.abs(e.seconds)}秒${e.seconds<0?'短縮':'延長'}`); if(p.length) out.push(`${e.turns||1}ターンの間、操作時間が${p.join('、')}`); break; }
+      case 'allAttackBuff': out.push(`${e.turns||1}ターンの間、敵全体に攻撃`); break;
+      case 'timeStop': out.push(`${fmt(e.seconds>0?e.seconds:5)}秒間、時を止める`); break;
+      case 'transformRandom': { const ids=Array.isArray(e.ids)?e.ids:[]; if(ids.length) out.push(`ランダムで${ids.map(id=>(db[id]&&db[id].name)||('ID'+id)).join('・')}のどれかに変身（そのダンジョン中）`); break; }
+      case 'bindRecover': out.push(`バインドを${e.turns||1}ターン回復`); break;
+      case 'roulette': { const sc=Number(e.sec), nm=sc===2?'低速ルーレット':sc===0.5?'高速ルーレット':sc===0.2?'超高速ルーレット':'ルーレット'; out.push(`${e.turns||1}ターンの間、${nm}を${e.count||1}つ生成`); break; }
+      case 'damageHalfHp': out.push('敵のHPを半分にする'); break;
+    }
+  }
+  return out.join('。');
+}
+// 「火と水ドロップを回復ドロップに変化」「最上段横2列」など、続けて並んだ同種の効果をまとめて1文にする
+const ROWS_N=5, COLS_N=6;
+const joinNames=(arr)=>arr.length>2?arr.join('・'):arr.join('と');
+function lineText(dir,start,n){
+  const row=dir!=='col', max=row?ROWS_N:COLS_N, dn=row?'横':'縦';
+  if(start===0) return n>1?`${row?'最上段':'最左'}${dn}${n}列`:`${row?'最上段':'最左'}の${dn}1列`;
+  if(start+n>=max) return n>1?`${row?'最下段':'最右'}${dn}${n}列`:`${row?'最下段':'最右'}の${dn}1列`;
+  const pos=`${row?'上':'左'}から${start+1}${row?'段':'列'}目`;
+  return n>1?`${pos}から${dn}${n}列`:`${pos}の${dn}1列`;
+}
+function describeGroup(f,g){
+  const out=[];
+  if(f==='cv'){
+    const order=[], map={};
+    for(const e of g){ const to=e.to; if(!map[to]){ map[to]=[]; order.push(to); } const fr=ATTR_NAME[e.from]||e.from; if(!map[to].includes(fr)) map[to].push(fr); }
+    const ORD=ATTRS.map(x=>x[1]);
+    for(const to of order) map[to].sort((x,y)=>ORD.indexOf(x)-ORD.indexOf(y));
+    for(const to of order) out.push(`${joinNames(map[to])}ドロップを${ATTR_NAME[to]||to}ドロップに変化`);
+  }else if(f==='ln'){
+    for(const dir of ['row','col']){
+      const es=g.filter(e=>(e.type==='orbChangeRow'?'row':(e.dir==='col'?'col':'row'))===dir);
+      if(!es.length) continue;
+      const max=dir==='row'?ROWS_N:COLS_N, lineAttr={};
+      for(const e of es){
+        const i0=e.type==='orbChangeRow'?(Number(e.row)||0):(Number(e.index)||0);
+        const c0=e.type==='orbChangeRow'?1:Math.max(1,Math.floor(Number(e.count)||1));
+        const st=Math.max(0,Math.min(max-1,Math.floor(i0)));
+        for(let i=st;i<Math.min(max,st+c0);i++) lineAttr[i]=e.attr;   // 同じ列を2回指定しても1列ぶん（あとの指定が上書き）
+      }
+      const idx=Object.keys(lineAttr).map(Number).sort((a,b)=>a-b);
+      for(let k=0;k<idx.length;){
+        let j=k; while(j+1<idx.length&&idx[j+1]===idx[j]+1) j++;
+        const seg=idx.slice(k,j+1), names=[];
+        for(const i of seg){ const nm=ATTR_NAME[lineAttr[i]]||lineAttr[i]; if(names[names.length-1]!==nm) names.push(nm); }
+        out.push(`${lineText(dir,seg[0],seg.length)}を${joinNames(names)}ドロップに変化`);
+        k=j+1;
+      }
+    }
+  }else if(f==='rd'){
+    const order=[], cnt={};
+    for(const e of g){ if(cnt[e.attr]===undefined){ cnt[e.attr]=0; order.push(e.attr); } cnt[e.attr]+=Math.max(1,Number(e.count)||1); }
+    const same=order.length>1&&order.every(a=>cnt[a]===cnt[order[0]]);
+    if(same){
+      const five=['fire','water','wood','light','dark'];
+      const has5=five.every(a=>order.includes(a));
+      const name=has5?(order.includes('heal')&&order.length===6?'5属性＋回復':(order.length===5?'5属性':null)):null;
+      out.push(`${name||joinNames(order.map(a=>ATTR_NAME[a]||a))}ドロップをランダムで${cnt[order[0]]}つずつ生成`);
+    }else for(const a of order) out.push(`${ATTR_NAME[a]||a}ドロップをランダムで${cnt[a]}つ生成`);
+  }else if(f==='cr'){
+    const attrs=[...new Set(g.map(e=>e.attr))];
+    const posOf=e=>{ const r=Number(e.row), c=Number(e.col); if(!isFinite(r)||!isFinite(c)) return ''; const v=r<=1?'上':r>=3?'下':'', h=c<=1?'左':c>=3?'右':''; return (v&&h)?h+v:''; };   // 四隅だけ「左上」「右下」のように書く
+    const labels=g.map(posOf);
+    const where=labels.every(x=>x)?`${[...new Set(labels)].join('と')}に`:'';
+    if(attrs.length===1) out.push(`${where}${ATTR_NAME[attrs[0]]||attrs[0]}ドロップを十字の形に${g.length>1?g.length+'つ':''}生成`);
+    else out.push(`${where}${joinNames(attrs.map(a=>ATTR_NAME[a]||a))}ドロップを十字の形に生成`);
+  }
+  return out;
+}
+function describeActive(effs){
+  const out=[];
+  const arr=(effs||[]).filter(Boolean);
+  const FAM={orbConvert:'cv',orbChangeLine:'ln',orbChangeRow:'ln',orbChangeRandom:'rd',orbChangeCross:'cr'};
+  for(let i=0;i<arr.length;){
+    const f=FAM[arr[i].type];
+    if(f){ let j=i; while(j<arr.length&&FAM[arr[j].type]===f) j++; out.push(...describeGroup(f,arr.slice(i,j))); i=j; continue; }
+    const t=describeActiveOne(arr[i]); if(t) out.push(t); i++;
+  }
+  return out.join('。\n')+(out.length?'。':'');
+}
+
+// ---------- スキルライブラリ（登録済みスキルの使い回し） ----------
+function collectSkills(){
+  const map = new Map(); // 名前 → {skill, from}
+  const add=(m)=>{
+    if(!m||!m.skill||!m.skill.name) return;
+    const key=m.skill.name;
+    if(!map.has(key)) map.set(key,{skill:m.skill,from:m});
+  };
+  const cur=buildMonster();
+  Object.values(db).forEach(m=>{ if(currentId!==null && String(m.id)===String(currentId)) return; add(m); });
+  add(cur); // 編集中のものも（最新の内容で）
+  return [...map.values()];
+}
+// ---------- ライブラリの並び順（種類順） ----------
+const SORT_ATTR = ['fire','water','wood','light','dark','heal','poison'];
+const attrRankOf = a => { const i = SORT_ATTR.indexOf(({'回復':'heal','火':'fire','水':'water','木':'wood','光':'light','闇':'dark','毒':'poison'})[a]||a); return i<0 ? 99 : i; };
+// リーダースキル：①火のソウル→火炎のソウル→水のソウル…（属性別の攻撃倍率）②タイプ・全属性の攻撃 ③HP(オーラ) ④回復力(ルーン) ⑤条件付き攻撃 ⑥その他
+const LS_COND_ORDER = ['hpAbove','hpBelow','hpFull','combo','attrCombos','orbConnect','exactCount','exact4','colorCount','colorCountHeal','colorRamp','cross','lShapes','poison','remainingOrbs','skillUsed'];
+function leaderSortKey(ls){
+  const effs = (ls.effects||[]);
+  const e = effs.find(x=>x&&['atk','hp','rec'].includes(x.type)) || effs[0] || {};
+  const _sa = e.attr || e.shapeAttr;
+  const val = Number(e.value)||0, cnt = Number(e.count ?? e.threshold)||0;
+  let cat;
+  if(e.type==='atk' && !e.condition){ cat = e.attr ? 0 : 2; }
+  else if(e.type==='atk' && e.condition==='type'){ cat = 1; }
+  else if(e.type==='hp'){ cat = (e.condition==='type') ? 4 : (e.attr ? 3 : 5); }
+  else if(e.type==='rec'){ cat = (e.condition==='type') ? 7 : (e.attr ? 6 : 8); }
+  else if(e.type==='atk'){ const i = LS_COND_ORDER.indexOf(e.condition); cat = 10 + (i<0 ? LS_COND_ORDER.length : i); }
+  else { cat = 50; }
+  return [cat, effs.length>1?1:0, attrRankOf(_sa), cnt, val, String(ls.name||'')];
+}
+function cmpKey(a,b){
+  for(let i=0;i<a.length;i++){
+    if(typeof a[i]==='string'){ const c=a[i].localeCompare(b[i],'ja'); if(c) return c; }
+    else if(a[i]!==b[i]) return a[i]-b[i];
+  }
+  return 0;
+}
+// スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','heal','atkBuff','allAttackBuff','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+function skillSortKey(sk){
+  const e = (sk.effects||[])[0] || {};
+  const i = SK_TYPE_ORDER.indexOf(e.type);
+  const attr = e.attr || ((sk.effects||[]).find(x=>x&&x.attr)||{}).attr;
+  return [i<0 ? SK_TYPE_ORDER.length : i, attrRankOf(attr), String(sk.name||'')];
+}
+
+let skLibCache=[];
+function renderSkillLib(){
+  const kw=$('skLibSearch').value.trim().toLowerCase();
+  skLibCache=collectSkills().filter(x=>!kw||(x.skill.name+' '+(x.skill.desc||'')).toLowerCase().includes(kw));
+  skLibCache.sort((a,b)=>cmpKey(skillSortKey(a.skill),skillSortKey(b.skill)));
+  $('skLibList').innerHTML = skLibCache.map((x,i)=>`<div class="libitem"><div class="info"><div class="nm">${esc(x.skill.name)}</div><div class="ds">${esc((x.skill.desc||'').replace(/\n/g,' '))||'（説明なし）'}　／ ${esc(x.from.name||'')}</div></div><span class="sp">SP ${x.skill.sp ?? 1}</span><button type="button" data-lib="${i}">使う</button></div>`).join('') || '<p class="small" style="padding:10px">該当するスキルがありません。</p>';
+}
+$('skLibSearch').addEventListener('input',renderSkillLib);
+function applySkill(sk){
+  $('skName').value=sk.name??'';
+  $('skSp').value=sk.sp ?? 1;
+  $('skDesc').value=sk.desc??'';
+  activeEffects=normActiveEffs(sk.effects).map(e=>({key:matchTemplate(activeTemplates,e),data:structuredClone(e)}));
+  renderEffects('active'); dirty=true; update();
+}
+
+// ---------- リーダースキルライブラリ・重複チェック ----------
+function stable(v){
+  if(Array.isArray(v)) return '['+v.map(stable).join(',')+']';
+  if(v&&typeof v==='object') return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
+  return JSON.stringify(v);
+}
+const leaderSig = effs => (effs||[]).map(e=>stable(normLeaderEff(e))).sort().join('|');
+function otherMonsters(){ return Object.values(db).filter(m=>!(currentId!==null && String(m.id)===String(currentId))); }
+function collectLeaders(){
+  const map=new Map(); // 名前+効果 → {ls, users:[monster]}
+  otherMonsters().forEach(m=>{
+    const ls=m.leaderSkill; if(!ls||!ls.name) return;
+    const key=ls.name+'##'+leaderSig(ls.effects);
+    if(!map.has(key)) map.set(key,{ls,users:[]});
+    map.get(key).users.push(m);
+  });
+  return [...map.values()];
+}
+let lsLibCache=[];
+function renderLeaderLib(){
+  const kw=$('lsLibSearch').value.trim().toLowerCase();
+  lsLibCache=collectLeaders().filter(x=>!kw||(x.ls.name+' '+(x.ls.desc||'')+' '+x.users.map(u=>u.name).join(' ')).toLowerCase().includes(kw));
+  lsLibCache.sort((a,b)=>cmpKey(leaderSortKey(a.ls),leaderSortKey(b.ls)));
+  $('lsLibList').innerHTML = lsLibCache.map((x,i)=>{
+    const desc=(x.ls.desc||describeLeader(x.ls.effects||[])||'（説明なし）').replace(/\n/g,' ');
+    const names=x.users.slice(0,3).map(u=>u.name).join('、')+(x.users.length>3?` ほか${x.users.length-3}体`:'');
+    return `<div class="libitem"><div class="info"><div class="nm">${esc(x.ls.name)}</div><div class="ds">${esc(desc)}　／ ${esc(names)}</div></div><button type="button" data-lslib="${i}">使う</button></div>`;
+  }).join('') || '<p class="small" style="padding:10px">該当するリーダースキルがありません。</p>';
+}
+$('lsLibSearch').addEventListener('input',renderLeaderLib);
+function applyLeader(ls){
+  $('lsName').value=ls.name??''; $('lsDesc').value=ls.desc??'';
+  leaderEffects=(ls.effects||[]).map(e0=>{ const e=normLeaderEff(e0); return {key:matchTemplate(leaderTemplates,e),data:e}; });
+  renderEffects('leader'); dirty=true; update();
+}
+function normSkillEff(e){
+  e=structuredClone(e);
+  if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; }
+  if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr}; }
+  Object.keys(e).forEach(k=>{ if(e[k]===''||(e[k]===false&&k.startsWith('orb_'))) delete e[k]; });
+  return e;
+}
+const skillSig = effs => (effs||[]).map(e=>stable(normSkillEff(e))).sort().join('|');
+function checkSkillDup(){
+  const effs=buildMonster().skill.effects;
+  const host=$('skDup');
+  if(!effs.length){ host.textContent=''; return; }
+  const sig=skillSig(effs);
+  const hit=otherMonsters().filter(m=>m.skill&&(m.skill.effects||[]).length&&skillSig(m.skill.effects)===sig);
+  host.textContent = hit.length ? '⚠ '+hit.map(m=>`【${m.skill.name||'名前なし'}】（${m.name}）`).join('、')+'と被っています' : '';
+}
+function checkLeaderDup(){
+  const effs=buildMonster().leaderSkill.effects;
+  const host=$('lsDup');
+  if(!effs.length){ host.textContent=''; return; }
+  const sig=leaderSig(effs);
+  const hit=otherMonsters().filter(m=>m.leaderSkill&&(m.leaderSkill.effects||[]).length&&leaderSig(m.leaderSkill.effects)===sig);
+  host.textContent = hit.length ? '⚠ '+hit.map(m=>`【${m.leaderSkill.name||'名前なし'}】（${m.name}）`).join('、')+'と被っています' : '';
+}
+
+// ---------- 出力・プレビュー ----------
+function updateStatPreview(){
+  const maxLv = $('monMaxLevel').value!=='' ? Math.max(1,Math.min(EXP_TABLE_LEN,Math.floor(num('monMaxLevel')))) : rarityMaxLevel(num('monRarity',1));
+  const lvs = [...new Set([1, Math.max(1,Math.round(maxLv/2)), maxLv])];
+  const calc=(min,max,lv)=>Math.floor(min+(max-min)*(maxLv<=1?1:(lv-1)/(maxLv-1)));
+  $('statPreview').innerHTML = '<tr><th>Lv</th><th>HP</th><th>攻撃</th><th>回復</th></tr>'+lvs.map(lv=>
+    `<tr><td>Lv${lv}${lv===maxLv?'（最大）':''}</td><td>${calc(num('hpMin'),num('hpMax'),lv).toLocaleString()}</td><td>${calc(num('atkMin'),num('atkMax'),lv).toLocaleString()}</td><td>${calc(num('recMin'),num('recMax'),lv).toLocaleString()}</td></tr>`).join('');
+  $('maxLvHint').textContent = $('monMaxLevel').value===''
+    ? `最大レベルは空欄のため、★${num('monRarity',1)} の既定値 Lv${maxLv} になります。`
+    : `このモンスターの最大レベルは Lv${maxLv}（上限${EXP_TABLE_LEN}：exp.js のテーブル長）。`;
+}
+function updateImgHint(){
+  const id=num('monId');
+  $('imgHint').innerHTML = imgKeep
+    ? `画像: <code>${esc(imgKeep)}</code>（既存の指定を保持中）<button class="sub" type="button" id="imgReset" style="margin-left:6px;padding:4px 8px">自動（m${esc(id)}.png）に戻す</button>`
+    : `画像: <code>m${esc(id)}.png</code>（IDから自動）`;
+}
+function refreshIdNames(){
+  document.querySelectorAll('input[data-idlist]').forEach(inp=>{
+    const span=inp.parentElement.querySelector('.idnames'); if(!span) return;
+    const ids=inp.value.split(/[,、，\s]+/).filter(x=>x!=='').map(Number).filter(n=>Number.isInteger(n)&&n>0);
+    const hasDb=Object.keys(db).length>0;
+    span.textContent = ids.map(id=>`${id}: ${(db[id]&&db[id].name)||(hasDb?'（未登録のID）':'')}`).join(' ／ ');
+  });
+}
+function update(){
+  refreshTypeList();
+  refreshIdNames();
+  updateImgHint();
+  updateStatPreview();
+  renderSkillLib();
+  renderLeaderLib();
+  checkLeaderDup();
+  checkSkillDup();
+  $('output').textContent = 'MONSTER_DATA を以下に追加／更新（保存ボタンなら monsters.js 全体を書き出し）:\n\n' + serMonster(buildMonster());
+}
+function say(msg, err){ const n=$('notice'); n.textContent=msg; n.className='notice'+(err?' err':''); }
+
+// ---------- モンスター選択 ----------
+function refreshSelect(){
+  const ids = Object.keys(db).map(Number).sort((a,b)=>a-b);
+  $('monSelect').innerHTML = '<option value="__new">＋ 新規モンスター</option>'+ids.map(id=>`<option value="${id}">${id}: ${esc(db[id].name||'')}</option>`).join('');
+  $('monSelect').value = currentId===null?'__new':String(currentId);
+  renderTplLib();
+}
+// 現在の編集内容を db に反映してから切り替える
+function commitCurrent(){
+  const cur = buildMonster();
+  if(!Number.isFinite(cur.id)||cur.id<=0) return;
+  // 新規で未編集（初期値のまま）の場合は追加しない
+  if(currentId===null && !dirty) return;
+  if(currentId!==null && String(currentId)!==String(cur.id)) delete db[currentId];
+  db[cur.id]=cur; currentId=cur.id;
+}
+let dirty=false;
+// ---------- 既存モンスターをテンプレートに ----------
+function renderTplLib(){
+  const kw=$('tplSearch').value.trim().toLowerCase();
+  const ids=Object.keys(db).map(Number).sort((a,b)=>a-b);
+  const rows=ids.map(id=>db[id]).filter(m=>{
+    if(!kw) return true;
+    const hay=[m.id,m.name,ATTR_NAME[m.attr]||m.attr,m.type,m.skill&&m.skill.name,m.leaderSkill&&m.leaderSkill.name].join(' ').toLowerCase();
+    return hay.includes(kw);
+  });
+  $('tplList').innerHTML = rows.map(m=>`<div class="libitem"><div class="info"><div class="nm">${esc(m.id)}: ${esc(m.name||'')}</div><div class="ds">★${esc(m.rarity??'')} ${esc(ATTR_NAME[m.attr]||m.attr||'')} / ${esc(m.type||'')} ／ スキル: ${esc((m.skill&&m.skill.name)||'-')} ／ リーダー: ${esc((m.leaderSkill&&m.leaderSkill.name)||'-')}</div></div><button type="button" data-tpl="${esc(m.id)}">テンプレートにする</button></div>`).join('') || '<p class="small" style="padding:10px">該当するモンスターがいません。</p>';
+}
+$('tplSearch').addEventListener('input',renderTplLib);
+function startFromTemplate(src){
+  commitCurrent();                       // 今の編集内容は一覧に保存してから切り替える
+  const m=structuredClone(src);
+  const ids=Object.keys(db).map(Number);
+  m.id=Math.max(...ids,99)+1;            // 新しい空きID
+  m.name=(src.name||'')+'（コピー）';
+  delete m.img;                          // 画像は新IDから自動（m{ID}.png）
+  if(!$('tplEvo').checked) delete m.evolutions;
+  currentId=null;                        // 新規扱い（元モンスターは上書きしない）
+  loadMonsterToForm(m); dirty=true; refreshSelect(); update();
+  say(`「${src.name}」をテンプレートに新規モンスター（ID ${m.id}）を作成しました。`);
+  window.scrollTo({top:$('monId').getBoundingClientRect().top+scrollY-80,behavior:'smooth'});
+}
+function blankMonster(){
+  const ids = Object.keys(db).map(Number);
+  const next = (ids.length?Math.max(...ids):99)+1;
+  return {id:next,name:'新モンスター',rarity:3,attr:'fire',type:'バランス',baseExp:100,
+    stats:{hp:{min:500,max:1500},atk:{min:200,max:600},rec:{min:50,max:150}},
+    skill:{name:'スキル名',sp:1,desc:'',effects:[]},
+    leaderSkill:{name:'リーダースキル名',desc:'',effects:[{type:'atk',attr:'fire',value:1.2}]}};
+}
+
+// ---------- イベント ----------
+document.addEventListener('input', e=>{
+  const t=e.target;
+  if(t.closest('#tabStats')) return;                                   // ステータス一覧は専用の処理
+  if(t.closest('#tabLeader') && t.dataset.kind!=='bulk') return;       // リーダースキル一括編集は専用の処理
+  if(t.dataset.field){
+    const list=getList(t.dataset.kind);
+    const eff=list[+t.dataset.i]; const key=t.dataset.field;
+    if(key==='$json'){ try{ eff.data=JSON.parse(t.value); t.style.borderColor=''; }catch{ t.style.borderColor='var(--bad)'; return; } }
+    else if(t.type==='checkbox'){ if(t.checked) eff.data[key]=true; else delete eff.data[key]; }
+    else if(t.dataset.idlist){ eff.data[key]=t.value.split(/[,、，\s]+/).filter(x=>x!=='').map(Number).filter(n=>Number.isInteger(n)&&n>0); }
+    else if(t.type==='number'){ eff.data[key]=t.value===''?0:Number(t.value); }
+    else if(key==='attr2'&&t.value===''){ delete eff.data[key]; }
+    else eff.data[key]=t.value;
+  } else if(t.dataset.evo!==undefined){
+    const ev=evolutions[+t.dataset.evo];
+    if(t.dataset.mat!==undefined) ev.materials[+t.dataset.mat][t.dataset.f]=t.dataset.f==='count'?Number(t.value):t.value;
+    else ev[t.dataset.f]=t.value;
+  } else if(t.id==='fileMonsters'||t.id==='fileItems'||t.id==='monSelect'||t.id==='tplSearch'||t.id==='tplEvo'||t.id==='skLibSearch'||t.id==='lsLibSearch') return;
+  if(t.dataset.kind==='bulk'){ blEffChanged(); return; }
+  dirty=true; update();
+});
+document.addEventListener('change', e=>{
+  const t=e.target;
+  if(t.dataset.role==='kind'){
+    const kind=t.dataset.kind; const list=getList(kind); const tpl=kind==='active'?activeTemplates:leaderTemplates;
+    list[+t.dataset.i]={key:t.value,data:structuredClone(tpl[t.value].data)};
+    renderEffects(kind); if(kind==='bulk'){ blEffChanged(); return; } dirty=true; update();
+  } else if(t.dataset.field && t.type==='checkbox'){ /* input で処理済み */ }
+});
+document.addEventListener('click', e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  if(t.id==='imgReset'){ imgKeep=''; dirty=true; update(); return; }
+  if(t.dataset.lslib!==undefined){ const x=lsLibCache[+t.dataset.lslib]; if(x){ applyLeader(structuredClone(x.ls)); say(`リーダースキル「${x.ls.name}」を適用しました。`); } return; }
+  if(t.dataset.tpl!==undefined){ const src=db[t.dataset.tpl]; if(src) startFromTemplate(src); return; }
+  if(t.id==='dupMon'){ const cur=buildMonster(); if(!Number.isFinite(cur.id)||cur.id<=0){ say('モンスターIDを正しく入力してください。',true); return; } startFromTemplate(cur); return; }
+  if(t.dataset.lib!==undefined){ const x=skLibCache[+t.dataset.lib]; if(x) applySkill(structuredClone(x.skill)); say(`スキル「${x.skill.name}」を適用しました。`); return; }
+  if(t.dataset.add){ const kind=t.dataset.add; const tpl=kind==='active'?activeTemplates:leaderTemplates; const key=Object.keys(tpl)[0];
+    getList(kind).push({key,data:structuredClone(tpl[key].data)}); renderEffects(kind); if(kind==='bulk'){ blEffChanged(); return; } dirty=true; update(); }
+  else if(t.dataset.role==='remove'){ getList(t.dataset.kind).splice(+t.dataset.i,1); renderEffects(t.dataset.kind); if(t.dataset.kind==='bulk'){ blEffChanged(); return; } dirty=true; update(); }
+  else if(t.id==='addEvo'){ evolutions.push({to:'',materials:[{item:'puzzle1',count:1}]}); renderEvos(); dirty=true; update(); }
+  else if(t.dataset.evoRemove!==undefined){ evolutions.splice(+t.dataset.evoRemove,1); renderEvos(); dirty=true; update(); }
+  else if(t.dataset.matAdd!==undefined){ evolutions[+t.dataset.matAdd].materials.push({item:'',count:1}); renderEvos(); dirty=true; update(); }
+  else if(t.dataset.matRemove!==undefined){ const [i,j]=t.dataset.matRemove.split(':').map(Number); evolutions[i].materials.splice(j,1); renderEvos(); dirty=true; update(); }
+});
+$('autoLsDesc').onclick=()=>{ $('lsDesc').value=describeLeader(leaderEffects.map(e=>e.data)); dirty=true; update(); };
+$('autoSkDesc').onclick=()=>{ $('skDesc').value=describeActive(activeEffects.map(e=>e.data)); dirty=true; update(); };
+
+$('monSelect').onchange=()=>{
+  commitCurrent();
+  const v=$('monSelect').value;
+  if(v==='__new'){ currentId=null; loadMonsterToForm(blankMonster()); dirty=false; }
+  else { currentId=Number(v); loadMonsterToForm(db[currentId]); dirty=false; }
+  refreshSelect(); update();
+};
+
+function readFileText(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(file,'utf-8'); }); }
+$('fileMonsters').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const code=await readFileText(f);
+    const data=new Function(code+'\n;return MONSTER_DATA;')();
+    applyMonsterData(data,code,f.name);
+  }catch(err){ $('loadNotice').textContent='読み込めませんでした: '+err.message; $('loadNotice').className='notice err'; }
+};
+function applyMonsterData(data,code,name){
+  {
+    if(!data||typeof data!=='object') throw new Error('MONSTER_DATA が見つかりません');
+    db=structuredClone(data);
+    code=code||'';
+    const hi=code.indexOf('const MONSTER_DATA');
+    const end=code.lastIndexOf('\n};');
+    fileHeader=hi>0?code.slice(0,hi):DEFAULT_HEADER;
+    fileTail=end>=0?code.slice(end+3):DEFAULT_TAIL;
+    currentId=null; dirty=false;
+    const ids=Object.keys(db).map(Number).sort((a,b)=>a-b);
+    currentId=ids[0]??null;
+    if(currentId!==null) loadMonsterToForm(db[currentId]); else loadMonsterToForm(blankMonster());
+    snapshotBase(); bulkDirty=false; bl.key=null; updateSaveState();
+    refreshSelect(); update();
+    $('loadNotice').textContent=`${name} を読み込みました（${ids.length}体）。`; $('loadNotice').className='notice';
+  }
+}
+function applyItems(items,name){
+  $('itemList').innerHTML=Object.values(items).map(i=>`<option value="${esc(i.id)}">${esc(i.name||'')}</option>`).join('');
+  return Object.keys(items).length;
+}
+$('fileItems').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const code=await readFileText(f);
+    const items=new Function(code+'\n;return ITEM_DATA;')();
+    $('itemList').innerHTML=Object.values(items).map(i=>`<option value="${esc(i.id)}">${esc(i.name||'')}</option>`).join('');
+    $('loadNotice').textContent=`${f.name} を読み込みました（素材候補 ${Object.keys(items).length}件）。`; $('loadNotice').className='notice';
+  }catch(err){ $('loadNotice').textContent='items.js を読み込めませんでした: '+err.message; $('loadNotice').className='notice err'; }
+};
+
+$('saveAll').onclick=()=>{
+  const cur=buildMonster();
+  if(!Number.isFinite(cur.id)||cur.id<=0){ say('モンスターIDを正しく入力してください。',true); return; }
+  if(currentId===null && db[cur.id]){ say(`ID ${cur.id} は既にあります。別のIDにしてください。`,true); return; }
+  if(currentId!==null && String(currentId)!==String(cur.id) && db[cur.id]){ say(`ID ${cur.id} は既に使われています。`,true); return; }
+  const text=fullFile();
+  const blob=new Blob([text],{type:'text/javascript'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='monsters.js'; a.click(); URL.revokeObjectURL(a.href);
+  commitCurrent(); dirty=true; commitCurrent(); refreshSelect();
+  snapshotBase(); bulkDirty=false; updateSaveState();
+  say('monsters.js を保存しました。js/data/monsters.js と置き換えてください。');
+};
+$('copyOne').onclick=async()=>{ try{ await navigator.clipboard.writeText(serMonster(buildMonster())); say('コピーしました。'); }catch{ say('コピーできませんでした。手動で選択してください。',true); } };
+$('deleteMon').onclick=()=>{
+  if(currentId===null){ say('まだ一覧にないモンスターです。',true); return; }
+  if(!confirm(`ID ${currentId} を一覧から削除しますか？（保存するまでファイルは変わりません）`)) return;
+  delete db[currentId]; currentId=null; loadMonsterToForm(blankMonster()); dirty=false; refreshSelect(); update(); say('削除しました。保存すると反映されます。');
+};
+
+// =====================================================
+// タブ切り替え／一括編集（リーダースキル・ステータス一覧）
+// =====================================================
+let curTab='single';
+let bulkDirty=false;            // 一括編集タブで変更したが、まだ保存していない
+let baseStats={};               // 読み込み／保存した時点のステータス（変更箇所の色付け用）
+const bl={key:null,ids:[],checked:new Set(),effects:[]};
+function getList(kind){ return kind==='active'?activeEffects:kind==='bulk'?bl.effects:leaderEffects; }
+function snapshotBase(){ baseStats={}; Object.values(db).forEach(m=>{ baseStats[m.id]=structuredClone(m.stats||{}); }); }
+function updateSaveState(){ document.querySelectorAll('.bulkState').forEach(el=>{ el.textContent=bulkDirty?'⚠ 未保存の変更があります':''; }); }
+window.addEventListener('beforeunload',e=>{ if(bulkDirty){ e.preventDefault(); e.returnValue=''; } });
+// 一括編集で db を書き換えたあと、個別編集フォームが古いままにならないよう合わせる
+function syncFormFromDb(){ if(currentId!==null&&db[currentId]){ loadMonsterToForm(db[currentId]); dirty=false; } }
+
+function showTab(t){
+  if(t===curTab) return;
+  if(curTab==='single'&&dirty){
+    if(currentId===null&&db[num('monId')]){ alert('新規モンスターのIDが既存のモンスターと重複しています。IDを変えてからタブを切り替えてください。'); return; }
+    commitCurrent();
+  }
+  curTab=t;
+  [['single','tabSingle'],['leader','tabLeader'],['stats','tabStats']].forEach(([k,id])=>{ $(id).hidden=(k!==t); });
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  if(t==='single'){ syncFormFromDb(); refreshSelect(); update(); }
+  else if(t==='leader') renderBl();
+  else renderSt();
+  updateSaveState();
+}
+document.querySelectorAll('.tabbtn').forEach(b=>{ b.onclick=()=>showTab(b.dataset.tab); });
+
+// 一括編集タブ用の保存（db の内容だけを書き出す）
+function saveFromDb(){
+  const ids=Object.keys(db).map(Number).sort((a,b)=>a-b);
+  if(!ids.length){ return false; }
+  const text=fileHeader+'const MONSTER_DATA = {\n'+ids.map(id=>serMonster(db[id])).join(',\n')+'\n};'+fileTail;
+  const blob=new Blob([text],{type:'text/javascript'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='monsters.js'; a.click(); URL.revokeObjectURL(a.href);
+  snapshotBase(); bulkDirty=false; updateSaveState();
+  return true;
+}
+document.querySelectorAll('[data-savedb]').forEach(b=>{ b.onclick=()=>{
+  const ok=saveFromDb();
+  const n=curTab==='leader'?$('blSaveNotice'):$('stSaveNotice');
+  n.textContent=ok?'monsters.js を保存しました。js/data/monsters.js と置き換えてください。':'モンスターが読み込まれていません。'; n.className='notice'+(ok?'':' err');
+  if(ok&&curTab==='stats') renderSt();
+}; });
+
+// ---------- リーダースキル一括編集 ----------
+function blGroups(){
+  const map=new Map();
+  Object.values(db).forEach(m=>{
+    const ls=m.leaderSkill; if(!ls||(!ls.name&&!(ls.effects||[]).length)) return;
+    const key=(ls.name||'')+'##'+leaderSig(ls.effects);
+    if(!map.has(key)) map.set(key,{key,ls,users:[]});
+    map.get(key).users.push(m);
+  });
+  return [...map.values()];
+}
+let blCache=[];
+function renderBl(){
+  const n=Object.keys(db).length;
+  $('blInfo').textContent=n?`${n}体のモンスターを読み込み済み。`:'モンスターが読み込まれていません。「個別編集」タブで monsters.js を読み込んでください。';
+  const kw=$('blSearch').value.trim().toLowerCase();
+  const all=blGroups();
+  const nameCnt={}; all.forEach(g=>{ nameCnt[g.ls.name]=(nameCnt[g.ls.name]||0)+1; });
+  blCache=all.filter(g=>!kw||(g.ls.name+' '+(g.ls.desc||'')+' '+g.users.map(u=>u.name).join(' ')).toLowerCase().includes(kw));
+  blCache.sort((a,b)=>cmpKey(leaderSortKey(a.ls),leaderSortKey(b.ls)));
+  $('blList').innerHTML=blCache.map((g,i)=>{
+    const desc=(g.ls.desc||describeLeader(g.ls.effects||[])||'（説明なし）').replace(/\n/g,' ');
+    const names=g.users.slice(0,4).map(u=>u.name).join('、')+(g.users.length>4?` ほか${g.users.length-4}体`:'');
+    return `<div class="libitem pick${g.key===bl.key?' sel':''}" data-blsel="${i}"><div class="info"><div class="nm">${esc(g.ls.name||'（名前なし）')}${nameCnt[g.ls.name]>1?'<span class="tag">効果違い</span>':''}</div><div class="ds">${esc(desc)}　／ ${esc(names)}</div></div><span class="cnt">${g.users.length}体</span></div>`;
+  }).join('')||'<p class="small" style="padding:10px">該当するリーダースキルがありません。</p>';
+  renderBlEditor();
+}
+$('blSearch').addEventListener('input',renderBl);
+$('blList').addEventListener('click',e=>{
+  const it=e.target.closest('[data-blsel]'); if(!it) return;
+  const g=blCache[+it.dataset.blsel]; if(g){ blSelect(g); renderBl(); $('blNotice').textContent=''; }
+});
+function blSelect(g){
+  bl.key=g.key; bl.ids=g.users.map(m=>m.id).sort((a,b)=>a-b); bl.checked=new Set(bl.ids);
+  bl.effects=(g.ls.effects||[]).map(e0=>{ const e=normLeaderEff(e0); return {key:matchTemplate(leaderTemplates,e),data:e}; });
+  $('blName').value=g.ls.name??''; $('blDesc').value=g.ls.desc??'';
+  // 今の説明文が自動生成と同じなら、倍率を変えたとき説明も自動で追従させる
+  $('blAuto').checked=(g.ls.desc??'')===blAutoDesc();
+}
+const blAutoDesc=()=>describeLeader(bl.effects.map(e=>cleanEff(structuredClone(e.data))));
+function blEffChanged(){ if($('blAuto').checked) $('blDesc').value=blAutoDesc(); }
+function renderBlEditor(){
+  const on=bl.key!==null;
+  $('blEmpty').hidden=on; $('blForm').hidden=!on;
+  if(!on) return;
+  renderEffects('bulk'); renderBlMembers();
+}
+function renderBlMembers(){
+  $('blMembers').innerHTML=bl.ids.map(id=>`<label class="chip"><input type="checkbox" data-blm="${id}"${bl.checked.has(id)?' checked':''}>${id}: ${esc((db[id]&&db[id].name)||'')}</label>`).join('');
+  $('blCount').textContent=`${bl.checked.size}／${bl.ids.length}体を選択中`;
+  $('blApply').textContent=`選んだ ${bl.checked.size} 体に適用`;
+  $('blApply').disabled=bl.checked.size===0;
+}
+$('blMembers').addEventListener('change',e=>{
+  const id=e.target.dataset.blm; if(id===undefined) return;
+  if(e.target.checked) bl.checked.add(Number(id)); else bl.checked.delete(Number(id));
+  renderBlMembers();
+});
+$('blAll').onclick=()=>{ bl.checked=new Set(bl.ids); renderBlMembers(); };
+$('blNone').onclick=()=>{ bl.checked=new Set(); renderBlMembers(); };
+$('blAuto').addEventListener('change',()=>{ blEffChanged(); });
+$('blDesc').addEventListener('input',()=>{ $('blAuto').checked=false; });
+$('blGen').onclick=()=>{ $('blDesc').value=blAutoDesc(); $('blAuto').checked=false; };
+$('blApply').onclick=()=>{
+  const ids=bl.ids.filter(id=>bl.checked.has(id));
+  if(!ids.length) return;
+  const name=$('blName').value;
+  const effects=bl.effects.map(e=>cleanEff(structuredClone(e.data)));
+  const desc=$('blAuto').checked?describeLeader(effects):$('blDesc').value;
+  ids.forEach(id=>{ const m=db[id]; m.leaderSkill=Object.assign({},m.leaderSkill,{name,desc,effects:structuredClone(effects)}); });
+  bulkDirty=true; syncFormFromDb(); updateSaveState();
+  const g=blGroups().find(x=>x.key===name+'##'+leaderSig(effects));
+  if(g) blSelect(g); else bl.key=null;
+  renderBl();
+  const n=$('blNotice'); n.textContent=`${ids.length}体のリーダースキルを「${name}」に更新しました。保存するとファイルに反映されます。`; n.className='notice';
+};
+
+// ---------- ステータス一覧 ----------
+const ST_SORTS=[['id','ID順'],['atk.max','こうげき順'],['hp.max','HP順'],['rec.max','回復順'],['rarity','★（レアリティ）順'],['attr','属性順'],['type','タイプ順'],['name','名前順'],['maxLv','最大Lv順']];
+const ST_ASC_FIRST=['id','name','attr','type'];   // この項目は最初は昇順、それ以外は大きい順
+const ATTR_COLOR={fire:'#ef4444',water:'#3b82f6',wood:'#22c55e',light:'#facc15',dark:'#a855f7',heal:'#f472b6',poison:'#84cc16'};
+let stSort='id', stDesc=false;
+$('stSort').innerHTML=ST_SORTS.map(([k,n])=>`<option value="${k}">${n}</option>`).join('');
+$('stAttr').innerHTML='<option value="">すべて</option>'+ATTRS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
+const stGet=(m,s,w)=>Number(m.stats&&m.stats[s]&&m.stats[s][w])||0;
+const stMaxLv=m=>m.maxLevel||rarityMaxLevel(m.rarity);
+function stVal(m,key){
+  switch(key){
+    case 'id': return Number(m.id); case 'name': return m.name||''; case 'rarity': return m.rarity||0;
+    case 'attr': return attrRankOf(m.attr); case 'type': return m.type||''; case 'maxLv': return stMaxLv(m);
+    default: { const [s,w]=key.split('.'); return stGet(m,s,w); }
+  }
+}
+function stBase(id,s,w){ const b=baseStats[id]; return Number(b&&b[s]&&b[s][w])||0; }
+function stRowChanged(m){ return ['hp','atk','rec'].some(s=>['max'].some(w=>stGet(m,s,w)!==stBase(m.id,s,w))); }
+function stFilterOptions(){
+  const keep=$('stRarity').value, keepT=$('stType').value;
+  const rs=[...new Set(Object.values(db).map(m=>m.rarity))].filter(x=>x!==undefined).sort((a,b)=>a-b);
+  $('stRarity').innerHTML='<option value="">すべて</option>'+rs.map(r=>`<option value="${r}">★${r}</option>`).join('');
+  $('stRarity').value=rs.map(String).includes(keep)?keep:'';
+  const ts=[...new Set(Object.values(db).map(m=>m.type).filter(Boolean))];
+  $('stType').innerHTML='<option value="">すべて</option>'+ts.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  $('stType').value=ts.includes(keepT)?keepT:'';
+}
+function renderSt(opts){
+  const keepScroll=opts&&opts.keepScroll;
+  const wrap=document.querySelector('.stwrap'), top=wrap.scrollTop;
+  const total=Object.keys(db).length;
+  $('stLoad').textContent=total?'':'モンスターが読み込まれていません。「個別編集」タブで monsters.js を読み込んでください。';
+  if(!opts||opts.filters!==false) stFilterOptions();
+  $('stSort').value=stSort; $('stDir').value=stDesc?'desc':'asc';
+  const kw=$('stSearch').value.trim().toLowerCase(), fa=$('stAttr').value, fr=$('stRarity').value, ft=$('stType').value;
+  let rows=Object.values(db).filter(m=>{
+    if(fa&&m.attr!==fa) return false;
+    if(fr!==''&&String(m.rarity)!==fr) return false;
+    if(ft&&m.type!==ft) return false;
+    if(kw){ const hay=[m.id,m.name,m.skill&&m.skill.name,m.leaderSkill&&m.leaderSkill.name].join(' ').toLowerCase(); if(!hay.includes(kw)) return false; }
+    return true;
+  });
+  const dir=stDesc?-1:1;
+  rows.sort((a,b)=>{
+    const x=stVal(a,stSort), y=stVal(b,stSort);
+    const c=typeof x==='string'?x.localeCompare(y,'ja'):x-y;
+    return c?c*dir:Number(a.id)-Number(b.id);
+  });
+  const heads=[['id','ID','l'],['name','名前','l'],['rarity','★',''],['attr','属性','l'],['type','タイプ','l'],['maxLv','最大Lv',''],
+    ['hp.max','HP',''],['atk.max','攻撃',''],['rec.max','回復','']];
+  const arrow=k=>k===stSort?(stDesc?' ▼':' ▲'):'';
+  const th='<thead><tr>'+heads.map(([k,n,c])=>`<th class="${c}${k===stSort?' on':''}" data-stsort="${k}">${n}${arrow(k)}</th>`).join('')+'<th style="cursor:default"></th></tr></thead>';
+  const body='<tbody>'+rows.map(m=>{
+    const cells=['hp','atk','rec'].map(s=>['max'].map(w=>{
+      const v=stGet(m,s,w), chg=v!==stBase(m.id,s,w);
+      return `<td><input type="number" step="1" min="0" class="${chg?'chg':''}" data-id="${esc(m.id)}" data-s="${s}" data-w="${w}" value="${v}"></td>`;
+    }).join('')).join('');
+    return `<tr data-id="${esc(m.id)}"><td class="l">${esc(m.id)}</td><td class="l">${esc(m.name||'')}</td><td>★${esc(m.rarity??'')}</td><td class="l"><span class="dot" style="background:${ATTR_COLOR[m.attr]||'#94a3b8'}"></span>${esc(ATTR_NAME[m.attr]||m.attr||'')}</td><td class="l">${esc(m.type||'')}</td><td>${stMaxLv(m)}</td>${cells}<td><button type="button" class="remove" data-stundo="${esc(m.id)}" style="padding:4px 8px"${stRowChanged(m)?'':' hidden'}>戻す</button></td></tr>`;
+  }).join('')+'</tbody>';
+  $('stTable').innerHTML=th+body;
+  wrap.scrollTop=keepScroll?top:0;
+  updateStInfo(rows.length,total);
+}
+function updateStInfo(shown,total){
+  if(shown===undefined){ shown=document.querySelectorAll('#stTable tbody tr').length; total=Object.keys(db).length; }
+  const ch=Object.values(db).filter(stRowChanged).length;
+  $('stInfo').textContent=`${shown}体を表示中（全${total}体）　／　変更した（未保存の）モンスター: ${ch}体`;
+}
+function stSetSort(k,desc){ stSort=k; stDesc=desc; renderSt({filters:false}); }
+$('stSort').onchange=()=>{ const k=$('stSort').value; stSetSort(k,!ST_ASC_FIRST.includes(k)); };
+$('stDir').onchange=()=>{ stSetSort(stSort,$('stDir').value==='desc'); };
+['stAttr','stRarity','stType'].forEach(id=>{ $(id).onchange=()=>renderSt({filters:false}); });
+$('stSearch').addEventListener('input',()=>renderSt({filters:false}));
+$('stTable').addEventListener('click',e=>{
+  const h=e.target.closest('[data-stsort]');
+  if(h){ const k=h.dataset.stsort; if(k===stSort) stSetSort(k,!stDesc); else stSetSort(k,!ST_ASC_FIRST.includes(k)); return; }
+  const u=e.target.closest('[data-stundo]');
+  if(u){ const id=u.dataset.stundo; db[id].stats=structuredClone(baseStats[id]||{}); if(String(id)===String(currentId)) syncFormFromDb(); bulkDirty=Object.values(db).some(stRowChanged); updateSaveState(); renderSt({filters:false,keepScroll:true}); }
+});
+$('stTable').addEventListener('input',e=>{
+  const t=e.target; if(t.dataset.s===undefined) return;
+  const m=db[t.dataset.id]; if(!m) return;
+  const s=t.dataset.s, w=t.dataset.w;
+  m.stats=m.stats||{}; m.stats[s]=m.stats[s]||{};
+  m.stats[s][w]=t.value===''?0:Math.max(0,Math.round(Number(t.value)));
+  t.classList.toggle('chg',m.stats[s][w]!==stBase(m.id,s,w));
+  const tr=t.closest('tr'), undo=tr.querySelector('[data-stundo]'); if(undo) undo.hidden=!stRowChanged(m);
+  if(String(m.id)===String(currentId)) syncFormFromDb();
+  bulkDirty=true; updateSaveState(); updateStInfo();
+});
+$('stTable').addEventListener('keydown',e=>{
+  const t=e.target; if(t.dataset.s===undefined) return;
+  const dirn=(e.key==='Enter'||e.key==='ArrowDown')?1:(e.key==='ArrowUp'?-1:0); if(!dirn) return;
+  e.preventDefault();
+  const tr=t.closest('tr'), idx=[...tr.children].indexOf(t.closest('td'));
+  const nx=dirn>0?tr.nextElementSibling:tr.previousElementSibling;
+  const inp=nx&&nx.children[idx]&&nx.children[idx].querySelector('input'); if(inp){ inp.focus(); inp.select(); }
+});
+
+// ---------- 初期化 ----------
+loadMonsterToForm(blankMonster());
+$('skDesc').value=''; refreshSelect(); update();
+
+// ---------- 同じフォルダの js/data/*.js を自動読み込み ----------
+(async function autoLoad(){
+  const msgs=[];
+  try{
+    if(typeof ITEM_DATA!=='undefined'){ msgs.push(`items.js（素材候補 ${applyItems(ITEM_DATA)}件）`); }
+  }catch(e){}
+  try{
+    if(typeof MONSTER_DATA!=='undefined'){
+      let code='';
+      try{ const r=await fetch('js/data/monsters.js'); if(r.ok) code=await r.text(); }catch(e){} // http経由なら元のヘッダー/末尾も保持
+      applyMonsterData(MONSTER_DATA,code,'js/data/monsters.js');
+      return $('loadNotice').textContent=`自動読み込み: monsters.js（${Object.keys(db).length}体）`+(msgs.length?'、'+msgs.join('、'):'')+'。別のファイルを使う場合は下から選択できます。';
+    }
+  }catch(e){ $('loadNotice').textContent='自動読み込みに失敗: '+e.message; $('loadNotice').className='notice err'; return; }
+  $('loadNotice').textContent='js/data/monsters.js が見つからないため、手動で読み込んでください。';
+})();
+</script></body></html>

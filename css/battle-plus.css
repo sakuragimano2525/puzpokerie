@@ -1,0 +1,260 @@
+/* ============================================================
+   battle-plus.css  —  戦闘画面の追加スタイル（ui.css の後に読み込む）
+   1) 敵の「あと〇」：あと0（攻撃中／攻撃待機）の表示
+   2) 敵のHPバー：金の細枠＋暗い溝＋属性色のツヤ付きゲージ＋ダメージの残像
+   3) スキルが使える時の印（パーティのモンスター）
+   ============================================================ */
+
+
+/* ════════════════════════════════════════════════════════════
+   1) 「あと〇」
+   ════════════════════════════════════════════════════════════ */
+.enemy-turn-counter .tc-burst,
+.enemy-turn-counter .tc-dash,
+.enemy-turn-counter .tc-wait { display: none; }
+
+.enemy-turn-counter .tc-wave  { fill: none; stroke: #ff7a3d; stroke-width: 2.6; opacity: 0; transform-origin: 20px 20px; }
+.enemy-turn-counter .tc-rays  { fill: none; stroke: #ffd98a; stroke-width: 2.8; stroke-linecap: round; opacity: 0; transform-origin: 20px 20px; }
+
+.enemy-turn-counter .tc-dash circle {
+  fill: none; stroke: #fff0c4; stroke-width: 3.2; stroke-linecap: round;
+  stroke-dasharray: 5.4 4.6;
+}
+.enemy-turn-counter .tc-dash { transform-origin: 20px 20px; }
+
+.enemy-turn-counter .tc-wait-bg    { fill: #2b1403; stroke: #ffc24a; stroke-width: 1.6; }
+.enemy-turn-counter .tc-wait-glass { fill: none; stroke: #ffe3a1; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.enemy-turn-counter .tc-wait-sand  { fill: #ffc24a; }
+.enemy-turn-counter .tc-wait-in    { transform-box: fill-box; transform-origin: 50% 50%; }
+
+/* あと0 共通：数字は「0」のまま、行動が終わるまで消えない */
+.enemy-turn-counter.zero .tc-spark { display: none; }
+.enemy-turn-counter.zero .tc-ring    { stroke: #ff3b30; }
+.enemy-turn-counter.zero .tc-outline { stroke: #4a0007; opacity: .92; }
+.enemy-turn-counter.zero text        { fill: #fff; stroke: #8a0010; }
+
+/* ── 攻撃中：赤く燃えて脈打ち、外側へ光の輪と放射状の爆ぜが広がる ── */
+.enemy-turn-counter.acting {
+  animation: tcZeroPop .38s cubic-bezier(.2, 1.7, .4, 1) 1, tcBeat .5s ease-in-out .38s infinite;
+}
+.enemy-turn-counter.acting .tc-ring {
+  stroke: #fff4e0;
+  filter: drop-shadow(0 0 2px #ff2a1a) drop-shadow(0 0 5px #ff6a2a);
+}
+.enemy-turn-counter.acting .tc-outline { stroke: #ff2a1a; stroke-width: 9; opacity: .95; }
+.enemy-turn-counter.acting text        { fill: #fff; stroke: #d0101c; stroke-width: 3.4; }
+.enemy-turn-counter.acting .tc-burst   { display: block; }
+.enemy-turn-counter.acting .tc-wave    { animation: tcWave .85s ease-out infinite; }
+.enemy-turn-counter.acting .tc-rays    { animation: tcRays .85s ease-out infinite; }
+
+/* ── 攻撃待機：0のまま。琥珀色の点線がゆっくり回り、右上の砂時計で「順番待ち」と分かる ── */
+.enemy-turn-counter.waiting { animation: tcZeroPop .38s cubic-bezier(.2, 1.7, .4, 1) 1; }
+.enemy-turn-counter.waiting .tc-ring    { stroke: #ffb43a; opacity: .4; }
+.enemy-turn-counter.waiting .tc-outline { stroke: #3d2000; opacity: .9; }
+.enemy-turn-counter.waiting text        { fill: #fff1d2; stroke: #6a3200; }
+.enemy-turn-counter.waiting .tc-dash    { display: block; animation: tcSpin 6s linear infinite reverse; }
+.enemy-turn-counter.waiting .tc-dash circle { stroke: #ffc24a; }
+.enemy-turn-counter.waiting .tc-wait    { display: block; }
+.enemy-turn-counter.waiting .tc-wait-in { animation: tcFlip 3.2s ease-in-out infinite; }
+
+/* 「あと」の後ろのにじみも状態で色を変える（攻撃中＝強い赤、待機＝琥珀） */
+.enemy-turn-pad.acting::before {
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 40, 20, .9) 0%, rgba(230, 10, 20, .6) 55%, rgba(220, 0, 20, 0) 100%);
+  animation: tcGlow .5s ease-in-out infinite;
+}
+.enemy-turn-pad.waiting::before {
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 170, 30, .62) 0%, rgba(230, 120, 10, .38) 55%, rgba(220, 110, 0, 0) 100%);
+}
+.enemy-turn-pad.waiting .turn-label { -webkit-text-stroke-color: #6a3200; }
+
+@keyframes tcZeroPop { 0% { transform: scale(.55); } 100% { transform: scale(1); } }
+@keyframes tcBeat    { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
+@keyframes tcGlow    { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+@keyframes tcWave    { 0% { opacity: .95; transform: scale(.92); } 100% { opacity: 0; transform: scale(1.75); } }
+@keyframes tcRays    { 0% { opacity: 0; transform: scale(.8); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.22); } }
+@keyframes tcFlip    { 0%, 62% { transform: rotate(0); } 82%, 100% { transform: rotate(180deg); } }
+
+
+/* ════════════════════════════════════════════════════════════
+   2) 敵のHPバー
+   ・下の自分のHPプレート（暗いガラス＋金の細枠）と同じ素材感にして、画面全体で統一
+   ・暗い溝＋金の枠＋白い縁取りの影で、明るい草原でも暗い洞窟でも読める
+   ・ゲージは属性色のグラデ＋上半分のツヤ＋先端の光。目盛りは25%ごと
+   ・ダメージを受けると、減った分が淡い色で残ってから縮む
+   ════════════════════════════════════════════════════════════ */
+#enemy-area .enemy-unit .enemy-hp-row {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .75));
+  margin-top: 3px;
+}
+#enemy-area .enemy-unit .enemy-attr-orb {
+  width: 13cqw; height: 13cqw;
+  min-width: 23px; min-height: 23px; max-width: 34px; max-height: 34px;
+  margin-right: -7px;
+  filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, .95)) drop-shadow(0 1px 2px rgba(0, 0, 0, .8));
+}
+#enemy-area .enemy-unit .enemy-hp-bar-wrap {
+  position: relative; flex: 1; min-width: 0;
+  height: max(15px, 6.8cqw);
+  padding: 2px 2px 2px 8px;
+  border: 0; border-radius: 0; overflow: visible;
+  background: linear-gradient(180deg, #fbebb8 0%, #d8b25a 34%, #8d6522 62%, #d9b765 100%);   /* 金の枠 */
+  box-shadow: none;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 0 100%);
+}
+.ehp-well {
+  position: relative; width: 100%; height: 100%; overflow: hidden;
+  background: linear-gradient(180deg, #08060d 0%, #181223 55%, #0b0810 100%);
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 50%, calc(100% - 4px) 100%, 0 100%);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, .9);
+}
+
+/* ゲージ本体 */
+#enemy-area .enemy-unit .enemy-hp-bar-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; height: auto;
+  width: 100%; border-radius: 0;
+  transition: width .15s ease-out;
+}
+#enemy-area .enemy-unit .enemy-hp-bar-fill::before {          /* 上半分のツヤ */
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, .1));
+}
+#enemy-area .enemy-unit .enemy-hp-bar-fill::after {           /* 先端の光（いまのHPの端が分かる） */
+  content: ''; position: absolute; top: 0; bottom: 0; left: auto; right: 0; height: auto; width: 7px;
+  border-radius: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .8));
+}
+.enemy-hp-bar-fill[data-attr="fire"]  { background: linear-gradient(180deg, #ffb67f 0%, #ff6a2c 38%, #d5330f 72%, #8f1a05 100%); }
+.enemy-hp-bar-fill[data-attr="water"] { background: linear-gradient(180deg, #9ddcff 0%, #3a96f4 38%, #1a62c8 72%, #0c3a86 100%); }
+.enemy-hp-bar-fill[data-attr="wood"]  { background: linear-gradient(180deg, #b4f090 0%, #4cc35a 38%, #25883a 72%, #0f5222 100%); }
+.enemy-hp-bar-fill[data-attr="light"] { background: linear-gradient(180deg, #fff3b0 0%, #ffd23a 38%, #e0a010 72%, #9a6504 100%); }
+.enemy-hp-bar-fill[data-attr="dark"]  { background: linear-gradient(180deg, #e0a0f5 0%, #a948d8 38%, #7425a8 72%, #431060 100%); }
+
+/* XL：バーを大きく */
+#enemy-area .enemy-unit.size-XL .enemy-hp-bar-wrap { height: max(20px, 4.4cqw); padding-left: 11px; }
+#enemy-area .enemy-unit.size-XL .enemy-attr-orb {
+  width: 9cqw; height: 9cqw; min-width: 30px; min-height: 30px; max-width: 50px; max-height: 50px;
+  margin-right: -8px;
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   3) スキルが使える印
+   ・金色の枠が脈打つ ＋ 光がときどき走る（⚡「スキル」の札は削除）
+   ・どの属性のカード（赤・青・緑・黄・紫）の上でも見えるよう、白い縁＋濃い茶の縁取り
+   ════════════════════════════════════════════════════════════ */
+.skill-ready {
+  position: absolute; inset: 0; bottom: 0; right: 0;
+  width: auto; height: auto; border-radius: 6px;
+  background: none; border: 0; box-shadow: none;
+  z-index: 5; pointer-events: none;
+}
+.skill-ready .sr-frame {
+  /* モンスター画像は scale(1.04) で拡大して表示している（style.css の .party-slot img）ので、
+     枠も同じだけ外へ広げて、画像（カードの枠）の縁にぴったり重ねる */
+  position: absolute; inset: -2%; border-radius: 4px;
+  border: 2px solid #fff4c2;
+  box-shadow:
+    0 0 0 1px rgba(110, 60, 0, .9),
+    0 0 10px 2px rgba(255, 196, 48, .95),
+    inset 0 0 0 1px rgba(110, 60, 0, .6),
+    inset 0 0 12px rgba(255, 214, 90, .75);
+  animation: srBreathe 1.6s ease-in-out infinite;
+  animation-delay: var(--sr-phase, 0s);
+}
+.skill-ready .sr-shine {
+  position: absolute; inset: calc(-2% + 2px); border-radius: 2px; overflow: hidden;
+}
+.skill-ready .sr-shine::before {
+  content: ''; position: absolute; top: -10%; bottom: -10%; left: -60%; width: 42%;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .7), rgba(255, 255, 255, 0));
+  transform: skewX(-18deg);
+  animation: srShine 3.2s ease-in-out infinite;
+  animation-delay: var(--sr-phase, 0s);
+}
+@keyframes srBreathe { 0%, 100% { opacity: .72; } 50% { opacity: 1; } }
+@keyframes srShine   { 0% { left: -60%; } 38%, 100% { left: 135%; } }
+
+
+/* 動きを減らす設定の端末では、脈打ち・回転・光の走りを止める（色と形はそのまま） */
+@media (prefers-reduced-motion: reduce) {
+  .enemy-turn-counter.acting,
+  .enemy-turn-counter.waiting,
+  .enemy-turn-counter.waiting .tc-dash,
+  .enemy-turn-counter.waiting .tc-wait-in,
+  .enemy-turn-counter.acting .tc-wave,
+  .enemy-turn-counter.acting .tc-rays,
+  .enemy-turn-pad.acting::before,
+  .skill-ready .sr-frame,
+  .skill-ready .sr-shine::before { animation: none; }
+  .enemy-turn-counter.acting .tc-wave { opacity: .6; }
+}
+
+/* ===== 敵ギミック：スキル使用不可（S❌）===== */
+.party-slot .skill-seal-badge {
+  position: absolute; left: 2px; top: 2px;
+  width: 30%; max-width: 26px; aspect-ratio: 1 / 1;
+  background: center / contain no-repeat;
+  z-index: 12; pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.85));
+}
+
+/* ═══════════════════════════════════
+   ルーレットギミック（本家風）
+   ・ドロップの下：透明（盤面が透けて見える／扇の下地のみ #roulette-back）
+   ・ドロップの上：金色の角飾り＋白い扇（#roulette-layer）
+   ・扇が0時から時計回りに伸びていき、一周したらリセット（＝ドロップ変化）
+═══════════════════════════════════ */
+#roulette-back, #roulette-layer {
+  position:absolute; inset:3px; pointer-events:none;
+  display:grid; grid-template-columns:repeat(6,1fr); grid-template-rows:repeat(5,1fr); gap:3px;
+}
+#roulette-back  { z-index:0; }   /* ドロップより下 */
+#roulette-layer { z-index:4; }   /* ドロップより上 */
+.rl, .rlb { position:relative; border-radius:6px; pointer-events:none; --p:0%; --deg:0deg; }
+/* 下：扇の下地（背景は透明） */
+.rlb {
+  /* 石の背景は廃止：枠（金の角飾り）だけ残し、盤面はそのまま透けて見える */
+  background:none;
+  box-shadow:none;
+  overflow:hidden;
+}
+.rlb .rl-sweep-b {
+  position:absolute; inset:4%; clip-path:circle(54.9% at 50% 50%);
+  background:conic-gradient(from 0deg, rgba(224,224,238,.97) var(--p), rgba(224,224,238,0) 0);
+}
+/* 上：ドロップに重なる半透明の扇（丸くくり抜いて、四隅の二重がけを避ける） */
+.rl-sweep {
+  position:absolute; inset:4%; clip-path:circle(54.9% at 50% 50%);
+  background:conic-gradient(from 0deg, rgba(240,240,255,.52) var(--p), rgba(240,240,255,0) 0);
+}
+/* 上：枠（四隅の金の飾り＋円形の縁取り。中は透明で盤面が見える） */
+.rl-ring {
+  position:absolute; inset:0; border-radius:4px;
+  background:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22 preserveAspectRatio=%22none%22%3E%3Cdefs%3E%3CclipPath id=%22in%22%3E%3Crect x=%224%22 y=%224%22 width=%2292%22 height=%2292%22 rx=%222%22/%3E%3C/clipPath%3E%3CradialGradient id=%22tn%22 cx=%2250%22 cy=%2250%22 r=%2264%22 gradientUnits=%22userSpaceOnUse%22%3E%3Cstop offset=%22.78%22 stop-color=%22%23e2d3a4%22/%3E%3Cstop offset=%22.86%22 stop-color=%22%23b9a478%22/%3E%3Cstop offset=%221%22 stop-color=%22%238a7650%22/%3E%3C/radialGradient%3E%3Cg id=%22c%22 clip-path=%22url(%23in)%22%3E%3Cpath d=%22M0,0 L29.2,0 L29.2,4 A50.5,50.5 0 0 0 4,29.2 L0,29.2 Z%22 fill=%22url(%23tn)%22/%3E%3Cpath d=%22M29.2,4 A50.5,50.5 0 0 0 4,29.2%22 fill=%22none%22 stroke=%22%234a3018%22 stroke-opacity=%22.65%22 stroke-width=%222.6%22/%3E%3Cpath d=%22M29.2,4 A50.5,50.5 0 0 0 4,29.2%22 fill=%22none%22 stroke=%22%23f6e9bd%22 stroke-width=%221.5%22/%3E%3Cpath d=%22M27.2,4.9 A48.9,48.9 0 0 0 4.9,27.2%22 fill=%22none%22 stroke=%22%23fff8de%22 stroke-opacity=%22.85%22 stroke-width=%22.6%22/%3E%3Cg transform=%22translate(10.6,10.6)%22%3E%3Cg fill=%22%237b5a41%22 stroke=%22%23f1e2b4%22 stroke-width=%221.1%22%3E%3Ccircle cx=%220%22 cy=%22-2.5%22 r=%222.2%22/%3E%3Ccircle cx=%222.5%22 cy=%220%22 r=%222.2%22/%3E%3Ccircle cx=%220%22 cy=%222.5%22 r=%222.2%22/%3E%3Ccircle cx=%22-2.5%22 cy=%220%22 r=%222.2%22/%3E%3C/g%3E%3Cg fill=%22%237b5a41%22%3E%3Ccircle cx=%220%22 cy=%22-2.5%22 r=%222.2%22/%3E%3Ccircle cx=%222.5%22 cy=%220%22 r=%222.2%22/%3E%3Ccircle cx=%220%22 cy=%222.5%22 r=%222.2%22/%3E%3Ccircle cx=%22-2.5%22 cy=%220%22 r=%222.2%22/%3E%3Ccircle r=%222.4%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/defs%3E%3Cuse href=%22%23c%22/%3E%3Cuse href=%22%23c%22 transform=%22translate(100,0) scale(-1,1)%22/%3E%3Cuse href=%22%23c%22 transform=%22translate(0,100) scale(1,-1)%22/%3E%3Cuse href=%22%23c%22 transform=%22translate(100,100) scale(-1,-1)%22/%3E%3Crect x=%222%22 y=%222%22 width=%2296%22 height=%2296%22 rx=%223.5%22 fill=%22none%22 stroke=%22%232f1a10%22 stroke-width=%224%22/%3E%3Crect x=%223.6%22 y=%223.6%22 width=%2292.8%22 height=%2292.8%22 rx=%222.2%22 fill=%22none%22 stroke=%22%23e8d6a2%22 stroke-opacity=%22.55%22 stroke-width=%22.5%22/%3E%3C/svg%3E') center / 100% 100% no-repeat;
+}
+.rl-turn {
+  position:absolute; right:-1px; bottom:-1px; min-width:15px; height:15px; padding:0 3px; box-sizing:border-box;
+  border-radius:8px; background:#3a1c0d; color:#fff3c9; border:1.5px solid #e6c98a;
+  font:700 .62rem/12px sans-serif; text-align:center;
+  box-shadow:0 1px 2px rgba(0,0,0,.6);
+}
+.rl.spawn, .rlb.spawn { animation:rl-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes rl-pop {
+  0%   { transform:scale(1.9); opacity:0; filter:brightness(3); }
+  60%  { transform:scale(.92); opacity:1; filter:brightness(1.6); }
+  100% { transform:scale(1);   opacity:1; filter:none; }
+}
+.rl.out, .rlb.out { animation:rl-out .28s ease-in both; }
+@keyframes rl-out { to { transform:scale(1.4); opacity:0; } }
+
+
+/* ===== スキルが溜まったモンスター：画像と枠をほんの少し上に持ち上げる（本家風） =====
+   戻る時も同じ動きで元の位置へ。transition は持ち上げ用クラスの付け外しで動く */
+.party-slot img,
+.party-slot .skill-ready { transition: transform .18s ease-out; }
+.party-slot img.sk-lift { transform: translateY(-7%) scale(1.04); }
+.party-slot .skill-ready.sk-lift { transform: translateY(-7%); }
+@media (prefers-reduced-motion: reduce) {
+  .party-slot img,
+  .party-slot .skill-ready { transition: none; }
+}

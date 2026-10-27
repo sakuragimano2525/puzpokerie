@@ -1,0 +1,162 @@
+/* ============================================================
+   モンスター図鑑（js/zukan.js）
+   色・縁・影・文字は css/ui.css の「ステッカー・スカイ」に合わせています
+   ============================================================ */
+#zukan-screen { z-index: 60; }
+
+/* ── ホームの図鑑ボタン：アイコンが4つ並ぶので、幅の狭い端末では少しつめる ── */
+@media (max-width: 380px) {
+  #hh-coin { min-width: 84px; margin-right: 8px; }
+  .hh-icons { gap: 8px; }
+}
+@media (max-width: 340px) {
+  .hh-icon-btn { width: 42px; height: 42px; }
+}
+
+/* ── 一覧 ─────────────────────────────────────── */
+#zukan-hint { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px var(--gutter) 8px; }
+#zukan-count { flex: 1; min-width: 0; font: 900 0.78rem/1.4 var(--ff); color: var(--ink-2); white-space: nowrap; }
+#zukan-count b { font: 400 1.05rem/1 var(--ff-num); letter-spacing: 0.02em; color: var(--ink); }
+#zukan-sort-btn { flex-shrink: 0; }
+
+#zukan-box { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px var(--gutter) 22px; }
+#zukan-box::-webkit-scrollbar { display: none; }
+/* 横6匹。縦はモンスターの数だけ自動で増える */
+#zukan-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px 6px; padding: 3px 3px 0; }
+#zukan-grid.has-val { row-gap: 30px; padding-bottom: 12px; }   /* HP順などの数値ラベル（.sort-val）の分だけ縦をあける */
+
+.zk-card {
+  position: relative; aspect-ratio: 1; border-radius: 13px;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  touch-action: pan-y; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease;
+}
+.zk-card.owned, .zk-card.seen { cursor: pointer; }
+.zk-card.pressing { transform: scale(0.93); }
+.zk-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
+
+/* 見たことあり（ダンジョンで出会っただけ）：灰色 */
+.zk-card.seen .zk-img { filter: grayscale(1) brightness(0.92); opacity: 0.82; }
+.zk-card.seen .zk-no { background: var(--ink-3); }
+
+/* まだ見ていない：？ */
+.zk-card.unknown {
+  background: var(--sky-2); border: var(--bw) solid var(--sky-3);
+  display: grid; place-items: center; cursor: default;
+}
+.zk-q { font: 400 clamp(1.3rem, 7vw, 2rem)/1 var(--ff-num); color: var(--ink-3); opacity: 0.6; text-shadow: 0 2px 0 rgba(255,255,255,0.7); pointer-events: none; }
+.zk-card.unknown .zk-no { background: var(--ink-3); left: 50%; transform: translateX(-50%); bottom: 4px; }
+
+/* 番号の札（編成・育成のLvの札と同じ形） */
+.zk-no {
+  position: absolute; left: 3px; bottom: 3px; z-index: 2;
+  padding: 2px 5px 1px; border-radius: 6px;
+  font: 400 0.58rem/1.15 var(--ff-num); letter-spacing: 0.03em; white-space: nowrap;
+  color: #fff; background: var(--ink); pointer-events: none;
+}
+
+/* m{id}.png がまだ無いモンスターは、名前の札で代わりにする */
+.zk-card.noimg {
+  display: grid; place-items: center; padding: 3px 3px 14px;
+  background: var(--at, var(--sky-2)); border: var(--bw) solid var(--a, var(--ink-3));
+}
+.zk-card.noimg.seen { filter: grayscale(1); opacity: 0.8; }
+.zk-name { font: 900 0.55rem/1.2 var(--ff); text-align: center; color: var(--ink); word-break: break-all; pointer-events: none; }
+
+#zukan-footer { justify-content: flex-start; }
+
+/* ── ステータスのポップアップ（長押し） ─────────────────────── */
+#zukan-info {
+  position: absolute; inset: 0; z-index: 45; display: none; align-items: center; justify-content: center;
+  padding: 0 calc(var(--gutter) * 0.6) env(safe-area-inset-bottom);
+  background: rgba(28,31,79,0.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+#zukan-info.show { display: flex; }
+/* 真ん中のカード（横いっぱいに広げて、縦を短くする） */
+.zk-info-wrap { display: flex; justify-content: center; width: 100%; max-width: 600px; max-height: 100%; }
+.zk-info-card {
+  flex: 1 1 auto; min-width: 0; width: 100%; max-height: 100%; overflow: hidden;
+  display: flex; flex-direction: column; gap: 8px; padding: 12px 14px;
+  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 24px; box-shadow: 0 6px 0 var(--ink);
+  animation: popIn 0.2s ease-out;
+}
+.zk-info-card::-webkit-scrollbar { display: none; }
+/* 中身だけスクロール。「とじる」の行は、いつも下に見えている */
+.zk-info-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
+.zk-info-body::-webkit-scrollbar { display: none; }
+.zk-info-body > * { flex-shrink: 0; }
+
+.zk-info-top { display: flex; align-items: center; gap: 12px; }
+.zk-info-pic {
+  position: relative; flex: 0 0 88px; width: 88px; height: 88px;
+  background: none; border: 0; box-shadow: none;   /* 属性の枠・背景・黒い影は付けず、画像だけ表示 */
+  display: grid; place-items: center;
+}
+.zk-info-pic img { width: 100%; height: 100%; object-fit: contain; }
+.zk-info-pic.gray img { filter: grayscale(1) brightness(0.92); opacity: 0.85; }
+.zk-info-noimg { padding: 4px; font: 900 0.7rem/1.2 var(--ff); text-align: center; }
+.zk-info-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.zk-info-line1 { display: flex; align-items: center; gap: 10px; }
+.zk-info-no { position: relative; z-index: 0; padding: 3px 12px; font: 400 0.9rem/1.2 var(--ff-num); letter-spacing: 0.05em; color: #fff; }
+.zk-info-no::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--ink); transform: skewX(-14deg); border-radius: 6px; }
+.zk-info-stars { font-size: 0.95rem; letter-spacing: 0.04em; color: var(--sun); -webkit-text-stroke: 1.2px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink); }
+.zk-info-namerow { display: flex; align-items: center; gap: 8px; max-width: 100%; }
+.zk-info-attr { width: 30px; height: 30px; object-fit: contain; flex-shrink: 0; }
+.zk-info-name { min-width: 0; font: 900 1.2rem/1.15 var(--ff); letter-spacing: 0.04em; }
+.zk-type { flex-shrink: 0; display: inline-flex; align-items: center; }
+.zk-type-icon { height: 1.4rem; width: auto; display: block; }
+.zk-type.as-text { padding: 2px 8px; font: 900 0.7rem/1.3 var(--ff); background: var(--sky); border: 2px solid var(--ink); border-radius: 999px; }
+.zk-info-state { padding: 2px 10px; font: 900 0.68rem/1.4 var(--ff); border: 2px solid var(--ink); border-radius: 999px; }
+.zk-info-state.got { background: var(--wood-t); }
+.zk-info-state.not { background: var(--sky-2); color: var(--ink-2); }
+
+/* Lv1 と 最大Lv のステータス */
+.zk-stats { display: flex; flex-direction: column; gap: 5px; }
+.zk-stat-head, .zk-stat-row { display: grid; grid-template-columns: 1.15fr 1fr 1fr; align-items: center; gap: 8px; }
+.zk-stat-head b { text-align: center; font: 400 0.95rem/1 var(--ff-num); letter-spacing: 0.04em; color: #fff; background: var(--ink); border-radius: 8px; padding: 4px 0 3px; }
+.zk-stat-head b small { margin-left: 4px; font: 900 0.55rem/1 var(--ff); color: var(--sun); }
+.zk-stat-row { padding: 4px 10px; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 14px; box-shadow: 0 3px 0 var(--ink); }
+.zk-stat-row.hp  { background: #eefbf3; }
+.zk-stat-row.atk { background: #fff3f0; }
+.zk-stat-row.rec { background: #eef4ff; }
+.zk-stat-label { display: flex; align-items: center; gap: 5px; font: 900 0.72rem/1 var(--ff); color: var(--ink-2); white-space: nowrap; }
+.zk-stat-val { text-align: center; font: 400 1.15rem/1.1 var(--ff-num); letter-spacing: 0.02em; }
+
+/* スキル / リーダースキル */
+.zk-sec { display: flex; flex-direction: column; gap: 4px; padding: 6px 12px; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 14px; box-shadow: 0 3px 0 var(--ink); }
+.zk-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.zk-sec-label { position: relative; z-index: 0; padding: 3px 12px; font: 900 0.78rem/1.3 var(--ff); letter-spacing: 0.04em; min-width: 0; }
+.zk-sec-label::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--sun); border: 2px solid var(--ink); border-radius: 6px; transform: skewX(-14deg); }
+.zk-sec.ls .zk-sec-label::before { background: var(--sky-2); }
+.zk-sec-chip { flex-shrink: 0; padding: 3px 10px; font: 900 0.7rem/1.3 var(--ff); background: var(--sky); border: 2px solid var(--ink); border-radius: 999px; white-space: nowrap; }
+.zk-sec-ls-name { font: 900 0.8rem/1.2 var(--ff); color: #1f6fe5; text-align: right; }
+.zk-sec-desc { margin: 0; font: 500 0.8rem/1.45 var(--ff); color: var(--ink); white-space: pre-line; }
+.zk-sec.spots .zk-sec-label::before { background: #cdf0d6; }
+.zk-spot-list { display: flex; flex-direction: column; gap: 5px; max-height: min(30vh, 210px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 2px 2px 3px; }
+.zk-spot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 10px; background: var(--sky); border: 2px solid var(--ink); border-radius: 10px; }
+.zk-spot-name { flex: 1; min-width: 0; font: 900 0.8rem/1.3 var(--ff); }
+.zk-spot.off { border-color: var(--ink-3); background: #f3f6fd; color: var(--ink-3); }
+.zk-spot-tag { flex-shrink: 0; padding: 2px 8px; font: 900 0.62rem/1.2 var(--ff); color: #fff; background: var(--ink-3); border-radius: 999px; }
+.zk-spot-none { color: var(--ink-3); font-weight: 700; }
+
+.zk-info-foot { display: grid; grid-template-columns: 62px 1fr 62px; gap: 8px; align-items: stretch; flex-shrink: 0; }
+.zk-info-close { min-height: 46px; }
+.zk-nav {
+  min-height: 46px; padding: 0; display: grid; place-items: center;
+  background: var(--sun); border: var(--bw) solid var(--ink); border-radius: 14px; box-shadow: 0 3px 0 var(--ink);
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.zk-nav svg { width: 24px; height: 24px; fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.zk-nav:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+
+@media (max-height: 640px) {
+  .zk-info-pic { flex-basis: 68px; width: 68px; height: 68px; }
+  .zk-sec-desc { font-size: 0.74rem; line-height: 1.4; }
+}
+
+/* HP・攻撃・回復のアイコン画像（sta1〜3.png）。図鑑・育成・編成・テスト画面で共通 */
+img.stat-ic { display: inline-block; flex-shrink: 0; width: 1.4em; height: 1.4em; object-fit: contain; vertical-align: middle; pointer-events: none; -webkit-user-drag: none; user-select: none; }
+
+/* スキル説明文の中に入れる画像（js/skill-text.js） */
+.sk-ic { height: 1.25em; width: auto; vertical-align: -0.28em; margin: 0 .05em; pointer-events: none; }
+.sk-ic.sk-z { height: 1.5em; vertical-align: -0.4em; }

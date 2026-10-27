@@ -1,0 +1,111 @@
+/* ============================================================
+   敵の必殺技カットイン（技名に ⚠️ が付いている行動）
+   パズドラ本家のコラボ演出風：ギザギザの白枠＋敵の大写し＋斜めの技名帯。
+   色は属性ごとに js/cutin.js が CSS変数（--c-main など）で差し替えます。
+   ============================================================ */
+.cutin-root {
+  position:absolute; inset:0; z-index:70; pointer-events:none; overflow:hidden;
+  --c-main:#ff3d1e; --c-deep:#8a0c0c; --c-dark:#2b0606; --c-glow:#ff8a3d; --c-light:#ffe0b0;
+}
+
+/* 画面を暗くして、星が瞬く宇宙っぽい背景に */
+.cutin-dim {
+  position:absolute; inset:0; opacity:0;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.35) 0%, rgba(0,0,0,.86) 100%),
+    linear-gradient(180deg, var(--c-dark), var(--c-dark));
+}
+.cutin-stars { position:absolute; inset:0; opacity:0; }
+.cutin-stars i {
+  position:absolute; border-radius:50%; background:#fff;
+  box-shadow:0 0 4px 1px rgba(255,255,255,.75);
+}
+.cutin-flash {
+  position:absolute; inset:0; opacity:0; background:var(--c-light); mix-blend-mode:screen;
+}
+
+/* 帯の後ろのぼんやりした属性色の光 */
+.cutin-halo {
+  position:absolute; left:-5%; right:-5%; opacity:0;
+  background:var(--c-glow); filter:blur(22px); border-radius:50%;
+}
+
+/* 帯全体（左から滑り込む） */
+.cutin-stage { position:absolute; left:0; width:100%; will-change:transform; }
+
+/* ギザギザ枠：黒い縁 → 白い紙 → 中身、の3枚重ね（形は clip-path をJSで入れる） */
+.cutin-layer { position:absolute; left:-4px; right:-4px; top:-8px; bottom:-8px; }
+.cutin-outline { background:#000; }
+.cutin-paper   { background:#fff; }
+.cutin-panel   { overflow:hidden; background:var(--c-dark); }
+.cutin-content { position:absolute; left:4px; right:4px; top:8px; bottom:8px; }
+
+.cutin-bg {
+  position:absolute; inset:-2px;
+  background:
+    radial-gradient(ellipse 60% 85% at 62% 38%, var(--c-light) 0%, var(--c-glow) 20%, var(--c-main) 46%, var(--c-deep) 78%, var(--c-dark) 100%);
+}
+/* 放射状の集中線（ゆっくり回る） */
+.cutin-rays {
+  position:absolute; border-radius:50%;
+  -webkit-mask-image:radial-gradient(circle, #000 12%, transparent 68%);
+          mask-image:radial-gradient(circle, #000 12%, transparent 68%);
+}
+/* 左側の大きな爆ぜる光 */
+.cutin-burst {
+  position:absolute; left:-18%; top:-8%; width:62%; height:112%; opacity:0;
+  background:radial-gradient(closest-side, #fff 0%, var(--c-light) 18%, var(--c-glow) 42%, transparent 100%);
+  mix-blend-mode:screen;
+}
+/* 最初に走る斬撃のような光の帯 */
+.cutin-slash {
+  position:absolute; top:-10%; height:120%; opacity:0; mix-blend-mode:screen;
+  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.95) 46%, var(--c-glow) 56%, transparent 100%);
+}
+
+/* 敵のモンスター（大写し） */
+.cutin-monwrap { position:absolute; }
+.cutin-mon {
+  display:block; width:100%; height:100%; object-fit:contain; object-position:50% 40%;
+  filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 14px var(--c-glow)) drop-shadow(0 6px 10px rgba(0,0,0,.55));
+  transform-origin:50% 40%;
+}
+
+.cutin-ember {
+  position:absolute; border-radius:50%;
+  background:radial-gradient(circle, #fff 0%, var(--c-glow) 55%, transparent 100%);
+  box-shadow:0 0 8px var(--c-glow);
+}
+
+/* 技名の帯 */
+.cutin-strip {
+  position:absolute; left:-6px; right:-6px; display:flex; align-items:center; justify-content:center;
+  box-sizing:border-box; border-top:3px solid #fff; border-bottom:3px solid #fff;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 2px, transparent 2px 5px),
+    linear-gradient(180deg, rgba(255,255,255,.32) 0%, rgba(255,255,255,0) 22%),
+    linear-gradient(180deg, var(--c-main) 0%, var(--c-deep) 100%);
+  box-shadow:0 -2px 0 #000, 0 2px 0 #000, 0 7px 14px rgba(0,0,0,.55);
+}
+.cutin-hit {
+  position:absolute; left:0; right:0; opacity:0; mix-blend-mode:screen;
+  background:radial-gradient(ellipse at 50% 50%, #fff 0%, var(--c-light) 25%, transparent 70%);
+}
+.cutin-name {
+  position:relative; display:inline-block; white-space:nowrap; line-height:1; font-weight:900;
+  font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Noto Sans JP','Noto Sans CJK JP','Zen Maru Gothic',sans-serif;
+  letter-spacing:.03em; transform:skewX(-11deg);
+}
+/* 1文字ずつ：本体＝黒い太フチ＋属性色の光、::after＝白い文字（下側だけほんのり属性色） */
+.cutin-ch {
+  position:relative; z-index:0; display:inline-block; white-space:pre;
+  color:#000; -webkit-text-stroke:.24em #000;
+  text-shadow:0 .05em 0 #000, 0 0 .22em var(--c-glow), 0 0 .5em var(--c-glow);
+}
+.cutin-ch::after {
+  content:attr(data-c); position:absolute; left:0; top:0;
+  -webkit-text-stroke:0; text-shadow:none;
+  background:linear-gradient(180deg, #fff 0%, #fff 56%, var(--c-light) 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+}

@@ -1,0 +1,1467 @@
+html, body { width:100%; height:100%; overflow:hidden; overscroll-behavior:none; }
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+img { pointer-events:none; -webkit-user-drag:none; user-drag:none; }
+
+/* ── 敵攻撃演出 ── */
+@keyframes enemyHitFlash {
+  0%   { opacity:1; }
+  100% { opacity:0; }
+}
+@keyframes enemyDmgPop {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+  20%  { opacity:1; transform:translate(-50%,-80%) scale(1.3); }
+  70%  { opacity:1; transform:translate(-50%,-110%) scale(1.0); }
+  100% { opacity:0; transform:translate(-50%,-140%) scale(0.8); }
+}
+
+/* ── バインド演出（暗くなって、稲妻が走る） ── */
+.party-slot.bound {
+  position: relative;
+}
+.bind-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  border-radius: 4px;
+  background: linear-gradient(160deg, rgba(20,6,50,0.50), rgba(8,0,24,0.62));
+  -webkit-backdrop-filter: brightness(0.6) saturate(0.55);
+  backdrop-filter: brightness(0.6) saturate(0.55);
+  box-shadow: inset 0 0 8px rgba(150,190,255,0.55);
+  overflow: hidden;
+}
+.bind-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><g fill='none' stroke-linejoin='round' stroke-linecap='round'><path vector-effect='non-scaling-stroke' d='M-2 36 L20 28 L32 44 L50 26 L64 42 L82 28 L102 38' stroke='%23a9d6ff' stroke-opacity='.6' stroke-width='5'/><path vector-effect='non-scaling-stroke' d='M-2 36 L20 28 L32 44 L50 26 L64 42 L82 28 L102 38' stroke='white' stroke-width='1.6'/><path vector-effect='non-scaling-stroke' d='M-2 70 L16 76 L34 62 L54 78 L72 64 L102 72' stroke='%23a9d6ff' stroke-opacity='.5' stroke-width='4'/><path vector-effect='non-scaling-stroke' d='M-2 70 L16 76 L34 62 L54 78 L72 64 L102 72' stroke='white' stroke-width='1.3'/></g></svg>") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 0 3px rgba(160,210,255,0.95));
+  animation: bindBolt 1.1s steps(1, end) infinite;
+}
+.bind-turn-label {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(20, 30, 90, 0.88);
+  color: #dff0ff;
+  font-size: 0.48rem;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 1px 4px;
+  z-index: 21;
+  pointer-events: none;
+  border: 1px solid rgba(160, 210, 255, 0.7);
+  text-shadow: 0 0 3px rgba(120,190,255,0.9);
+}
+@keyframes bindBolt {
+  0%   { opacity: 1;   transform: translate(0, 0); }
+  18%  { opacity: 0.25; transform: translate(1px, -1px); }
+  30%  { opacity: 1;   transform: translate(-1px, 1px); }
+  62%  { opacity: 0.55; transform: translate(0, 1px); }
+  78%  { opacity: 1;   transform: translate(1px, 0); }
+}
+
+/* ── コンボ後攻撃強化演出 ── */
+@keyframes attackCharge {
+  0%   { box-shadow: 0 0 0px transparent; }
+  40%  { box-shadow: 0 0 18px rgba(255,220,60,0.9), inset 0 0 10px rgba(255,200,0,0.5); }
+  100% { box-shadow: 0 0 0px transparent; }
+}
+.party-slot.charging {
+  animation: attackCharge 0.6s ease-out forwards;
+}
+
+/* ── LS倍率適用時のダメージ上昇演出 ── */
+@keyframes dmgBoost {
+  0%   { transform:translate(-50%,-50%) scale(1.0); color:#fff; text-shadow:0 0 0 transparent; }
+  30%  { transform:translate(-50%,-50%) scale(1.35); color:#ffe44e; text-shadow:0 0 18px rgba(255,200,0,1), 0 0 30px rgba(255,100,0,0.8); }
+  60%  { transform:translate(-50%,-50%) scale(1.2); color:#ffb300; text-shadow:0 0 12px rgba(255,160,0,0.9); }
+  100% { transform:translate(-50%,-50%) scale(1.0); color:#fff; text-shadow:none; }
+}
+.monster-damage.boosting {
+  animation: dmgBoost 0.55s ease-out forwards !important;
+}
+
+/* ── バトル遷移演出 ── */
+.dng-anim-text.battle-next-text {
+  color:#fff;
+  font-size:3.5rem;
+  text-shadow:0 0 40px rgba(100,200,255,0.9), 0 4px 0 rgba(0,0,0,0.5);
+  animation:battleNextPop 2.0s ease-out forwards;
+  line-height:1.3;
+}
+@keyframes battleNextPop {
+  0%   { opacity:0; transform:scale(0.4) translateY(30px); }
+  20%  { opacity:1; transform:scale(1.15) translateY(-5px); }
+  40%  { opacity:1; transform:scale(1.0) translateY(0); }
+  75%  { opacity:1; transform:scale(1.0); }
+  100% { opacity:0; transform:scale(1.08); }
+}
+
+body {
+  background:#000;
+  display:flex; align-items:center; justify-content:center;
+  height:100vh; height:var(--app-h, 100dvh); overflow:hidden;
+  font-family:'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+}
+
+#start {
+  position:fixed; inset:0;
+  background:linear-gradient(160deg, #1a0a2e 0%, #0d0518 60%, #1a0508 100%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color:#fff; font-size:1.4rem; cursor:pointer; z-index:100;
+  letter-spacing:0.1em; gap:12px;
+}
+#start span { font-size:0.85rem; color:rgba(255,255,255,0.45); letter-spacing:0.2em; }
+
+#game {
+  display:none; flex-direction:column;
+  width:100vw; height:100vh; height:var(--app-h, 100dvh);
+  background:linear-gradient(180deg, #0e0520 0%, #180a10 50%, #1a0d04 100%);
+}
+
+/* ═══════════════════════════════════
+   リーダー / フレンドスキル表示（画面最上部・2行）
+   ・ステージ背景に左右されない、落ち着いた紺紫の不透明パネル
+   ・左に役割プレート（リーダー=金 / フレンド=銀青）、右にスキル説明
+   ・説明文の「1.2倍」「3%」などの数値だけ、ほんのり金色で強調
+═══════════════════════════════════ */
+#leader-skill-area {
+  --ls-gold: 214, 178, 102;
+  position:relative; z-index:2; flex-shrink:0;
+  padding:3px 8px;
+  display:flex; flex-direction:column; justify-content:center;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0) 45%),
+    linear-gradient(180deg, #1d1337 0%, #120a29 100%);
+  box-shadow:0 1px 0 rgba(0,0,0,0.7), 0 3px 8px rgba(0,0,0,0.35);
+}
+#leader-skill-area::after {          /* 下端の金ヘアライン（両端はフェード） */
+  content:''; position:absolute; left:0; right:0; bottom:0; height:1px; pointer-events:none;
+  background:linear-gradient(90deg, rgba(var(--ls-gold),0) 0%, rgba(var(--ls-gold),0.55) 16%, rgba(var(--ls-gold),0.55) 84%, rgba(var(--ls-gold),0) 100%);
+}
+.leader-skill-row {
+  position:relative;
+  display:flex; align-items:center; gap:7px;
+  min-height:14px; padding:1px 0;
+}
+.leader-skill-row + .leader-skill-row::before {   /* 2行の区切り線（両端フェード） */
+  content:''; position:absolute; left:0; right:0; top:-1px; height:1px; pointer-events:none;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.11) 18%, rgba(255,255,255,0.11) 82%, rgba(255,255,255,0) 100%);
+}
+.ls-tag {
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center; gap:2px;
+  width:48px; height:12px; border-radius:3px;
+  font-size:0.5rem; font-weight:800; letter-spacing:0.03em; line-height:1; white-space:nowrap;
+  color:#2d1d06;
+  background:linear-gradient(180deg, #eed99f 0%, #d0af60 50%, #a98334 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(0,0,0,0.28), 0 1px 2px rgba(0,0,0,0.55);
+  text-shadow:0 1px 0 rgba(255,255,255,0.28);
+}
+.ls-friend .ls-tag {
+  color:#142034;
+  background:linear-gradient(180deg, #d7e2f1 0%, #aabfd8 50%, #7b91b0 100%);
+}
+.ls-ic { width:8px; height:8px; flex:none; fill:currentColor; }
+.ls-text {
+  flex:1; min-width:0;
+  font-size:0.6rem; color:rgba(236,230,252,0.93);
+  line-height:1.3; letter-spacing:0.01em;
+  text-shadow:0 1px 1px rgba(0,0,0,0.55);
+  white-space:normal; word-break:break-all;
+  display:-webkit-box; -webkit-box-orient:vertical;
+  -webkit-line-clamp:2; overflow:hidden;
+}
+.ls-num { color:#ffd87a; font-weight:800; font-style:normal; }
+.leader-skill-row.empty .ls-tag { opacity:0.55; filter:saturate(0.4); }
+.leader-skill-row.empty .ls-text { color:rgba(206,198,232,0.38); }
+
+/* ═══════════════════════════════════
+   上部エリア：ステータスバー
+═══════════════════════════════════ */
+#status-bar {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:5px 10px;
+  background:rgba(0,0,0,0.55);
+  border-bottom:1px solid rgba(255,180,30,0.18);
+}
+#coin-display {
+  display:flex; align-items:center; gap:5px;
+}
+.coin-icon {
+  width:20px; height:20px; object-fit:contain;
+  flex-shrink:0; display:block;
+}
+#coin-count {
+  font-size:0.85rem; font-weight:bold;
+  color:#f5d020;
+  text-shadow:0 0 8px rgba(245,208,32,0.6);
+  letter-spacing:0.03em;
+}
+#status-right {
+  display:flex; align-items:center; gap:8px;
+}
+#drop-display {
+  display:flex; align-items:center; gap:4px;
+}
+.drop-icon {
+  width:20px; height:20px; object-fit:contain;
+  flex-shrink:0; display:block;
+}
+#drop-count {
+  font-size:0.82rem; color:rgba(255,255,255,0.85);
+  font-weight:bold;
+}
+#menu-btn {
+  background:linear-gradient(135deg, #1e90ff, #0055cc);
+  color:#fff; font-size:0.72rem; font-weight:bold;
+  padding:3px 10px; border-radius:4px; border:none; cursor:pointer;
+  box-shadow:0 2px 8px rgba(30,144,255,0.45);
+  letter-spacing:0.05em;
+}
+#combo-label {
+  color:#f5c518; font-weight:bold; font-size:0.85rem;
+  min-width:60px; text-align:center;
+  text-shadow:0 0 8px rgba(245,197,24,0.7);
+  white-space:pre-line;
+  line-height:1.4;
+}
+
+/* ── バフ表示UI ── */
+#buff-status {
+  position:fixed;
+  top: 52px;
+  left: 50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.82);
+  color:#fff;
+  padding:6px 16px;
+  border-radius:8px;
+  z-index:50;
+  text-align:center;
+  font-size:0.72rem;
+  border:1px solid rgba(255,255,255,0.15);
+  box-shadow:0 4px 20px rgba(0,0,0,0.8);
+  pointer-events:none;
+  display:none;
+  white-space:pre-line;
+  line-height:1.6;
+  max-width:90%;
+}
+
+/* ═══════════════════════════════════
+   中央エリア：ダンジョン（敵）
+═══════════════════════════════════ */
+#dungeon {
+  flex:1;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(60,20,100,0.35) 0%, transparent 70%),
+    linear-gradient(180deg, #120830 0%, #1e0f3a 40%, #2a0a18 100%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
+  padding:20px 0 6px 0;
+}
+#dungeon::before {
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(180,30,60,0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(80,30,160,0.08) 0%, transparent 40%);
+  pointer-events:none;
+}
+
+/* ─── 敵エリア ─── */
+#enemy-area {
+  display:flex; flex-direction:row; align-items:flex-end; justify-content:center;
+  gap:4px; width:100%; position:relative; z-index:1;
+  padding:0 4px; flex-wrap:wrap;
+}
+.enemy-unit {
+  display:flex; flex-direction:column; align-items:center;
+  position:relative;
+  flex-shrink:0;
+}
+.enemy-unit.size-S { width:20%; }
+.enemy-unit.size-M { width:33.3333%; }
+.enemy-unit.size-L { width:50%; }
+.enemy-unit.size-XL { width:100%; }
+
+/* HPバー行（画像の下） */
+.enemy-hp-row {
+  display:flex; align-items:center;
+  width:100%; padding:0 2px;
+  gap:4px;
+  margin-top:2px;
+  position:relative;
+  z-index:3;
+}
+/* ─── パズドラZ風：行動ターン「あと N」（背景の箱なし・赤いにじみ光のみ） ─── */
+.enemy-unit { container-type:inline-size; }
+.enemy-turn-pad {
+  position:absolute; left:1%; top:1%; z-index:6;
+  display:flex; align-items:center; gap:1.5cqw;
+  padding:1cqw 3cqw;
+  pointer-events:none;
+}
+.enemy-turn-pad::before {   /* 赤いにじみ（箱ではなくぼかし） */
+  content:''; position:absolute; inset:-2cqw -3cqw; z-index:-1;
+  background:radial-gradient(ellipse at 50% 50%, rgba(235,10,25,.95) 0%, rgba(210,0,20,.7) 45%, rgba(200,0,20,0) 75%);
+  filter:blur(max(1px,.8cqw));
+}
+.enemy-turn-pad .turn-label {
+  font-size:max(9px,7cqw); font-weight:900; color:#fff; line-height:1;
+  text-shadow:0 0 3px #b00, 0 0 5px #b00, 0 1px 2px rgba(0,0,0,.6);
+}
+.enemy-turn-counter {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:10cqw; height:10cqw; min-width:16px; min-height:16px;
+  font-size:max(11px,8cqw); font-weight:900; line-height:1; font-style:italic;
+  color:#fff; background:transparent;
+  border:max(1.5px,.9cqw) solid rgba(255,255,255,.95); border-radius:50%;
+  box-shadow:0 0 5px rgba(255,60,60,.9), inset 0 0 4px rgba(255,60,60,.7);
+  text-shadow:0 0 3px #b00, 0 1px 2px rgba(0,0,0,.7);
+}
+.enemy-turn-counter.red {
+  color:#ff2a2a; text-shadow:0 0 4px #fff, 0 0 8px rgba(255,255,255,.9);
+}
+.enemy-turn-pad.dead { display:none; }
+
+/* 状態アイコン（ターン数ピルの下に縦並び。数字はアイコン左上） */
+.enemy-status-icons {
+  position:absolute; left:1%; top:calc(1% + 13cqw); z-index:5;
+  display:flex; flex-direction:column; gap:1.5cqw;
+  pointer-events:none;
+}
+.st-icon {
+  position:relative; width:11cqw; height:11cqw; min-width:20px; min-height:20px;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));
+}
+.st-icon img { width:100%; height:100%; object-fit:contain; display:block; }
+.st-icon .st-turn {
+  position:absolute; left:-8%; top:-12%;
+  font-size:max(9px,5.6cqw); font-weight:900; line-height:1; color:#fff;
+  -webkit-text-stroke:max(1.5px,1cqw) #123; paint-order:stroke fill;
+  text-shadow:0 0 3px #000;
+}
+/* barrier.png が無い時の代替（盾風） */
+.st-icon.fallback::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,#fff 0 48%,#58c4e8 52% 100%);
+  border:max(1.5px,.8cqw) solid #333;
+  clip-path:polygon(0 0,100% 0,100% 55%,50% 100%,0 55%);
+}
+.st-icon.emoji { display:flex; align-items:center; justify-content:center; font-size:max(14px,8cqw);
+  background:rgba(20,30,60,.8); border:1px solid #8fd; border-radius:50%; }
+.enemy-attr-icon { display:none; }
+
+.enemy-hp-bar-wrap {
+  flex:1; height:8px;
+  background:rgba(0,0,0,0.55);
+  border-radius:4px; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);
+}
+.enemy-hp-bar-fill {
+  height:100%; width:100%;
+  border-radius:4px;
+  transition:width 0.25s ease;
+  position:relative;
+}
+.enemy-hp-bar-fill::after {
+  content:''; position:absolute;
+  top:1px; left:3px; right:3px; height:2px;
+  background:rgba(255,255,255,0.25); border-radius:2px;
+}
+
+/* 敵画像 */
+.enemy-img-wrap {
+  width:100%; position:relative;
+  display:flex; align-items:flex-end; justify-content:center;
+  margin-bottom:0;
+}
+.enemy-img-wrap img {
+  width:100%; height:auto;
+  object-fit:contain;
+  display:block;
+  image-rendering:auto;
+}
+
+/* ギフト画像（ドロップ表示） */
+.enemy-gift-row {
+  position:absolute;
+  bottom:18px; left:0; right:0;   /* HPバー行の上に表示 */
+  display:flex; justify-content:center; align-items:flex-end; gap:2%;
+  z-index:10; pointer-events:none;
+}
+.enemy-gift {
+  flex:0 1 50%; min-width:0; max-width:60%;
+  aspect-ratio:1/1; height:auto;
+  object-fit:contain;
+  animation:giftAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes giftAppear {
+  0% { opacity:0; transform:scale(0.3) rotate(-20deg); }
+  100% { opacity:1; transform:scale(1) rotate(0deg); }
+}
+
+/* 行動ポップアップ */
+.enemy-action-popup {
+  position:absolute; top:-28px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.85); color:#fff; padding:4px 12px;
+  border-radius:12px; font-size:0.7rem; font-weight:bold;
+  border:2px solid #ffcc00; white-space:nowrap; display:none;
+  z-index:20; pointer-events:none;
+  text-shadow:0 1px 4px rgba(0,0,0,0.8);
+  box-shadow:0 2px 12px rgba(0,0,0,0.6);
+  letter-spacing:0.04em;
+}
+.enemy-action-popup.show {
+  display:block;
+  animation: popupFade 1.6s ease-out forwards;
+}
+@keyframes popupFade {
+  0% { opacity:0; transform:translateX(-50%) scale(0.8); }
+  15% { opacity:1; transform:translateX(-50%) scale(1.1); }
+  30% { opacity:1; transform:translateX(-50%) scale(1); }
+  80% { opacity:1; }
+  100% { opacity:0; transform:translateX(-50%) scale(0.9); }
+}
+
+/* バインドアイコン */
+.bind-icon {
+  position:absolute; top:-8px; right:-8px;
+  width:20px; height:20px; border-radius:50%;
+  background:#aa3344; color:#fff; font-size:0.6rem;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid #ff8888; z-index:25;
+  font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.6);
+}
+
+/* 旧行動バッジは非表示 */
+.enemy-turn-badge { display:none; }
+
+/* ─── START / CLEAR アニメーション ─── */
+#dungeon-anim-overlay {
+  display:none;
+  position:absolute; inset:0; z-index:50;
+  align-items:center; justify-content:center;
+  pointer-events:none;
+  background:rgba(0,0,0,0.25);
+}
+.dng-anim-text {
+  font-size:5rem; font-weight:900;
+  letter-spacing:0.15em;
+  white-space:pre-line;
+  text-align:center;
+}
+.dng-anim-text.start-text {
+  color:#fff;
+  text-shadow:0 0 40px rgba(255,200,0,0.9), 0 4px 0 rgba(0,0,0,0.5);
+  animation:animPop 2.2s ease-out forwards;
+}
+.dng-anim-text.clear-text {
+  color:#f5c518;
+  text-shadow:0 0 60px rgba(245,197,24,0.9), 0 4px 0 rgba(0,0,0,0.5);
+  animation:animPop 2.5s ease-out forwards;
+}
+@keyframes animPop {
+  0%   { opacity:0; transform:scale(0.2) rotate(-8deg); }
+  18%  { opacity:1; transform:scale(1.25) rotate(3deg); }
+  38%  { opacity:1; transform:scale(1.0) rotate(0deg); }
+  75%  { opacity:1; transform:scale(1.0); }
+  100% { opacity:0; transform:scale(1.15); }
+}
+
+.attr-dmg-up   { color:#ffee00; font-size:0.55rem; font-weight:bold; }
+.attr-dmg-down { color:#aaaaaa; font-size:0.55rem; font-weight:bold; }
+
+/* 旧HPバーは非表示 */
+#enemy-hp-wrap { display:none; }
+.enemy-hp-label { display:none; }
+#enemy-hp-bar-bg { display:none; }
+#enemy-hp-bar {
+  height:100%; width:100%;
+  background:linear-gradient(90deg, #c0392b, #e74c3c, #ff6b6b);
+  border-radius:5px;
+  box-shadow:0 0 8px rgba(231,76,60,0.7);
+  position:relative;
+  transition: width 0.25s ease;
+}
+#enemy-hp-bar::after {
+  content:''; position:absolute;
+  top:1px; left:4px; right:4px; height:3px;
+  background:rgba(255,255,255,0.25); border-radius:2px;
+}
+
+/* ═══════════════════════════════════
+   時を止める演出（本家風）
+   ・敵エリアの背景と敵の絵が色反転（ネガ）になる
+   ・敵エリア中央に大きな青い時計。針は「カチッ」と1コマずつ進む
+   ═══════════════════════════════════ */
+#time-stop-clock {
+  display:none;
+  position:fixed; left:50%; top:50%;
+  --ts-d:120px;
+  width:var(--ts-d); height:var(--ts-d);
+  margin:calc(var(--ts-d) / -2) 0 0 calc(var(--ts-d) / -2);
+  border-radius:50%;
+  box-sizing:border-box;
+  background:radial-gradient(circle at 50% 42%, #8398ff 0%, #7188fb 55%, #6a7ff0 100%);
+  border:calc(var(--ts-d) * 0.045) solid #8e9eff;
+  box-shadow:
+    inset 0 0 0 2px #5a6ddd,
+    inset 0 0 calc(var(--ts-d) * 0.16) rgba(25,35,130,0.45),
+    0 0 0 2px rgba(18,18,48,0.7),
+    0 0 calc(var(--ts-d) * 0.2) calc(var(--ts-d) * 0.05) rgba(8,8,34,0.6);
+  z-index:150;
+  pointer-events:none;
+  transform-origin:center;
+}
+#time-stop-clock.ts-in  { animation:tsClockIn .38s cubic-bezier(.2,.9,.3,1.2) both; }
+#time-stop-clock.ts-out { animation:tsClockOut .22s ease-in both; }
+#time-stop-clock::after {            /* 出現時に広がる波紋 */
+  content:''; position:absolute; inset:-4%; border-radius:50%;
+  border:3px solid rgba(170,185,255,0.95);
+  opacity:0; pointer-events:none;
+}
+#time-stop-clock.ts-in::after { animation:tsRing .7s ease-out .05s both; }
+#clock-face { position:absolute; inset:0; }
+#clock-hour, #clock-hand, #clock-cap {
+  position:absolute; inset:0; width:100%; height:100%;
+  filter:drop-shadow(0 1px 1px rgba(0,0,40,0.35));
+}
+#clock-hour, #clock-hand { transform:rotate(0deg); }   /* 角度はJSがフレームごとに指定（反時計回り＝マイナス方向） */
+@keyframes tsClockIn  { 0% { transform:scale(.25); opacity:0; } 60% { transform:scale(1.12); opacity:1; } 100% { transform:scale(1); opacity:1; } }
+@keyframes tsClockOut { 0% { transform:scale(1); opacity:1; } 100% { transform:scale(.7); opacity:0; } }
+@keyframes tsRing     { 0% { transform:scale(.9); opacity:.95; } 100% { transform:scale(2.3); opacity:0; } }
+
+/* 敵エリアの背景を反転させる膜（HPバーなどは反転しない）＋最初のフラッシュ */
+#time-stop-negative {
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  opacity:0; transition:opacity .22s ease-out;
+  -webkit-backdrop-filter:invert(1); backdrop-filter:invert(1);
+}
+#time-stop-negative.on { opacity:1; animation:tsFlash .5s ease-out; }
+@keyframes tsFlash { 0% { background:rgba(255,255,255,.85); } 100% { background:rgba(255,255,255,0); } }
+/* 敵の絵も反転（HPバー・ターン数などの表示はそのまま） */
+#game .enemy-img-wrap { transition:filter .22s ease-out; }
+#game.ts-on .enemy-img-wrap { filter:invert(1); }
+
+/* ═══════════════════════════════════
+   下部エリア：パーティ
+═══════════════════════════════════ */
+#party-area {
+  flex-shrink:0;
+  /* ダンジョン背景と同じ画像を「ひと続き」で表示する（サイズ・位置は game.js の layoutBattleBg が --party-bg-* に入れる）。
+     上との境目に線や段差が出ないよう、上枠線はなし */
+  background-image: var(--party-bg, url('../dungeon1.png')) !important;
+  background-repeat: no-repeat !important;
+  background-size: var(--party-bg-size, cover) !important;
+  background-position: var(--party-bg-pos, center) !important;
+  background-color: transparent !important;
+  border-top:0;
+  padding:5px 6px 4px;
+  position:relative;
+}
+#party-area::before {
+  content:'';
+  position:absolute; inset:0;
+  /* 上端だけ少しずつ暗くして、ダンジョン背景から自然につなぐ */
+  background:linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0.65) 14px);
+  pointer-events:none;
+  z-index:0;
+}
+#party-area > * {
+  position:relative;
+  z-index:1;
+}
+#party-grid {
+  display:grid; grid-template-columns:repeat(6,1fr);
+  gap:4px; margin-bottom:5px;
+}
+.party-slot {
+  aspect-ratio:1;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  position:relative; overflow:visible;
+  cursor:pointer;
+}
+.party-slot::after {
+  display: none !important;
+}
+.attr-dot { display: none !important; }
+
+/* モンスターのダメージ表示 */
+.monster-damage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  font-weight: 900;
+  text-shadow: 0 0 1px #000, 0 0 2px #000, 0 0 3px #000, 0 0 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  opacity: 0;
+  transition: transform 0.15s ease-out, opacity 0.2s;
+  font-size: 0.9rem;
+}
+.monster-damage.show { opacity:1; transform: translate(-50%, -50%) scale(1); }
+.monster-damage.pop { animation: damagePop 0.25s ease-out; }
+@keyframes damagePop {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.3; }
+  40% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.party-slot img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+  display: block;
+  transform: scale(1.04);
+  transform-origin: center center;
+  background: transparent !important;
+}
+.party-slot span { display: none; }
+
+.skill-ready {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #7ef7ff, #00bfff);
+  box-shadow: 0 0 8px rgba(0,191,255,0.9);
+  border: 1px solid rgba(255,255,255,0.4);
+  z-index: 5;
+  pointer-events: none;
+}
+
+
+/* ═══════════════════════════════════
+   HPバー / 操作時間バー（ひとつの「ゲージプレート」にまとめる）
+   ・暗いガラス調のプレート＋金の細枠で、どのステージ背景の上でも読める
+   ・上段=HP（太め・数値入り）、下段=操作時間（細め）。左の小さな見出しで役割を示す
+═══════════════════════════════════ */
+#bottom-bars {
+  display:flex; flex-direction:column; gap:3px;
+}
+#bars-wrap {
+  --cap-w:17px;
+  position:relative;
+  display:flex; flex-direction:column; gap:2px;
+  padding:2px 4px 2px 3px;
+  border-radius:7px;
+  background:linear-gradient(180deg, rgba(22,16,30,0.88) 0%, rgba(9,6,14,0.93) 100%);
+  border:1px solid rgba(214,178,102,0.36);
+  box-shadow:0 2px 6px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 0 0 1px rgba(0,0,0,0.5);
+}
+.gauge-row {
+  position:relative;
+  display:flex; align-items:center; gap:4px;
+}
+.gauge-cap {
+  flex:0 0 var(--cap-w);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.5rem; font-weight:900; letter-spacing:0.05em; line-height:1;
+  color:rgba(238,222,184,0.92);
+  text-shadow:0 1px 1px rgba(0,0,0,0.85);
+}
+.gauge-cap svg {
+  width:9px; height:9px; display:block;
+  fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,0.8));
+}
+#hp-track, #timer-track {
+  position:relative; flex:1; overflow:hidden;
+  background:#0b0811;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,0.95), inset 0 0 0 1px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.08);
+}
+#hp-track    { height:13px; border-radius:4px; }
+#timer-track { height:5px;  border-radius:3px; }
+#time-row { height:5px; }
+#time-row .gauge-cap { height:5px; overflow:visible; }
+
+/* ── HP ── */
+#hp-ghost, #player-hp-bar, #hp-poison {
+  position:absolute; top:0; bottom:0; left:0; border-radius:3px;
+}
+#hp-ghost {            /* ダメージを受けた直後だけ残る、淡い「減少分」 */
+  width:100%;
+  background:linear-gradient(180deg, #ffe4ee 0%, #f2a8c3 100%);
+  opacity:0.8;
+  transition:width 0.55s ease 0.35s;
+}
+#player-hp-bar {
+  width:100%;
+  background:linear-gradient(180deg, #f56ca8 0%, #e0337f 42%, #b2165e 100%);
+  box-shadow:inset -1px 0 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(0,0,0,0.28);
+  transition:width 0.3s ease;
+}
+#player-hp-bar::after {   /* 上面のツヤ */
+  content:''; position:absolute; left:2px; right:2px; top:1px; height:36%; border-radius:2px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.08));
+}
+/* ピンチ表現：HP25%以下で赤く、ゆっくり明滅（約1.3秒周期・なめらか）。10%以下はやや速く(約0.9秒)＋プレートも赤く脈打つ */
+#bars-wrap.hp-low #player-hp-bar {
+  background:linear-gradient(180deg, #ff7f66 0%, #e5402f 42%, #a9150f 100%);
+  animation:hpLowPulse 1.3s ease-in-out infinite;
+}
+#bars-wrap.hp-low { animation:hpLowFrame 1.3s ease-in-out infinite; }
+#bars-wrap.hp-crit #player-hp-bar, #bars-wrap.hp-crit { animation-duration:0.9s; }
+@keyframes hpLowPulse {
+  0%,100% { filter:brightness(0.82) saturate(1); }
+  50%     { filter:brightness(1.38) saturate(1.1); }
+}
+@keyframes hpLowFrame {
+  0%,100% { border-color:rgba(214,178,102,0.36); box-shadow:0 2px 6px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 0 0 1px rgba(0,0,0,0.5); }
+  50%     { border-color:rgba(255,110,90,0.75);  box-shadow:0 2px 6px rgba(0,0,0,0.45), 0 0 8px rgba(255,70,50,0.38), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 0 0 1px rgba(0,0,0,0.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #bars-wrap.hp-low, #bars-wrap.hp-low #player-hp-bar { animation:none; }
+}
+/* 毒で減る分のHPバー（紫） */
+#hp-poison {
+  width:0;
+  background:linear-gradient(180deg, #c98fe4 0%, #9a3dc4 45%, #6a1f94 100%);
+  box-shadow:0 0 5px rgba(156,39,176,0.7);
+  opacity:0; z-index:1; pointer-events:none;
+  transition: opacity 0.35s ease, left 0.2s ease, width 0.2s ease;
+}
+#hp-poison.preview { animation: poisonPulse 0.7s ease-in-out infinite alternate; }
+@keyframes poisonPulse { from { filter:brightness(0.85); } to { filter:brightness(1.35); } }
+#hp-label {
+  position:absolute; left:7px; top:50%; transform:translateY(-50%);
+  z-index:3; pointer-events:none;
+  font-size:0.6rem; font-weight:800; line-height:1; letter-spacing:0.02em;
+  font-variant-numeric:tabular-nums;
+  color:#fff;
+  text-shadow:0 1px 0 rgba(0,0,0,0.7), 0 0 3px rgba(0,0,0,0.85), 0 0 1px rgba(0,0,0,0.9);
+}
+/* HP増減フローティング表示（HPバーの中央に出てふわっと上がる） */
+#hp-delta {
+  position:absolute; top:50%;
+  left:calc(var(--cap-w) + 4px + (100% - var(--cap-w) - 4px) / 2);
+  transform:translate(-50%,-50%);
+  font-size:0.75rem; font-weight:900; line-height:1;
+  pointer-events:none; z-index:10;
+  white-space:nowrap; display:none;
+  text-shadow:0 1px 4px rgba(0,0,0,0.9);
+  letter-spacing:0.04em;
+}
+#hp-delta.heal-delta {
+  color:#7fffae;
+  animation: hpDeltaFloat 1.6s ease-out forwards;
+}
+#hp-delta.poison-delta {
+  color:#e0a8ff;
+  text-shadow:0 0 6px rgba(170,60,255,0.9), 0 1px 4px rgba(0,0,0,0.9);
+  animation: poisonDeltaPop 0.25s ease-out;
+}
+@keyframes poisonDeltaPop { from { transform:translate(-50%,-50%) scale(1.5); } to { transform:translate(-50%,-50%) scale(1); } }
+#hp-delta.dmg-delta {
+  color:#ff6060;
+  animation: hpDeltaFloat 1.6s ease-out forwards;
+}
+
+/* ── 操作時間 ──
+   残り割合は game.js の setTimerRatio() が --t(0〜1) に入れる。
+   バーは「伸び縮み」ではなく右側から切り取る方式なので、グラデーションが潰れず先端が丸いまま減っていく */
+#timer-bar {
+  position:absolute; inset:0; border-radius:3px;
+  background:linear-gradient(180deg, #a9f1ff 0%, #38bbef 45%, #0f7cc8 100%);
+  clip-path:inset(0 calc((1 - var(--t, 1)) * 100%) 0 0 round 3px);
+}
+#timer-bar::after {      /* 残り少ないときに重なる琥珀色（ふわっと切り替わる） */
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg, #ffe7a0 0%, #f2aa2a 50%, #c27a0e 100%);
+  opacity:0; transition:opacity 0.3s ease;
+}
+#timer-track.low #timer-bar::after { opacity:1; }
+#timer-spark {           /* 先端の小さな光 */
+  position:absolute; top:0; bottom:0; width:7px; pointer-events:none;
+  left:calc(var(--t, 1) * 100%);
+  transform:translateX(-100%);
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 100%);
+  opacity:min(1, calc(var(--t, 1) * 30));
+}
+
+/* ===== 共通SPゲージ（パズドラZ風・パーティ全体で共有） ===== */
+#sp-common-wrap {
+  display:flex; align-items:center; gap:5px;
+  padding:2px 2px;
+}
+#sp-common-label {
+  font-size:0.55rem; font-weight:bold;
+  color:#ffe066;
+  text-shadow:0 1px 3px rgba(0,0,0,0.9);
+  white-space:nowrap;
+  letter-spacing:0.03em;
+}
+#sp-common-bar {
+  position:relative; flex:1; height:12px;
+  display:flex; gap:2px;
+  background:rgba(0,0,0,0.4);
+  border-radius:6px; padding:2px;
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:inset 0 1px 4px rgba(0,0,0,0.6);
+}
+.sp-common-seg {
+  flex:1; border-radius:2px;
+  background:rgba(255,255,255,0.08);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.sp-common-seg.filled {
+  background:linear-gradient(180deg, #7ef7ff, #00bfff);
+  box-shadow:0 0 5px rgba(0,191,255,0.9);
+}
+.sp-common-seg.filled.ready {
+  background:linear-gradient(180deg, #ffe066, #ffb700);
+  box-shadow:0 0 6px rgba(255,183,0,0.9);
+}
+#sp-common-count {
+  font-size:0.55rem; font-weight:bold;
+  color:rgba(255,255,255,0.9);
+  text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  white-space:nowrap;
+  min-width:2.6em; text-align:right;
+}
+@keyframes hpDeltaFloat {
+  0%   { opacity:1; transform:translate(-50%, -50%); }
+  30%  { opacity:1; transform:translate(-50%, -80%); }
+  70%  { opacity:0.7; transform:translate(-50%, -100%); }
+  100% { opacity:0; transform:translate(-50%, -130%); }
+}
+
+/* ═══════════════════════════════════
+   グリッドエリア
+═══════════════════════════════════ */
+#grid-wrap {
+  background:#0e0804 url('../banmen.png') center/cover no-repeat;
+  border-top:2px solid #2a1a06;
+  padding:3px; flex-shrink:0;
+  position:relative;
+}
+#grid {
+  display:grid; grid-template-columns:repeat(6,1fr); gap:3px;
+}
+#combo-overlay { position:absolute; inset:0; pointer-events:none; z-index:5; }
+.combo-chip {
+  position:absolute; transform:translate(-50%, -50%);
+  background:rgba(0,0,0,.65);
+  color:rgba(255,220,60,.95);
+  font-size:0.62rem; font-weight:bold;
+  padding:3px 6px; border-radius:4px; white-space:nowrap;
+  text-shadow:0 1px 3px rgba(0,0,0,.9);
+  border:1px solid rgba(255,200,50,.3); line-height:1.4;
+  pointer-events:none;
+  display:flex; flex-direction:column; align-items:center;
+}
+.combo-chip .combo-boost {
+  font-size:0.5rem; color:#7ef7ff; font-weight:normal;
+  letter-spacing:0.05em;
+}
+
+.orb {
+  aspect-ratio:1; border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.15);
+  position:relative; cursor:grab;
+  background-size:cover; background-position:center;
+  overflow:hidden; will-change:transform;
+  transition:transform .12s ease-out;
+}
+.orb.fire  { background-image:url('../1.png'); }
+.orb.water { background-image:url('../2.png'); }
+.orb.wood  { background-image:url('../3.png'); }
+.orb.light { background-image:url('../4.png'); }
+.orb.dark  { background-image:url('../5.png'); }
+.orb.heal  { background-image:url('../6.png'); background-size:78%; background-repeat:no-repeat; background-position:center; border-radius:0; border:none; overflow:visible; }
+.orb.poison { background-image:url('../8.png'); background-size:78%; background-repeat:no-repeat; background-position:center; border-radius:0; border:none; overflow:visible; filter: drop-shadow(0 0 6px rgba(128,0,255,0.5)); }
+
+/* 暗闇：ドロップの画像そのものを真っ黒の影にする（形は元のまま。動かすと見える） */
+.orb[data-blind="1"] {
+  filter: brightness(0.06) !important;
+}
+.orb.dragging {
+  z-index:10; cursor:grabbing;
+  box-shadow:0 0 22px rgba(255,255,255,.7) !important;
+  transition:none !important;
+}
+.orb.glow { animation:glow .22s ease-out forwards; }
+@keyframes glow {
+  0%   { filter:brightness(1); }
+  50%  { filter:brightness(2.2); transform:scale(1.18); }
+  100% { filter:brightness(1.7); transform:scale(1.1); }
+}
+.orb.vanish { animation:vanish .13s ease-in forwards; }
+@keyframes vanish {
+  0%   { transform:scale(1.1); opacity:1; }
+  100% { transform:scale(0);   opacity:0; }
+}
+.orb.drop-fast {
+  transition:transform .26s cubic-bezier(.25,.46,.45,.94) var(--fall-delay, 0s);
+}
+@keyframes dmgPop {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+  30%  { opacity:1; transform:translate(-50%,-80%) scale(1.2); }
+  70%  { opacity:1; transform:translate(-50%,-100%) scale(1.0); }
+  100% { opacity:0; transform:translate(-50%,-130%) scale(0.8); }
+}
+@keyframes skillDmgPop {
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(0.6); }
+  20%  { opacity:1; transform:translate(-50%,-90%) scale(1.3); }
+  75%  { opacity:1; transform:translate(-50%,-120%) scale(1.05); }
+  100% { opacity:0; transform:translate(-50%,-150%) scale(0.9); }
+}
+
+/* 攻撃弾を囲むエネルギーリング（JSで生成する演出要素） */
+@keyframes fxSpin {
+  from { transform:rotate(0deg) scale(.7); }
+  to   { transform:rotate(360deg) scale(1.12); }
+}
+
+
+/* ═══════════════════════════════════
+   戦闘中の入力ロック
+   ※ ホーム・編成・育成などのメニュー画面のデザインは css/ui.css に移しました
+═══════════════════════════════════ */
+/* 敵の行動中は盤面・メニュー・パーティ操作を無効化 */
+#game.enemy-acting #grid,
+#game.enemy-acting #menu-btn,
+#game.enemy-acting #party-grid { pointer-events:none; }
+/* 敵の行動中：盤面を少しだけ暗くして「いまは操作できない」と分かるように。Menuも押せない見た目に */
+#grid { transition:filter .25s ease; }
+#game.enemy-acting #grid { filter:brightness(.72); }
+#menu-btn { transition:opacity .2s ease, filter .2s ease; }
+#game.enemy-acting #menu-btn,
+#game.player-acting #menu-btn { pointer-events:none; opacity:.45; filter:grayscale(.6); cursor:default; }
+
+
+/* ─── HPバー：左に属性オーブ、右端は矢じり形（パズドラZ風） ─── */
+.enemy-attr-orb {
+  width:13cqw; height:13cqw; min-width:16px; min-height:16px; max-width:30px; max-height:30px;
+  flex-shrink:0; object-fit:contain;
+  margin-right:-3cqw; position:relative; z-index:2;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));
+}
+.enemy-hp-row { align-items:center; gap:0; padding:0; }
+.enemy-hp-bar-wrap {
+  height:max(10px,6.5cqw); border-radius:0; border:1px solid rgba(255,255,255,.55);
+  clip-path:polygon(0 0, calc(100% - 4px) 0, 100% 50%, calc(100% - 4px) 100%, 0 100%);
+  padding-left:3cqw;
+}
+.enemy-hp-bar-fill { border-radius:0; }
+
+/* コンボ吸収アイコン（ピンクの数字＋白い星）。残りターンは左上の小さい数字 */
+.st-icon.combo { width:19cqw; height:16cqw; min-width:30px; min-height:25px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.st-icon.combo svg { width:100%; height:100%; display:block; }
+.st-icon.combo .st-turn { left:-4%; top:-14%; }
+
+/* あと〇をさらに上へ */
+.enemy-turn-pad { top:-24cqw; }
+.enemy-status-icons { top:calc(-24cqw + 13cqw); }
+
+/* ドロップ品：モンスターのいた位置（画像枠の中央）に上から落ちて弾む */
+.enemy-gift-row {
+  top:0; bottom:0; left:0; right:0;
+  align-items:center;
+}
+.enemy-gift { animation:giftDrop 0.7s cubic-bezier(.3,.1,.3,1) forwards; }
+@keyframes giftDrop {
+  0%   { opacity:0; transform:translateY(-90%) scale(.6); }
+  45%  { opacity:1; transform:translateY(0) scale(1); }
+  62%  { transform:translateY(-14%) scale(1); }
+  80%  { transform:translateY(0) scale(1); }
+  90%  { transform:translateY(-4%) scale(1); }
+  100% { opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* 状態アイコンを全体的に小さく・左揃え */
+.enemy-status-icons { align-items:flex-start; gap:1cqw; }
+.st-icon { width:8cqw; height:8cqw; min-width:14px; min-height:14px; }
+.st-icon .st-turn { font-size:max(8px,4.4cqw); left:-14%; top:-16%; }
+.st-icon.combo { width:auto; min-width:0; height:9.5cqw; min-height:17px; }
+.st-icon.combo svg { height:100%; width:auto; }
+.st-icon.combo .st-turn { left:-6%; top:-18%; }
+
+/* break.png が無い時の代替（赤い下向き矢印） */
+.st-icon.fallback-break::before {
+  content:'▼'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:#ff4040; font-size:max(12px,7cqw); text-shadow:0 0 2px #000,0 0 2px #000;
+}
+
+/* 左上：「あと〇」の下に状態アイコンを縦並び（Sサイズでも重ならない・見える大きさ） */
+.enemy-top-left {
+  position:absolute; left:1%; top:-24cqw; z-index:6;
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+  pointer-events:none;
+}
+.enemy-top-left .enemy-turn-pad { position:relative; left:auto; top:auto; }
+.enemy-top-left .enemy-status-icons { position:relative; left:auto; top:auto; padding-left:3px; padding-top:2px; gap:3px; }
+.st-icon { width:clamp(20px,8cqw,30px); height:clamp(20px,8cqw,30px); min-width:0; min-height:0; }
+.st-icon.combo { width:auto; height:clamp(28px,11cqw,36px); }
+.st-icon .st-turn { font-size:clamp(9px,4.4cqw,14px); }
+.st-icon img { image-rendering:auto; }
+
+/* Sサイズ対応：ターン表示は読める大きさ、状態アイコンは控えめ・重ならない */
+.enemy-turn-pad .turn-label { font-size:max(13px,7cqw); }
+.enemy-turn-counter { width:max(21px,10cqw); height:max(21px,10cqw); min-width:0; min-height:0; font-size:max(14px,8cqw); }
+.enemy-top-left { gap:5px; top:max(-24cqw,-34px); }
+.enemy-top-left .enemy-status-icons { padding-left:7px; padding-top:0; gap:5px; }
+.st-icon { width:clamp(14px,6cqw,22px); height:clamp(14px,6cqw,22px); }
+.st-icon.combo { height:clamp(20px,8cqw,28px); }
+.st-icon .st-turn { font-size:clamp(8px,3.8cqw,12px); left:-30%; top:-22%; }
+.st-icon.combo .st-turn { left:-18%; top:-24%; }
+
+/* ─── 敵スキルウインドウ（パズドラ風の青い帯） ─── */
+.enemy-skill-window {
+  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  width:78%; max-width:560px; padding:10px 8px; z-index:40;
+  text-align:center; color:#fff; font-weight:900; font-size:1.15rem; letter-spacing:.08em;
+  background:linear-gradient(180deg,#4f9bd9 0%,#2c6fb7 45%,#1f559a 100%);
+  border:2px solid #cfe6fb; border-radius:8px;
+  box-shadow:0 0 0 2px #1a3a66, 0 4px 10px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.55);
+  text-shadow:0 0 3px #123, 0 2px 2px #123, 1px 1px 0 #123, -1px -1px 0 #123;
+  pointer-events:none; white-space:normal; overflow-wrap:anywhere; word-break:normal; line-height:1.3;
+  display:flex; align-items:center; justify-content:center; min-height:2.6em; box-sizing:border-box;
+}
+/* 長いスキル名：文字を小さくして最大2行で全文表示 */
+.enemy-skill-window.len-m { font-size:.95rem; letter-spacing:.04em; }
+.enemy-skill-window.len-l { font-size:.8rem;  letter-spacing:.02em; }
+.enemy-skill-window.len-xl{ font-size:.68rem; letter-spacing:0; }
+/* 敵を少し下へ（ウインドウ分の余白） */
+#enemy-area { margin-top:44px; }
+
+/* ikari.png が無い時の代替 */
+.st-icon.fallback-ikari::before { content:'💢'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:max(13px,6.5cqw); }
+
+
+/* ─── Sサイズ：「あと〇」が下すぎたので上へ ─── */
+.enemy-unit.size-S .enemy-top-left { top:calc(max(-24cqw,-34px) - 16px); }
+
+/* ─── 状態アイコン（敵）をタップ可能に：当たり判定を少し広げる ─── */
+.enemy-top-left .enemy-status-icons .st-icon { pointer-events:auto; cursor:pointer; }
+.enemy-top-left .enemy-status-icons .st-icon::after { content:''; position:absolute; inset:-5px; }
+
+/* ─── 効果ポップアップ（画面中央に数秒表示） ─── */
+#effect-popup {
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  z-index:9000; display:none; pointer-events:none;
+  min-width:200px; max-width:80vw; padding:14px 18px;
+  background:rgba(8,10,28,.92); color:#fff; text-align:center;
+  border:2px solid rgba(255,255,255,.75); border-radius:14px;
+  box-shadow:0 0 0 2px rgba(20,40,90,.9), 0 8px 24px rgba(0,0,0,.7);
+}
+#effect-popup.show { display:block; animation:effectPopIn .18s ease-out; }
+@keyframes effectPopIn { from { opacity:0; transform:translate(-50%,-50%) scale(.85); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
+#effect-popup .ep-head { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px; }
+#effect-popup .ep-icon { width:34px; height:34px; object-fit:contain; display:inline-flex; align-items:center; justify-content:center; }
+#effect-popup .ep-icon svg { width:auto; height:100%; }
+#effect-popup .ep-name { font-size:1.05rem; font-weight:900; text-shadow:0 0 4px #000; }
+#effect-popup .ep-text { font-size:.85rem; line-height:1.5; }
+#effect-popup .ep-turns { margin-top:6px; font-size:.8rem; font-weight:900; color:#ffe36b; }
+
+
+/* ═══════════════════════════════════════════════
+   敵サイズ（本家風）：横幅いっぱいを基準に
+     S = 1/5（5匹分） / M = 1/3（3匹分） / L = 1/2（2匹分） / XL = 全幅（1匹分）
+   ※ max-width は付けない（画面が広くても比率どおり）。収まらなければ次の段へ折り返す
+═══════════════════════════════════════════════ */
+#enemy-area {
+  gap:0; padding:0 6px; box-sizing:border-box;
+  flex-wrap:nowrap; justify-content:center; align-items:flex-end;
+}
+/* 1列に収める：合計が100%を超える並び(M,L,M や SSMM など)は、比率を保ったまま全体を縮める */
+#enemy-area .enemy-unit { box-sizing:border-box; flex:0 1 auto; max-width:none; min-width:0; }
+/* XLがいる時だけは、XLを1段まるごと使い、他は次の段へ */
+#enemy-area.has-xl { flex-wrap:wrap; }
+#enemy-area.has-xl .enemy-unit { flex-shrink:0; }
+#enemy-area .enemy-unit.size-S  { width:20%; }
+#enemy-area .enemy-unit.size-M  { width:33.3333%; }
+#enemy-area .enemy-unit.size-L  { width:50%; }
+#enemy-area .enemy-unit.size-XL { width:100%; }
+.enemy-unit .enemy-img-wrap { padding:0 1.5%; box-sizing:border-box; }
+
+/* XL：HPバーを小さくせず、左端〜右端いっぱい（端にはくっつかない程度に余白） */
+.enemy-unit.size-XL .enemy-hp-row { padding:0 2.5%; box-sizing:border-box; }
+.enemy-unit.size-XL .enemy-attr-orb { width:9cqw; height:9cqw; max-width:48px; max-height:48px; min-width:28px; min-height:28px; margin-right:-2.5cqw; }
+.enemy-unit.size-XL .enemy-hp-bar-wrap { height:max(14px,3.6cqw); padding-left:2.5cqw; }
+.enemy-unit.size-XL .enemy-top-left { top:-34px; }
+.enemy-unit.size-XL .enemy-turn-pad { left:0; }
+
+/* ロックオン */
+#enemy-area .enemy-unit { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.enemy-img-wrap { position:relative; }
+.enemy-unit .lock-mark { position:absolute; left:50%; top:50%; width:min(62%,90px); aspect-ratio:1; transform:translate(-50%,-50%); pointer-events:none; z-index:6; filter:drop-shadow(0 0 4px #000); animation:lockPulse .9s ease-in-out infinite; }
+.enemy-unit .lock-mark svg { width:100%; height:100%; display:block; }
+@keyframes lockPulse { 0%,100% { transform:translate(-50%,-50%) scale(1); opacity:1; } 50% { transform:translate(-50%,-50%) scale(1.15); opacity:.75; } }
+
+
+
+/* ═══════════════════════════════════════════════
+   敵画像サイズ調整
+   ・L：画像を少しだけ小さく（枠の88%）
+   ・XL：画像は「Lくらい」（全幅の44％＝Lの画像と同じ大きさ）に縮小。
+         ただしHPバー（属性アイコン付き）は左端〜右端いっぱいのまま（本家風）
+═══════════════════════════════════════════════ */
+.enemy-unit.size-L  .enemy-img-wrap { width:88%; }
+.enemy-unit.size-XL .enemy-img-wrap { width:44%; }
+/* XLの「あと〇」・状態アイコンは本家のように、敵エリアの左上（左端）に置く。
+   XLは枠が全幅なので、そのままだと文字が大きすぎる → Lくらいの大きさに抑える */
+/* 画像(44%幅・中央)の左端は枠の28%の位置。top-left は画像基準なので、枠(敵エリア)の左端1.5%に来るよう左へずらす
+   （画像幅の 63.64% = 枠の28%、3.41% = 枠の1.5%） */
+.enemy-unit.size-XL .enemy-top-left { left:calc(-63.64% + 3.41%); top:-34px; }
+.enemy-unit.size-XL .enemy-turn-pad .turn-label { font-size:max(13px,4.2cqw); }
+.enemy-unit.size-XL .enemy-turn-counter { width:max(21px,6cqw); height:max(21px,6cqw); font-size:max(14px,4.6cqw); }
+
+/* ═══════════════════════════════════
+   ゲームオーバー演出（ドロップが崩れる → GAMEOVER → タップでホームへボタン）
+═══════════════════════════════════ */
+#game.game-over #party-grid,
+#game.game-over #menu-btn,
+#game.game-over #grid { pointer-events:none; }
+#grid-wrap.go-collapsing { overflow:hidden; }
+#gameover-overlay {
+  position:absolute; inset:0; z-index:40;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4%;
+  container-type:inline-size;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  touch-action:none; user-select:none; -webkit-user-select:none;
+}
+#gameover-text {
+  width:92%; line-height:0;
+  opacity:0; transform:scale(1.7);
+  pointer-events:none;
+}
+#gameover-text svg { width:100%; height:auto; display:block; overflow:visible; }
+#gameover-text.show { animation:gameoverPop .55s cubic-bezier(.2,.9,.3,1.2) forwards; }
+@keyframes gameoverPop {
+  0%   { opacity:0; transform:scale(1.7); }
+  60%  { opacity:1; transform:scale(.94); }
+  100% { opacity:1; transform:scale(1); }
+}
+#gameover-home-btn, #clear-home-btn {
+  min-width:52%; opacity:0; pointer-events:none; transform:translateY(8px);
+  transition:opacity .3s, transform .3s, box-shadow .06s;
+}
+#gameover-home-btn.show, #clear-home-btn.show { opacity:1; pointer-events:auto; transform:none; }
+#gameover-home-btn.show:active, #clear-home-btn.show:active { transform:translateY(4px); }
+
+/* ═══════════════════════════════════
+   ダンジョンクリア演出（CLEAR! ＋ 花火 ＋ ホームへボタン）
+═══════════════════════════════════ */
+#game { position:relative; }
+#game.game-clear #party-grid,
+#game.game-clear #menu-btn,
+#game.game-clear #grid { pointer-events:none; }
+#clear-fireworks { position:absolute; left:0; top:0; width:100%; height:100%; z-index:30; pointer-events:none; }
+#clear-text-overlay {
+  position:absolute; inset:0; z-index:32; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+}
+#clear-text { width:88%; line-height:0; opacity:0; transform:scale(1.7); filter:drop-shadow(0 0 10px rgba(120,220,255,.65)); }
+#clear-text svg { width:100%; height:auto; display:block; overflow:visible; }
+#clear-text.show { animation:gameoverPop .6s cubic-bezier(.2,.9,.3,1.2) forwards; }
+#clear-board-overlay {
+  position:absolute; inset:0; z-index:40;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0); transition:background .4s;
+  touch-action:none; user-select:none; -webkit-user-select:none;
+}
+#clear-board-overlay.show { background:rgba(0,0,0,.38); }
+
+/* ダメージ軽減（盾アイコン）：ターン数字はアイコンの右 */
+.st-icon.dmgcut { width:clamp(20px,8cqw,30px); height:clamp(20px,8cqw,30px); }
+.st-icon.dmgcut svg { width:100%; height:100%; display:block; }
+.enemy-top-left .enemy-status-icons .st-icon.dmgcut .st-turn,
+.st-icon.dmgcut .st-turn { left:calc(100% + 2px); top:50%; transform:translateY(-50%); }
+
+
+/* ===== リーダースキルのダメージ軽減マーク（HPバーの右端） ===== */
+#ls-guard {                /* 軽減中バッジ：盾アイコンがメダルのように左にはみ出す */
+  position:absolute; right:3px; top:50%; transform:translateY(-50%);
+  display:none; align-items:center;
+  height:9px; padding:0 4px 0 11px; border-radius:5px;
+  background:rgba(10,20,40,0.78); border:1px solid rgba(150,200,255,0.5);
+  z-index:6; pointer-events:none; line-height:1;
+}
+#ls-guard.on { display:flex; }
+#ls-guard img {
+  position:absolute; left:-3px; top:50%; transform:translateY(-50%);
+  width:12px; height:12px; display:block; object-fit:contain;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,0.7));
+}
+#ls-guard-pct {
+  font-size:0.46rem; font-weight:900; color:#e4f1ff;
+  letter-spacing:0; white-space:nowrap;
+}
+#ls-guard.pop { animation: lsGuardPop 0.45s ease-out; }
+@keyframes lsGuardPop {
+  0%   { transform:translateY(-50%) scale(1.9); filter:brightness(2.2); }
+  100% { transform:translateY(-50%) scale(1);   filter:brightness(1); }
+}
+}
+
+/* ═══════════════════════════════════════════════════
+   バトル / BOSS 菱形バナー（Battle n/m → BOSS）
+   ═══════════════════════════════════════════════════ */
+#dungeon-anim-overlay.bn-mode {
+  background:rgba(0,0,0,0);
+  animation:bnDim .35s ease-out forwards;
+}
+#dungeon-anim-overlay.bn-mode.bn-out { animation:bnUndim .4s ease-in forwards; }
+#dungeon-anim-overlay.bn-boss { animation:bnDimRed .35s ease-out forwards; }
+#dungeon-anim-overlay.bn-boss.bn-out { animation:bnUndimRed .4s ease-in forwards; }
+@keyframes bnDim      { to { background:rgba(0,0,0,.38); } }
+@keyframes bnUndim    { from { background:rgba(0,0,0,.38); } to { background:rgba(0,0,0,0); } }
+@keyframes bnDimRed   { to { background:rgba(40,0,8,.5); } }
+@keyframes bnUndimRed { from { background:rgba(40,0,8,.5); } to { background:rgba(40,0,8,0); } }
+
+.bn-wrap {
+  --bn: min(40vw, 34vh, 210px);
+  position:relative; width:var(--bn); height:var(--bn);
+  display:flex; align-items:center; justify-content:center;
+  perspective:900px;
+  animation:bnPop .4s cubic-bezier(.2,1.4,.4,1) both;
+}
+.bn-wrap.bn-leave { animation:bnLeave .4s ease-in forwards; }
+@keyframes bnPop {
+  0%   { opacity:0; transform:scale(.15) rotate(-14deg); }
+  60%  { opacity:1; transform:scale(1.08) rotate(2deg); }
+  100% { opacity:1; transform:scale(1) rotate(0); }
+}
+@keyframes bnLeave {
+  0%   { opacity:1; transform:scale(1); }
+  100% { opacity:0; transform:scale(1.35); }
+}
+
+/* 裏表（フリップ）する本体 */
+.bn-flip { position:absolute; inset:0; transform-style:preserve-3d; }
+.bn-flip.bn-do-flip { animation:bnFlip .6s cubic-bezier(.5,0,.2,1) forwards; }
+@keyframes bnFlip {
+  0%   { transform:rotateY(0)     scale(1); }
+  35%  { transform:rotateY(90deg) scale(1.12); }
+  100% { transform:rotateY(180deg) scale(1); }
+}
+.bn-side {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+}
+.bn-side.bn-back { transform:rotateY(180deg); }
+
+/* 白い角丸の菱形 */
+.bn-shape {
+  position:absolute; left:50%; top:50%;
+  width:70.7%; height:70.7%;
+  transform:translate(-50%,-50%) rotate(45deg);
+  border-radius:9%;
+  background:linear-gradient(135deg, #ffffff 0%, #f6f6f4 55%, #e9e8e4 100%);
+  border:max(2px,.9vw) solid #d9a84a;
+  box-shadow:
+    0 0 0 max(1px,.4vw) rgba(255,236,170,.9),
+    0 0 26px 6px rgba(255,214,110,.75),
+    0 0 60px 14px rgba(255,190,60,.35),
+    inset 0 0 18px rgba(255,255,255,.95),
+    inset 0 -10px 24px rgba(0,0,0,.08);
+  overflow:hidden;
+}
+/* 菱形の中を横切る光（きらっ） */
+.bn-shape::after {
+  content:''; position:absolute; top:-20%; bottom:-20%; left:-60%; width:40%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.95), transparent);
+  transform:skewX(-20deg);
+  animation:bnShine 1.4s ease-in-out .5s infinite;
+}
+@keyframes bnShine { 0% { left:-60%; } 60%,100% { left:130%; } }
+
+/* BOSS 面：飾り枠と赤い縁 */
+.bn-side.bn-back .bn-shape {
+  border-color:#ff3a5c;
+  box-shadow:
+    0 0 0 max(1px,.4vw) rgba(255,190,200,.9),
+    0 0 28px 8px rgba(255,40,80,.8),
+    0 0 70px 16px rgba(220,0,50,.45),
+    inset 0 0 18px rgba(255,255,255,.95),
+    inset 0 -10px 24px rgba(160,0,30,.1);
+}
+/* 菱形の内側の飾り（角の丸い菱形の細い線） */
+.bn-deco {
+  position:absolute; inset:9%;
+  border:max(1px,.35vw) solid rgba(210,60,90,.3);
+  border-radius:8%;
+}
+.bn-deco::before, .bn-deco::after {
+  content:''; position:absolute; inset:9%;
+  border:max(1px,.3vw) solid rgba(210,60,90,.2);
+  border-radius:8%;
+}
+.bn-deco::after { inset:-12%; border-color:rgba(210,60,90,.16); }
+
+/* テキスト（菱形は回転させず文字は水平に） */
+.bn-text { position:relative; text-align:center; z-index:2; font-family:'Hiragino Maru Gothic ProN','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif; }
+.bn-battle-label {
+  font-size:calc(var(--bn) * .11); font-weight:700; letter-spacing:.04em;
+  color:#3b3b40; line-height:1;
+  transform:translateY(-6%);
+}
+.bn-count { display:flex; align-items:baseline; justify-content:center; gap:.05em; margin-top:3%; line-height:1; }
+.bn-count .bn-now { font-size:calc(var(--bn) * .30); font-weight:700; color:#111; transform:translateY(2%); }
+.bn-count .bn-slash {
+  display:inline-block; width:.14em; height:calc(var(--bn) * .15);
+  background:#666; transform:skewX(-28deg) translateY(10%);
+  margin:0 calc(var(--bn) * .02);
+}
+.bn-count .bn-max { font-size:calc(var(--bn) * .105); font-weight:700; color:#555; align-self:flex-end; transform:translateY(-8%); }
+.bn-boss-text {
+  font-size:calc(var(--bn) * .21); font-weight:900; letter-spacing:.04em;
+  color:#e0124c; line-height:1;
+  text-shadow:0 0 1px rgba(224,18,76,.6), 0 2px 8px rgba(224,18,76,.25);
+}
+
+/* ボスの周りの赤い菱形の縁（外へ広がって脈打つ） */
+.bn-ring {
+  position:absolute; left:50%; top:50%;
+  width:70.7%; height:70.7%;
+  transform:translate(-50%,-50%) rotate(45deg) scale(1);
+  border:max(2px,.7vw) solid #ff2d55;
+  border-radius:9%;
+  box-shadow:0 0 14px 2px rgba(255,40,80,.7), inset 0 0 14px 2px rgba(255,40,80,.45);
+  opacity:0; pointer-events:none; z-index:-1;
+}
+.bn-wrap.bn-boss-on .bn-ring { animation:bnRing 1.5s ease-out infinite; }
+.bn-wrap.bn-boss-on .bn-ring.r2 { animation-delay:.5s; }
+.bn-wrap.bn-boss-on .bn-ring.r3 { animation-delay:1s; }
+@keyframes bnRing {
+  0%   { opacity:.95; transform:translate(-50%,-50%) rotate(45deg) scale(1.02); }
+  100% { opacity:0;   transform:translate(-50%,-50%) rotate(45deg) scale(1.9); }
+}
+/* 常にある、少し大きめの細い赤い菱形（脈動） */
+.bn-ring.fixed {
+  opacity:0; width:70.7%; height:70.7%;
+  border-width:max(1px,.35vw);
+  transform:translate(-50%,-50%) rotate(45deg) scale(1.28);
+}
+.bn-wrap.bn-boss-on .bn-ring.fixed { animation:bnRingFixed 1.2s ease-in-out infinite alternate; }
+@keyframes bnRingFixed {
+  0%   { opacity:.45; transform:translate(-50%,-50%) rotate(45deg) scale(1.22); }
+  100% { opacity:.95; transform:translate(-50%,-50%) rotate(45deg) scale(1.34); }
+}
+/* 切り替わりの閃光 */
+.bn-flash {
+  position:absolute; left:50%; top:50%; width:70.7%; height:70.7%;
+  transform:translate(-50%,-50%) rotate(45deg); border-radius:9%;
+  background:#fff; opacity:0; pointer-events:none; z-index:3;
+}
+.bn-flash.go { animation:bnFlash .5s ease-out; }
+@keyframes bnFlash { 0% { opacity:.9; transform:translate(-50%,-50%) rotate(45deg) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) rotate(45deg) scale(1.8); } }
+
+/* ═══ LAST BOSS 版バナー：波動・光・文字を紫にして「LAST BOSS」と表示（js/boss-cloud.js の banner:'last'） ═══
+   ※ 紫を赤に戻したい場合は、この下の .bn-last-wrap / .bn-lastboss のブロックをまるごと消せばOK */
+#dungeon-anim-overlay.bn-boss.bn-lastboss { animation:bnDimPurple .35s ease-out forwards; }
+#dungeon-anim-overlay.bn-boss.bn-lastboss.bn-out { animation:bnUndimPurple .4s ease-in forwards; }
+@keyframes bnDimPurple   { to { background:rgba(22,0,40,.58); } }
+@keyframes bnUndimPurple { from { background:rgba(22,0,40,.58); } to { background:rgba(22,0,40,0); } }
+.bn-wrap.bn-last-wrap .bn-side.bn-back .bn-shape {
+  border-color:#a65bff;
+  box-shadow:
+    0 0 0 max(1px,.4vw) rgba(226,200,255,.9),
+    0 0 28px 8px rgba(160,70,255,.85),
+    0 0 70px 16px rgba(110,20,200,.5),
+    inset 0 0 18px rgba(255,255,255,.95),
+    inset 0 -10px 24px rgba(90,0,160,.12);
+}
+.bn-wrap.bn-last-wrap .bn-deco { border-color:rgba(150,70,230,.32); }
+.bn-wrap.bn-last-wrap .bn-deco::before { border-color:rgba(150,70,230,.22); }
+.bn-wrap.bn-last-wrap .bn-deco::after  { border-color:rgba(150,70,230,.18); }
+.bn-wrap.bn-last-wrap .bn-ring {
+  border-color:#b266ff;
+  box-shadow:0 0 16px 3px rgba(170,80,255,.8), inset 0 0 16px 2px rgba(170,80,255,.5);
+}
+.bn-boss-text.bn-last {
+  display:flex; flex-direction:column; align-items:center; gap:calc(var(--bn) * .02);
+  color:#7a1fd6; text-shadow:0 0 1px rgba(122,31,214,.6), 0 2px 10px rgba(150,70,255,.35);
+}
+.bn-boss-text.bn-last .bn-last-sub  { font-size:calc(var(--bn) * .115); letter-spacing:.18em; margin-right:-.18em; }
+.bn-boss-text.bn-last .bn-last-main { font-size:calc(var(--bn) * .21); }
+
+/* ─── 自分のモンスター長押し：スキル説明（敵エリアに表示。離すと消える） ─── */
+#skill-hold-info {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.96);
+  width:min(88%, 420px); box-sizing:border-box;
+  padding:12px 14px; border-radius:12px;
+  background:rgba(14,10,38,0.92); border:1.5px solid rgba(160,170,255,0.7);
+  box-shadow:0 4px 18px rgba(0,0,0,0.6);
+  color:#fff; text-align:left; z-index:140; pointer-events:none;
+  opacity:0; visibility:hidden; transition:opacity .12s ease-out, transform .12s ease-out;
+}
+#skill-hold-info.on { opacity:1; visibility:visible; transform:translate(-50%,-50%) scale(1); }
+#skill-hold-info .shi-who  { font-size:11px; color:#a9b1ff; margin-bottom:2px; }
+#skill-hold-info .shi-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+#skill-hold-info .shi-name { font-size:15px; font-weight:700; color:#ffe27a; }
+#skill-hold-info .shi-sp   { font-size:12px; font-weight:700; padding:2px 8px; border-radius:999px; background:#3a46c8; white-space:nowrap; }
+#skill-hold-info .shi-desc { font-size:13px; line-height:1.5; color:#eef; white-space:pre-wrap; }
+#party-grid .party-slot { touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+
+
+/* ===== 敵の状態アイコン：大きさ・左端をそろえる（ガタガタ防止） =====
+   ダメージ軽減（盾）だけ大きく、コンボ吸収だけ幅が違っていたので、
+   全部「同じ大きさの正方形」＋「同じ左端」に統一する（コンボ吸収だけは横長のまま左端はそろえる） */
+.enemy-top-left .enemy-status-icons { align-items:flex-start; }
+.enemy-top-left .enemy-status-icons .st-icon,
+.enemy-top-left .enemy-status-icons .st-icon.dmgcut {
+  width:clamp(17px,6.5cqw,24px); height:clamp(17px,6.5cqw,24px);
+  flex:0 0 auto; margin:0; box-sizing:border-box;
+}
+.enemy-top-left .enemy-status-icons .st-icon.combo { width:auto; height:clamp(17px,6.5cqw,24px); }
+.enemy-top-left .enemy-status-icons .st-icon.combo svg { height:100%; width:auto; }
+.enemy-top-left .enemy-status-icons .st-icon img { width:100%; height:100%; object-fit:contain; object-position:center; }
+.enemy-top-left .enemy-status-icons .st-icon.dmgcut svg { width:100%; height:100%; }
+
+
+/* ★4以上のモンスターがドロップした時の虹の光（少し派手め：大きめの虹のにじみ＋出現時に虹の輪が1回広がる。1.2秒で現れ、そのあとも光り続ける） */
+.enemy-gift-rare { position:relative; overflow:visible; }
+.enemy-gift-rare .rare-gift-img { position:relative; z-index:3; width:100%; height:100%; object-fit:contain; display:block;
+  filter:drop-shadow(0 0 5px rgba(255,255,255,.95)) drop-shadow(0 0 10px rgba(255,255,255,.55)); }
+.enemy-gift-rare .rare-rainbow {
+  position:absolute; left:50%; top:50%; width:215%; aspect-ratio:1/1; margin:-107.5% 0 0 -107.5%; border-radius:50%; z-index:1; pointer-events:none;
+  background:conic-gradient(from 0deg,#ff3a3a,#ffa62a,#fff23a,#3aff6a,#2adfff,#4a6aff,#b04aff,#ff4ad8,#ff3a3a);
+  -webkit-mask-image:radial-gradient(circle,#000 0%,rgba(0,0,0,.8) 34%,transparent 68%);
+          mask-image:radial-gradient(circle,#000 0%,rgba(0,0,0,.8) 34%,transparent 68%);
+  filter:blur(4px) saturate(1.3);
+  opacity:0;
+  animation:rareSpin 3.6s linear infinite, rareGlowIn 1.2s ease-out forwards, rarePulse 1.4s 1.2s ease-in-out infinite alternate;
+}
+/* 出現した瞬間、虹の輪が1回ふわっと広がる */
+.enemy-gift-rare::after {
+  content:''; position:absolute; left:50%; top:50%; width:150%; aspect-ratio:1/1; margin:-75% 0 0 -75%; border-radius:50%; z-index:2; pointer-events:none;
+  border:3px solid transparent;
+  background:linear-gradient(#0000,#0000) padding-box, conic-gradient(#ff3a3a,#ffa62a,#fff23a,#3aff6a,#2adfff,#4a6aff,#b04aff,#ff4ad8,#ff3a3a) border-box;
+  filter:drop-shadow(0 0 6px rgba(255,255,255,.8));
+  opacity:0; animation:rareRing 1s ease-out .05s forwards;
+}
+@keyframes rareSpin { to { transform:rotate(360deg); } }
+@keyframes rareGlowIn { 0% { opacity:0; } 45% { opacity:.85; } 100% { opacity:.6; } }
+@keyframes rarePulse { from { opacity:.5; } to { opacity:.75; } }
+@keyframes rareRing { 0% { opacity:0; transform:scale(.4); } 20% { opacity:1; } 100% { opacity:0; transform:scale(1.7); } }
+
+/* ===== 敵の状態アイコン：縦に最大4つ。5つ目以降は1つ目の右から縦に並べる（見切れ防止）=====
+     1 5
+     2
+     3
+     4 */
+.enemy-top-left .enemy-status-icons {
+  display:grid; grid-auto-flow:column; grid-template-rows:repeat(4, auto);
+  grid-auto-columns:max-content; justify-content:start; align-items:start;
+  column-gap:clamp(12px,5cqw,18px);
+}

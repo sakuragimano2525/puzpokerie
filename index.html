@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#e8f0fd">
+<title>パズル</title>
+<!-- UIフォント（オフライン時は端末の丸ゴシックに自動で切り替わります） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/battle-plus.css">
+<link rel="stylesheet" href="css/cutin.css">
+<link rel="stylesheet" href="css/zukan.css">
+<!-- 画像の自動再読み込み（ページ前半の画像も拾うため、必ず head の中で読み込む） -->
+<script src="js/img-retry.js"></script>
+</head>
+<body>
+
+<!-- ============================================================
+     アイコン（UI共通）  <svg class="ic"><use href="#i-xxx"/></svg>
+     ============================================================ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3.5"/><path d="m4.5 8.5 7.5 5.2 7.5-5.2"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M9 6.5V6a3 3 0 0 1 6 0v.5"/><path d="M6.5 6.5h11a2.5 2.5 0 0 1 2.5 2.5v9a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V9a2.5 2.5 0 0 1 2.5-2.5Z"/><path d="M4.5 13h15"/><path d="M10.5 13v2h3v-2"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8"/><circle cx="12" cy="12" r="6.6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.5 5.5-6.5 6.5 6.5 6.5"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9.5 6 6 6-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14.5M15 4.5 18.5 8 15 11.5"/><path d="M20 16H5.5M9 12.5 5.5 16 9 19.5"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"/><path d="M4 4.5V8.5h4"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.6 2.2c-.8.5-1.2 1-1.2 1.9"/><path d="M12 16.9h.01"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3.5 8 4.5 4 4-6.5 4 6.5 4.5-4-1.8 10H5.3Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-team" viewBox="0 0 24 24"><circle cx="8.5" cy="8.5" r="3.2"/><path d="M2.8 19c.4-3.2 2.6-5 5.7-5s5.3 1.8 5.7 5"/><circle cx="17" cy="9.5" r="2.5"/><path d="M16 14.2c2.8-.3 4.8 1.2 5.2 4.3"/></symbol>
+    <symbol id="i-grow" viewBox="0 0 24 24"><path d="M12 21v-9"/><path d="M12 13c0-4.4-3-6.8-8-6.8 0 4.4 3 6.8 8 6.8Z"/><path d="M12 15.5c0-3.8 2.6-6.5 8-6.5 0 4-3 6.5-8 6.5Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2Z"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="4" rx="1.5"/><path d="M5 13v6.5a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5V13M12 9v12"/><path d="M12 9c-1.5-4-6-4.5-5.5-1.8C6.9 9 12 9 12 9Zm0 0c1.5-4 6-4.5 5.5-1.8C17.1 9 12 9 12 9Z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.2S4.2 15.5 4.2 9.6a4.1 4.1 0 0 1 7.8-1.8 4.1 4.1 0 0 1 7.8 1.8c0 5.9-7.8 10.6-7.8 10.6Z"/></symbol>
+    <symbol id="i-sword" viewBox="0 0 24 24"><path d="M20.5 3.5h-6L5.8 12.2l6 6L20.5 9.5Z"/><path d="m3 21 4-4M7.5 12.5l4 4"/></symbol>
+    <symbol id="i-rec" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4M6 5h11l-2.5 3.8L17 12.5H6"/></symbol>
+    <symbol id="i-event" viewBox="0 0 24 24"><path d="m12 3.2 2.7 5.5 6 .9-4.4 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6-4.4-4.2 6-.9Z"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3.5 6.5 9 4l6 2.5 5.5-2.5v13L15 20l-6-2.5-5.5 2.5Z"/><path d="M9 4v13.5M15 6.5V20"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M6.5 3.5H19v13H6.5a2 2 0 0 0-2 2v-13a2 2 0 0 1 2-2Z"/><path d="M4.5 18.5a2 2 0 0 0 2 2H19v-4"/><path d="M9 8h6M9 11.5h4"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.5c.7 4.6 2.4 6.3 7 7-4.6.7-6.3 2.4-7 7-.7-4.6-2.4-6.3-7-7 4.6-.7 6.3-2.4 7-7Z"/><path d="M19 3v3.4M17.3 4.7h3.4"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============================================================
+     ホーム
+     ============================================================ -->
+<div id="home" class="ui-screen">
+  <div id="home-header">
+    <div id="hh-coin" aria-label="所持エナ"><img id="hh-coin-icon" src="hcoin.png" alt="エナ"><span id="hh-coin-num">0</span></div>
+    <div class="hh-icons">
+      <button id="zukan-open-btn" class="hh-icon-btn zukan" type="button" aria-label="モンスター図鑑"><svg class="ic"><use href="#i-book"/></svg></button>
+      <button id="mail-open-btn" class="hh-icon-btn mail" aria-label="メール"><svg class="ic"><use href="#i-mail"/></svg><span class="hh-badge"></span></button>
+      <button id="bag-open-btn" class="hh-icon-btn bag" aria-label="カバン"><svg class="ic"><use href="#i-bag"/></svg></button>
+      <button id="mode-toggle-btn" class="hh-icon-btn mode" type="button" aria-label="イベントステージ一覧"><svg class="ic"><use href="#i-event"/></svg><span class="hh-lbl">イベント</span></button>
+    </div>
+  </div>
+  <div id="home-main"><div id="home-scroll"><div id="stage-map"></div></div></div>
+  <div id="home-bottom">
+    <div class="hb-row">
+      <button class="hb-btn team" id="btn-team">
+        <span class="hb-ico"><svg class="ic"><use href="#i-team"/></svg></span>
+        <span class="hb-txt"><b>チーム編成</b><small>6体を選ぶ</small></span>
+      </button>
+      <button class="hb-btn grow" id="btn-grow">
+        <span class="hb-ico"><svg class="ic"><use href="#i-grow"/></svg></span>
+        <span class="hb-txt"><b>育成</b><small>レベルアップ</small></span>
+      </button>
+      <button class="hb-btn evo" id="btn-evo">
+        <span class="hb-ico"><svg class="ic"><use href="#i-sparkle"/></svg></span>
+        <span class="hb-txt"><b>進化</b><small>素材で進化させる</small></span>
+      </button>
+    </div>
+  </div>
+  <div id="home-toast"></div>
+</div>
+
+<!-- カバン（所持チップ一覧） -->
+<div id="bag-screen" class="ui-screen">
+  <div id="bag-header" class="bar">
+    <button id="bag-close-btn" class="btn-back" aria-label="閉じる"><svg class="ic"><use href="#i-back"/></svg></button>
+    <span id="bag-title">カバン</span>
+    <span id="bag-total"></span>
+  </div>
+  <div id="bag-grid"></div>
+</div>
+
+<!-- ============================================================
+     ステージ選択
+     ============================================================ -->
+<div id="stage-select" class="ui-screen">
+  <div id="ss-hero">
+    <div id="ss-header">
+      <button id="ss-back-btn" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+      <span id="ss-header-area-name">ハジマリ草原</span>
+    </div>
+    <div id="ss-title-block">
+      <span class="ss-area-eyebrow" id="ss-area-num">エリア 1</span>
+      <div class="ss-area-bigname" id="ss-area-bigname">ハジマリ草原</div>
+      <div id="ss-ofuda" style="display:none"></div>
+    </div>
+  </div>
+  <div id="ss-content"></div>
+  <div id="ss-toast"></div>
+</div>
+
+<!-- ============================================================
+     出撃準備（潜入確認）
+     ============================================================ -->
+<div id="dungeon-entry" class="ui-screen">
+  <div id="de-hero">
+    <div id="de-top-bar">
+      <span id="de-title-text">出撃準備</span>
+      <div id="de-stage-bar">
+        <span id="de-stage-label">1-1</span>
+        <span id="de-battle-label">バトル</span>
+        <span id="de-battle-count">5</span>
+      </div>
+    </div>
+  </div>
+  <div id="de-body">
+    <div id="de-team-panel">
+      <div id="de-panel-header">
+        <div class="team-nav" id="de-team-name"><button class="tn-btn" data-dir="-1" aria-label="前のパーティー"><svg class="ic"><use href="#i-back"/></svg></button><span class="tn-label">パーティー <b class="tn-no">1</b><small>/ 10</small></span><button class="tn-btn" data-dir="1" aria-label="次のパーティー"><svg class="ic"><use href="#i-chev"/></svg></button></div>
+        <button id="de-edit-btn" class="btn btn-sm"><svg class="ic"><use href="#i-swap"/></svg>編成を変える</button>
+      </div>
+      <div id="de-monster-row-wrap">
+        <div id="de-monster-row"></div>
+        <div id="de-row-labels"><span>リーダー</span><i></i><i></i><i></i><i></i><span>フレンド</span></div>
+      </div>
+      <div id="de-stats-row">
+        <div class="de-stat-cell hp">
+          <span class="de-stat-label"><img class="stat-ic" src="sta1.png" alt="" draggable="false">合計HP</span>
+          <span class="de-stat-value" id="de-total-hp">0</span>
+        </div>
+        <div class="de-stat-cell atk">
+          <span class="de-stat-label"><img class="stat-ic" src="sta2.png" alt="" draggable="false">合計攻撃</span>
+          <span class="de-stat-value" id="de-total-atk">0</span>
+        </div>
+        <div class="de-stat-cell rec">
+          <span class="de-stat-label"><img class="stat-ic" src="sta3.png" alt="" draggable="false">合計回復</span>
+          <span class="de-stat-value" id="de-total-rec">0</span>
+        </div>
+      </div>
+    </div>
+    <div id="de-ls-section">
+      <div class="de-ls-block lead">
+        <div class="de-ls-head">
+          <span class="de-ls-type-label"><svg class="ic"><use href="#i-crown"/></svg>リーダースキル</span>
+          <span class="de-ls-monster-name" id="de-ls1-name"></span>
+        </div>
+        <span class="de-ls-desc" id="de-ls1-desc">（なし）</span>
+      </div>
+      <div class="de-ls-block friend">
+        <div class="de-ls-head">
+          <span class="de-ls-type-label"><svg class="ic"><use href="#i-flag"/></svg>フレンドスキル</span>
+          <span class="de-ls-monster-name" id="de-ls2-name"></span>
+        </div>
+        <span class="de-ls-desc" id="de-ls2-desc">（なし）</span>
+      </div>
+    </div>
+    <!-- クリア済みダンジョンだけ表示（未クリアは非表示のまま） -->
+    <div id="de-info-section" style="display:none;">
+      <div class="de-info-block" id="de-mon-block">
+        <div class="de-info-head"><span class="de-info-label">出現モンスター</span></div>
+        <div class="de-info-grid" id="de-mon-list"></div>
+      </div>
+      <div class="de-info-block chip" id="de-chip-block">
+        <div class="de-info-head"><span class="de-info-label">落ちるチップ</span></div>
+        <div class="de-info-grid" id="de-chip-list"></div>
+      </div>
+    </div>
+  </div>
+  <div id="de-footer" class="dock">
+    <button id="de-back-btn" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+    <button id="de-challenge-btn" class="btn btn-primary btn-cta"><svg class="ic"><use href="#i-play"/></svg>挑戦する<span id="de-cost" class="de-cost" style="display:none"></span></button>
+  </div>
+</div>
+
+<!-- ============================================================
+     スキル確認ポップアップ
+     ============================================================ -->
+<div id="skill-confirm">
+  <div class="skill-popup">
+    <div class="sp-title" id="sp-title">スキル名</div>
+    <div class="sp-desc" id="sp-desc">説明テキスト</div>
+    <div class="sp-cooldown" id="sp-cooldown">SP ○ / ○</div>
+    <div class="sp-question">スキルを使用しますか？</div>
+    <div class="sp-buttons">
+      <button class="sp-btn sp-btn-no" id="sp-no">やめる</button>
+      <button class="sp-btn sp-btn-yes" id="sp-yes">使う</button>
+    </div>
+  </div>
+</div>
+
+<!-- ダンジョン中メニュー（続ける / ドロップを見る / リタイア） -->
+<div id="quit-confirm">
+  <div class="skill-popup" id="menu-popup">
+    <!-- メニュー -->
+    <div class="menu-view" id="menu-view-main">
+      <div class="sp-title">メニュー</div>
+      <div class="sp-buttons sp-buttons-col">
+        <button class="sp-btn sp-btn-yes" id="quit-no">続ける</button>
+        <button class="sp-btn" id="menu-drops-btn">ドロップを見る</button>
+        <button class="sp-btn" id="menu-retire-btn">リタイア</button>
+      </div>
+    </div>
+    <!-- 今ドロップしているもの -->
+    <div class="menu-view" id="menu-view-drops" style="display:none;">
+      <div class="sp-title">現在のドロップ</div>
+      <div id="menu-drops-list" class="res-drops"></div>
+      <div class="sp-buttons sp-buttons-col">
+        <button class="sp-btn sp-btn-yes" id="menu-drops-back">戻る</button>
+      </div>
+    </div>
+    <!-- リタイア確認 -->
+    <div class="menu-view" id="menu-view-retire" style="display:none;">
+      <div class="sp-title">リタイアしますか？</div>
+      <div class="sp-desc">ダンジョンを中断してホームに戻ります。<br>ここまでに手に入れたドロップは受け取れます。</div>
+      <div class="sp-buttons">
+        <button class="sp-btn sp-btn-no" id="menu-retire-no">やめる</button>
+        <button class="sp-btn sp-btn-yes" id="quit-yes">リタイア</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     モンスター詳細
+     ============================================================ -->
+<div id="monster-detail" class="ui-screen" data-attr="fire">
+  <div id="md-top-wrap">
+    <div id="md-header">
+      <span id="md-title">モンスター詳細</span>
+    </div>
+    <div id="md-card-area">
+      <button class="md-arrow" id="md-prev" aria-label="前のモンスター"><svg class="ic"><use href="#i-back"/></svg></button>
+      <div id="md-card-frame">
+        <img id="md-monster-img" src="" alt="">
+        <div class="md-img-placeholder" id="md-img-placeholder">イラスト</div>
+      </div>
+      <button class="md-arrow" id="md-next" aria-label="次のモンスター"><svg class="ic"><use href="#i-chev"/></svg></button>
+    </div>
+  </div>
+  <div id="md-info-panel">
+    <div id="md-header-row">
+      <span id="md-no">No.1</span>
+      <span id="md-stars">★★★</span>
+    </div>
+    <div id="md-name-row">
+      <div id="md-attr-icons"></div>
+      <span id="md-name">モンスター名</span>
+      <span id="md-type"></span>
+    </div>
+    <div id="md-level-row">
+      <span id="md-level">Lv1</span>
+      <div id="md-exp-bar-bg"><div id="md-exp-bar"></div></div>
+      <span id="md-exp-text">0 / 999</span>
+    </div>
+    <div id="md-stats-grid">
+      <div class="md-stat-cell hp"><span class="md-stat-label"><img class="stat-ic" src="sta1.png" alt="" draggable="false">HP</span><span class="md-stat-val" id="md-hp">0</span></div>
+      <div class="md-stat-cell atk"><span class="md-stat-label"><img class="stat-ic" src="sta2.png" alt="" draggable="false">攻撃力</span><span class="md-stat-val" id="md-atk">0</span></div>
+      <div class="md-stat-cell rec"><span class="md-stat-label"><img class="stat-ic" src="sta3.png" alt="" draggable="false">回復力</span><span class="md-stat-val" id="md-rec">0</span></div>
+    </div>
+    <div id="md-skill-section">
+      <div id="md-skill-header">
+        <span class="md-section-label">スキル</span>
+        <span id="md-skill-turn">ターン 7</span>
+      </div>
+      <div id="md-skill-lv-row">
+        <span id="md-skill-lv">スキルLv 1 / 7</span>
+      </div>
+      <p id="md-skill-desc">スキル説明テキスト</p>
+    </div>
+    <div id="md-ls-section">
+      <div class="md-ls-head">
+        <span class="md-section-label">リーダースキル</span>
+        <span id="md-ls-name"></span>
+      </div>
+      <p id="md-ls-desc">---</p>
+    </div>
+  </div>
+  <div id="md-footer" class="dock">
+    <button id="md-back-btn" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+    <div id="md-btn-area">
+      <button id="md-levelup-btn" class="btn btn-primary"><svg class="ic"><use href="#i-grow"/></svg>レベルアップ</button>
+      <button id="md-evolve-btn" class="btn btn-evo" style="display:none"><svg class="ic"><use href="#i-sparkle"/></svg>進化</button>
+    </div>
+    <span id="md-hint">覚醒タッチ：詳細</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     進化できるモンスター一覧（ホームの「進化」から）
+     ============================================================ -->
+<div id="evo-list-screen" class="ui-screen">
+  <div id="evo-list-header" class="bar">
+    <span class="iku-title">進化</span>
+  </div>
+  <div id="evo-list-hint">
+    <span id="evo-list-hint-txt">進化させるモンスターを選んでください</span>
+    <button class="te-sort-btn btn btn-sm" id="evo-sort-btn"><span id="evo-sort-label">入手順</span><svg class="ic"><use href="#i-down"/></svg></button>
+  </div>
+  <div id="evo-list-box"><div id="evo-list-grid"></div><p id="evo-list-empty">進化できるモンスターがいません</p></div>
+  <div id="evo-list-footer" class="dock">
+    <button id="evo-list-back" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+  </div>
+</div>
+
+<!-- ============================================================
+     モンスター図鑑（ホームの本のボタンから。中身は js/zukan.js が作る）
+     ============================================================ -->
+<div id="zukan-screen" class="ui-screen">
+  <div id="zukan-header" class="bar">
+    <span class="iku-title">モンスター図鑑</span>
+  </div>
+  <div id="zukan-hint">
+    <span id="zukan-count"></span>
+    <button class="te-sort-btn btn btn-sm" id="zukan-sort-btn" type="button"><span id="zukan-sort-label">図鑑番号順</span><svg class="ic"><use href="#i-down"/></svg></button>
+  </div>
+  <div id="zukan-box"><div id="zukan-grid"></div></div>
+  <div id="zukan-footer" class="dock">
+    <button id="zukan-back" class="btn-back" type="button" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+    <span class="te-hint-text">長押しでステータス（Lv1 / 最大Lv）</span>
+  </div>
+  <div id="zukan-info">
+    <div class="zk-info-wrap">
+      <div id="zukan-info-card" class="zk-info-card"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     進化
+     ============================================================ -->
+<!-- 進化素材（チップ）の入手場所 -->
+<div id="chip-spots">
+  <div class="skill-popup" id="cs-popup">
+    <div class="sp-title">入手できる場所</div>
+    <div id="cs-item"><img id="cs-item-img" alt=""><span id="cs-item-name"></span></div>
+    <div id="cs-list"></div>
+    <div class="sp-buttons sp-buttons-col">
+      <button class="sp-btn sp-btn-yes" id="cs-close">とじる</button>
+    </div>
+  </div>
+</div>
+
+<!-- チップの入手場所へ移動する前の確認 -->
+<div id="chip-jump">
+  <div class="skill-popup">
+    <div class="sp-title">移動しますか？</div>
+    <div class="sp-desc" id="cj-desc"></div>
+    <div class="sp-buttons">
+      <button class="sp-btn sp-btn-no" id="cj-no">やめる</button>
+      <button class="sp-btn sp-btn-yes" id="cj-yes">移動する</button>
+    </div>
+  </div>
+</div>
+
+<div id="evo-screen" class="ui-screen">
+  <div id="evo-header"><span id="evo-title">進化</span></div>
+  <div id="evo-branch"></div>
+  <div id="evo-compare">
+    <div class="evo-card">
+      <div class="evo-card-img"><img id="evo-from-img" alt=""></div>
+      <div class="evo-card-name" id="evo-from-name"></div>
+      <div class="evo-card-sub" id="evo-from-sub"></div>
+    </div>
+    <div class="evo-arrow"><svg class="ic"><use href="#i-chev"/></svg></div>
+    <div class="evo-card to">
+      <div class="evo-card-img"><img id="evo-to-img" alt=""></div>
+      <div class="evo-card-name" id="evo-to-name"></div>
+      <div class="evo-card-sub" id="evo-to-sub"></div>
+    </div>
+  </div>
+  <div id="evo-body">
+    <div class="evo-label">必要素材</div>
+    <div id="evo-materials"></div>
+    <div class="evo-label">必要エナ</div>
+    <div id="evo-cost"></div>
+    <div class="evo-label">進化後のステータス</div>
+    <div id="evo-stats"></div>
+    <p id="evo-note">進化するとレベルは1に戻ります</p>
+  </div>
+  <div id="evo-footer" class="dock">
+    <button id="evo-back-btn" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+    <button id="evo-exec-btn" class="btn btn-primary btn-cta">進化させる</button>
+  </div>
+  <div id="evo-result">
+    <div id="evo-result-glow"></div>
+    <img id="evo-result-img" alt="">
+    <div id="evo-result-title">進化！</div>
+    <div id="evo-result-text"></div>
+    <button id="evo-result-ok" class="btn btn-primary btn-cta">OK</button>
+  </div>
+</div>
+
+<!-- 進化パズル（進化させる → 5×5 のパズルを完成させると進化の演出へ） -->
+<div id="evo-puzzle" class="ui-screen">
+  <div id="pz-header">
+    <span id="pz-title">進化パズル</span>
+    <div id="pz-sample-wrap">
+      <div id="pz-sample"><img id="pz-sample-img" alt=""></div>
+      <span id="pz-sample-label">お手本</span>
+    </div>
+  </div>
+  <div id="pz-info"><span><b id="pz-name"></b> の絵を完成させよう！</span><span class="pz-moves-wrap">手数 <b id="pz-moves">0</b></span></div>
+  <div id="pz-area">
+    <div id="pz-board">
+      <div id="pz-loading">読み込み中…</div>
+      <div id="pz-preview"></div>
+      <div id="pz-clear">COMPLETE!</div>
+    </div>
+  </div>
+  <div id="pz-footer" class="dock">
+    <button id="pz-back-btn" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+    <div id="pz-hint">ピースをドラッグして入れ替え<br>お手本を押している間は大きく表示</div>
+    <button id="pz-evo-btn" class="btn btn-evo" disabled>進化させる</button>
+  </div>
+</div>
+
+<!-- 進化の演出（○○の ようすが… → 次へ → 10秒の進化演出） -->
+<div id="evo-scene" class="ui-screen">
+  <div id="es-aura"></div>
+  <div id="es-rays"></div>
+  <div id="es-stage">
+    <div id="es-from" class="es-mon"><img id="es-from-c" class="c" alt=""><img id="es-from-w" class="w" alt=""></div>
+    <div id="es-to" class="es-mon"><img id="es-to-c" class="c" alt=""><img id="es-to-w" class="w" alt=""></div>
+  </div>
+  <canvas id="es-fx"></canvas>
+  <div id="es-flash"></div>
+  <div id="es-msg">
+    <div id="es-msg-text"></div>
+    <button id="es-next" class="btn btn-primary">次へ ▶</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     チーム編成
+     ============================================================ -->
+<div id="team-edit" class="ui-screen">
+  <div id="te-header" class="bar">
+    <span class="te-title">チーム編成</span>
+    <button class="te-swap-btn btn btn-sm" id="te-swap-btn"><svg class="ic"><use href="#i-swap"/></svg><span id="te-swap-label">入れ替え</span></button>
+    <button class="te-reset-btn btn btn-sm" id="te-reset-btn" aria-label="編成をリセット"><svg class="ic"><use href="#i-reset"/></svg><span class="lbl">リセット</span></button>
+    <button class="te-help-btn btn btn-sm btn-icon" id="te-help-btn" aria-label="操作のしかた"><svg class="ic"><use href="#i-help"/></svg></button>
+  </div>
+
+  <div id="te-party-area">
+    <div class="team-nav" id="te-team-nav"><button class="tn-btn" data-dir="-1" aria-label="前のパーティー"><svg class="ic"><use href="#i-back"/></svg></button><span class="tn-label">パーティー <b class="tn-no">1</b><small>/ 10</small></span><button class="tn-btn" data-dir="1" aria-label="次のパーティー"><svg class="ic"><use href="#i-chev"/></svg></button></div>
+    <div id="te-party-scroll"></div>
+    <div id="te-party-labels"><span>リーダー</span><i></i><i></i><i></i><i></i><span>フレンド</span></div>
+    <div id="te-stats">
+      <div class="te-stat hp"><img class="stat-ic" src="sta1.png" alt="" draggable="false"><small>HP</small><b id="te-stat-hp">0</b></div>
+      <div class="te-stat atk"><img class="stat-ic" src="sta2.png" alt="" draggable="false"><small>攻撃</small><b id="te-stat-atk">0</b></div>
+      <div class="te-stat rec"><img class="stat-ic" src="sta3.png" alt="" draggable="false"><small>回復</small><b id="te-stat-rec">0</b></div>
+    </div>
+  </div>
+
+  <div id="te-tools">
+    <div id="te-filter-row">
+      <div id="te-attr-filters">
+        <button class="te-attr-btn" data-attr="fire" aria-label="火"><img src="1.png" alt="火"></button>
+        <button class="te-attr-btn" data-attr="water" aria-label="水"><img src="2.png" alt="水"></button>
+        <button class="te-attr-btn" data-attr="wood" aria-label="木"><img src="3.png" alt="木"></button>
+        <button class="te-attr-btn" data-attr="light" aria-label="光"><img src="4.png" alt="光"></button>
+        <button class="te-attr-btn" data-attr="dark" aria-label="闇"><img src="5.png" alt="闇"></button>
+      </div>
+      <span id="te-count"></span>
+    </div>
+    <div id="te-search-row">
+      <div id="te-search-wrap">
+        <svg class="ic" id="te-search-icon"><use href="#i-search"/></svg>
+        <input id="te-search-input" type="text" placeholder="名前・スキルで探す">
+        <button id="te-search-clear" aria-label="検索をクリア"><svg class="ic"><use href="#i-x"/></svg></button>
+      </div>
+      <button class="te-sort-btn btn btn-sm" id="te-sort-btn"><span id="te-sort-label">入手順</span><svg class="ic"><use href="#i-down"/></svg></button>
+    </div>
+  </div>
+
+  <div id="te-box-wrap">
+    <div id="te-monster-grid"></div>
+  </div>
+
+  <div id="te-footer" class="dock">
+    <span class="te-hint-text">2回タップで編成 ・ 長押しで詳細</span>
+    <button class="te-back-btn btn btn-primary" id="te-back"><svg class="ic"><use href="#i-check"/></svg>決定</button>
+  </div>
+
+  <div id="te-help-sheet">
+    <div class="te-help-card">
+      <div class="te-help-title">操作のしかた</div>
+      <ul>
+        <li><b>2回タップ</b><span>ボックスのモンスターを選んだ枠に入れる（編成済みなら外す）</span></li>
+        <li><b>長押し</b><span>モンスターの詳細を見る</span></li>
+        <li><b>チーム枠をタップ</b><span>入れたい枠を選ぶ</span></li>
+        <li><b>入れ替え</b><span>オンの間、チーム枠をドラッグして入れ替え</span></li>
+        <li><b>パーティー切り替え</b><span>矢印、または編成エリアを右へスワイプで次(2)、左へスワイプで前(10)。パーティーは1〜10</span></li>
+        <li><b>1番目と6番目</b><span>リーダーとフレンドのスキルが発動</span></li>
+      </ul>
+      <button class="btn btn-primary" id="te-help-close">わかった</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     育成（合成）
+     ============================================================ -->
+<div id="iku-screen" class="ui-screen">
+  <div id="iku-header" class="bar">
+    <span class="iku-title">育成</span>
+    <div id="iku-coin" aria-label="所持エナ"><img id="iku-coin-icon" src="hcoin.png" alt="エナ"><span id="iku-coin-num">0</span></div>
+    <div id="iku-tabs">
+      <button class="iku-tab active" data-tab="gassho">合成</button>
+    </div>
+  </div>
+  <div id="iku-panel-gassho">
+    <div id="iku-stage">
+      <div id="iku-altar">
+        <svg id="iku-spokes" viewBox="0 0 300 210" preserveAspectRatio="none" aria-hidden="true">
+          <polygon id="iku-ring" points="150,27 252.7,80.9 213.5,168.1 86.5,168.1 47.3,80.9"/>
+          <line class="iku-spoke" data-mat="0" x1="150" y1="105" x2="150" y2="27"/>
+          <line class="iku-spoke" data-mat="1" x1="150" y1="105" x2="252.7" y2="80.9"/>
+          <line class="iku-spoke" data-mat="2" x1="150" y1="105" x2="213.5" y2="168.1"/>
+          <line class="iku-spoke" data-mat="3" x1="150" y1="105" x2="86.5" y2="168.1"/>
+          <line class="iku-spoke" data-mat="4" x1="150" y1="105" x2="47.3" y2="80.9"/>
+        </svg>
+        <div id="iku-base-slot"><span class="slot-empty">ベース</span></div>
+        <div class="iku-mat-slot" data-mat="0"><span class="slot-empty-icon">＋</span></div>
+        <div class="iku-mat-slot" data-mat="1"><span class="slot-empty-icon">＋</span></div>
+        <div class="iku-mat-slot" data-mat="2"><span class="slot-empty-icon">＋</span></div>
+        <div class="iku-mat-slot" data-mat="3"><span class="slot-empty-icon">＋</span></div>
+        <div class="iku-mat-slot" data-mat="4"><span class="slot-empty-icon">＋</span></div>
+      </div>
+      <div id="iku-base-info">
+        <div id="iku-base-top">
+          <div id="iku-base-name">ベースを選択</div>
+          <div id="iku-preview"><span id="iku-preview-exp"></span><span id="iku-preview-lv"></span></div>
+        </div>
+        <div id="iku-base-detail"><span id="iku-base-detail-txt"></span><span id="iku-great-rate" title="素材1体につき3%（最大5体で15%）で、素材の経験値が2倍になります"></span></div>
+        <div id="iku-exp-row">
+          <div id="iku-exp-bar-bg"><div id="iku-exp-bar-gain"></div><div id="iku-exp-bar-fill"></div></div>
+          <span id="iku-exp-text">EXP 0 / ---</span>
+        </div>
+      </div>
+    </div>
+    <div id="iku-filter-row">
+      <div id="iku-attr-filters">
+        <button class="iku-attr-btn" data-attr="fire" aria-label="火"><img src="1.png" alt="火"></button>
+        <button class="iku-attr-btn" data-attr="water" aria-label="水"><img src="2.png" alt="水"></button>
+        <button class="iku-attr-btn" data-attr="wood" aria-label="木"><img src="3.png" alt="木"></button>
+        <button class="iku-attr-btn" data-attr="light" aria-label="光"><img src="4.png" alt="光"></button>
+        <button class="iku-attr-btn" data-attr="dark" aria-label="闇"><img src="5.png" alt="闇"></button>
+      </div>
+      <div id="iku-sort-tools">
+        <button class="iku-expsort-btn btn btn-sm" id="iku-expsort-btn" aria-pressed="false" title="合計経験値の多い順に並べる">EXP</button>
+        <button class="te-sort-btn btn btn-sm" id="iku-sort-btn"><span id="iku-sort-label">入手順</span><svg class="ic"><use href="#i-down"/></svg></button>
+      </div>
+    </div>
+    <div id="iku-box-wrap">
+      <div id="iku-monster-grid"></div>
+    </div>
+    <div id="iku-gassho-footer" class="dock">
+      <button class="te-back-btn btn-back" id="iku-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+      <button id="iku-gassho-btn" class="btn btn-primary btn-cta" disabled><span class="gb-label"><svg class="ic"><use href="#i-sparkle"/></svg>合成する</span><span class="gb-cost" id="iku-gassho-costwrap"><img src="hcoin.png" alt="エナ"><span id="iku-gassho-cost">0</span></span></button>
+    </div>
+  </div>
+</div>
+
+<div id="iku-result-overlay">
+  <div id="iku-result-box">
+    <div class="res-title" id="iku-result-title">合成完了</div>
+    <div id="iku-result-main">
+      <div class="res-great-row" id="iku-result-great"></div>
+      <div class="res-exp-row" id="iku-result-exp"></div>
+      <div class="res-lv-row"  id="iku-result-lv"></div>
+      <div class="res-slv-row" id="iku-result-skill"></div>
+    </div>
+    <button id="iku-result-ok" class="btn btn-primary btn-cta">OK</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     メール一覧
+     ============================================================ -->
+<div id="mail-screen" class="ui-screen">
+  <div id="mail-header" class="bar">
+    <button id="mail-close-btn" class="btn-back" aria-label="閉じる"><svg class="ic"><use href="#i-back"/></svg></button>
+    <span id="mail-header-title">メールボックス</span>
+  </div>
+  <div id="mail-list"></div>
+</div>
+
+<!-- ============================================================
+     メール詳細
+     ============================================================ -->
+<div id="mail-detail" class="ui-screen">
+  <div id="md2-header" class="bar">
+    <button id="md2-back-btn" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
+    <span id="md2-title"></span>
+  </div>
+  <div id="mail-detail-body">
+    <p id="md2-content-text"></p>
+    <div id="md2-reward-area"></div>
+    <button id="md2-receive-btn" class="btn btn-primary btn-cta" style="display:none;"><svg class="ic"><use href="#i-gift"/></svg>受け取る</button>
+    <div id="md2-received-area"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     リザルト
+     ============================================================ -->
+<div id="result-screen">
+  <div id="result-box">
+    <div class="res-title">ダンジョンクリア！</div>
+    <div class="res-stats">
+      <div class="res-stat">
+        <div class="res-stat-label res-coin-label">獲得エナ</div>
+        <div class="res-stat-value" id="res-coin">0</div>
+      </div>
+      <div class="res-stat">
+        <div class="res-stat-label res-exp-label">獲得EXP</div>
+        <div class="res-stat-value" id="res-exp">0</div>
+      </div>
+    </div>
+
+    <div class="res-section-title">ドロップ</div>
+    <div id="res-drops-container" class="res-drops"></div>
+
+    <div class="res-section-title">経験値の分配</div>
+    <div id="res-exp-members" class="res-exp-members"></div>
+
+    <button class="res-close-btn btn btn-primary btn-cta" id="res-close-btn">閉じる</button>
+  </div>
+</div>
+
+<!-- おふだ消費・日付変更などのお知らせ（出撃準備画面用） -->
+<div id="de-toast"></div>
+
+<!-- ログインボーナス（24時間ごとに「ようびのおふだ」） -->
+<div id="login-bonus" role="dialog" aria-modal="true" aria-label="ログインボーナス">
+  <div class="lb-card">
+    <div class="lb-head">ログインボーナス</div>
+    <div class="lb-body">
+      <div class="lb-item"><span class="lb-glow"></span><span id="lb-ico"></span></div>
+      <div class="lb-name" id="lb-name"></div>
+      <div class="lb-count" id="lb-count"></div>
+      <div class="lb-have" id="lb-have"></div>
+    </div>
+    <button id="lb-ok-btn" class="btn btn-primary btn-cta" type="button">やったー！</button>
+  </div>
+</div>
+
+<div id="start" style="display:none;">
+  タップして開始
+  <span>PUZZLE GAME</span>
+</div>
+
+<div id="game">
+  <div id="buff-status"></div>
+
+  <div id="time-stop-clock">
+    <div id="clock-face">
+      <!-- 短針（太く短い）／長針（細く長い）。どちらも真上(0時)を向いた形で描き、JSで回す -->
+      <svg id="clock-hour" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 24 L52.2 33 L56.6 43 L53.4 52 L50 56 L46.6 52 L43.4 43 L47.8 33 Z" fill="#0a0e2e"/>
+      </svg>
+      <svg id="clock-hand" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 6 L51.1 18 L53.2 20.2 L51.2 22 L52.2 34 L53.4 46 L51.6 54 L50 58 L48.4 54 L46.6 46 L47.8 34 L48.8 22 L46.8 20.2 L48.9 18 Z" fill="#0a0e2e"/>
+      </svg>
+      <svg id="clock-cap" viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="4.2" fill="#0a0e2e"/><circle cx="50" cy="50" r="1.6" fill="#8398ff"/>
+      </svg>
+    </div>
+  </div>
+
+  <div id="leader-skill-area">
+    <div class="leader-skill-row ls-leader empty" id="ls-row-0">
+      <span class="ls-tag"><svg class="ls-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.2 4.4 4.7 7.2 8 2.4l3.3 4.8 3.5-2.8-1.3 7.3H2.5z"/><rect x="2.5" y="12.9" width="11" height="1.6" rx=".6"/></svg>リーダー</span>
+      <span class="ls-text" id="ls-text-0">（なし）</span>
+    </div>
+    <div class="leader-skill-row ls-friend empty" id="ls-row-1">
+      <span class="ls-tag"><svg class="ls-ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="5.6" cy="5" r="2.4"/><path d="M1 13.4c0-2.9 1.9-4.6 4.6-4.6s4.6 1.7 4.6 4.6z"/><circle cx="11.5" cy="5.9" r="1.9"/><path d="M11 9.1c.2 0 .4-.1.6-.1 2 0 3.4 1.4 3.4 3.9v.5h-3.6c0-1.7-.1-3-.4-4.3z"/></svg>フレンド</span>
+      <span class="ls-text" id="ls-text-1">（なし）</span>
+    </div>
+  </div>
+  <div id="status-bar">
+    <div id="coin-display"><img class="coin-icon" src="hcoin.png" alt="エナ"><span id="coin-count">0</span></div>
+    <span id="combo-label"></span>
+    <div id="status-right"><div id="drop-display"><img class="drop-icon" src="itembox.png" alt="ドロップ"><span id="drop-count">0</span></div><button id="menu-btn">Menu</button></div>
+  </div>
+  <div id="dungeon">
+    <div id="dungeon-anim-overlay"></div>
+    <div id="time-stop-negative"></div>
+    <div id="enemy-area"></div>
+  </div>
+  <div id="party-area">
+    <div id="party-grid"></div>
+    <div id="sp-common-wrap">
+      <span id="sp-common-label">SP</span>
+      <div id="sp-common-bar"></div>
+      <span id="sp-common-count">0 / 10</span>
+    </div>
+    <div id="bottom-bars"><div id="bars-wrap"><div class="gauge-row" id="hp-row"><span class="gauge-cap">HP</span><div id="hp-track"><div id="hp-ghost"></div><div id="player-hp-bar"></div><div id="hp-poison"></div><div id="hp-label">0 / 0</div><div id="ls-guard"><img alt="" src="data:image/png;base64,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"><span id="ls-guard-pct"></span></div></div><div id="hp-delta"></div></div><div class="gauge-row" id="time-row"><span class="gauge-cap"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8.6" r="5.6"/><path d="M8 5.6v3.2l2.1 1.3M6 1.6h4"/></svg></span><div id="timer-track"><div id="timer-bar"></div><div id="timer-spark"></div></div></div></div></div>
+  </div>
+  <div id="grid-wrap"><div id="grid"></div><div id="combo-overlay"></div></div>
+</div>
+
+<!-- 画面サイズ補正 / 全画面化 -->
+<script src="js/screen-fit.js"></script>
+<!-- データ -->
+<script src="js/data/monsters.js"></script>
+<script src="js/data/dungeons.js"></script>
+<script src="js/data/areas.js"></script>
+<script src="js/data/exp.js"></script>
+<script src="js/data/mail.js"></script>
+<script src="js/data/items.js"></script>
+<!-- ゲーム本体 -->
+<script src="js/damage-number.js"></script>
+<script src="js/skill-text.js"></script>
+<script src="js/box-sort.js"></script>
+<script src="js/boss-cloud.js"></script>
+<script src="js/game.js"></script>
+<script src="js/evo-puzzle.js"></script>
+<script src="js/evo-scene.js"></script>
+<script src="js/zukan.js"></script>
+<script src="js/allattack-fx.js"></script>
+<script src="js/enemy-attack-fx.js"></script>
+<script src="js/cutin.js"></script>
+<script src="js/preload.js"></script>
+</body>
+</html>
