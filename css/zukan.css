@@ -9,6 +9,10 @@
   #hh-coin { min-width: 84px; margin-right: 8px; }
   .hh-icons { gap: 8px; }
 }
+@media (max-width: 420px) {   /* ホームのアイコンが5つになったので、少しせまく */
+  .hh-icon-btn { width: 42px; height: 42px; }
+  #hh-coin { min-width: 76px; margin-right: 6px; }
+}
 @media (max-width: 340px) {
   .hh-icon-btn { width: 42px; height: 42px; }
 }

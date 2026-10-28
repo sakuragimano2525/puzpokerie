@@ -1,0 +1,42 @@
+/* マルチ：交代制ターン（js/multi-turn.js） */
+#game { --mt-c0:#4aa3ff; --mt-c1:#ff5d6c; --mt-c2:#4fd37a; --mt-c3:#ffc83d; }
+#mt-hud {
+  display:none; position:absolute; left:50%; transform:translateX(-50%);
+  top:calc(env(safe-area-inset-top, 0px) + 34px); z-index:60;
+  align-items:center; gap:6px; padding:3px 6px;
+  background:rgba(8,12,30,.72); border:1px solid rgba(255,255,255,.18); border-radius:999px;
+  backdrop-filter:blur(4px); font-family:inherit; pointer-events:none;
+}
+#mt-players { display:flex; gap:4px; }
+.mt-pl { display:flex; align-items:center; gap:4px; padding:2px 8px 2px 3px; border-radius:999px;
+  background:rgba(255,255,255,.08); opacity:.55; transition:opacity .2s, background .2s, box-shadow .2s; }
+.mt-pl.on { opacity:1; background:rgba(255,255,255,.16); box-shadow:0 0 0 1.5px currentColor, 0 0 10px currentColor; }
+.mt-pl.p0 { color:var(--mt-c0); } .mt-pl.p1 { color:var(--mt-c1); }
+.mt-pl.p2 { color:var(--mt-c2); } .mt-pl.p3 { color:var(--mt-c3); }
+.mt-av { width:20px; height:20px; border-radius:50%; background:currentColor; color:inherit;
+  display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; }
+.mt-av { -webkit-text-fill-color:#0b1020; }
+.mt-tag { font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
+.mt-tag.w { font-weight:500; color:#c9d0ea; }
+#mt-count { pointer-events:auto; border:0; border-radius:999px; padding:3px 9px; font-size:11px; font-weight:700;
+  color:#dfe5ff; background:rgba(255,255,255,.14); cursor:pointer; }
+
+/* 今の人の色で盤面の枠を光らせる */
+#game.mt-on #grid-wrap { transition:box-shadow .25s; }
+#game.mt-p0 #grid-wrap { box-shadow:0 0 0 2px var(--mt-c0), 0 0 16px var(--mt-c0); }
+#game.mt-p1 #grid-wrap { box-shadow:0 0 0 2px var(--mt-c1), 0 0 16px var(--mt-c1); }
+#game.mt-p2 #grid-wrap { box-shadow:0 0 0 2px var(--mt-c2), 0 0 16px var(--mt-c2); }
+#game.mt-p3 #grid-wrap { box-shadow:0 0 0 2px var(--mt-c3), 0 0 16px var(--mt-c3); }
+
+/* ターン切替バナー */
+#mt-banner {
+  position:absolute; left:0; right:0; top:42%; z-index:9000; text-align:center; pointer-events:none;
+  padding:14px 0; opacity:0; transform:scale(.85);
+  background:linear-gradient(90deg, transparent, rgba(6,10,28,.82) 15%, rgba(6,10,28,.82) 85%, transparent);
+  transition:opacity .22s ease-out, transform .22s ease-out;
+}
+#mt-banner.show { opacity:1; transform:scale(1); }
+#mt-banner .mt-b-sub { font-size:14px; font-weight:700; letter-spacing:.12em; color:#cfd6f5; }
+#mt-banner .mt-b-main { font-size:30px; font-weight:900; letter-spacing:.06em; text-shadow:0 2px 10px rgba(0,0,0,.6); }
+#mt-banner.p0 .mt-b-main { color:var(--mt-c0); } #mt-banner.p1 .mt-b-main { color:var(--mt-c1); }
+#mt-banner.p2 .mt-b-main { color:var(--mt-c2); } #mt-banner.p3 .mt-b-main { color:var(--mt-c3); }

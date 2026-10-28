@@ -4108,6 +4108,7 @@ function _clearGoHome(unlockedArea, rewards) {
   document.getElementById('home').style.display = 'flex';
   stopDungeonBGM();
   stopClearSE();
+  if (window.MultiTurn) MultiTurn.end();
   busy = false;
   setTimeout(() => { try { scrollHomeToFrontier(); } catch (e) {} }, 50);
 
@@ -7592,6 +7593,7 @@ for (const k in AREA_INFO) {
 const EVENT_INFO = (typeof EVENT_AREA_DATA !== 'undefined' && EVENT_AREA_DATA) || {};
 const EVENT_UNLOCK = (typeof EVENT_UNLOCK_AREA !== 'undefined' && EVENT_UNLOCK_AREA) || 6;
 function isEventArea(a) { return typeof a === 'string' && Object.prototype.hasOwnProperty.call(EVENT_INFO, a); }
+function isMultiArea(a) { return typeof MULTI_AREA_IDS !== 'undefined' && MULTI_AREA_IDS.indexOf(a) >= 0; }
 function isEventUnlocked() { return isAreaBossCleared(EVENT_UNLOCK); }
 function areaNameOf(a) { return isEventArea(a) ? (EVENT_INFO[a].name || String(a)) : (AREA_NAMES[a] || `エリア${a}`); }
 function areaHue(a) {
@@ -7780,10 +7782,10 @@ function applyAreaBackground(elId, n) {
   el.style.setProperty('--h', areaHue(n));
 }
 // ホームの表示モード：'main'（メインのエリア一覧）／'event'（イベントステージ一覧）。右上のボタンで切り替え
-let homeMode = 'main';
+let homeMode = 'main';   // 'main' | 'event' | 'multi'
 function buildStageMap() {
   if (homeMode === 'event' && !isEventUnlocked()) homeMode = 'main';
-  if (homeMode === 'event') buildEventMap(); else buildMainMap();
+  if (homeMode === 'event') buildEventMap(); else if (homeMode === 'multi') buildMultiMap(); else buildMainMap();
   updateModeBtn();
 }
 function updateModeBtn() {
@@ -7797,6 +7799,16 @@ function updateModeBtn() {
   if (use) use.setAttribute('href', ev ? '#i-map' : '#i-event');   // イベント表示中はメイン（地図）のアイコンに
   const lbl = btn.querySelector('.hh-lbl');
   if (lbl) lbl.textContent = ev ? 'メイン' : 'イベント';           // 押すと行き先が文字でわかるように
+  const mb = document.getElementById('multi-toggle-btn');        // マルチ一覧ボタン（図鑑の左）
+  if (mb) {
+    const mu = homeMode === 'multi';
+    mb.classList.toggle('on', mu);
+    mb.setAttribute('aria-label', mu ? 'メインステージへもどる' : 'マルチプレイステージ一覧');
+    const mUse = mb.querySelector('use');
+    if (mUse) mUse.setAttribute('href', mu ? '#i-map' : '#i-multi');
+    const mLbl = mb.querySelector('.hh-lbl');
+    if (mLbl) mLbl.textContent = mu ? 'メイン' : 'マルチ';
+  }
 }
 function buildEventMap() {
   const map = document.getElementById('stage-map');
@@ -7812,34 +7824,50 @@ function buildEventMap() {
     const em = document.createElement('div'); em.className = 'ev-empty'; em.textContent = 'いまはイベントがありません';
     map.appendChild(em);
   }
-  ids.forEach(id => {
-    const ev = EVENT_INFO[id];
-    const b = document.createElement('div');
-    b.className = 'area-band evt';
-    b.style.setProperty('--h', areaHue(id));
-    const art = document.createElement('span');
-    art.className = 'area-art';
-    art.style.backgroundImage = `url('${areaBgImage(id)}')`;
-    const text = document.createElement('span'); text.className = 'area-text';
-    if (ev.desc) { const ds = document.createElement('span'); ds.className = 'area-sub'; ds.textContent = ev.desc; text.appendChild(ds); }
-    const nm = document.createElement('span'); nm.className = 'area-name fit1';   // fit1 = 長い行は縮めて絵にかからないよう収める
-    // bannerName があればそれを表示（\n で改行。例 'ハッピー\nハロウィン'）。無ければ name を1行で
-    (ev.bannerName || ev.name || id).split('\n').forEach((ln, i) => { if (i) nm.appendChild(document.createElement('br')); nm.appendChild(document.createTextNode(ln)); });
-    text.appendChild(nm);
-    const ent = eventEntry(id);   // 入るのにおふだが要るイベント：持っている数を出す
-    if (ent) { const row = document.createElement('span'); row.className = 'ofuda-row'; row.innerHTML = ofudaChipHtml(ent.item); text.appendChild(row); }
-    const go = document.createElement('button');
-    go.type = 'button'; go.className = 'area-state area-go';
-    go.innerHTML = '挑戦<svg class="ic"><use href="#i-chev"/></svg>';
-    go.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!getStageList(id).length) { homeToast('準備中です'); return; }
-      openStageSelect(id);
-    });
-    b.appendChild(art); b.appendChild(text); b.appendChild(go);
-    map.appendChild(b);
-    fitAreaNameObserve(b);
+  ids.forEach(id => map.appendChild(buildEventBand(id)));
+}
+function buildEventBand(id) {
+  const ev = EVENT_INFO[id];
+  const b = document.createElement('div');
+  b.className = 'area-band evt';
+  b.style.setProperty('--h', areaHue(id));
+  const art = document.createElement('span');
+  art.className = 'area-art';
+  art.style.backgroundImage = `url('${areaBgImage(id)}')`;
+  const text = document.createElement('span'); text.className = 'area-text';
+  if (ev.desc) { const ds = document.createElement('span'); ds.className = 'area-sub'; ds.textContent = ev.desc; text.appendChild(ds); }
+  const nm = document.createElement('span'); nm.className = 'area-name fit1';   // fit1 = 長い行は縮めて絵にかからないよう収める
+  // bannerName があればそれを表示（\n で改行。例 'ハッピー\nハロウィン'）。無ければ name を1行で
+  (ev.bannerName || ev.name || id).split('\n').forEach((ln, i) => { if (i) nm.appendChild(document.createElement('br')); nm.appendChild(document.createTextNode(ln)); });
+  text.appendChild(nm);
+  const ent = eventEntry(id);   // 入るのにおふだが要るイベント：持っている数を出す
+  if (ent) { const row = document.createElement('span'); row.className = 'ofuda-row'; row.innerHTML = ofudaChipHtml(ent.item); text.appendChild(row); }
+  const go = document.createElement('button');
+  go.type = 'button'; go.className = 'area-state area-go';
+  go.innerHTML = '挑戦<svg class="ic"><use href="#i-chev"/></svg>';
+  go.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!getStageList(id).length) { homeToast('準備中です'); return; }
+    openStageSelect(id);
   });
+  b.appendChild(art); b.appendChild(text); b.appendChild(go);
+  fitAreaNameObserve(b);
+  return b;
+}
+// マルチプレイステージ一覧（ホームの「マルチ」ボタン）。バナーはイベントと同じ作り
+function buildMultiMap() {
+  const map = document.getElementById('stage-map');
+  map.innerHTML = '';
+  map.classList.add('event');
+  const head = document.createElement('div');
+  head.className = 'ev-head'; head.textContent = 'マルチプレイステージ';
+  map.appendChild(head);
+  const ids = MULTI_AREA_IDS.filter(id => isEventArea(id));
+  if (!ids.length) {
+    const em = document.createElement('div'); em.className = 'ev-empty'; em.textContent = 'いまはマルチステージがありません';
+    map.appendChild(em);
+  }
+  ids.forEach(id => map.appendChild(buildEventBand(id)));
 }
 // 日替わりダンジョンのカード（今日の曜日のバナー＋ダンジョン名＋ようびのおふだの所持数＋1週間のカレンダー）
 function buildDailyCard(id) {
@@ -7951,7 +7979,7 @@ function setHomeFocusFromCurrent() {
 function scrollHomeToFrontier() {
   const sc = document.getElementById('home-scroll');
   const land = !!(window.isLandscapeHome && window.isLandscapeHome());
-  if (homeMode === 'event') { if (sc) { sc.scrollTop = 0; sc.scrollLeft = 0; } return; }
+  if (homeMode === 'event' || homeMode === 'multi') { if (sc) { sc.scrollTop = 0; sc.scrollLeft = 0; } return; }
   let t = null;
   if (homeFocusArea) t = document.querySelector(`.area-band[data-area="${homeFocusArea}"]`);   // リタイア/クリアした直後はそのエリアの位置へ
   if (!t) t = document.querySelector('.area-band.unlocked') || document.querySelector('.area-band.cleared');
@@ -7974,11 +8002,17 @@ function homeToast(msg, ms = 1400) {
 document.querySelectorAll('#home [data-soon]').forEach(b => b.addEventListener('click', () => homeToast('準備中です')));
 // 右上ボタン：メイン ⇄ イベントステージ一覧。エリア6（EVENT_UNLOCK_AREA）をクリアするまでは使えない
 document.getElementById('mode-toggle-btn').addEventListener('click', () => {
-  if (homeMode === 'main' && !isEventUnlocked()) {
+  if (homeMode !== 'event' && !isEventUnlocked()) {
     homeToast(`エリア${EVENT_UNLOCK}をクリアするとイベントステージが開放されます`, 2200);
     return;
   }
   homeMode = homeMode === 'event' ? 'main' : 'event';
+  buildStageMap();
+  scrollHomeToFrontier();
+});
+// 図鑑の左ボタン：メイン ⇄ マルチプレイステージ一覧（開放条件なし）
+document.getElementById('multi-toggle-btn').addEventListener('click', () => {
+  homeMode = homeMode === 'multi' ? 'main' : 'multi';
   buildStageMap();
   scrollHomeToFrontier();
 });
@@ -8020,7 +8054,7 @@ function renderStageSelect() {
   document.getElementById('ss-header-area-name').textContent = areaName;
   document.getElementById('ss-area-bigname').textContent = areaName;
   const areaNumEl = document.getElementById('ss-area-num');
-  if (areaNumEl) areaNumEl.textContent = isDailyArea(currentAreaNum) ? `日替わり ・ ${WEEKDAY_JP[dailyDowOf(currentAreaNum)]}曜日` : isEventArea(currentAreaNum) ? 'イベント' : `エリア ${currentAreaNum}`;
+  if (areaNumEl) areaNumEl.textContent = isDailyArea(currentAreaNum) ? `日替わり ・ ${WEEKDAY_JP[dailyDowOf(currentAreaNum)]}曜日` : isMultiArea(currentAreaNum) ? 'マルチプレイ' : isEventArea(currentAreaNum) ? 'イベント' : `エリア ${currentAreaNum}`;
   const ssOf = document.getElementById('ss-ofuda');   // おふだ所持数
   if (ssOf) {
     const ent = eventEntry(currentAreaNum);
@@ -8057,6 +8091,7 @@ function renderStageSelect() {
         return;
       }
       currentStageType = stage.key;
+      if (isMultiArea(currentAreaNum) && window.MultiOnline) { startMultiMatching(currentAreaNum, stage.key); return; }   // マルチ：自動マッチング
       openDungeonEntry(currentAreaNum, stage.key);
     });
     content.appendChild(btn);
@@ -8172,6 +8207,7 @@ async function startGameFromHome() {
   }
 
   init();
+  if (window.MultiTurn) { if (isMultiArea(currentAreaNum)) MultiTurn.begin(); else MultiTurn.end(); }   // マルチ：交代制ターン（Aから）
   // START表示が終わるまでは盤面操作・スキル・メニュー・敵の先制を止める。表示後に先制→操作可能
   busy = true;
   setEnemyActing(true);
@@ -8189,7 +8225,8 @@ async function startGameFromHome() {
       }
       await playEnemyAppear(); await runBattleStartActions();
     }
-    busy = false;
+    if (window.MultiTurn && MultiTurn.active) await MultiTurn.announce();   // マルチ：「Aのターン」
+    busy = !!(window.MultiTurn && MultiTurn.online && MultiTurn.active && !MultiTurn.isMyTurn());   // マルチ(オンライン)：自分の番まで待つ
   }, 200);
 }
 
@@ -8379,6 +8416,7 @@ function renderDungeonEntry() {
   setSkillText(document.getElementById('de-ls2-desc'), ls2Desc);
 
   renderDungeonEntryInfo(dKey, dd);
+  multiLobbyRefresh();   // マルチ：編成を変えたら「決定」を取り消す／あいてへ編成を送る
 }
 
 // 画像の「透明でない部分」だけを正方形に切り出して、中身が枠の真ん中に来るようにする
@@ -8490,8 +8528,129 @@ function openDungeonEntry(areaNum, stageType) {
   startMenuBGM();
 }
 
+// ============================================================
+// マルチ：自動マッチング → 出撃準備でお互い編成 → 両者「決定」で開始
+//   multiLobby = { room, seat, ready, sig, opp, seen } / ひとりで交代プレイ = { solo:true } / 通常 = null
+// ============================================================
+let multiLobby = null;
+const _moEl = id => document.getElementById(id);
+function moTeamStr() {   // 自分の編成を「モンスターID:Lv,…」(6枠)にして相手へ見せる
+  return currentTeam.map(uid => { const e = uid !== null && uid !== undefined && box.find(b => b.uid === uid); return e ? e.monsterId + ':' + e.level : ''; }).join(',');
+}
+function moRenderOpp() {
+  const panel = _moEl('mo-opp');
+  if (!panel) return;
+  if (!multiLobby || multiLobby.solo) { panel.style.display = 'none'; return; }
+  panel.style.display = 'flex';
+  _moEl('mo-opp-seat').textContent = MultiTurn.name(1 - multiLobby.seat);
+  const o = multiLobby.opp, here = !!(o && o.present);
+  const row = _moEl('mo-opp-mons'); row.innerHTML = '';
+  const parts = (here && o.team ? String(o.team) : '').split(',');
+  for (let i = 0; i < 6; i++) {
+    const span = document.createElement('span');
+    const t = parts[i] || '', id = t ? t.slice(0, t.lastIndexOf(':')) : '', mon = id && MONSTER_DATA[id];
+    if (mon) { const im = document.createElement('img'); im.src = monsterImg(mon); im.alt = mon.name; im.onerror = function () { this.style.display = 'none'; }; span.appendChild(im); }
+    row.appendChild(span);
+  }
+  const st = _moEl('mo-opp-state');
+  panel.classList.toggle('ready', here && !!o.ready);
+  panel.classList.toggle('gone', !here && multiLobby.seen);
+  st.textContent = here ? (o.ready ? '準備OK！' : '編成中…') : (multiLobby.seen ? '退出しました' : '入室待ち…');
+}
+function moRefreshBtn() {
+  const t = _moEl('de-cta-txt'), b = _moEl('de-challenge-btn');
+  if (!t) return;
+  if (multiLobby && !multiLobby.solo) { t.textContent = multiLobby.ready ? 'あいて待ち…（タップで取消）' : '決定'; b.classList.toggle('waiting', !!multiLobby.ready); }
+  else { t.textContent = '挑戦する'; b.classList.remove('waiting'); }
+}
+function multiLobbyRefresh() {
+  if (multiLobby && !multiLobby.solo) {
+    const sig = moTeamStr();
+    if (multiLobby.ready && sig !== multiLobby.sig) { multiLobby.ready = false; deToast('編成を変えたので「決定」を取り消しました'); }
+    MultiOnline.setReady(multiLobby.ready, sig);   // 編成中でも、あいてに今の編成が見える
+  }
+  moRenderOpp(); moRefreshBtn();
+}
+function moLeaveLobby() {
+  if (multiLobby && !multiLobby.solo && window.MultiOnline) MultiOnline.leave();
+  multiLobby = null; moRenderOpp(); moRefreshBtn();
+}
+// 「決定」ボタン：準備OK ⇔ 取り消し
+function moOnDecide() {
+  const lob = multiLobby;
+  if (lob.ready) { lob.ready = false; MultiOnline.setReady(false, moTeamStr()); moRefreshBtn(); return; }
+  if (lob.seen && !(lob.opp && lob.opp.present)) { deToast('あいてが退出しました。戻ってもういちど探してね', 2800); return; }
+  if (partyMemberCount() === 0) { deToast('パーティーにモンスターがいません。編成してね', 2600); return; }
+  if (dungeonRequiresAllAttr(currentAreaNum, currentStageType) && !teamHasAllAttrs()) { deToast('【全属性必須】火・水・木・光・闇のモンスターを1匹ずつ以上編成してね', 3000); return; }
+  lob.ready = true; lob.sig = moTeamStr();
+  MultiOnline.setReady(true, lob.sig);
+  moRefreshBtn();
+}
+// 2人とも「決定」→ 同時にスタート（自分の番号は seat：0=A / 1=B）
+function moStartBattle() {
+  const lob = multiLobby;
+  if (!lob || lob.solo) return;
+  MultiTurn.online = true; MultiTurn.localId = lob.seat; MultiTurn.count = 2;
+  MultiTurn.transport = { send: s => MultiOnline.sendTurn(s) };
+  multiLobby = null;
+  moRenderOpp(); moRefreshBtn();
+  document.getElementById('dungeon-entry').style.display = 'none';
+  startGameFromHome();
+}
+function moOnOpponent(o) {
+  if (multiLobby && !multiLobby.solo) {
+    multiLobby.opp = o;
+    if (o && o.present) multiLobby.seen = true;
+    if (multiLobby.seen && !(o && o.present)) multiLobby.ready = false;
+    moRenderOpp(); moRefreshBtn();
+    return;
+  }
+  // ダンジョン中にあいてが抜けたら、のこりは自由に操作できるようにする
+  if (window.MultiTurn && MultiTurn.online && MultiTurn.active && !(o && o.present)) {
+    const waiting = !MultiTurn.isMyTurn();
+    MultiTurn.localId = null;
+    if (MultiTurn.banner) MultiTurn.banner('MULTI', 'あいてが退出しました', 1);
+    if (waiting) busy = false;
+  }
+}
+async function startMultiMatching(areaNum, stageKey) {
+  const ov = _moEl('mo-matching'), spin = _moEl('mo-spin'), msg = _moEl('mo-msg'), tm = _moEl('mo-time');
+  const cancel = _moEl('mo-cancel'), solo = _moEl('mo-solo');
+  _moEl('mo-stage').textContent = stageShortLabel(areaNum, stageKey);
+  spin.classList.remove('off'); msg.textContent = 'あいてをさがしています…'; tm.textContent = '';
+  cancel.textContent = 'キャンセル'; solo.style.display = 'none';
+  ov.classList.add('show');
+  const t0 = Date.now();
+  const tick = setInterval(() => { tm.textContent = `${Math.floor((Date.now() - t0) / 1000)} 秒`; }, 500);
+  const close = () => { clearInterval(tick); ov.classList.remove('show'); };
+  cancel.onclick = () => { MultiOnline.cancelMatch(); close(); };
+  solo.onclick = () => { close(); multiLobby = { solo: true }; openDungeonEntry(areaNum, stageKey); };   // 通信なし：いままで通り1台で交代
+  try {
+    if (!MultiOnline.available()) throw new Error('offline');
+    const r = await MultiOnline.findMatch(`${areaNum}-${stageKey}`);
+    clearInterval(tick);
+    spin.classList.add('off'); msg.textContent = 'マッチしました！'; tm.textContent = '';
+    await new Promise(res => setTimeout(res, 700));
+    ov.classList.remove('show');
+    multiLobby = { room: r.room, seat: r.seat, ready: false, sig: '', opp: null, seen: false };
+    MultiOnline.enterRoom(r.room, r.seat, {
+      onOpponent: moOnOpponent,
+      onBothReady: moStartBattle,
+      onTurn: s => { if (window.MultiTurn) MultiTurn.receive(s); },
+    });
+    openDungeonEntry(areaNum, stageKey);
+  } catch (e) {
+    if (e && e.message === 'cancel') return;
+    clearInterval(tick);
+    spin.classList.add('off'); msg.textContent = 'つうしんできませんでした'; tm.textContent = 'ネット接続を確認してね';
+    cancel.textContent = '閉じる'; solo.style.display = '';
+  }
+}
+if (window.MultiTurn) MultiTurn.onMyTurn = () => { busy = false; };   // あいてのターンが終わったら盤面のロックを解く
+
 document.getElementById('de-edit-btn').addEventListener('click', openTeamEditFromDungeonEntry);
 document.getElementById('de-back-btn').addEventListener('click', () => {
+  moLeaveLobby();   // マルチ：部屋から退出
   document.getElementById('dungeon-entry').style.display = 'none';
   document.getElementById('stage-select').style.display = 'flex';
   startMenuBGM();
@@ -8501,6 +8660,8 @@ function partyMemberCount() {
   return currentTeam.filter(uid => uid !== null && uid !== undefined && box.some(b => b.uid === uid)).length;
 }
 document.getElementById('de-challenge-btn').addEventListener('click', () => {
+  if (multiLobby && !multiLobby.solo) { moOnDecide(); return; }   // マルチ：「決定」（両者そろったら自動で始まる）
+  if (multiLobby && multiLobby.solo) { multiLobby = null; moRenderOpp(); moRefreshBtn(); }
   // パーティーが0匹ならダンジョンに入れない（おふだも消費しない）
   if (partyMemberCount() === 0) {
     deToast('パーティーにモンスターがいません。編成してね', 2600);
@@ -8592,6 +8753,7 @@ document.getElementById('quit-yes').addEventListener('click', function() {      
   document.getElementById('home').style.display = 'flex';
   stopDungeonBGM();
   startMenuBGM();
+  if (window.MultiTurn) MultiTurn.end();
   setTimeout(scrollHomeToFrontier, 50);
   if (got > 0) homeToast(`ドロップ ${got}個を受け取りました`, 2600);
 });
@@ -9619,7 +9781,12 @@ async function _evaluateInner() {
 
   if (enemyDefeatedHandled) await handleBattleEnd();
 
-  busy = false;
+  // マルチ：1人分のパズルが終わったら、同じ盤面のまま次の人へ交代（クリア／ゲームオーバー／ホーム復帰中は交代しない）
+  if (window.MultiTurn && MultiTurn.active && !_gameOverActive && !_clearActive && document.getElementById('game').style.display === 'flex') {
+    await MultiTurn.endTurn();
+  }
+
+  busy = !!(window.MultiTurn && MultiTurn.online && MultiTurn.active && !MultiTurn.isMyTurn());   // マルチ(オンライン)：あいてのターン中は操作できない
 }
 
 // (r,c) に type を置いたとき、縦か横に3つ以上つながるか（空きマスはつながらない扱い）

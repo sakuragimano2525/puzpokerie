@@ -182,6 +182,9 @@
 .hh-icon-btn.mode .ic { width: 1.25rem; height: 1.25rem; stroke-width: 2.4; }
 .hh-icon-btn.mode .hh-lbl { display: block; font: 900 0.52rem/1 var(--ff); letter-spacing: 0; white-space: nowrap; }
 .hh-icon-btn.mode.on { background: var(--ink); }
+/* マルチ一覧ボタン（図鑑の左）。ふだん=ティール、表示中=紺（押すとメインへ戻る） */
+.hh-icon-btn.mode.multi { background: #12a594; }
+.hh-icon-btn.mode.multi.on { background: var(--ink); }
 .hh-icon-btn.mode.locked { color: var(--ink-3); border-color: var(--ink-3); box-shadow: 0 4px 0 var(--ink-3); background: #f3f6fd; }
 .hh-icon-btn.mode.locked::after { content: ''; position: absolute; right: -6px; bottom: -6px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10.5' width='14' height='10' rx='3'/%3E%3Cpath d='M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5'/%3E%3C/svg%3E") center/10px no-repeat; border: 2px solid #fff; }
 .hh-badge { display: none; position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; border-radius: 50%; background: var(--coral); border: var(--bw) solid var(--ink); }

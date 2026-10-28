@@ -65,10 +65,16 @@ const AREA_DATA = {
 //     ・バナーの名前を2行にしたいときは bannerName: 'ハッピー\nハロウィン' のように \n で区切る（無ければ name を1行で表示）
 // ============================================================
 const EVENT_UNLOCK_AREA = 6;   // このエリアのボスをクリアするとイベントステージが開放される
+// ホームの「マルチ」ボタンで一覧に出すエリアID（EVENT_AREA_DATA のキー）。マルチ用ステージを足すときはここに足す
+const MULTI_AREA_IDS = ['multi'];
 const EVENT_AREA_DATA = {
   keiken: { name: 'けいけんパーク', desc: 'モンスターを育てよう！', bg: 'dungeon1.png', hue: 200, entryItem: 'ohuda1', entryCost: 1 },
   halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
 
+
+  // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──
+  //   ダンジョンのキーは「multi-番号」。中身は js/data/multi-dungeons.js（いまは 1-1 のコピー）
+  multi: { name: 'マルチダンジョン', bannerName: 'マルチ\nダンジョン', desc: 'なかまと協力！（仮）', bg: 'dungeon1.png', hue: 175, hidden: true, stageNames: { 1: 'マルチ-1' }, stageLevels: { 1: '初級' } },
 
   // ── 日替わりダンジョン（月〜日の7つ。今日の曜日のものだけが、イベント一覧の「日替わりダンジョン」から遊べる） ──
   //   ダンジョンのキーは「イベントID-番号」。  例  daily_mon-1（月曜のステージ1） / daily_mon-boss
