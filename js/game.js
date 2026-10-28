@@ -511,7 +511,8 @@ function applyLeaderEffects(effects, context) {
         } else if (cond === 'hpAbove') {
           if ((context.hpRatio || 0) >= eff.threshold) apply = true;
         } else if (cond === 'hpBelow') {
-          if (context.hpRatio !== undefined && context.hpRatio <= eff.threshold) apply = true;
+          { const _lo = context.hpRatioLow !== undefined ? context.hpRatioLow : context.hpRatio;
+            if (_lo !== undefined && _lo <= eff.threshold) apply = true; }
         } else if (cond === 'skillUsed') {
           if (context.skillUsed) apply = true;
         } else if (cond === 'darkCombos') {
@@ -9348,8 +9349,13 @@ async function _evaluateInner() {
 
     // ★ 最終コンボ補正を一括適用し、LS/エンハンス倍率を乗算 ★
     const finalComboBonus = 1 + 0.25 * (totalCombo - 1);
-    const finalDamages = [];
+    let finalDamages = [];
     let anyAtkUp = false;   // 攻撃力アップ(LS/バフ倍率 or コンボ補正)がかかったか
+    // 毒・回復の「前」のHP割合（この後 回復が入っても「HP〇%以下」を判定できるよう覚えておく）
+    const _hpStartRatio = playerCurrentHP / Math.max(1, playerMaxHP);
+    // ダメージ計算。回復後にもう一度呼んで、回復でHP満タン／HP〇%以上になった分も反映する
+    const calcFinalDamages = () => {
+    finalDamages = []; anyAtkUp = false;
     for (let i = 0; i < partyUids.length; i++) {
       const uid = partyUids[i];
       if (uid === null) { finalDamages.push(0); continue; }
@@ -9373,8 +9379,12 @@ async function _evaluateInner() {
           if (e) { const m = MONSTER_DATA[e.monsterId]; if (m && m.leaderSkill && m.leaderSkill.effects) lse.push(...m.leaderSkill.effects); }
         }
       });
-      const hpRatioFinal = playerCurrentHP / playerMaxHP;
-      const context = { attr: mon.attr, monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: hpRatioFinal, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, remainingOrbs };
+      // 「満タン／HP〇%以上」系：毒・回復を済ませた今のHP（回復で条件達成でも発動）。回復前に条件を満たしていた場合も従来どおり発動
+      // 「HP〇%以下」系：回復する前のHPでも判定（回復して%を超えても発動）
+      const _hpNowRatio = playerCurrentHP / Math.max(1, playerMaxHP);
+      const hpRatioFinal = Math.max(_hpStartRatio, _hpNowRatio);
+      const hpRatioLowFinal = Math.min(_hpStartRatio, _hpNowRatio);
+      const context = { attr: mon.attr, monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: hpRatioFinal, hpRatioLow: hpRatioLowFinal, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, remainingOrbs };
       const res = applyLeaderEffects(lse, context);
       atkMult = res.atkMultiplier;
       for (const b of atkBuffs) {
@@ -9387,6 +9397,8 @@ async function _evaluateInner() {
       if ((atkMult > 1.0 || finalComboBonus > 1) && finalDmg > 0) anyAtkUp = true;
       finalDamages.push(finalDmg);
     }
+    };
+    calcFinalDamages();
 
     // ★ 毒ダメージ（回復より先。回復があれば毒の後に回復する） ★
     _poisonNet = null;
@@ -9450,6 +9462,8 @@ async function _evaluateInner() {
         await sleep(finalDamages.some(d => d > 0) ? 350 : 800);
       }
     }
+    // 回復を済ませたあとのHPでリーダースキルを判定し直す（回復してHP満タン／〇%以上になった分も発動）
+    calcFinalDamages();
 
     // ★ 毒でHPが0なら（回復後も0なら）ゲームオーバー ★
     if (playerCurrentHP <= 0) {

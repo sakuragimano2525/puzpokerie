@@ -175,7 +175,8 @@ const DUNGEON_DATA = {
               }
             ],
             "monsterDrop": {
-              "enabled": false
+              "enabled": true,
+              "rate": 0.05
             }
           }
         ]
@@ -208,7 +209,8 @@ const DUNGEON_DATA = {
               }
             ],
             "monsterDrop": {
-              "enabled": false
+              "enabled": true,
+              "rate": 0.05
             }
           }
         ]
@@ -219,13 +221,13 @@ const DUNGEON_DATA = {
             "name": "フシギダネ",
             "img": "mp1.png",
             "attr": "wood",
-            "hp": 1000,
-            "atk": 70,
+            "hp": 2000,
+            "atk": 50,
             "def": 0,
             "isBoss": true,
             "turnInterval": 2,
             "size": "M",
-            "exp": 10,
+            "exp": 18,
             "coin": 5,
             "drops": [],
             "actions": [
@@ -251,9 +253,10 @@ const DUNGEON_DATA = {
                   },
                   {
                     "type": "board_change",
-                    "pattern": "spawn",
-                    "to": "wood",
-                    "count": 5
+                    "pattern": "row",
+                    "to": "heal",
+                    "pos": "random",
+                    "lines": 1
                   }
                 ]
               }
@@ -2277,7 +2280,7 @@ const DUNGEON_DATA = {
             "def": 6,
             "turnInterval": 1,
             "size": "S",
-            "exp": 5,
+            "exp": 55,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -2584,7 +2587,7 @@ const DUNGEON_DATA = {
             "def": 6,
             "turnInterval": 1,
             "size": "S",
-            "exp": 5,
+            "exp": 75,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -2639,7 +2642,7 @@ const DUNGEON_DATA = {
             "def": 100,
             "turnInterval": 2,
             "size": "M",
-            "exp": 5,
+            "exp": 75,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -2712,7 +2715,7 @@ const DUNGEON_DATA = {
             "def": 6,
             "turnInterval": 1,
             "size": "S",
-            "exp": 5,
+            "exp": 75,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -3014,12 +3017,12 @@ const DUNGEON_DATA = {
             "name": "シェルダー",
             "img": "mp90.png",
             "attr": "water",
-            "hp": 3500,
-            "atk": 78,
+            "hp": 4000,
+            "atk": 88,
             "def": 350,
             "turnInterval": 2,
             "size": "M",
-            "exp": 5,
+            "exp": 75,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -3389,7 +3392,7 @@ const DUNGEON_DATA = {
             "def": 100,
             "turnInterval": 2,
             "size": "XL",
-            "exp": 250,
+            "exp": 500,
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
@@ -3862,7 +3865,7 @@ const DUNGEON_DATA = {
             "def": 250,
             "turnInterval": 1,
             "size": "M",
-            "exp": 10,
+            "exp": 100,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -4108,7 +4111,7 @@ const DUNGEON_DATA = {
             "def": 40,
             "turnInterval": 1,
             "size": "M",
-            "exp": 10,
+            "exp": 210,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -4411,7 +4414,7 @@ const DUNGEON_DATA = {
             "def": 60,
             "turnInterval": 1,
             "size": "M",
-            "exp": 10,
+            "exp": 210,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -4757,7 +4760,7 @@ const DUNGEON_DATA = {
             "def": 50,
             "turnInterval": 1,
             "size": "S",
-            "exp": 25,
+            "exp": 325,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -4794,7 +4797,7 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 1,
             "size": "M",
-            "exp": 20,
+            "exp": 320,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -4848,7 +4851,7 @@ const DUNGEON_DATA = {
             "def": 50,
             "turnInterval": 1,
             "size": "S",
-            "exp": 25,
+            "exp": 325,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -5140,7 +5143,7 @@ const DUNGEON_DATA = {
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.2
+            "rate": 0.3
           },
           "drops": [],
           "actions": [
@@ -5174,7 +5177,7 @@ const DUNGEON_DATA = {
             "def": 200,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 350,
+            "exp": 1100,
             "coin": 25,
             "monsterDrop": {
               "enabled": true,
@@ -5603,7 +5606,7 @@ const DUNGEON_DATA = {
             "def": 300,
             "turnInterval": 3,
             "size": "M",
-            "exp": 80,
+            "exp": 580,
             "coin": 30,
             "monsterDrop": {
               "enabled": true,
@@ -5930,7 +5933,7 @@ const DUNGEON_DATA = {
             "def": 200,
             "turnInterval": 2,
             "size": "M",
-            "exp": 100,
+            "exp": 300,
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
@@ -6333,7 +6336,7 @@ const DUNGEON_DATA = {
             "def": 800,
             "turnInterval": 1,
             "size": "S",
-            "exp": 60,
+            "exp": 260,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -7239,7 +7242,7 @@ const DUNGEON_DATA = {
             "def": 100,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 500,
+            "exp": 1500,
             "coin": 30,
             "monsterDrop": {
               "enabled": true,
@@ -7637,7 +7640,7 @@ const DUNGEON_DATA = {
           "def": 5000,
           "turnInterval": 2,
           "size": "S",
-          "exp": 1500,
+          "exp": 3000,
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
@@ -7675,7 +7678,7 @@ const DUNGEON_DATA = {
             "def": 600,
             "turnInterval": 3,
             "size": "L",
-            "exp": 100,
+            "exp": 300,
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
@@ -7981,7 +7984,7 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 1,
             "size": "M",
-            "exp": 150,
+            "exp": 450,
             "coin": 30,
             "monsterDrop": {
               "enabled": true,
@@ -8280,12 +8283,12 @@ const DUNGEON_DATA = {
             "name": "ドードー",
             "img": "mp84.png",
             "attr": "light",
-            "hp": 8000,
+            "hp": 10000,
             "atk": 322,
             "def": 200,
             "turnInterval": 1,
             "size": "S",
-            "exp": 200,
+            "exp": 600,
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
@@ -8807,7 +8810,7 @@ const DUNGEON_DATA = {
             "def": 600,
             "turnInterval": 2,
             "size": "L",
-            "exp": 200,
+            "exp": 600,
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
@@ -9159,7 +9162,7 @@ const DUNGEON_DATA = {
             "def": 100,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 1000,
+            "exp": 2000,
             "coin": 0,
             "monsterDrop": {
               "enabled": true,
@@ -9541,7 +9544,7 @@ const DUNGEON_DATA = {
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.2
+            "rate": 0.75
           },
           "drops": [],
           "actions": [
@@ -9714,7 +9717,7 @@ const DUNGEON_DATA = {
             "img": "mp93.png",
             "attr": "dark",
             "hp": 22500,
-            "atk": 326,
+            "atk": 336,
             "def": 250,
             "turnInterval": 1,
             "size": "M",
@@ -9806,7 +9809,7 @@ const DUNGEON_DATA = {
             "def": 750,
             "turnInterval": 3,
             "size": "M",
-            "exp": 99,
+            "exp": 599,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -10302,7 +10305,7 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 1,
             "size": "L",
-            "exp": 250,
+            "exp": 750,
             "coin": 25,
             "monsterDrop": {
               "enabled": true,
@@ -10736,10 +10739,10 @@ const DUNGEON_DATA = {
             "attr": "water",
             "hp": 45000,
             "atk": 612,
-            "def": 50,
+            "def": 100,
             "turnInterval": 2,
             "size": "L",
-            "exp": 300,
+            "exp": 500,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -11172,11 +11175,11 @@ const DUNGEON_DATA = {
             "img": "mp2.png",
             "attr": "wood",
             "hp": 47500,
-            "atk": 513,
-            "def": 0,
+            "atk": 583,
+            "def": 100,
             "turnInterval": 2,
             "size": "L",
-            "exp": 300,
+            "exp": 1000,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -11614,7 +11617,7 @@ const DUNGEON_DATA = {
             "def": 100,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 1500,
+            "exp": 2500,
             "coin": 30,
             "monsterDrop": {
               "enabled": true,
@@ -12107,7 +12110,7 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 2,
             "size": "L",
-            "exp": 300,
+            "exp": 800,
             "coin": 15,
             "monsterDrop": {
               "enabled": true,
@@ -12514,7 +12517,7 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 2,
             "size": "L",
-            "exp": 500,
+            "exp": 800,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -12932,7 +12935,7 @@ const DUNGEON_DATA = {
             "def": 500,
             "turnInterval": 1,
             "size": "L",
-            "exp": 750,
+            "exp": 950,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -13343,7 +13346,7 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 2,
             "size": "L",
-            "exp": 300,
+            "exp": 700,
             "coin": 5,
             "monsterDrop": {
               "enabled": true,
@@ -14469,7 +14472,7 @@ const DUNGEON_DATA = {
             "def": 500,
             "turnInterval": 1,
             "size": "L",
-            "exp": 1000,
+            "exp": 3000,
             "coin": 30,
             "monsterDrop": {
               "enabled": true,
@@ -14548,7 +14551,7 @@ const DUNGEON_DATA = {
       }
     ],
     "intrusion": {
-      "rate": 3,
+      "rate": 10,
       "monsters": [
         {
           "name": "ラッキー",
@@ -14563,7 +14566,7 @@ const DUNGEON_DATA = {
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.2
+            "rate": 0.25
           },
           "drops": [],
           "actions": [
@@ -18201,7 +18204,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 20,
       "monsters": [
         {
           "name": "ラッキー",
@@ -18216,7 +18219,7 @@ const DUNGEON_DATA = {
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.2
+            "rate": 0.25
           },
           "drops": [],
           "actions": [
@@ -18250,7 +18253,7 @@ const DUNGEON_DATA = {
             "def": 2000,
             "turnInterval": 2,
             "size": "L",
-            "exp": 250,
+            "exp": 850,
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
@@ -18658,7 +18661,7 @@ const DUNGEON_DATA = {
             "name": "カイロス",
             "img": "mp127.png",
             "attr": "wood",
-            "hp": 70000,
+            "hp": 73000,
             "atk": 960,
             "def": 600,
             "turnInterval": 1,

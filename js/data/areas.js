@@ -77,8 +77,8 @@ const EVENT_AREA_DATA = {
   daily_mon: { name: '月曜ダンジョン',   desc: '月曜日のダンジョン', bg: 'dungeon5.png', hue: 265, hidden: true, weekday: 1, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '月の森-1',2: '月の森-2' } , stageLevels: { 1: '中級', 2: '上級' }},
   daily_tue: { name: '火曜ダンジョン',   desc: '火曜日のダンジョン', bg: 'dungeon13.png', hue: 8,   hidden: true, weekday: 2, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '火の火山-1',2: '火の火山-2' } , stageLevels: { 1: '中級', 2: '上級' }},
   daily_wed: { name: '水曜ダンジョン',   desc: '水曜日のダンジョン', bg: 'dungeon9.png', hue: 210, hidden: true, weekday: 3, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '水の洞窟-1',2: '水の洞窟-2' } , stageLevels: { 1: '中級', 2: '上級' }},
-  daily_thu: { name: '木曜ダンジョン',     desc: '木曜日のダンジョン', bg: 'daily_thu.png', hue: 130, hidden: true, weekday: 4, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '木の密林-1',2: '木の密林-2' } , stageLevels: { 1: '中級', 2: '上級' }},
-  daily_fri: { name: '金曜ダンジョン',   desc: '金曜日のダンジョン', bg: 'daily_fri.png', hue: 45,  hidden: true, weekday: 5, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '金の砂漠-1',2: '金の砂漠-2' } , stageLevels: { 1: '中級', 2: '上級' }},
+  daily_thu: { name: '木曜ダンジョン',     desc: '木曜日のダンジョン', bg: 'dungeon2.png', hue: 130, hidden: true, weekday: 4, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '木の密林-1',2: '木の密林-2' } , stageLevels: { 1: '中級', 2: '上級' }},
+  daily_fri: { name: '金曜ダンジョン',   desc: '金曜日のダンジョン', bg: 'dungeon6.png', hue: 45,  hidden: true, weekday: 5, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '金の砂漠-1',2: '金の砂漠-2' } , stageLevels: { 1: '中級', 2: '上級' }},
   daily_sat: { name: 'エナスポットの森',   desc: '土曜日のダンジョン', bg: 'daily_sat.png', hue: 25,  hidden: true, weekday: 6, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '初級', 2: '中級' } },
   daily_sun: { name: 'エナスポットの森',     desc: '日曜日のダンジョン', bg: 'daily_sat.png', hue: 52,  hidden: true, weekday: 0, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '中級', 2: '上級' } },
 };

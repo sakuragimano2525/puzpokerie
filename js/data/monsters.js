@@ -3120,7 +3120,8 @@ const MONSTER_DATA = {
         { type: 'noDrop', value: true },
         { type: 'atk', condition: 'orbConnect', attr: 'ojama', count: 6, value: 1.8 }
       ]
-    }
+    },
+    evolutions: [ { to: 711, materials: [ { item: 'spuzzle_5', count: 3 }, { item: 'puzzle32', count: 2 } ] } ]
   },
   711: {
     id: 711,
