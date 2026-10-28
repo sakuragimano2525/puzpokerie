@@ -221,6 +221,7 @@ let _gameOverActive = false;
 function triggerGameOver() {
   if (_gameOverActive) return;
   _gameOverActive = true;
+  if (window.MultiShare) MultiShare.sendOver();   // マルチ：相手の画面もゲームオーバー（2人で1つの戦場）
   busy = true;
   try { stopTimer(); } catch (e) {}
   timerStarted = false;
@@ -335,6 +336,7 @@ function _gameOverGoHome() {
   stopGameOverSE();
   _gameOverActive = false;
   busy = false;
+  if (window.MultiTurn) MultiTurn.end();   // マルチ：部屋から退出
   setTimeout(() => { try { scrollHomeToFrontier(); } catch (e) {} }, 50);
 }
 // 念のための保険：どの経路でもホーム画面が表示されたらゲームオーバー音を止める
@@ -1399,6 +1401,8 @@ async function loadBattle(battleData, autoStart = true) {
 
 // 先制攻撃・バトル開始時の行動（最初のバトルは START 表示が終わってから呼ぶ）
 async function runBattleStartActions() {
+  // マルチ(オンライン)：相手の番の間は、先制攻撃などを相手の端末が実行する（結果は盤面・敵・バフとして次の同期で届く）
+  if (window.MultiShare && MultiShare.skipStartActions()) { enemyList.forEach(e => { e.preemptiveDone = true; }); return; }
   // 先制攻撃・バトル開始時の行動中は操作不可
   const prevBusy = busy;
   busy = true;
@@ -1862,13 +1866,14 @@ function rollDropCount(count) {
   return count || 1;
 }
 
-function tryDrop(enemy) {
+function tryDrop(enemy, silent = false) {   // silent=true：演出なし（マルチで、相手が倒した階層の報酬だけ受け取る時）
+  if (enemy._killCombo === undefined) enemy._killCombo = attackPhaseCombo;   // マルチ：倒した時のコンボ数を控える（相手の端末で10コンボ確定ドロップを判定するため）
   if (enemy._fled) { enemy._dropChecked = true; return; }   // にげた敵は何も落とさない
   if (enemy._dropChecked) return;
   enemy._dropChecked = true;
   // コインは倒した時点で確定ドロップ → 左上の表示に即反映
   addCoin(enemy.coin || 0);
-  const vanish = startEnemyVanish(enemy);
+  const vanish = silent ? Promise.resolve() : startEnemyVanish(enemy);
   let dropped = false;
   const dropImgs = [];   // この敵が落とした物の表示用画像（モンスター=ギフト / アイテム=チップ画像）
 
@@ -1925,6 +1930,7 @@ function tryDrop(enemy) {
 
   if (!dropped) return;
   updateDropCount();
+  if (silent) return;
   // 消滅し終わってからチップ／卵を出す
   const reveal = vanish.then(() => {
     playSE('chip');   // チップ／卵が落ちた音（chip.mp3）
@@ -3644,11 +3650,10 @@ async function handleBattleEnd() {
       }
     }
 
+    if (window.MultiShare) MultiShare.recordKill();   // マルチ：この階層で倒した敵の記録（相手の端末が、自分の分の経験値・ドロップを受け取るのに使う）
     if (isLast) {
-      markDungeonCleared(currentDungeonKey);   // このダンジョンをクリア済みにする（出撃準備の表示用）
-      // エリアのBOSSを初めてクリアしたら、次のエリアを開放する
-      const unlockedArea = (!isEventArea(currentAreaNum) && currentStageType === 'boss' && markBossCleared(currentAreaNum) && currentAreaNum < TOTAL_STAGES) ? currentAreaNum + 1 : 0;
-      await playDungeonClear(unlockedArea);   // チップ/卵が光に包まれて消える → CLEAR! ＋ 花火 ＋ ホームへボタン
+      if (window.MultiShare) MultiShare.sendClear();   // マルチ：相手の画面もクリアにする
+      await finishDungeonClear();
       return;
     }
     currentBattleIndex++;
@@ -3679,6 +3684,14 @@ async function handleBattleEnd() {
   } finally {
     _battleEndRunning = false;
   }
+}
+
+// ダンジョンクリアの締め（マルチでは、相手の端末からも呼ばれる）
+async function finishDungeonClear() {
+  markDungeonCleared(currentDungeonKey);   // このダンジョンをクリア済みにする（出撃準備の表示用）
+  // エリアのBOSSを初めてクリアしたら、次のエリアを開放する
+  const unlockedArea = (!isEventArea(currentAreaNum) && currentStageType === 'boss' && markBossCleared(currentAreaNum) && currentAreaNum < TOTAL_STAGES) ? currentAreaNum + 1 : 0;
+  await playDungeonClear(unlockedArea);   // チップ/卵が光に包まれて消える → CLEAR! ＋ 花火 ＋ ホームへボタン
 }
 
 // ============================================================
@@ -8180,7 +8193,8 @@ async function startGameFromHome() {
   const dungeon = document.getElementById('dungeon');
 
   if (dungeonData) {
-    currentDungeonBattles = applyIntrusion(dungeonData, buildDungeonBattles(dungeonData));
+    // マルチ(オンライン)：ランダム階層・乱入の抽選は、部屋IDのシードで2人とも同じ結果にする
+    currentDungeonBattles = (window.MultiShare ? MultiShare.withSeed : (t, f) => f())('battles', () => applyIntrusion(dungeonData, buildDungeonBattles(dungeonData)));
     currentBattleIndex    = 0;
     let battleBg = dungeonData.bgImg || areaBgImage(currentAreaNum);
     if (window.BossCloud && BossCloud.has(dungeonKey)) {
@@ -8226,6 +8240,7 @@ async function startGameFromHome() {
       await playEnemyAppear(); await runBattleStartActions();
     }
     if (window.MultiTurn && MultiTurn.active) await MultiTurn.announce();   // マルチ：「Aのターン」
+    if (window.MultiTurn && MultiTurn.active && MultiTurn.online) await MultiTurn.markReady();   // マルチ(オンライン)：先攻は最初の状態を渡す／待たされた相手の状態を反映
     busy = !!(window.MultiTurn && MultiTurn.online && MultiTurn.active && !MultiTurn.isMyTurn());   // マルチ(オンライン)：自分の番まで待つ
   }, 200);
 }
@@ -8607,6 +8622,7 @@ function moOnOpponent(o) {
   }
   // ダンジョン中にあいてが抜けたら、のこりは自由に操作できるようにする
   if (window.MultiTurn && MultiTurn.online && MultiTurn.active && !(o && o.present)) {
+    if (_gameOverActive || _clearActive) return;   // クリア／ゲームオーバー画面の間は、あいてが先にホームへ戻っても何もしない
     const waiting = !MultiTurn.isMyTurn();
     MultiTurn.localId = null;
     if (MultiTurn.banner) MultiTurn.banner('MULTI', 'あいてが退出しました', 1);
@@ -8637,6 +8653,8 @@ async function startMultiMatching(areaNum, stageKey) {
       onOpponent: moOnOpponent,
       onBothReady: moStartBattle,
       onTurn: s => { if (window.MultiTurn) MultiTurn.receive(s); },
+      onEvent: v => { if (window.MultiShare) MultiShare.onEvent(v); },   // クリア／ゲームオーバー
+      onLive: v => { if (window.MultiShare) MultiShare.onLive(v); },     // 相手が動かしている盤面
     });
     openDungeonEntry(areaNum, stageKey);
   } catch (e) {
@@ -8790,7 +8808,7 @@ function init() {
   currentMoveMs = calcCurrentMoveMs();
 
   enemyDefeatedHandled = false;
-  grid = Array.from({length:ROWS}, () => Array.from({length:COLS}, rand));
+  grid = (window.MultiShare && MultiShare.initialGrid()) || Array.from({length:ROWS}, () => Array.from({length:COLS}, rand));   // マルチ(オンライン)は2人とも同じ最初の盤面
   buildDOM();
   renderParty();
   updateLeaderSkill2();
@@ -9121,6 +9139,7 @@ function onMove(e) {
       dragEl = orbEls[dragR][dragC];
       dragEl.classList.add('dragging');
       playDropSound();
+      if (window.MultiShare) MultiShare.live();   // マルチ：動かしている盤面を相手の画面にも見せる
     }
   }
 
@@ -9139,6 +9158,7 @@ function onEnd(e) {
   if (!timeStopActive) { stopTimer(); timerStarted = false; }
   if (dragEl) { dragEl.style.transform = ''; dragEl.classList.remove('dragging'); }
   dragEl = null; gridRectCache = null;
+  if (window.MultiShare) MultiShare.live(true);   // マルチ：指を離した時の盤面
   if (!timeStopActive) { _rlHold = roulettes.length > 0; setTimeout(evaluateIfMoved, 80); }
 }
 
