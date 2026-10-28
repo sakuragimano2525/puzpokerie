@@ -1,0 +1,23 @@
+{
+  "name": "パズリエ",
+  "short_name": "パズリエ",
+  "description": "パズリエ",
+  "start_url": "index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#111111",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "pomicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "pomicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
