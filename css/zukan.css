@@ -14,10 +14,27 @@
 }
 
 /* ── 一覧 ─────────────────────────────────────── */
-#zukan-hint { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px var(--gutter) 8px; }
-#zukan-count { flex: 1; min-width: 0; font: 900 0.78rem/1.4 var(--ff); color: var(--ink-2); white-space: nowrap; }
+/* 1行目：ゲット／発見の数（横いっぱい）、2行目：リダスキ・並び替えのボタン（折り返してゆったり並べる） */
+#zukan-hint { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 10px; padding: 2px var(--gutter) 10px; }
+#zukan-count { flex: 1 1 100%; min-width: 0; font: 900 0.78rem/1.4 var(--ff); color: var(--ink-2); white-space: nowrap; }
 #zukan-count b { font: 400 1.05rem/1 var(--ff-num); letter-spacing: 0.02em; color: var(--ink); }
 #zukan-sort-btn { flex-shrink: 0; }
+/* リダスキは絵（じょうごのマーク）だけ。属性アイコンと並び替えが1行に入るように */
+#zukan-hint .lss-btn { flex-shrink: 0; padding: 0 11px; }
+#zukan-hint .lss-btn .lss-btn-t { display: none; }
+#zukan-hint #zukan-sort-btn { padding: 0 8px 0 10px; }
+
+/* 属性検索：リダスキの左に並べる。空いた幅に合わせてアイコンが縮む（狭すぎるときは折り返す） */
+#zukan-attr-filters { flex: 1 1 0; min-width: 100px; display: flex; align-items: center; justify-content: flex-start; gap: 3px; }
+.zk-attr-btn {
+  position: relative; flex: 0 1 36px; min-width: 0; max-width: 36px; aspect-ratio: 1; padding: 0;
+  display: block; background: transparent; border: 0; border-radius: 50%; box-shadow: none; cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: transform 0.06s, opacity 0.12s;
+}
+.zk-attr-btn img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+.zk-attr-btn:active { transform: translateY(2px); }
+.zk-attr-btn:focus-visible { outline: 3px solid var(--water); outline-offset: 2px; }
+#zukan-attr-filters:has(.active) .zk-attr-btn:not(.active) { opacity: 0.45; }
 
 #zukan-box { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px var(--gutter) 22px; }
 #zukan-box::-webkit-scrollbar { display: none; }

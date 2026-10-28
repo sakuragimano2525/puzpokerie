@@ -4146,6 +4146,7 @@ let searchQuery = '';
 // 並び替え（js/box-sort.js）。入手順 / レベル / 属性 / 名前 / HP / こうげき / かいふく / タイプ / レア度 / スキル / リダスキ
 //   編成画面では、編成済みでも先頭には移動しない（並び替え設定の順のまま）。合計経験値順は合成画面だけ
 const teSort = BoxSort.makeState('te', BoxSort.MODES.map(m => m.id).filter(id => id !== 'exp'), false);
+let teLS = null;   // リーダースキル検索（js/ls-search.js）。下の「te-sort-btn」のあたりで作る
 
 // ── タップ編成 ──
 //  ・カードをダブルタップ：チームの空き枠へ入る（編成済みなら外れる）
@@ -4556,6 +4557,7 @@ function renderTeMonsterGrid() {
       const q = searchQuery.toLowerCase();
       if (!mon.name.toLowerCase().includes(q) && !(mon.skill && mon.skill.name.toLowerCase().includes(q))) return false;
     }
+    if (teLS && !teLS.match(mon)) return false;   // リーダースキル検索
     return true;
   });
   const teamMap = {};
@@ -4587,7 +4589,8 @@ function renderTeMonsterGrid() {
       badge.textContent = teamMap[entry.uid] + 1;
       card.appendChild(badge);
     }
-    if (BoxSort.attachValue(card, teSort.mode, entry, { monsters: MONSTER_DATA, stats: calcMonsterStats })) anyVal = true;   // HP順などのとき数値を出す
+    if (BoxSort.attachValue(card, teSort.mode, entry, { monsters: MONSTER_DATA, stats: calcMonsterStats })   // HP順などのとき数値を出す
+        || (teLS && teLS.attachLabel(card, mon))) anyVal = true;                                              // リダスキ検索中は倍率を出す
     setupCardTap(card, entry);   // ダブルタップ=編成 / 長押し=詳細
     grid.appendChild(card);
   });
@@ -4601,6 +4604,7 @@ function openTeamEdit() {
   teamEditReturnTo = 'home';
   activeAttrFilters.clear();
   searchQuery = '';
+  if (teLS) teLS.reset();
   document.querySelectorAll('.te-attr-btn').forEach(b => b.classList.remove('active'));
   const inp = document.getElementById('te-search-input');
   if (inp) inp.value = '';
@@ -4615,6 +4619,7 @@ function openTeamEditFromDungeonEntry() {
   teamEditReturnTo = 'dungeon-entry';
   activeAttrFilters.clear();
   searchQuery = '';
+  if (teLS) teLS.reset();
   document.querySelectorAll('.te-attr-btn').forEach(b => b.classList.remove('active'));
   const inp = document.getElementById('te-search-input');
   if (inp) inp.value = '';
@@ -4658,6 +4663,7 @@ let ikuAttrFilter = new Set();
 let ikuSelectMode = 'base';
 // 並び替え（js/box-sort.js）。編成中のモンスターは、どの並びでも先頭に出す。合計経験値順は合成画面だけ
 const ikuSort = BoxSort.makeState('iku', null, true);
+let ikuLS = null;   // リーダースキル検索（js/ls-search.js）
 let ikuPrevSortMode = 'acq';   // 「EXP」ボタンをもう一度押したときに戻る並び
 // 合成の大成功：素材1体ごとに +3%（5体で15%）で、素材の経験値の合計が2倍
 const IKU_GREAT_RATE_PER_MAT = 0.03;
@@ -4667,6 +4673,7 @@ function openIkuScreen() {
   ikuBaseUid = null;
   ikuMatUids = [null,null,null,null,null];
   ikuAttrFilter.clear();
+  if (ikuLS) ikuLS.reset();
   document.querySelectorAll('.iku-attr-btn').forEach(b => b.classList.remove('active'));
   ikuSelectMode = 'base';
   document.getElementById('iku-screen').style.display = 'flex';
@@ -4893,6 +4900,7 @@ function renderIkuGrid() {
     const mon = MONSTER_DATA[entry.monsterId];
     if (!mon) return false;
     if (ikuAttrFilter.size > 0 && !ikuAttrFilter.has(mon.attr)) return false;
+    if (ikuLS && !ikuLS.match(mon)) return false;   // リーダースキル検索
     return true;
   });
 
@@ -4938,7 +4946,8 @@ function renderIkuGrid() {
     lv.textContent = `Lv.${entry.level}`;
     card.appendChild(lv);
 
-    if (BoxSort.attachValue(card, ikuSort.mode, entry, sortCtx)) anyVal = true;   // HP順・合計経験値順などのとき数値を出す
+    if (BoxSort.attachValue(card, ikuSort.mode, entry, sortCtx)   // HP順・合計経験値順などのとき数値を出す
+        || (ikuLS && ikuLS.attachLabel(card, mon))) anyVal = true;  // リダスキ検索中は倍率を出す
 
     // 素材を選ぶ段階では、編成中のモンスターは選べない（薄く表示）
     const inTeam = currentTeam.includes(entry.uid);
@@ -5230,6 +5239,7 @@ document.getElementById('md-levelup-btn').addEventListener('click', () => {
   ikuBaseUid = entry.uid;
   ikuMatUids = [null,null,null,null,null];
   ikuAttrFilter.clear();
+  if (ikuLS) ikuLS.reset();
   document.querySelectorAll('.iku-attr-btn').forEach(b => b.classList.remove('active'));
   ikuSelectMode = 'mat';
   document.getElementById('monster-detail').style.display = 'none';
@@ -5611,13 +5621,16 @@ document.getElementById('evo-result-ok').addEventListener('click', () => {
 // ---- ホーム →「進化」：進化できるモンスターの一覧 ----
 // 進化の一覧の並び替え（js/box-sort.js）。編成中のモンスターは、どの並びでも先頭
 const evoSort = BoxSort.makeState('evo', BoxSort.MODES.map(m => m.id).filter(id => id !== 'exp'), true);
+let evoLS = null;   // リーダースキル検索（js/ls-search.js）
 function renderEvoList() {
   const grid = document.getElementById('evo-list-grid');
   const emptyEl = document.getElementById('evo-list-empty');
   grid.innerHTML = '';
   const lbl = document.getElementById('evo-sort-label');
   if (lbl) lbl.textContent = BoxSort.buttonLabel(evoSort);
-  const list = box.filter(e => MONSTER_DATA[e.monsterId] && getEvolutions(e.monsterId).length);
+  const evoAll = box.filter(e => MONSTER_DATA[e.monsterId] && getEvolutions(e.monsterId).length);
+  const list = evoLS && evoLS.active() ? evoAll.filter(e => evoLS.match(MONSTER_DATA[e.monsterId])) : evoAll;   // リーダースキル検索
+  emptyEl.textContent = evoAll.length && !list.length ? '条件に合うモンスターがいません' : '進化できるモンスターがいません';
   emptyEl.style.display = list.length ? 'none' : 'block';
   const sortCtx = { monsters: MONSTER_DATA, stats: calcMonsterStats, teamUids: currentTeam };
   let anyVal = false;
@@ -5637,18 +5650,26 @@ function renderEvoList() {
     lv.className = 'iku-mon-lv';
     lv.textContent = `Lv.${entry.level}`;
     card.appendChild(lv);
-    if (BoxSort.attachValue(card, evoSort.mode, entry, sortCtx)) anyVal = true;
+    if (BoxSort.attachValue(card, evoSort.mode, entry, sortCtx)
+        || (evoLS && evoLS.attachLabel(card, mon))) anyVal = true;   // リダスキ検索中は倍率を出す
     card.addEventListener('click', () => openEvoScreenFor(entry, 'list'));
     grid.appendChild(card);
   });
   grid.classList.toggle('has-val', anyVal);
 }
 function openEvoList() {
+  if (evoLS) evoLS.reset();
   renderEvoList();
   document.getElementById('evo-list-screen').style.display = 'flex';
   startMenuBGM();
 }
 document.getElementById('btn-evo').addEventListener('click', openEvoList);
+evoLS = LSSearch.mount({
+  key: 'evo', host: document.getElementById('evo-list-screen'),
+  before: document.getElementById('evo-sort-btn'), after: document.getElementById('evo-list-hint'),
+  candidates: () => box.filter(e => MONSTER_DATA[e.monsterId] && getEvolutions(e.monsterId).length).map(e => MONSTER_DATA[e.monsterId]),
+  onChange: () => { const wrap = document.getElementById('evo-list-box'); if (wrap) wrap.scrollTop = 0; renderEvoList(); }
+});
 document.getElementById('evo-sort-btn').addEventListener('click', () => {
   BoxSort.openSheet(document.getElementById('evo-list-screen'), evoSort, () => {
     const wrap = document.getElementById('evo-list-box'); if (wrap) wrap.scrollTop = 0;
@@ -5707,6 +5728,12 @@ document.getElementById('te-search-clear').addEventListener('click', () => {
 document.getElementById('te-back').addEventListener('click', () => closeTeamEdit(true));
 document.getElementById('te-swap-btn').addEventListener('click', () => { teSetSwapMode(!teSwapMode); renderTeamEdit(); });
 document.getElementById('te-sort-label').textContent = BoxSort.buttonLabel(teSort);
+teLS = LSSearch.mount({
+  key: 'te', host: document.getElementById('team-edit'),
+  before: document.getElementById('te-sort-btn'), after: document.getElementById('te-tools'),
+  candidates: () => box.map(e => MONSTER_DATA[e.monsterId]).filter(Boolean),
+  onChange: () => { const wrap = document.getElementById('te-box-wrap'); if (wrap) wrap.scrollTop = 0; renderTeMonsterGrid(); }
+});
 document.getElementById('te-sort-btn').addEventListener('click', () => {
   BoxSort.openSheet(document.getElementById('team-edit'), teSort, () => {
     document.getElementById('te-sort-label').textContent = BoxSort.buttonLabel(teSort);
@@ -8151,6 +8178,13 @@ document.querySelectorAll('.iku-attr-btn').forEach(btn => {
   });
 });
 
+// リーダースキル検索（js/ls-search.js）。「EXP」ボタンの左に「リダスキ」ボタンが付く
+ikuLS = LSSearch.mount({
+  key: 'iku', host: document.getElementById('iku-screen'),
+  before: document.getElementById('iku-expsort-btn'), after: document.getElementById('iku-filter-row'),
+  candidates: () => box.map(e => MONSTER_DATA[e.monsterId]).filter(Boolean),
+  onChange: () => { const wrap = document.getElementById('iku-box-wrap'); if (wrap) wrap.scrollTop = 0; renderIkuGrid(); }
+});
 // 並び替え（ボタンでシートを開く / 「EXP」ボタンは合計経験値順をワンタップで入り切り）
 document.getElementById('iku-sort-btn').addEventListener('click', () => {
   BoxSort.openSheet(document.getElementById('iku-screen'), ikuSort, () => {

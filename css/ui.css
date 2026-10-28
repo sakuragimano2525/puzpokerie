@@ -445,7 +445,8 @@
 .de-stat-cell.hp  .de-stat-label .ic { color: var(--wood); }
 .de-stat-cell.atk .de-stat-label .ic { color: var(--fire); }
 .de-stat-cell.rec .de-stat-label .ic { color: var(--water); }
-.de-stat-value { font: 400 1.25rem/1.1 var(--ff-num); letter-spacing: 0.02em; }
+.de-stat-value { white-space: nowrap; font: 400 1.25rem/1.1 var(--ff-num); letter-spacing: 0.02em; }
+.de-stat-label .stat-ic { margin-left: -3px; }
 #de-ls-section { flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
 .de-ls-block { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px 12px 20px; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); }
 .de-ls-block::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: var(--sun); border-right: var(--bw) solid var(--ink); border-radius: 13px 0 0 13px; }
@@ -499,7 +500,8 @@
 .md-stat-cell.hp  .md-stat-label .ic { color: var(--wood); }
 .md-stat-cell.atk .md-stat-label .ic { color: var(--fire); }
 .md-stat-cell.rec .md-stat-label .ic { color: var(--water); }
-.md-stat-val { font: 400 1.2rem/1.1 var(--ff-num); letter-spacing: 0.02em; }
+.md-stat-val { white-space: nowrap; font: 400 1.2rem/1.1 var(--ff-num); letter-spacing: 0.02em; }
+.md-stat-label .stat-ic { margin-left: -3px; }
 #md-skill-section, #md-ls-section { display: flex; flex-direction: column; gap: 5px; padding: 8px 14px; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 14px; box-shadow: 0 3px 0 var(--ink); }
 #md-skill-header, .md-ls-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .md-section-label { position: relative; z-index: 0; padding: 3px 12px; font: 900 0.8rem/1.3 var(--ff); letter-spacing: 0.04em; color: var(--ink); }
@@ -589,7 +591,9 @@
 .te-swipe-ghost { position: fixed; z-index: 400; pointer-events: none; transform: translate(-50%, -50%) scale(1.1); overflow: visible; background: transparent; border: 0; border-radius: 13px; filter: drop-shadow(0 8px 8px rgba(28,31,79,0.35)); }
 .te-swipe-ghost img { width: 100%; height: 100%; object-fit: contain; display: block; }
 #te-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
-.te-stat { display: flex; align-items: center; gap: 5px; padding: 6px 8px; min-width: 0; border: 2px solid var(--ink); border-radius: 12px; }
+/* 1行のまま。6桁（100,000など）でも入るように、数字は js/stat-fit.js が幅に合わせて自動で小さくする */
+.te-stat { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 6px; min-width: 0; border: 2px solid var(--ink); border-radius: 12px; }
+.te-stat .stat-ic { margin-left: -3px; width: 1.2em; height: 1.2em; }
 .te-stat.hp  { background: #eefbf3; }
 .te-stat.atk { background: #fff3f0; }
 .te-stat.rec { background: #eef4ff; }
@@ -598,7 +602,8 @@
 .te-stat.atk .ic { color: var(--fire); }
 .te-stat.rec .ic { color: var(--water); }
 .te-stat small { font: 900 0.6rem/1 var(--ff); color: var(--ink-2); }
-.te-stat b { margin-left: auto; font: 400 0.98rem/1 var(--ff-num); letter-spacing: 0.02em; }
+.te-stat small { white-space: nowrap; flex-shrink: 0; }
+.te-stat b { flex: 1 1 0; min-width: 0; text-align: right; white-space: nowrap; font: 400 0.98rem/1 var(--ff-num); letter-spacing: 0.02em; }
 
 #te-tools { flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; padding: 16px var(--gutter) 10px; }
 #te-filter-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

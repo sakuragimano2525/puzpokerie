@@ -1,0 +1,106 @@
+/* ============================================================
+   リーダースキル検索（js/ls-search.js）
+   見た目は並び替えシート（.sort-sheet）と同じ「ステッカー」デザイン
+   ============================================================ */
+
+/* ── ボタン（並び替えボタンの左に並ぶ） ── */
+.lss-btn { position: relative; gap: 5px; }
+.lss-btn .ic { width: 1.05em; height: 1.05em; stroke-width: 2.6; }
+.lss-btn.on { background: var(--sun); }
+.lss-badge { display: none; position: absolute; top: -8px; right: -6px; min-width: 19px; height: 19px; padding: 0 4px; box-sizing: border-box; align-items: center; justify-content: center; font: 400 0.64rem/1 var(--ff-num); color: #fff; background: var(--coral); border: 2px solid var(--ink); border-radius: 999px; }
+.lss-btn.on .lss-badge { display: inline-flex; }
+/* せまい画面では文字を省いて絵だけにする */
+@media (max-width: 400px) {
+  #iku-filter-row .lss-btn-t, #evo-list-hint .lss-btn-t { display: none; }
+  #iku-filter-row .lss-btn, #evo-list-hint .lss-btn { padding: 0 10px; }
+}
+@media (max-width: 350px) {
+  .lss-btn-t { display: none; }
+  .lss-btn { padding: 0 10px; }
+}
+
+/* ── 絞り込み中のタグ（画面の上に出る） ── */
+.lss-summary { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 2px var(--gutter) 6px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.lss-summary::-webkit-scrollbar { display: none; }
+.lss-summary[hidden] { display: none; }
+.lss-tag { flex-shrink: 0; appearance: none; -webkit-appearance: none; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 8px 0 11px; font: 900 0.72rem/1 var(--ff); color: var(--ink); background: var(--sun); border: 2px solid var(--ink); border-radius: 999px; box-shadow: 0 2px 0 var(--ink); cursor: pointer; touch-action: manipulation; }
+.lss-tag:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--ink); }
+.lss-tag-x { display: grid; place-items: center; width: 16px; height: 16px; font: 900 0.7rem/1 var(--ff); color: #fff; background: var(--ink); border-radius: 50%; }
+.lss-clear { flex-shrink: 0; appearance: none; -webkit-appearance: none; min-height: 30px; padding: 0 10px; font: 900 0.7rem/1 var(--ff); color: var(--ink-2); background: transparent; border: 0; text-decoration: underline; cursor: pointer; }
+
+/* ── シート ── */
+.lss-sheet { position: absolute; inset: 0; z-index: 45; display: flex; align-items: flex-end; justify-content: center; padding: 0 var(--gutter) calc(14px + env(safe-area-inset-bottom)); background: rgba(28,31,79,0.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.lss-card { width: 100%; max-width: 520px; max-height: min(88%, 720px); display: flex; flex-direction: column; gap: 10px; padding: 14px 12px 12px; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 24px; box-shadow: 0 6px 0 var(--ink); animation: popIn 0.2s ease-out; }
+.lss-head { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px; }
+.lss-title { font: 900 1.1rem/1.2 var(--ff); letter-spacing: 0.05em; background: linear-gradient(transparent 64%, var(--sun) 64% 90%, transparent 90%); padding: 0 4px; }
+.lss-reset { appearance: none; -webkit-appearance: none; min-height: 32px; padding: 0 12px; font: 900 0.74rem/1 var(--ff); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 10px; box-shadow: 0 2px 0 var(--ink); cursor: pointer; touch-action: manipulation; }
+.lss-reset:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--ink); }
+
+.lss-q { flex-shrink: 0; position: relative; }
+.lss-q input { width: 100%; height: 42px; padding: 0 40px 0 14px; font: 700 0.86rem/1 var(--ff); color: var(--ink); background: var(--sky); border: var(--bw) solid var(--ink); border-radius: 21px; outline: none; }
+.lss-q input::placeholder { color: var(--ink-3); }
+.lss-q input:focus { box-shadow: 0 0 0 3px var(--sun); background: var(--paper); }
+.lss-q-x { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; padding: 0; display: grid; place-items: center; font: 900 0.8rem/1 var(--ff); color: #fff; background: var(--ink-3); border: 0; border-radius: 50%; cursor: pointer; }
+
+.lss-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding: 2px 2px 6px; }
+.lss-body::-webkit-scrollbar { display: none; }
+.lss-sec { display: flex; flex-direction: column; gap: 8px; }
+.lss-sec-t { align-self: flex-start; padding: 2px 10px; font: 900 0.76rem/1.3 var(--ff); letter-spacing: 0.06em; color: #fff; background: var(--ink); border-radius: 999px; }
+.lss-row { display: flex; flex-direction: column; gap: 5px; }
+.lss-row-l { font: 900 0.68rem/1.2 var(--ff); color: var(--ink-2); padding-left: 2px; }
+.lss-chips { display: flex; flex-wrap: wrap; gap: 7px 6px; }
+
+.lss-chip {
+  appearance: none; -webkit-appearance: none;
+  display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 10px;
+  font: 900 0.78rem/1.1 var(--ff); color: var(--ink); background: var(--paper);
+  border: 2px solid var(--ink); border-radius: 12px; box-shadow: 0 3px 0 var(--ink);
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.lss-chip:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+/* 選択中：外側に枠を出さない（上や左がはみ出して切れるため）。黄色＋内側の白い線＋✓＋少しへこませて、はっきり見せる */
+.lss-chip.on { background: var(--sun); transform: translateY(2px); box-shadow: 0 1px 0 var(--ink), inset 0 0 0 2px #fff; }
+.lss-chip.on::before { content: '✓'; flex-shrink: 0; font: 900 0.9rem/1 var(--ff); color: var(--ink); margin-right: 1px; }
+.lss-chip.on:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink), inset 0 0 0 2px #fff; }
+.lss-chip.zero { opacity: 0.42; }
+.lss-chip-ic { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+.lss-chip-n { font: 400 0.62rem/1 var(--ff-num); color: var(--ink-2); min-width: 1em; text-align: center; padding: 2px 4px; background: var(--sky); border-radius: 999px; }
+.lss-chip.on .lss-chip-n { background: #fff; color: var(--ink); }
+.lss-hint { margin: 0; font: 500 0.68rem/1.55 var(--ff); color: var(--ink-2); }
+
+.lss-foot { flex-shrink: 0; display: flex; }
+.lss-go { flex: 1; min-height: 50px; font-size: 1rem; letter-spacing: 0.06em; }
+.lss-go.none { background: var(--sky-2); }
+
+/* 絞り込み中の一覧：倍率ラベルの分だけ縦をあける（並び替えの数値ラベルと同じ） */
+#zukan-grid.has-val { row-gap: 30px; }
+
+/* 図鑑：条件に合うモンスターがいないとき */
+.zk-empty { display: none; margin: 40px 16px; text-align: center; font: 900 0.9rem/1.6 var(--ff); color: var(--ink-2); }
+
+/* 編成画面：検索欄・リダスキ・並び替えが1行に並ぶので、検索欄の余白をつめる */
+#te-search-row { gap: 8px; }
+#te-search-row .lss-btn { padding: 0 11px; }
+#te-search-row .te-sort-btn { padding: 0 10px 0 12px; }
+#te-search-input { padding-left: 38px; }
+#te-search-input:placeholder-shown { padding-right: 8px; }
+#te-search-icon { left: 12px; font-size: 1.05rem; }
+
+/* 合成・進化・図鑑：ほかのボタンと同じ高さにそろえる。合成は横がせまいので絵だけ（件数バッジ付き） */
+#iku-sort-tools .lss-btn, #evo-list-hint .lss-btn, #zukan-hint .lss-btn { min-height: 38px; padding: 0 10px; font-size: 0.74rem; }
+#iku-sort-tools .lss-btn { padding: 0 9px; }
+#iku-sort-tools .lss-btn-t { display: none; }
+#zukan-hint .lss-btn, #evo-list-hint .lss-btn { margin-left: 0; }
+/* 合成：属性アイコンをさらに少し小さく（EXP・リダスキ・並び替えの3つが入るように） */
+@media (max-width: 430px) {
+  #iku-filter-row .iku-attr-btn { width: 30px; height: 30px; }
+  #iku-filter-row #iku-attr-filters { gap: 3px; }
+  #iku-filter-row { gap: 6px; }
+  #iku-sort-tools { gap: 5px; }
+  #iku-sort-tools .iku-expsort-btn { padding: 0 8px; }
+}
+@media (max-width: 370px) {
+  #iku-sort-btn .ic { display: none; }
+  #iku-sort-btn { padding: 0 10px; }
+}

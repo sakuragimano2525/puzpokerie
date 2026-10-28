@@ -112,9 +112,24 @@
   // 図鑑用の仮のBOXデータ（最大Lvのモンスター1体 = 図鑑の1マス）
   const entryOf = id => ({ uid: id, monsterId: id, level: maxLvOf(MONSTER_DATA[id]) });
 
+  // リーダースキル検索（js/ls-search.js）。まだ見ていないモンスターの情報が検索で分からないよう、
+  //   絞り込み中は「ゲット済み／見たことあり」だけが対象（？のマスは出さない）
+  let lsFilter = null;
+  const lsOn = () => !!(lsFilter && lsFilter.active());
+  // 属性検索（火・水・木・光・闇）。複数えらぶと「どれか」に合うモンスターを出す
+  const attrSel = new Set();
+  const attrOn = () => attrSel.size > 0;
+  const filterOn = () => lsOn() || attrOn();   // どちらかで絞り込み中
+
   function orderedEntries() {
     sortCtx.monsters = MONSTER_DATA;
     const entries = allIds().map(entryOf);
+    if (filterOn()) {
+      const hit = entries.filter(e => statusOf(e.monsterId) > 0
+        && (!attrOn() || attrSel.has(MONSTER_DATA[e.monsterId].attr))
+        && (!lsOn() || lsFilter.match(MONSTER_DATA[e.monsterId])));
+      return BoxSort.sort(hit, sortState, sortCtx);
+    }
     if (sortState.mode === 'acq') return BoxSort.sort(entries, sortState, sortCtx);   // ID順（向きを逆にすると大きい番号から）
     const shown = entries.filter(e => statusOf(e.monsterId) > 0);
     const hidden = entries.filter(e => statusOf(e.monsterId) === 0);
@@ -178,19 +193,26 @@
     if (!grid) return;
     const frag = document.createDocumentFragment();
     let anyVal = false;
-    orderedEntries().forEach(entry => {
+    const list = orderedEntries();
+    list.forEach(entry => {
       const card = buildCard(entry);
-      if (statusOf(entry.monsterId) > 0 && BoxSort.attachValue(card, sortState.mode, entry, sortCtx)) anyVal = true;   // HP順などは数値も出す
+      if (statusOf(entry.monsterId) > 0 && (BoxSort.attachValue(card, sortState.mode, entry, sortCtx)   // HP順などは数値も出す
+          || (lsOn() && lsFilter.attachLabel(card, MONSTER_DATA[entry.monsterId])))) anyVal = true;     // リダスキ検索中は倍率を出す
       frag.appendChild(card);
     });
     grid.innerHTML = '';
     grid.appendChild(frag);
     grid.classList.toggle('has-val', anyVal);
+    let empty = $('zukan-empty');
+    if (!empty) { empty = document.createElement('p'); empty.id = 'zukan-empty'; empty.className = 'zk-empty'; empty.textContent = '条件に合うモンスターがいません'; grid.parentNode.appendChild(empty); }
+    empty.style.display = filterOn() && !list.length ? 'block' : 'none';
 
     const ids = allIds();
     const nOwned = ids.filter(id => owned.has(id)).length;
     const nSeen = ids.filter(id => seen.has(id)).length;
-    $('zukan-count').innerHTML = `ゲット <b>${nOwned}</b> / ${ids.length}　発見 <b>${nSeen}</b>`;
+    $('zukan-count').innerHTML = filterOn()
+      ? `該当 <b>${list.length}</b>体`
+      : `ゲット <b>${nOwned}</b> / ${ids.length}　発見 <b>${nSeen}</b>`;
     $('zukan-sort-label').textContent = BoxSort.buttonLabel(sortState);
   }
 
@@ -451,6 +473,9 @@
     syncOwned();
     cancelLongPress();
     closeInfo();
+    if (lsFilter) lsFilter.reset();
+    attrSel.clear();
+    document.querySelectorAll('.zk-attr-btn').forEach(b => b.classList.remove('active'));
     $('zukan-box').scrollTop = 0;
     render();
     $('zukan-screen').style.display = 'flex';
@@ -474,6 +499,21 @@
     if (!$('zukan-screen')) return;
     $('zukan-open-btn').addEventListener('click', open);
     $('zukan-back').addEventListener('click', close);
+    lsFilter = LSSearch.mount({
+      key: 'zukan', host: $('zukan-screen'),
+      before: $('zukan-sort-btn'), after: $('zukan-hint'),
+      candidates: () => allIds().filter(id => statusOf(id) > 0).map(id => MONSTER_DATA[id]),   // 見たことあるモンスターだけ
+      onChange: () => { $('zukan-box').scrollTop = 0; render(); }
+    });
+    document.querySelectorAll('.zk-attr-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const a = btn.dataset.attr;
+        if (attrSel.has(a)) { attrSel.delete(a); btn.classList.remove('active'); }
+        else { attrSel.add(a); btn.classList.add('active'); }
+        $('zukan-box').scrollTop = 0;
+        render();
+      });
+    });
     $('zukan-sort-btn').addEventListener('click', () => {
       BoxSort.openSheet($('zukan-screen'), sortState, () => {
         $('zukan-box').scrollTop = 0;
