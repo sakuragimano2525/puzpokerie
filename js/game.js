@@ -6973,8 +6973,14 @@ function renderBuffIcons() {
   });
 
   container.appendChild(row);
-  document.getElementById('party-area').style.position = 'relative';
-  document.getElementById('party-area').appendChild(container);
+  // 横画面の時は、盤面の下の「状態異常アイコン欄」へ入れる（縦画面は今までどおりチーム欄の上）
+  const _lsHost = (typeof window.landscapeStatusHost === 'function') ? window.landscapeStatusHost() : null;
+  if (_lsHost) {
+    _lsHost.appendChild(container);
+  } else {
+    document.getElementById('party-area').style.position = 'relative';
+    document.getElementById('party-area').appendChild(container);
+  }
 }
 
 // ============================================================
@@ -7907,6 +7913,8 @@ function buildMainMap() {
     if (unlocked) b.querySelector('.area-go').addEventListener('click', (e) => { e.stopPropagation(); openStageSelect(n); });
     map.appendChild(b);
   }
+  // 横画面は左→右へ「エリア1, 2, 3…」の順に並べる（縦画面は上が最新のまま）
+  if (window.isLandscapeHome && window.isLandscapeHome()) Array.from(map.children).reverse().forEach(c => map.appendChild(c));
 }
 // エリア名を「1行のまま」右の画像（斜めの境目）にはみ出さないように、長い名前だけ文字を縮めて収める
 function fitAreaName(band) {
@@ -7941,11 +7949,18 @@ function setHomeFocusFromCurrent() {
 }
 function scrollHomeToFrontier() {
   const sc = document.getElementById('home-scroll');
-  if (homeMode === 'event') { if (sc) sc.scrollTop = 0; return; }
+  const land = !!(window.isLandscapeHome && window.isLandscapeHome());
+  if (homeMode === 'event') { if (sc) { sc.scrollTop = 0; sc.scrollLeft = 0; } return; }
   let t = null;
   if (homeFocusArea) t = document.querySelector(`.area-band[data-area="${homeFocusArea}"]`);   // リタイア/クリアした直後はそのエリアの位置へ
   if (!t) t = document.querySelector('.area-band.unlocked') || document.querySelector('.area-band.cleared');
   if (!sc || !t) return;
+  if (land) {   // 横画面：そのエリアが画面の真ん中に来るよう、横にスクロール（アニメなしで即移動）
+    const prev = sc.style.scrollBehavior; sc.style.scrollBehavior = 'auto';
+    sc.scrollLeft = Math.max(0, t.offsetLeft - (sc.clientWidth - t.offsetWidth) / 2);
+    sc.style.scrollBehavior = prev;
+    return;
+  }
   sc.scrollTop = Math.max(0, t.offsetTop - (sc.clientHeight - t.offsetHeight) / 2);
 }
 let homeToastTimer = null;

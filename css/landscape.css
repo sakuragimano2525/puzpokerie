@@ -1,0 +1,384 @@
+/* ============================================================
+   横画面（ランドスケープ）のダンジョン画面レイアウト
+   ┌───────────────┬───────────────┐
+   │ MENU          │ リーダースキル説明 │
+   │               │ 操作時間バー      │
+   │   敵モンスター  │ ┌───────────┐ │
+   │               │ │   盤  面    │ │
+   ├───────────────┤ └───────────┘ │
+   │ 自分のモンスター │ 自分の状態異常   │
+   │ ＋ HPバー       │               │
+   └───────────────┴───────────────┘
+   縦画面のレイアウトには一切影響しない（orientation: landscape のときだけ有効）
+============================================================ */
+@media (orientation: landscape) {
+  #game {
+    /* 右カラム＝盤面の幅。盤面(6x5)が高さに収まる大きさ：画面高さ − (スキル説明+操作時間+状態異常 ≒ 104px) を 6/5 倍 */
+    --ls-rw: min(56vw, calc((var(--app-h, 100dvh) - 104px) * 1.2));
+    display:none;                                   /* 表示/非表示は game.js が style.display で制御する */
+  }
+  #game[style*="display: flex"], #game[style*="display:flex"] {
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) var(--ls-rw);
+    grid-template-rows:auto auto 1fr auto auto;
+    grid-template-areas:
+      "dungeon  skill"
+      "dungeon  timer"
+      "dungeon  board"
+      "party    board"
+      "party    status";
+    column-gap:0;
+  }
+
+  /* ── 左上：MENU（敵エリアの左上に重ねる） ── */
+  #status-bar {
+    grid-area:dungeon; align-self:start; justify-self:stretch;
+    position:relative; z-index:6;
+    background:transparent; border-bottom:0;
+    padding:6px 8px; gap:8px;
+    justify-content:flex-start; pointer-events:none;
+  }
+  #status-bar > * { pointer-events:auto; }
+  #status-right { order:-1; display:flex; align-items:center; gap:8px; }
+  #status-right #menu-btn { order:-1; }
+  #coin-display { order:1; }
+  #combo-label { order:2; margin-left:auto; pointer-events:none; }
+
+  /* ── 左中央：敵モンスター ── */
+  #dungeon {
+    grid-area:dungeon; min-height:0;
+    padding:0 0 4px 0;
+    justify-content:center;
+  }
+  #enemy-area {
+    margin-top:30px;
+    width:min(100%, calc(var(--app-h, 100dvh) * 1.05));
+  }
+
+  /* ── 左下：自分のモンスター＋HP ── */
+  #party-area {
+    grid-area:party; min-width:0;
+    padding:4px 8px 6px;
+  }
+  #party-area > * {
+    max-width:calc(var(--app-h, 100dvh) * 0.92);
+    margin-left:auto; margin-right:auto;
+  }
+  #party-grid { gap:3px; margin-bottom:4px; }
+  /* 操作時間バーは右カラムへ移すので、HP行だけ残る */
+  #bars-wrap #time-row { display:none; }
+  #sp-common-wrap { margin-bottom:3px; }
+
+  /* ── 右上：リーダースキル説明 ── */
+  #leader-skill-area {
+    grid-area:skill; z-index:3;
+    padding:3px 8px;
+  }
+  .ls-text { font-size:0.62rem; -webkit-line-clamp:2; }
+
+  /* ── その下：操作時間バー（右カラム用に移動した #time-row） ── */
+  #ls-timer-slot {
+    grid-area:timer; display:block; z-index:3;
+    padding:4px 8px 4px 6px;
+    background:linear-gradient(180deg, rgba(22,16,30,0.9) 0%, rgba(9,6,14,0.94) 100%);
+    border-bottom:1px solid rgba(214,178,102,0.3);
+  }
+  #ls-timer-slot #time-row { display:flex; height:12px; align-items:center; gap:5px; }
+  #ls-timer-slot .gauge-cap { flex:0 0 16px; height:12px; --cap-w:16px; }
+  #ls-timer-slot .gauge-cap svg { width:12px; height:12px; }
+  #ls-timer-slot #timer-track { height:10px; border-radius:5px; }
+
+  /* ── その下：盤面 ── */
+  #grid-wrap {
+    grid-area:board; align-self:start; justify-self:stretch;
+    width:100%; min-width:0;
+  }
+
+  /* ── 盤面の下：自分の状態異常アイコン ── */
+  #player-status-row {
+    grid-area:status; display:flex; flex-wrap:wrap; align-items:center; align-content:flex-start;
+    gap:4px; min-height:30px; padding:3px 6px;
+    background:linear-gradient(180deg, rgba(20,14,34,0.92) 0%, rgba(10,6,18,0.96) 100%);
+    border-top:1px solid rgba(214,178,102,0.25);
+    box-sizing:border-box; overflow:hidden;
+  }
+  /* renderBuffIcons が作るコンテナを、絶対配置から横並びに変える */
+  #player-status-row #buff-icon-container {
+    position:static !important; right:auto !important; bottom:auto !important;
+    display:block !important; pointer-events:auto;
+  }
+  #player-status-row #buff-icon-container > div { flex-direction:row !important; flex-wrap:wrap; align-items:center !important; }
+  #player-status-row #buff-icon-container > div > div { flex-direction:row !important; flex-wrap:wrap; align-items:center !important; }
+
+  /* バフ詳細の一時表示は、右カラムの上端に出す */
+  #buff-status { top:8px; }
+}
+
+/* 縦画面では横画面専用の入れ物は出さない */
+@media not (orientation: landscape) {
+  #ls-timer-slot, #player-status-row { display:none !important; }
+}
+
+/* ============================================================
+   横画面のホーム画面
+   ┌──────────────────────────────────────┐
+   │ [エナ][イベント]          [図鑑][メール][カバン] │
+   │        ◀  エリア1  エリア2  エリア3 …  ▶       │  ← 左右スライド
+   │ [チーム]                      [育成][進化]   │
+   └──────────────────────────────────────┘
+============================================================ */
+@media (orientation: landscape) {
+  #home { --lh-gut: max(12px, env(safe-area-inset-left)); }
+
+  /* ── 上：左=エナ＋イベント / 右=図鑑・メール・カバン ── */
+  #home-header {
+    padding: calc(8px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 4px max(12px, env(safe-area-inset-left));
+    gap: 10px;
+  }
+  #hh-coin { margin-right: 0; height: 40px; min-width: 100px; }
+  .hh-icons { display: contents; }
+  .hh-icons .hh-icon-btn { width: 40px; height: 40px; }
+  .hh-icons .hh-icon-btn.mode { order: 1; width: 52px; margin-right: auto; }   /* イベントは左側（エナの隣）。残りは右へ寄せる */
+  .hh-icons .hh-icon-btn.zukan,
+  .hh-icons .hh-icon-btn.mail,
+  .hh-icons .hh-icon-btn.bag { order: 3; }
+  #hh-coin { order: 0; }
+
+  /* ── 中央：エリアを左右にスライド ── */
+  #home-main { min-height: 0; }
+  #home-scroll {
+    overflow-x: auto; overflow-y: hidden; touch-action: pan-x;
+    -webkit-mask-image: none; mask-image: none;
+    scroll-snap-type: x proximity; scroll-behavior: smooth;
+  }
+  #stage-map, #stage-map.event {
+    flex-direction: row; align-items: stretch; gap: 16px;
+    height: 100%; box-sizing: border-box; width: max-content; min-width: 100%;
+    padding: 10px max(40px, 12vw) 14px max(40px, 12vw);   /* 左右に余白（端のカードも真ん中に来られる） */
+  }
+  #stage-map::before { display: none; }
+  .ev-head { display: none; }
+  .area-node { display: none; }
+
+  /* エリアのカード：縦長（上に絵、下に名前） */
+  #stage-map > .area-band,
+  #stage-map > .daily-card {
+    flex: 0 0 auto; width: min(300px, 38vw); scroll-snap-align: center;
+  }
+  #stage-map > .area-band { min-height: 0; flex-direction: column; }
+  .daily-card { height: 100%; }
+  .daily-card > .area-band { flex: 1; min-height: 0; flex-direction: column; }
+  .area-band::before { display: none; }
+  .area-band .area-art {
+    position: relative; flex: 1; min-height: 0; width: 100%; top: auto; right: auto; bottom: auto;
+    clip-path: none; border-radius: 19px 19px 0 0;
+  }
+  .area-band .area-text {
+    flex: none; max-width: 100%; padding: 8px 12px 10px 14px; gap: 3px;
+    background: var(--paper); border-top: var(--bw) solid var(--ink); border-radius: 0 0 19px 19px;
+  }
+  .area-text:has(.area-sub)::before { display: none; }
+  .area-band .area-text .area-sub { position: relative; top: auto; left: auto; align-self: flex-start; font-size: 0.66rem; }
+  .area-band .area-name { font-size: 1.1rem; }
+  .area-band .area-name.fit1 { max-width: calc(100% - 92px); overflow: hidden; text-overflow: ellipsis; }
+  .area-band::after { font-size: 4.2rem; left: 8px; bottom: auto; top: 22px; }
+  .area-band .area-state { right: 10px; bottom: 8px; padding: 7px 12px; font-size: 0.74rem; }
+  .daily-week { display: none; }
+
+  /* ── 下：左=チーム / 右=育成・進化 ── */
+  #home-bottom {
+    flex-direction: row; align-items: flex-end; gap: 10px;
+    padding: 4px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background: transparent; border-top: 0;
+  }
+  .hb-row { display: contents; }
+  .hb-btn { flex-direction: row; justify-content: flex-start; gap: 8px; min-height: 0; height: 56px; width: clamp(130px, 20vw, 190px); padding: 6px 10px; text-align: left; }
+  .hb-btn.team { margin-right: auto; }
+  .hb-btn.evo { margin-left: 0; }
+  .hb-ico { width: 34px; height: 34px; }
+  .hb-txt b { font-size: 0.9rem; }
+  .hb-txt small { display: none; }
+  .hb-btn.grow { order: 2; }
+  .hb-btn.evo  { order: 3; }
+}
+
+/* ============================================================
+   横画面：チーム編成 / 育成 / 進化リスト
+   ┌──────────────┬─────────────────────────┐
+   │ ヘッダー      │ 絞り込み・検索・並び替え   │
+   │ パーティー    │ ┌─────────────────────┐ │
+   │ ステータス    │ │ モンスター一覧(スクロール)│ │
+   │              │ └─────────────────────┘ │
+   ├──────────────┴─────────────────────────┤
+   │ ヒント／決定ボタン                       │
+   └────────────────────────────────────────┘
+   （display は game.js が style.display で切り替えるので、表示中だけ grid にする）
+============================================================ */
+@media (orientation: landscape) {
+  /* 横画面は高さが足りないので、余白の基準を詰める */
+  .ui-screen { --gutter: max(14px, env(safe-area-inset-left)); }
+  .bar { padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px;
+         padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+  .dock { padding: 6px max(14px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
+  .te-title, .iku-title, #bag-title, #mail-header-title, #md2-title, #evo-title, #md-title { font-size: 1.15rem; }
+
+  /* ── チーム編成 ── */
+  #team-edit[style*="display: flex"] {
+    display: grid !important;
+    grid-template-columns: minmax(280px, 42%) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+      "head   tools"
+      "party  box"
+      "party  box"
+      "foot   foot";
+    column-gap: 14px;
+  }
+  #te-header { grid-area: head; padding-bottom: 6px; padding-right: 0; }
+  #te-party-area { grid-area: party; align-self: start; margin: 0 0 0 max(14px, env(safe-area-inset-left)); padding: 10px 10px 8px; border-radius: 18px; }
+  #te-party-scroll { gap: 5px; }
+  #te-stats { margin-top: 8px; gap: 5px; }
+  #te-tools { grid-area: tools; padding: 6px max(14px, env(safe-area-inset-right)) 4px 0; gap: 6px; }
+  #te-filter-row { gap: 6px; }
+  .te-attr-btn, .iku-attr-btn { width: 34px; height: 34px; }
+  #te-attr-filters { gap: 6px; }
+  #te-search-input { height: 38px; border-radius: 19px; }
+  .te-sort-btn { min-height: 38px; }
+  #te-box-wrap { grid-area: box; padding: 6px max(14px, env(safe-area-inset-right)) 14px 0; }
+  #te-monster-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px 6px; }
+  #te-footer { grid-area: foot; padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+  .te-back-btn.btn { min-height: 44px; min-width: 120px; }
+  #te-help-sheet { align-items: center; padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); }
+  .te-help-card { max-height: calc(var(--app-h, 100dvh) - 24px); overflow-y: auto; padding: 12px 14px; gap: 8px; }
+  .te-help-card ul { gap: 6px; }
+
+  /* ── 育成（合成） ── */
+  #iku-screen[style*="display: flex"] { display: flex !important; }
+  #iku-header { padding-bottom: 4px; }
+  #iku-panel-gassho {
+    display: grid; flex: 1; min-height: 0;
+    grid-template-columns: minmax(280px, 42%) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "stage  filter"
+      "stage  box"
+      "foot   foot";
+    column-gap: 14px;
+  }
+  #iku-stage { grid-area: stage; align-self: start; padding: 2px 0 4px max(14px, env(safe-area-inset-left)); gap: 8px; min-height: 0; overflow-y: auto; }
+  #iku-altar { gap: 5px; margin: 0; padding: 0; }
+  #iku-base-info { padding: 6px 10px 8px; gap: 4px; border-radius: 14px; }
+  #iku-base-top { height: 40px; }
+  #iku-base-name { font-size: 0.9rem; }
+  #iku-preview-exp { font-size: 0.85rem; }
+  #iku-filter-row { grid-area: filter; padding: 4px max(14px, env(safe-area-inset-right)) 4px 0; }
+  #iku-filter-row .iku-attr-btn { width: 32px; height: 32px; }
+  #iku-box-wrap { grid-area: box; padding: 4px max(14px, env(safe-area-inset-right)) 14px 0; }
+  #iku-monster-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px 6px; }
+  #iku-gassho-footer { grid-area: foot; }
+  #iku-gassho-btn, #iku-back { min-height: 44px; }
+  #iku-result-box { max-height: calc(var(--app-h, 100dvh) - 20px); overflow-y: auto; padding: 14px 18px; gap: 8px; }
+
+  /* ── 進化するモンスター一覧 / 図鑑 ── */
+  #evo-list-box { padding: 6px max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left)); }
+  #evo-list-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px 6px; }
+  #evo-list-hint { padding-bottom: 4px; }
+  #zukan-box { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+  #zukan-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+}
+
+/* ============================================================
+   横画面：モンスター詳細 / 進化 / 出撃準備 / ステージ選択 / 進化パズル / カバン / メール
+============================================================ */
+@media (orientation: landscape) {
+  /* ── モンスター詳細：左=絵、右=情報（スクロール）、下=ボタン ── */
+  #monster-detail[style*="display: flex"] {
+    display: grid !important;
+    grid-template-columns: minmax(200px, 38%) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "top info" "foot foot";
+  }
+  #md-top-wrap { grid-area: top; padding-bottom: 8px; justify-content: center; min-height: 0; }
+  #md-card-frame { height: clamp(110px, calc(var(--app-h, 100dvh) - 150px), 280px); }
+  #md-info-panel { grid-area: info; padding: calc(8px + env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px 14px; }
+  #md-footer { grid-area: foot; }
+  #md-btn-area .btn { min-height: 44px; }
+
+  /* ── 進化：左=進化前→後、右=素材・ステータス ── */
+  #evo-screen[style*="display: flex"] {
+    display: grid !important;
+    grid-template-columns: minmax(240px, 44%) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "head body" "branch body" "compare body" "foot foot";
+  }
+  #evo-header { grid-area: head; padding: calc(8px + env(safe-area-inset-top)) 14px 2px max(14px, env(safe-area-inset-left)); text-align: left; }
+  #evo-branch { grid-area: branch; padding: 2px 14px 4px max(14px, env(safe-area-inset-left)); }
+  #evo-compare { grid-area: compare; align-self: center; padding: 4px 8px 4px max(14px, env(safe-area-inset-left)); }
+  .evo-card { max-width: calc((var(--app-h, 100dvh) - 150px) * 0.8); }
+  .evo-card-name { margin-top: 6px; font-size: 0.82rem; }
+  #evo-body { grid-area: body; padding: calc(8px + env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 12px 6px; gap: 8px; }
+  #evo-footer { grid-area: foot; }
+  #evo-result { flex-direction: row; flex-wrap: wrap; gap: 8px 24px; }
+  #evo-result-img { width: min(40vh, 260px); height: min(40vh, 260px); }
+
+  /* ── 進化パズル：左=お手本・説明、右=盤面 ── */
+  #evo-puzzle[style*="display: flex"] {
+    display: grid !important;
+    grid-template-columns: minmax(180px, 30%) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas: "head area" "info area" "blank area" "foot foot";
+  }
+  #pz-header { grid-area: head; padding: calc(8px + env(safe-area-inset-top)) 10px 0 max(14px, env(safe-area-inset-left)); }
+  #pz-title { font-size: 1.1rem; }
+  #pz-sample { width: 64px; height: 64px; }
+  #pz-info { grid-area: info; flex-direction: column; gap: 4px; padding: 4px 10px 4px max(14px, env(safe-area-inset-left)); text-align: center; }
+  #pz-area { grid-area: area; padding: 8px max(14px, env(safe-area-inset-right)) 8px 8px; }
+  #pz-footer { grid-area: foot; }
+  #pz-hint { font-size: 0.66rem; }
+  #pz-evo-btn { min-height: 44px; }
+
+  /* ── 出撃準備：左=チーム、右=スキル・出現情報 ── */
+  #dungeon-entry[style*="display: flex"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "hero hero" "body body" "foot foot";
+  }
+  #de-hero { grid-area: hero; padding-bottom: 20px; }
+  #de-hero::before { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), 0 100%); }
+  #de-top-bar { flex-direction: row; align-items: center; justify-content: space-between; padding: calc(8px + env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 2px max(14px, env(safe-area-inset-left)); gap: 12px; }
+  #de-title-text { font-size: 1.2rem; }
+  #de-body {
+    grid-area: body; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: start; align-items: start; gap: 10px 14px;
+    padding: 6px max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left));
+  }
+  #de-team-panel { grid-column: 1; grid-row: 1 / span 2; }
+  #de-ls-section { grid-column: 2; gap: 8px; }
+  #de-info-section { grid-column: 2; }
+  #de-footer { grid-area: foot; }
+  #de-footer #de-challenge-btn { min-height: 48px; font-size: 1.1rem; }
+
+  /* ── ステージ選択：上のヒーローを細くして、一覧を広く ── */
+  #ss-hero { min-height: 0; padding-bottom: 22px; }
+  #ss-hero::before { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), 0 100%); }
+  #ss-header { padding: calc(6px + env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); }
+  #ss-title-block { margin-top: 4px; padding: 4px max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); }
+  .ss-area-bigname { font-size: 1.4rem; }
+  #ss-content { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); padding-top: 8px; gap: 10px; }
+
+  /* ── カバン / メール ── */
+  #bag-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+  #mail-list, #mail-detail-body { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); padding-top: 4px; }
+  #mail-list { gap: 8px; }
+
+  /* ── ポップアップ類：高さに収まらないときは中でスクロール ── */
+  .skill-popup, #result-box { max-height: calc(var(--app-h, 100dvh) - 16px); overflow-y: auto; }
+  #result-box { padding-top: 10px; padding-bottom: 10px; }
+  #login-bonus .lb-card { max-height: calc(var(--app-h, 100dvh) - 16px); overflow-y: auto; }
+}
+
+@media (orientation: landscape) {
+  /* 進化パズルの盤面：縦画面の計算式（高さ−330px）だと横画面で潰れるので、ヘッダー/フッター分だけ引く */
+  #pz-board { width: min(calc(var(--app-h, 100dvh) - 96px), 62vw, 520px); }
+}

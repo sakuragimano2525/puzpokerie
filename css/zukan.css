@@ -19,7 +19,7 @@
 #zukan-count { flex: 1 1 100%; min-width: 0; font: 900 0.78rem/1.4 var(--ff); color: var(--ink-2); white-space: nowrap; }
 #zukan-count b { font: 400 1.05rem/1 var(--ff-num); letter-spacing: 0.02em; color: var(--ink); }
 #zukan-sort-btn { flex-shrink: 0; }
-/* リダスキは絵（じょうごのマーク）だけ。属性アイコンと並び替えが1行に入るように */
+/* リダスキは絵（虫めがね＋星のマーク）だけ。属性アイコンと並び替えが1行に入るように */
 #zukan-hint .lss-btn { flex-shrink: 0; padding: 0 11px; }
 #zukan-hint .lss-btn .lss-btn-t { display: none; }
 #zukan-hint #zukan-sort-btn { padding: 0 8px 0 10px; }

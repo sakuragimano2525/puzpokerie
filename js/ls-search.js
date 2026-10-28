@@ -300,7 +300,8 @@
   // ④ 画面（ボタン / 絞り込みタグ / シート）
   // ============================================================
   const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-  const FUNNEL = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6.2 7.6V19l-3.6-2v-4.4z"/></svg>';
+  // 虫めがね＋リーダーの星（リダスキ検索のアイコン。編成・合成・進化・図鑑ぜんぶこれ）
+  const FUNNEL = '<svg class="ic ic-ls" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7.6"/><path d="M15.6 15.6 21.2 21.2" stroke-width="3.4"/><path d="M10.00 5.70 L11.06 8.54 L14.09 8.67 L11.71 10.56 L12.53 13.48 L10.00 11.80 L7.47 13.48 L8.29 10.56 L5.91 8.67 L8.94 8.54Z" fill="currentColor" stroke-width="1.2"/></svg>';
 
   function mount(opts) {
     const st = newState();

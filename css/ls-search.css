@@ -5,7 +5,8 @@
 
 /* ── ボタン（並び替えボタンの左に並ぶ） ── */
 .lss-btn { position: relative; gap: 5px; }
-.lss-btn .ic { width: 1.05em; height: 1.05em; stroke-width: 2.6; }
+.lss-btn .ic { width: 1.7em; height: 1.7em; min-width: 22px; min-height: 22px; stroke-width: 2.6; }
+.lss-btn .ic-ls { margin: -2px 0; }
 .lss-btn.on { background: var(--sun); }
 .lss-badge { display: none; position: absolute; top: -8px; right: -6px; min-width: 19px; height: 19px; padding: 0 4px; box-sizing: border-box; align-items: center; justify-content: center; font: 400 0.64rem/1 var(--ff-num); color: #fff; background: var(--coral); border: 2px solid var(--ink); border-radius: 999px; }
 .lss-btn.on .lss-badge { display: inline-flex; }
@@ -90,6 +91,7 @@
 /* 合成・進化・図鑑：ほかのボタンと同じ高さにそろえる。合成は横がせまいので絵だけ（件数バッジ付き） */
 #iku-sort-tools .lss-btn, #evo-list-hint .lss-btn, #zukan-hint .lss-btn { min-height: 38px; padding: 0 10px; font-size: 0.74rem; }
 #iku-sort-tools .lss-btn { padding: 0 9px; }
+#iku-sort-tools .lss-btn .ic, #evo-list-hint .lss-btn .ic, #zukan-hint .lss-btn .ic { width: 24px; height: 24px; }
 #iku-sort-tools .lss-btn-t { display: none; }
 #zukan-hint .lss-btn, #evo-list-hint .lss-btn { margin-left: 0; }
 /* 合成：属性アイコンをさらに少し小さく（EXP・リダスキ・並び替えの3つが入るように） */
