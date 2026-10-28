@@ -37,9 +37,9 @@
   MODES.forEach(m => { MODE_BY_ID[m.id] = m; });
 
   // ── monster-editor.html と同じ並びのキー ─────────────────────
-  const SORT_ATTR = ['fire', 'water', 'wood', 'light', 'dark', 'heal', 'poison'];
+  const SORT_ATTR = ['fire', 'water', 'wood', 'light', 'dark', 'heal', 'poison', 'ojama'];
   const attrRankOf = a => {
-    const i = SORT_ATTR.indexOf(({ '回復': 'heal', '火': 'fire', '水': 'water', '木': 'wood', '光': 'light', '闇': 'dark', '毒': 'poison' })[a] || a);
+    const i = SORT_ATTR.indexOf(({ '回復': 'heal', '火': 'fire', '水': 'water', '木': 'wood', '光': 'light', '闇': 'dark', '毒': 'poison', 'お邪魔': 'ojama' })[a] || a);
     return i < 0 ? 99 : i;
   };
   // リーダースキル：①火のソウル→火炎のソウル→水のソウル…（属性別の攻撃倍率）②タイプ・全属性の攻撃 ③HP(オーラ) ④回復力(ルーン) ⑤条件付き攻撃 ⑥その他

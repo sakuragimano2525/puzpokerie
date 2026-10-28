@@ -801,7 +801,7 @@ function buildEnemyActionFn(skills, enemyRef) {
           playSE('pahu');   // 敵からドロップ生成・変換された時の効果音（tedrop.mp3）
           if (sk.pattern === '5color_heal' || sk.pattern === 'multi') {
             // 盤面全体を指定した色だけにランダム変換。選んだ各色は必ず3個以上になる（各色3個ずつ先に確保 → 残りはランダム）
-            const ALL = ['fire','water','wood','light','dark','heal','poison'];
+            const ALL = ['fire','water','wood','light','dark','heal','poison','ojama'];
             let kinds = sk.pattern === '5color_heal'
               ? ['fire','water','wood','light','dark','heal']
               : (Array.isArray(sk.orbs) ? sk.orbs.filter(k => ALL.includes(k)) : ALL.filter(k => sk['orb_' + k]));
@@ -815,7 +815,7 @@ function buildEnemyActionFn(skills, enemyRef) {
             for (const k of kinds) for (let n = 0; n < minEach; n++) place(k);
             while (i < cells.length) place(kinds[Math.floor(Math.random() * kinds.length)]);
           } else {
-            const ORB_KINDS = ['fire','water','wood','light','dark','heal','poison'];   // 変換先・生成には毒も指定できる
+            const ORB_KINDS = ['fire','water','wood','light','dark','heal','poison','ojama'];   // 変換先・生成には毒・お邪魔も指定できる
             const ORB_SRC = ['fire','water','wood','light','dark','heal'];   // random_to の変換元（毒は対象外）
             const paint = (r, c, t) => {
               grid[r][c] = t; revealBlind(r, c);
@@ -5764,6 +5764,10 @@ updateTeamNavLabels();
 const ROWS = 5, COLS = 6;
 const TYPES = ['fire','water','wood','light','dark','heal'];
 let grid = [], orbEls = [];
+// ── お邪魔ドロップ ──
+// 'ojama' は本家と同じ「攻撃力のないドロップ」。3つ以上つなげると消え、コンボには数えるが、どの属性の攻撃にもならない。
+// 動かす・入れ替える・落下するのは普通のドロップと同じ。敵スキル board_change の to:'ojama'、味方スキルの to/attr:'ojama' で盤面に現れる。
+// 不要になったら：board_change／orbChange系の 'ojama'、css の .orb.ojama、editor の ORB/ATTRS を消せばOK。
 // ── 暗闇ギミック ──
 // blindCells[r][c] === true のマスのドロップは見えない（?マーク表示）。
 //  ・ドロップを「持った」だけでは消えない。実際に動かして入れ替わったドロップだけ暗闇が解ける。
@@ -6535,9 +6539,10 @@ function runSkillEffect(eff, context) {
     case 'orbChangeMulti':
     case 'orbChange5ColorHeal': { // 盤面全体を指定した色だけにランダム変換（選んだ各色は必ず3個以上）
       playDropcOnce();
-      const ALLK = ['fire','water','wood','light','dark','heal'];
+      const ALLK = ['fire','water','wood','light','dark','heal','ojama'];
       let kinds = eff.type === 'orbChange5ColorHeal'
-        ? ALLK.slice()
+        ? ['fire','water','wood','light','dark','heal']
+
         : (Array.isArray(eff.orbs) ? eff.orbs.filter(k => ALLK.includes(k)) : ALLK.filter(k => eff['orb_' + k]));
       if (kinds.length === 0) kinds = ['fire'];   // 未選択の保険
       const cells = [];
@@ -7810,7 +7815,9 @@ function buildEventMap() {
     art.style.backgroundImage = `url('${areaBgImage(id)}')`;
     const text = document.createElement('span'); text.className = 'area-text';
     if (ev.desc) { const ds = document.createElement('span'); ds.className = 'area-sub'; ds.textContent = ev.desc; text.appendChild(ds); }
-    const nm = document.createElement('span'); nm.className = 'area-name'; nm.textContent = ev.name || id;
+    const nm = document.createElement('span'); nm.className = 'area-name fit1';   // fit1 = 長い行は縮めて絵にかからないよう収める
+    // bannerName があればそれを表示（\n で改行。例 'ハッピー\nハロウィン'）。無ければ name を1行で
+    (ev.bannerName || ev.name || id).split('\n').forEach((ln, i) => { if (i) nm.appendChild(document.createElement('br')); nm.appendChild(document.createTextNode(ln)); });
     text.appendChild(nm);
     const ent = eventEntry(id);   // 入るのにおふだが要るイベント：持っている数を出す
     if (ent) { const row = document.createElement('span'); row.className = 'ofuda-row'; row.innerHTML = ofudaChipHtml(ent.item); text.appendChild(row); }
@@ -7824,6 +7831,7 @@ function buildEventMap() {
     });
     b.appendChild(art); b.appendChild(text); b.appendChild(go);
     map.appendChild(b);
+    fitAreaNameObserve(b);
   });
 }
 // 日替わりダンジョンのカード（今日の曜日のバナー＋ダンジョン名＋ようびのおふだの所持数＋1週間のカレンダー）
@@ -7902,21 +7910,26 @@ function buildMainMap() {
 }
 // エリア名を「1行のまま」右の画像（斜めの境目）にはみ出さないように、長い名前だけ文字を縮めて収める
 function fitAreaName(band) {
-  const nm = band.querySelector('.area-name.fit1');
   const art = band.querySelector('.area-art');
-  if (!nm || !art) return;
+  if (!art) return;
   const br = band.getBoundingClientRect();
   if (!br.width) return;   // 非表示中（表示された時にObserverが再計算する）
-  nm.style.fontSize = '';
-  const ar = art.getBoundingClientRect();
-  const nr = nm.getBoundingClientRect();
-  const yFrac = Math.min(1, Math.max(0, ((nr.top + nr.bottom) / 2 - ar.top) / ar.height));
-  // 画像の左の境目は上が26%・下が0%の斜め線（clip-path）。名前の高さでの境目のx座標
-  const edge = ar.left + ar.width * 0.26 * (1 - yFrac);
-  const avail = edge - 10 - nr.left;
-  const base = parseFloat(getComputedStyle(nm).fontSize);
-  const w = nm.scrollWidth;
-  if (avail > 0 && w > avail) nm.style.fontSize = Math.max(10, base * avail / w * 0.98) + 'px';
+  // 対象：エリア名（fit1）と、イベントカードの説明文（area-sub）
+  const targets = [band.querySelector('.area-name.fit1')];
+  if (band.classList.contains('evt')) targets.push(band.querySelector('.area-sub'));
+  for (const nm of targets) {
+    if (!nm) continue;
+    nm.style.fontSize = '';
+    const ar = art.getBoundingClientRect();
+    const nr = nm.getBoundingClientRect();
+    const yFrac = Math.min(1, Math.max(0, ((nr.top + nr.bottom) / 2 - ar.top) / ar.height));
+    // 画像の左の境目は上が26%・下が0%の斜め線（clip-path）。文字の高さでの境目のx座標
+    const edge = ar.left + ar.width * 0.26 * (1 - yFrac);
+    const avail = edge - 10 - nr.left;
+    const base = parseFloat(getComputedStyle(nm).fontSize);
+    const w = nm.scrollWidth;
+    if (avail > 0 && w > avail) nm.style.fontSize = Math.max(9, base * avail / w * 0.98) + 'px';
+  }
 }
 function fitAreaNameObserve(band) {
   if (typeof ResizeObserver === 'function') new ResizeObserver(() => fitAreaName(band)).observe(band);
@@ -8352,6 +8365,35 @@ function renderDungeonEntry() {
   renderDungeonEntryInfo(dKey, dd);
 }
 
+// 画像の「透明でない部分」だけを正方形に切り出して、中身が枠の真ん中に来るようにする
+// （おふだなど、画像内の余白が偏っているアイテムのズレ対策。読み込めない／加工できない時はそのまま表示）
+function centerCropImg(img) {
+  if (!img) return;
+  const run = () => {
+    try {
+      if (img.dataset.centered) return;
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) return;
+      const sc = Math.min(1, 256 / Math.max(w, h));
+      const cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
+      const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0, cw, ch);
+      const d = g.getImageData(0, 0, cw, ch).data;
+      let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+      for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+        if (d[(y * cw + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      }
+      if (x1 < 0) return;
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1, side = Math.max(bw, bh);
+      const c2 = document.createElement('canvas'); c2.width = side; c2.height = side;
+      c2.getContext('2d').drawImage(c, x0, y0, bw, bh, (side - bw) / 2, (side - bh) / 2, bw, bh);
+      const url = c2.toDataURL('image/png');
+      img.dataset.centered = '1';
+      img.src = url;
+    } catch (e) { /* 加工できなければ元の画像のまま */ }
+  };
+  if (img.complete && img.naturalWidth) run(); else img.addEventListener('load', run, { once: true });
+}
 // 出撃準備：出現モンスター(mX.png) と 落ちるチップ。クリア済みのダンジョンだけ表示する
 function renderDungeonEntryInfo(dKey, dd) {
   const section = document.getElementById('de-info-section');
@@ -8387,6 +8429,7 @@ function renderDungeonEntryInfo(dKey, dd) {
       cell.title = def.name;
       cell.innerHTML = `<img src="${def.img}" alt="${def.name}" onerror="this.parentNode.style.display='none'">`;
       chipList.appendChild(cell);
+      centerCropImg(cell.querySelector('img'));   // 画像の余白が偏っていても、中身を枠の真ん中に
     }
     const fd = e.ofudaDrop;   // おふだドロップ（ONの敵だけ）
     if (fd && fd.enabled && ITEM_DATA[fd.item] && !seenChip.has(fd.item)) {
@@ -8397,6 +8440,7 @@ function renderDungeonEntryInfo(dKey, dd) {
       cell.title = def.name;
       cell.innerHTML = `<img src="${def.img}" alt="${def.name}" onerror="this.parentNode.style.display='none'">`;
       chipList.appendChild(cell);
+      centerCropImg(cell.querySelector('img'));   // 画像の余白が偏っていても、中身を枠の真ん中に
     }
   }
   monBlock.style.display = seenMon.size ? '' : 'none';
@@ -9026,7 +9070,7 @@ async function _evaluateInner() {
   resetLsGuard();
   let lastGroupCells = null;
   damageElements.forEach(el => { if (el) { el.textContent = ''; el.classList.remove('show', 'pop'); } });
-  const attrCounts = { fire: 0, water: 0, wood: 0, light: 0, dark: 0, heal: 0, poison: 0 };
+  const attrCounts = { fire: 0, water: 0, wood: 0, light: 0, dark: 0, heal: 0, poison: 0, ojama: 0 };
   let exact4Count = 0;
   let crossCount = 0;
   let lShapes = 0;
@@ -9036,7 +9080,7 @@ async function _evaluateInner() {
   let darkCombos = 0;
   let healCombos = 0;
   // 属性ごとのコンボ数。新しい属性コンボ条件はこの値を使う。
-  const attrCombos = { fire: 0, water: 0, wood: 0, light: 0, dark: 0, heal: 0, poison: 0 };
+  const attrCombos = { fire: 0, water: 0, wood: 0, light: 0, dark: 0, heal: 0, poison: 0, ojama: 0 };
   let hasWaterConnect5 = false;
   let hasDarkConnect5 = false;
   let exactAttrCounts = {};

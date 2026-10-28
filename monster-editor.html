@@ -271,7 +271,7 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
 const $ = id => document.getElementById(id);
 
 // ---------- 定数 ----------
-const ATTRS = [['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['poison','毒']];
+const ATTRS = [['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['poison','毒'],['ojama','お邪魔']];
 const ATTR_NAME = Object.fromEntries(ATTRS);
 const DEFAULT_TYPES = ['バランス','こうげき','たいりょく','かいふく','回復','バード','マター','悪魔'];
 const KNOWN_KEYS = ['id','name','img','rarity','attr','type','maxLevel','baseExp','stats','skill','leaderSkill','evolutions'];
@@ -309,7 +309,7 @@ const activeTemplates = {
   orbChangeCross:{label:'十字の形に生成',data:{type:'orbChangeCross',row:1,col:1,attr:'fire'},fields:[numF('row','中心の行（0〜4）'),numF('col','中心の列（0〜5）'),attrF('attr','属性')]},
   orbChangeReverseL:{label:'左上に逆L字で生成',data:{type:'orbChangeReverseL',attr:'wood'},fields:[attrF('attr','属性')]},
   orbChange5ColorHeal:{label:'全ドロップを5属性＋回復に変化（各3個以上）',data:{type:'orbChange5ColorHeal'},fields:[]},
-  orbChangeMulti:{label:'全ドロップを選んだ色に変化（各3個以上。例：火,水,回復）',data:{type:'orbChangeMulti',orb_fire:true,orb_water:true,orb_heal:true},fields:[['orb_fire','火ドロップ','bool'],['orb_water','水ドロップ','bool'],['orb_wood','木ドロップ','bool'],['orb_light','光ドロップ','bool'],['orb_dark','闇ドロップ','bool'],['orb_heal','回復ドロップ','bool']]},
+  orbChangeMulti:{label:'全ドロップを選んだ色に変化（各3個以上。例：火,水,回復）',data:{type:'orbChangeMulti',orb_fire:true,orb_water:true,orb_heal:true},fields:[['orb_fire','火ドロップ','bool'],['orb_water','水ドロップ','bool'],['orb_wood','木ドロップ','bool'],['orb_light','光ドロップ','bool'],['orb_dark','闇ドロップ','bool'],['orb_heal','回復ドロップ','bool'],['orb_ojama','お邪魔ドロップ','bool']]},
   orbConvert:{label:'ドロップを一括変換',data:{type:'orbConvert',from:'fire',to:'heal'},fields:[attrF('from','変換元'),attrF('to','変換先')]},
   enemyDelay:{label:'敵の行動を遅延（全体/単体）',data:{type:'enemyDelay',target:'all',turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('turns','ターン')]},
   dmgReductionBuff:{label:'○ターンの間、ダメージを○%軽減',data:{type:'dmgReductionBuff',turns:1,value:0.5},fields:[numF('turns','ターン数'),numF('value','軽減率（50%=0.5、100%=1）')]},
@@ -351,7 +351,7 @@ const leaderTemplates = {
   typeRec:{label:'タイプの回復力倍率',data:{type:'rec',condition:'type',attr:'回復',value:2},fields:[typeF('attr','対象タイプ'),numF('value','回復力倍率')]},
   allRec:{label:'全属性の回復力倍率',data:{type:'rec',value:1.5},fields:[numF('value','回復力倍率')]},
   dmgReduction:{label:'ダメージ軽減',data:{type:'dmgReduction',value:0.35},fields:[numF('value','軽減率（35%=0.35）')]},
-  attrCombos:{label:'○属性ドロップの○コンボ以上で',data:{type:'atk',condition:'attrCombos',attr:'light',count:2,value:2},fields:[attrF('attr','属性（火・水・木・光・闇・回復・毒）'),numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  attrCombos:{label:'○属性ドロップの○コンボ以上で',data:{type:'atk',condition:'attrCombos',attr:'light',count:2,value:2},fields:[attrF('attr','属性（火・水・木・光・闇・回復・毒・お邪魔）'),numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   combo:{label:'○コンボ以上で',data:{type:'atk',condition:'combo',count:7,value:2},fields:[numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   orbConnect:{label:'属性を○個以上つなげて（2属性を同時につなげるも可）',data:{type:'atk',condition:'orbConnect',attr:'fire',count:5,value:2},fields:[attrF('attr','属性（1つ目）'),['attr2','同時につなげる2つ目の属性（指定なし＝1属性のみ）','attrAny'],numF('count','必要個数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   hpCond:{label:'HP○%以上／以下で',data:{type:'atk',condition:'hpAbove',threshold:0.8,value:2},fields:[['condition','HPの条件','select','hpAbove:HP○%以上|hpBelow:HP○%以下'],numF('threshold','HP割合（80%=0.8）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&['hpAbove','hpBelow'].includes(e.condition)},
@@ -436,7 +436,7 @@ let extraKeys = {};          // エディターが知らないキー（そのま
 let activeEffects = [], leaderEffects = [], evolutions = [];
 
 // ---------- 画面部品 ----------
-const attrOptions = ATTRS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
+const attrOptions = ATTRS.filter(([v])=>v!=='ojama').map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
 $('monAttr').innerHTML = attrOptions;
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function allTypes(){
@@ -675,7 +675,7 @@ function describeActiveOne(e0){
       case 'orbChangeCross': out.push(`${a}ドロップを十字の形に生成`); break;
       case 'orbChangeReverseL': out.push(`左上に${a}を逆L字型に生成`); break;
       case 'orbChange5ColorHeal': out.push('ドロップを5属性＋回復ドロップに変化（各3個以上）'); break;
-      case 'orbChangeMulti': { const ks=[['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復']].filter(([k])=>e['orb_'+k]).map(x=>x[1]); out.push(`ドロップを${(ks.length?ks:['火']).join('・')}ドロップに変化${ks.length>1?'（各3個以上）':''}`); break; }
+      case 'orbChangeMulti': { const ks=[['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['ojama','お邪魔']].filter(([k])=>e['orb_'+k]).map(x=>x[1]); out.push(`ドロップを${(ks.length?ks:['火']).join('・')}ドロップに変化${ks.length>1?'（各3個以上）':''}`); break; }
       case 'orbConvert': out.push(`${ATTR_NAME[e.from]}ドロップを${ATTR_NAME[e.to]}ドロップに変化`); break;
       case 'enemyDelay': out.push(`敵${e.target==='single'?'単体':'全体'}の行動を${e.turns}ターン遅らせる`); break;
       case 'dmgReductionBuff': out.push(`${e.turns||1}ターンの間、ダメージを${pct(e.value)}軽減`); break;
@@ -775,8 +775,8 @@ function collectSkills(){
   return [...map.values()];
 }
 // ---------- ライブラリの並び順（種類順） ----------
-const SORT_ATTR = ['fire','water','wood','light','dark','heal','poison'];
-const attrRankOf = a => { const i = SORT_ATTR.indexOf(({'回復':'heal','火':'fire','水':'water','木':'wood','光':'light','闇':'dark','毒':'poison'})[a]||a); return i<0 ? 99 : i; };
+const SORT_ATTR = ['fire','water','wood','light','dark','heal','poison','ojama'];
+const attrRankOf = a => { const i = SORT_ATTR.indexOf(({'回復':'heal','火':'fire','水':'water','木':'wood','光':'light','闇':'dark','毒':'poison','お邪魔':'ojama'})[a]||a); return i<0 ? 99 : i; };
 // リーダースキル：①火のソウル→火炎のソウル→水のソウル…（属性別の攻撃倍率）②タイプ・全属性の攻撃 ③HP(オーラ) ④回復力(ルーン) ⑤条件付き攻撃 ⑥その他
 const LS_COND_ORDER = ['hpAbove','hpBelow','hpFull','combo','attrCombos','orbConnect','exactCount','exact4','colorCount','colorCountHeal','colorRamp','cross','lShapes','poison','remainingOrbs','skillUsed'];
 function leaderSortKey(ls){
@@ -1217,10 +1217,10 @@ $('blApply').onclick=()=>{
 // ---------- ステータス一覧 ----------
 const ST_SORTS=[['id','ID順'],['atk.max','こうげき順'],['hp.max','HP順'],['rec.max','回復順'],['rarity','★（レアリティ）順'],['attr','属性順'],['type','タイプ順'],['name','名前順'],['maxLv','最大Lv順']];
 const ST_ASC_FIRST=['id','name','attr','type'];   // この項目は最初は昇順、それ以外は大きい順
-const ATTR_COLOR={fire:'#ef4444',water:'#3b82f6',wood:'#22c55e',light:'#facc15',dark:'#a855f7',heal:'#f472b6',poison:'#84cc16'};
+const ATTR_COLOR={fire:'#ef4444',water:'#3b82f6',wood:'#22c55e',light:'#facc15',dark:'#a855f7',heal:'#f472b6',poison:'#84cc16',ojama:'#9ca3af'};
 let stSort='id', stDesc=false;
 $('stSort').innerHTML=ST_SORTS.map(([k,n])=>`<option value="${k}">${n}</option>`).join('');
-$('stAttr').innerHTML='<option value="">すべて</option>'+ATTRS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
+$('stAttr').innerHTML='<option value="">すべて</option>'+ATTRS.filter(([v])=>v!=='ojama').map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
 const stGet=(m,s,w)=>Number(m.stats&&m.stats[s]&&m.stats[s][w])||0;
 const stMaxLv=m=>m.maxLevel||rarityMaxLevel(m.rarity);
 function stVal(m,key){

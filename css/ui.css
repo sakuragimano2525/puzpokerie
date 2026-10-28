@@ -201,7 +201,9 @@
 .area-band.evt { background: var(--paper); }
 .area-band.evt::after { content: none; }
 .area-band.evt .area-text { gap: 8px; }
-.area-band.evt .area-sub { font-size: 0.78rem; font-weight: 700; color: var(--ink-2); }
+/* イベントのカード：上の説明文のぶんの空きを無くして、エリア名をカードの真ん中に */
+.area-band.evt:not(.daily) .area-text:has(.area-sub)::before { display: none; }
+.area-band.evt .area-sub { font-size: 0.78rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; }   /* 長い説明は game.js の fitAreaName が縮めて絵にかからないようにする */
 .area-band.evt .area-go { background: var(--sun); }
 .ev-empty { padding: 28px 8px; text-align: center; font: 700 0.9rem/1.5 var(--ff); color: var(--ink-3); }
 
@@ -877,8 +879,9 @@
 /* 出現モンスター：他の画面（編成・クリア画面）と同じく、枠・背景なしで画像だけ並べる */
 .de-info-cell { position: relative; width: 52px; height: 52px; display: grid; place-items: center; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 .de-info-cell img { width: 100%; height: 100%; object-fit: contain; }
-/* チップだけは、クリア画面のチップと同じ枠付き */
-.de-info-cell.chip-cell { background: var(--sky); border: var(--bw) solid var(--ink); border-radius: 13px; box-shadow: 0 3px 0 var(--ink); overflow: hidden; }
+/* チップ/アイテム：白い四角の枠。縦長のおふだなども枠の中に収める（はみ出さない） */
+.de-info-cell.chip-cell { box-sizing: border-box; width: 56px; height: 56px; padding: 4px; background: #fff; border: 2px solid var(--sky-3); border-radius: 10px; box-shadow: none; overflow: hidden; }
+.de-info-cell.chip-cell img { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
 
 /* ── 画面の高さが低い端末 ── */
 @media (max-height: 680px) {
@@ -1088,7 +1091,7 @@ button.cs-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--in
 #pz-header { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: calc(12px + env(safe-area-inset-top)) var(--gutter) 2px; text-align: center; }
 #pz-title { display: inline-block; padding: 0 6px 0 0.3em; font: 900 1.4rem/1.2 var(--ff); letter-spacing: 0.3em; background: linear-gradient(transparent 64%, var(--sun) 64% 90%, transparent 90%); }
 #pz-sample-wrap { margin-top: 8px; display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
-#pz-sample { width: 72px; height: 72px; background: #fff; border: var(--bw) solid var(--ink); border-radius: 12px; box-shadow: 0 3px 0 var(--ink); overflow: hidden; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; }
+#pz-sample { width: 72px; height: 72px; background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; }
 #pz-sample img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 #pz-sample-label { font: 900 0.66rem/1 var(--ff); letter-spacing: 0.1em; color: var(--ink-2); }
 #pz-info { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 4px var(--gutter) 6px; font: 700 0.78rem/1.3 var(--ff); color: var(--ink-2); }

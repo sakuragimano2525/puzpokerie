@@ -27,9 +27,9 @@
   'use strict';
 
   const ATTRS = ['fire', 'water', 'wood', 'light', 'dark'];
-  const ATTR_JP = { fire: '火', water: '水', wood: '木', light: '光', dark: '闇', heal: '回復', poison: '毒' };
+  const ATTR_JP = { fire: '火', water: '水', wood: '木', light: '光', dark: '闇', heal: '回復', poison: '毒', ojama: 'お邪魔' };
   const ATTR_IMG = { fire: '1.png', water: '2.png', wood: '3.png', light: '4.png', dark: '5.png' };
-  const JP2ATTR = { '火': 'fire', '水': 'water', '木': 'wood', '光': 'light', '闇': 'dark', '回復': 'heal', '毒': 'poison' };
+  const JP2ATTR = { '火': 'fire', '水': 'water', '木': 'wood', '光': 'light', '闇': 'dark', '回復': 'heal', '毒': 'poison', 'お邪魔': 'ojama' };
   const normAttr = a => JP2ATTR[a] || a;
   const normType = t => (t === '回復' ? 'かいふく' : t);
   const TYPE_ORDER = ['バランス', 'こうげき', 'たいりょく', 'かいふく'];
@@ -277,7 +277,7 @@
 
     // ── ドロップの属性 ──
     const orbs = [];
-    ['fire', 'water', 'wood', 'light', 'dark', 'heal', 'poison'].forEach(a => { if (has('orb:' + a)) orbs.push(chip('orb:' + a, ATTR_JP[a], { full: ATTR_JP[a] + 'ドロップが条件', attr: ATTR_IMG[a] ? a : '' })); });
+    ['fire', 'water', 'wood', 'light', 'dark', 'heal', 'poison', 'ojama'].forEach(a => { if (has('orb:' + a)) orbs.push(chip('orb:' + a, ATTR_JP[a], { full: ATTR_JP[a] + 'ドロップが条件', attr: ATTR_IMG[a] ? a : '' })); });
     sections.push({ id: 'orb', title: '条件になるドロップの属性', chips: orbs });
 
     // ── 倍率 ──

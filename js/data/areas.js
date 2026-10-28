@@ -62,10 +62,13 @@ const AREA_DATA = {
 //     1) このファイルに  event2: { name:'おカネパーク', desc:'エナがたくさん！', hue:45 }  を足す
 //     2) ダンジョン設定ツールで  event2-1 〜 event2-3 などを作り、dungeons.js を差し替える
 //     3) （任意）背景画像を bg に指定してゲームのフォルダに置く
+//     ・バナーの名前を2行にしたいときは bannerName: 'ハッピー\nハロウィン' のように \n で区切る（無ければ name を1行で表示）
 // ============================================================
 const EVENT_UNLOCK_AREA = 6;   // このエリアのボスをクリアするとイベントステージが開放される
 const EVENT_AREA_DATA = {
   keiken: { name: 'けいけんパーク', desc: 'モンスターを育てよう！', bg: 'dungeon1.png', hue: 200, entryItem: 'ohuda1', entryCost: 1 },
+  halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
+
 
   // ── 日替わりダンジョン（月〜日の7つ。今日の曜日のものだけが、イベント一覧の「日替わりダンジョン」から遊べる） ──
   //   ダンジョンのキーは「イベントID-番号」。  例  daily_mon-1（月曜のステージ1） / daily_mon-boss

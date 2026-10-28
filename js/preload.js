@@ -53,7 +53,7 @@
     // よく使う共通の画像（属性アイコン・バフアイコン・ギフト等）
     add('status.png');
     ['sta1','sta2','sta3'].forEach(n => add(n + '.png'));          // ステータスアイコン
-    add('itembox.png'); add('hcoin.png');
+    add('itembox.png'); add('hcoin.png'); add('ojama.png');   // お邪魔ドロップ
     Array.from(document.images).forEach(im => add(im.getAttribute('src')));   // index.html に直接書かれた画像も先読み
     ['1','2','3','4','5'].forEach(n => { add(n + '.png'); add('gift' + n + '.png'); add('gift' + n + 's.png'); });
     ['j1','j2','j3','j4','j5','j6'].forEach(n => add(n + '.png'));

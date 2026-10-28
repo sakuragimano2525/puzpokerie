@@ -886,6 +886,7 @@ body {
 .orb.light { background-image:url('../4.png'); }
 .orb.dark  { background-image:url('../5.png'); }
 .orb.heal  { background-image:url('../6.png'); background-size:78%; background-repeat:no-repeat; background-position:center; border-radius:0; border:none; overflow:visible; }
+.orb.ojama { background-image:url('../ojama.png'); background-size:92%; background-repeat:no-repeat; background-position:center; border-radius:0; border:none; overflow:visible; }
 .orb.poison { background-image:url('../8.png'); background-size:78%; background-repeat:no-repeat; background-position:center; border-radius:0; border:none; overflow:visible; filter: drop-shadow(0 0 6px rgba(128,0,255,0.5)); }
 
 /* 暗闇：ドロップの画像そのものを真っ黒の影にする（形は元のまま。動かすと見える） */

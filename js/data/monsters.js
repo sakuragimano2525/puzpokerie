@@ -540,8 +540,8 @@ const MONSTER_DATA = {
     skill: {
       name: 'ダブルチェンジハート・光',
       sp: 5,
-      desc: '闇と毒ドロップを回復ドロップに変化。',
-      effects: [ { type: 'orbConvert', from: 'dark', to: 'heal' }, { type: 'orbConvert', from: 'poison', to: 'heal' } ]
+      desc: '闇とお邪魔ドロップを回復ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'dark', to: 'heal' }, { type: 'orbConvert', from: 'ojama', to: 'heal' } ]
     },
     leaderSkill: { name: '光のオーラ・中', desc: '光属性のHP1.5倍。', effects: [ { type: 'hp', attr: 'light', value: 1.5 } ] }
   },
@@ -931,11 +931,11 @@ const MONSTER_DATA = {
       effects: [ { type: 'orbConvert', from: 'water', to: 'heal' }, { type: 'orbConvert', from: 'fire', to: 'heal' } ]
     },
     leaderSkill: {
-      name: 'ポイズンカラミティ',
-      desc: '【落ちコンなし】毒を6個以上つなげて消すと攻撃2倍、受けるダメージ20%軽減。',
+      name: 'ジャミングカラミティ',
+      desc: '【落ちコンなし】お邪魔を6個以上つなげて消すと攻撃2倍、受けるダメージ20%軽減。',
       effects: [
         { type: 'noDrop', value: true },
-        { type: 'atk', condition: 'orbConnect', attr: 'poison', count: 6, value: 2, reduce: 0.2 }
+        { type: 'atk', condition: 'orbConnect', attr: 'ojama', count: 6, value: 2, reduce: 0.2 }
       ]
     }
   },
@@ -1344,8 +1344,17 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     baseExp: 50,
     stats: { hp: { min: 198, max: 910 }, atk: { min: 126, max: 241 }, rec: { min: 8, max: 19 } },
-    skill: { name: 'スモッグ', sp: 2, desc: '木ドロップを毒ドロップに変化。', effects: [ { type: 'orbConvert', from: 'wood', to: 'poison' } ] },
-    leaderSkill: { name: 'どくくらい', desc: '毒ドロップを消すと攻撃1.5倍。', effects: [ { type: 'atk', condition: 'poison', value: 1.5 } ] },
+    skill: {
+      name: 'ドロップチェンジ・邪水',
+      sp: 2,
+      desc: '木ドロップをお邪魔ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'wood', to: 'ojama' } ]
+    },
+    leaderSkill: {
+      name: 'おじゃまくらい',
+      desc: 'お邪魔をちょうど4個消すと攻撃1.7倍。',
+      effects: [ { type: 'atk', condition: 'exactCount', attr: 'ojama', count: 4, value: 1.7 } ]
+    },
     evolutions: [ { to: 73, materials: [ { item: 'puzzle22', count: 2 }, { item: 'puzzle52', count: 1 } ] } ]
   },
   73: {
@@ -1358,17 +1367,21 @@ const MONSTER_DATA = {
     baseExp: 750,
     stats: { hp: { min: 640, max: 4250 }, atk: { min: 170, max: 1150 }, rec: { min: 133, max: 380 } },
     skill: {
-      name: 'ポイズンロック',
+      name: 'ジャミングスライド',
       sp: 2,
-      desc: 'HPが最大HPの25%減る。\n左上に毒を逆L字型に生成。',
-      effects: [ { type: 'selfDamage', mode: 'percent', value: 0.25 }, { type: 'orbChangeReverseL', attr: 'poison' } ]
+      desc: 'HPが最大HPの20%減る。\n最上段の横1列をお邪魔ドロップに変化。',
+      effects: [
+        { type: 'selfDamage', mode: 'percent', value: 0.2 },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'ojama' }
+      ]
     },
     leaderSkill: {
-      name: 'アシッドコンボ',
-      desc: '毒ドロップを消すと攻撃1.5倍。\nHP50%以下で受けるダメージ20%軽減。',
+      name: 'ジャミングオーラ',
+      desc: '水と闇属性の回復力1.3倍。\nお邪魔をちょうど6個消すと攻撃1.8倍。',
       effects: [
-        { type: 'atk', condition: 'poison', value: 1.5 },
-        { type: 'atk', condition: 'hpBelow', threshold: 0.5, value: 1, reduce: 0.2 }
+        { type: 'atk', condition: 'exactCount', attr: 'ojama', count: 6, value: 1.8 },
+        { type: 'rec', attr: 'water', value: 1.3 },
+        { type: 'rec', attr: 'dark', value: 1.3 }
       ]
     }
   },
@@ -2858,7 +2871,7 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'アイスウインドコンボ',
-      desc: '水属性の十字消しをすると攻撃1.4倍、受けるダメージ8%軽減。\nL字消しをすると攻撃1.4倍、受けるダメージ8%軽減。',
+      desc: '水の十字消しをすると攻撃1.4倍、受けるダメージ8%軽減。\nL字消しをすると攻撃1.4倍、受けるダメージ8%軽減。',
       effects: [
         { type: 'atk', condition: 'cross', shapeAttr: 'water', value: 1.4, reduce: 0.08 },
         { type: 'atk', condition: 'lShapes', value: 1.4, reduce: 0.08 }
@@ -3036,6 +3049,101 @@ const MONSTER_DATA = {
       name: 'バランスのアミュレット',
       desc: 'バランスタイプの全パラメータが1.2倍。',
       effects: [ { type: 'allStat', condition: 'type', attr: 'バランス', value: 1.2 } ]
+    }
+  },
+  708: {
+    id: 708,
+    name: 'ボクレー',
+    rarity: 1,
+    attr: 'dark',
+    type: 'こうげき',
+    baseExp: 200,
+    stats: { hp: { min: 290, max: 406 }, atk: { min: 96, max: 263 }, rec: { min: 5, max: 15 } },
+    skill: {
+      name: 'ドロップチェンジ・邪火',
+      sp: 2,
+      desc: '火ドロップをお邪魔ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'fire', to: 'ojama' } ]
+    },
+    leaderSkill: {
+      name: 'トリートオア',
+      desc: '闇属性のHP1.1倍。\nお邪魔と光ドロップを同時に6個以上つなげて消すと攻撃2倍。',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'ojama', count: 6, value: 2, attr2: 'light' },
+        { type: 'hp', attr: 'dark', value: 1.1 }
+      ]
+    },
+    evolutions: [ { to: 709, materials: [ { item: 'puzzle52', count: 2 }, { item: 'puzzle32', count: 2 } ] } ]
+  },
+  709: {
+    id: 709,
+    name: 'オーロット',
+    rarity: 3,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 1500,
+    stats: { hp: { min: 450, max: 2900 }, atk: { min: 300, max: 2000 }, rec: { min: 5, max: 45 } },
+    skill: {
+      name: 'ドロップチェンジ・邪火',
+      sp: 2,
+      desc: '火ドロップをお邪魔ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'fire', to: 'ojama' } ]
+    },
+    leaderSkill: {
+      name: 'トリックオアトリート',
+      desc: '闇属性のHP1.2倍。\nお邪魔と光のドロップを同時に6個以上つなげて消すと攻撃2倍。\n',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'ojama', count: 6, value: 2, attr2: 'light' },
+        { type: 'hp', attr: 'dark', value: 1.2 }
+      ]
+    }
+  },
+  710: {
+    id: 710,
+    name: 'バケッチャ',
+    rarity: 1,
+    attr: 'dark',
+    type: 'バランス',
+    baseExp: 200,
+    stats: { hp: { min: 306, max: 466 }, atk: { min: 156, max: 253 }, rec: { min: 25, max: 50 } },
+    skill: {
+      name: 'スリードロップ・邪光改',
+      sp: 5,
+      desc: '光とお邪魔ドロップをランダムで6つずつ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'light', count: 6 }, { type: 'orbChangeRandom', attr: 'ojama', count: 6 } ]
+    },
+    leaderSkill: {
+      name: 'トリックオア',
+      desc: '【落ちコンなし】お邪魔ドロップを6個以上つなげて消すと攻撃1.8倍。',
+      effects: [
+        { type: 'noDrop', value: true },
+        { type: 'atk', condition: 'orbConnect', attr: 'ojama', count: 6, value: 1.8 }
+      ]
+    }
+  },
+  711: {
+    id: 711,
+    name: 'パンプジン',
+    rarity: 3,
+    attr: 'dark',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 3000,
+    stats: { hp: { min: 560, max: 3900 }, atk: { min: 210, max: 1200 }, rec: { min: 151, max: 200 } },
+    skill: {
+      name: 'スリードロップ・邪光改',
+      sp: 5,
+      desc: '光とお邪魔ドロップをランダムで6つずつ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'light', count: 6 }, { type: 'orbChangeRandom', attr: 'ojama', count: 6 } ]
+    },
+    leaderSkill: {
+      name: 'ハロウィーン',
+      desc: '闇属性の回復力1.3倍。\nお邪魔と光ドロップを同時に5個以上つなげて消すと攻撃2倍。\n',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'ojama', count: 5, value: 2, attr2: 'light' },
+        { type: 'rec', attr: 'dark', value: 1.3 }
+      ]
     }
   }
 };
