@@ -71,6 +71,7 @@
     const g = gameEl();
     for (let i = 0; i < 4; i++) g.classList.toggle('mt-p' + i, MT.active && i === MT.current);
     g.classList.toggle('mt-on', MT.active);
+    g.classList.toggle('mt-wait', !!(MT.active && MT.online && !MT.isMyTurn()));   // オンライン：自分の番ではない間は盤面を暗くする（敵の攻撃中と同じ暗さ）
     if (!MT.active) return;
     const box = $('mt-players');
     box.innerHTML = '';

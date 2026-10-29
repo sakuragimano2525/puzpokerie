@@ -183,7 +183,7 @@
 .hh-icon-btn.mode .hh-lbl { display: block; font: 900 0.52rem/1 var(--ff); letter-spacing: 0; white-space: nowrap; }
 .hh-icon-btn.mode.on { background: var(--ink); }
 /* マルチ一覧ボタン（図鑑の左）。ふだん=ティール、表示中=紺（押すとメインへ戻る） */
-.hh-icon-btn.mode.multi { background: #12a594; }
+.hh-icon-btn.mode.is-multi { background: #12a594; }
 .hh-icon-btn.mode.multi.on { background: var(--ink); }
 .hh-icon-btn.mode.locked { color: var(--ink-3); border-color: var(--ink-3); box-shadow: 0 4px 0 var(--ink-3); background: #f3f6fd; }
 .hh-icon-btn.mode.locked::after { content: ''; position: absolute; right: -6px; bottom: -6px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10.5' width='14' height='10' rx='3'/%3E%3Cpath d='M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5'/%3E%3C/svg%3E") center/10px no-repeat; border: 2px solid #fff; }
@@ -1162,3 +1162,18 @@ button.cs-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--in
 #evo-result.quick.play #evo-result-title { animation: evoFade 0.5s 1.0s forwards; }
 #evo-result.quick.play #evo-result-text  { animation: evoFade 0.5s 1.3s forwards; }
 #evo-result.quick.play #evo-result-ok    { animation: evoFade 0.4s 1.6s forwards; }
+
+/* 右上のモード切替ボタン → タブ（メイン／イベント／マルチ） */
+.hh-icon-btn.mode.is-multi { background: #12a594; }
+#mode-menu { position: fixed; z-index: 500; display: flex; flex-direction: column; gap: 6px; padding: 8px;
+  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); min-width: 132px; }
+#mode-menu[hidden] { display: none; }
+#mode-menu .mm-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; cursor: pointer;
+  font: 900 0.95rem/1 var(--ff); color: #fff; border: var(--bw) solid var(--ink); border-radius: 12px; background: #ff8a1f; touch-action: manipulation; }
+#mode-menu .mm-item .ic { width: 1.35rem; height: 1.35rem; stroke-width: 2.4; flex-shrink: 0; }
+#mode-menu .mm-item.main  { background: #3b6ff0; }
+#mode-menu .mm-item.event { background: #ff8a1f; }
+#mode-menu .mm-item.multi { background: #12a594; }
+#mode-menu .mm-item.on { outline: 3px solid var(--ink); outline-offset: 1px; }
+#mode-menu .mm-item.locked { color: var(--ink-3); background: #f3f6fd; border-color: var(--ink-3); }
+#mode-menu .mm-item:active { transform: translateY(2px); }

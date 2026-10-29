@@ -7869,27 +7869,63 @@ function buildStageMap() {
   if (homeMode === 'event') buildEventMap(); else if (homeMode === 'multi') buildMultiMap(); else buildMainMap();
   updateModeBtn();
 }
+const HOME_MODES = [
+  { key: 'main',  label: 'メイン',   icon: '#i-map' },
+  { key: 'event', label: 'イベント', icon: '#i-event' },
+  { key: 'multi', label: 'マルチ',   icon: '#i-multi' },
+];
 function updateModeBtn() {
   const btn = document.getElementById('mode-toggle-btn');
   if (!btn) return;
-  const ev = homeMode === 'event';
-  btn.classList.toggle('on', ev);
-  btn.classList.toggle('locked', !ev && !isEventUnlocked());
-  btn.setAttribute('aria-label', ev ? 'メインステージへもどる' : 'イベントステージ一覧');
+  const cur = HOME_MODES.find(m => m.key === homeMode) || HOME_MODES[0];
+  btn.classList.toggle('is-multi', homeMode === 'multi');
+  btn.setAttribute('aria-label', `表示中：${cur.label}（タップで切り替え）`);
   const use = btn.querySelector('use');
-  if (use) use.setAttribute('href', ev ? '#i-map' : '#i-event');   // イベント表示中はメイン（地図）のアイコンに
+  if (use) use.setAttribute('href', cur.icon);          // いま表示中のモードのアイコン
   const lbl = btn.querySelector('.hh-lbl');
-  if (lbl) lbl.textContent = ev ? 'メイン' : 'イベント';           // 押すと行き先が文字でわかるように
-  const mb = document.getElementById('multi-toggle-btn');        // マルチ一覧ボタン（図鑑の左）
-  if (mb) {
-    const mu = homeMode === 'multi';
-    mb.classList.toggle('on', mu);
-    mb.setAttribute('aria-label', mu ? 'メインステージへもどる' : 'マルチプレイステージ一覧');
-    const mUse = mb.querySelector('use');
-    if (mUse) mUse.setAttribute('href', mu ? '#i-map' : '#i-multi');
-    const mLbl = mb.querySelector('.hh-lbl');
-    if (mLbl) mLbl.textContent = mu ? 'メイン' : 'マルチ';
+  if (lbl) lbl.textContent = cur.label;
+  renderModeMenu();
+}
+function renderModeMenu() {
+  const menu = document.getElementById('mode-menu');
+  if (!menu) return;
+  menu.innerHTML = '';
+  HOME_MODES.forEach(m => {
+    const it = document.createElement('button');
+    it.type = 'button'; it.setAttribute('role', 'menuitem');
+    const locked = m.key === 'event' && !isEventUnlocked();
+    it.className = 'mm-item ' + m.key + (m.key === homeMode ? ' on' : '') + (locked ? ' locked' : '');
+    it.innerHTML = `<svg class="ic"><use href="${m.icon}"/></svg><span>${m.label}</span>`;
+    it.addEventListener('click', (e) => { e.stopPropagation(); selectHomeMode(m.key); });
+    menu.appendChild(it);
+  });
+}
+function closeModeMenu() {
+  const menu = document.getElementById('mode-menu'), btn = document.getElementById('mode-toggle-btn');
+  if (menu) menu.hidden = true;
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+function openModeMenu() {
+  const menu = document.getElementById('mode-menu'), btn = document.getElementById('mode-toggle-btn');
+  if (!menu || !btn) return;
+  renderModeMenu();
+  menu.hidden = false;
+  btn.setAttribute('aria-expanded', 'true');
+  const r = btn.getBoundingClientRect();
+  menu.style.top = (r.bottom + 8) + 'px';
+  const mw = menu.offsetWidth;
+  menu.style.left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw)) + 'px';
+}
+function selectHomeMode(key) {
+  closeModeMenu();
+  if (key === 'event' && !isEventUnlocked()) {
+    homeToast(`エリア${EVENT_UNLOCK}をクリアするとイベントステージが開放されます`, 2200);
+    return;
   }
+  if (key === homeMode) return;
+  homeMode = key;
+  buildStageMap();
+  scrollHomeToFrontier();
 }
 function buildEventMap() {
   const map = document.getElementById('stage-map');
@@ -8081,22 +8117,14 @@ function homeToast(msg, ms = 1400) {
   homeToastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
 document.querySelectorAll('#home [data-soon]').forEach(b => b.addEventListener('click', () => homeToast('準備中です')));
-// 右上ボタン：メイン ⇄ イベントステージ一覧。エリア6（EVENT_UNLOCK_AREA）をクリアするまでは使えない
-document.getElementById('mode-toggle-btn').addEventListener('click', () => {
-  if (homeMode !== 'event' && !isEventUnlocked()) {
-    homeToast(`エリア${EVENT_UNLOCK}をクリアするとイベントステージが開放されます`, 2200);
-    return;
-  }
-  homeMode = homeMode === 'event' ? 'main' : 'event';
-  buildStageMap();
-  scrollHomeToFrontier();
+// 右上ボタン：タップするとタブ（メイン／イベント／マルチ）が開いて選べる。イベントはエリア6（EVENT_UNLOCK）クリアまで使えない
+document.getElementById('mode-toggle-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('mode-menu');
+  if (menu && menu.hidden) openModeMenu(); else closeModeMenu();
 });
-// 図鑑の左ボタン：メイン ⇄ マルチプレイステージ一覧（開放条件なし）
-document.getElementById('multi-toggle-btn').addEventListener('click', () => {
-  homeMode = homeMode === 'multi' ? 'main' : 'multi';
-  buildStageMap();
-  scrollHomeToFrontier();
-});
+document.addEventListener('click', closeModeMenu);
+window.addEventListener('resize', closeModeMenu);
 // ホームが表示されるたびに、マップ・パーティ表示を更新して進行中のエリアへスクロール
 new MutationObserver(() => {
   if (document.getElementById('home').style.display !== 'flex') return;

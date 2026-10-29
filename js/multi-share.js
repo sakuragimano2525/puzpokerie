@@ -538,23 +538,49 @@
   }
 
   function cellEl(r, c) { return orbEls[r] && orbEls[r][c]; }
-  // 盤面を、新しく落ちてくるドロップは上から落とす形で反映
+  // 盤面を反映する。落ちコンは、操作した人の画面の drop()（game.js）と同じ動きにする：
+  //   消えたあとの空きマスの分だけ、残ったドロップは「元の位置から」下へ詰まり、新しいドロップは上から降ってくる
+  //   （以前は変わったマスをぜんぶ上から出し直していたので、瞬間移動に見えた）
+  let vanishing = new Set();   // cb で消えはじめたマス（まだ grid には残っている分）："r,c"
   function applyGridAnimated(str) {
-    const rows = String(str || '').split('|').map(s => s.split(','));
+    const rows = String(str || '').split('|').map(s => s.split(',').map(v => v || null));
     const cellH = $id('grid').getBoundingClientRect().height / ROWS;
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      const t = (rows[r] && rows[r][c]) || null, old = grid[r][c], el = cellEl(r, c);
-      grid[r][c] = t;
-      if (!el) continue;
-      if (!t) { el.style.transition = 'none'; el.style.transform = ''; el.className = 'orb vanish'; continue; }
-      if (t !== old || el.className.indexOf('vanish') >= 0 || el.className.indexOf('glow') >= 0) {
-        el.style.transition = 'none'; el.style.transform = 'translateY(-' + (cellH * 1.6) + 'px)'; el.className = 'orb ' + t;
+    let maxFall = 0;
+    for (let c = 0; c < COLS; c++) {
+      // 落ちる前の列（消えたマスは空き）
+      const existing = [];
+      for (let r = 0; r < ROWS; r++) {
+        if (grid[r][c] !== null && !vanishing.has(r + ',' + c)) existing.push({ type: grid[r][c], origR: r, blind: !!(blindCells[r] && blindCells[r][c]) });
+      }
+      const fillCount = ROWS - existing.length;
+      let nulls = 0;
+      for (let r = 0; r < ROWS; r++) if (!(rows[r] && rows[r][c])) nulls++;
+      const consistent = nulls === 0 || nulls === fillCount;   // 補充あり／補充なし（落ちコンなし）のどちらかに合うときだけ、詰め方を再現
+      for (let destR = 0; destR < ROWS; destR++) {
+        const t = (rows[destR] && rows[destR][c]) || null;
+        const el = cellEl(destR, c);
+        const old = grid[destR][c];
+        grid[destR][c] = t;
+        let blind = false, startRows = 0;
+        if (consistent && destR >= fillCount) { const ex = existing[destR - fillCount]; blind = ex.blind; startRows = destR - ex.origR; }
+        else if (consistent) startRows = destR + 1;                         // 新しいドロップ：盤面の上から
+        else startRows = (t !== old) ? 1.6 : 0;                             // ずれていたときの保険
+        if (blindCells[destR]) { blindCells[destR][c] = blind; try { setBlindEl(destR, c); } catch (_) {} }
+        if (!el) continue;
+        if (!t) { el.style.transition = 'none'; el.style.transform = ''; el.className = 'orb vanish'; continue; }
+        if (startRows <= 0) { el.style.transition = ''; el.style.transform = ''; el.className = 'orb ' + t; continue; }
+        if (startRows > maxFall) maxFall = startRows;
+        el.style.transition = 'none'; el.style.transform = 'translateY(-' + (cellH * startRows) + 'px)'; el.className = 'orb ' + t;
         requestAnimationFrame(() => requestAnimationFrame(() => {
-          el.style.transition = ''; el.classList.add('drop-fast'); el.style.transform = '';
-          setTimeout(() => el.classList.remove('drop-fast'), 500);
+          el.style.transition = '';
+          el.classList.add('drop-fast');
+          el.style.setProperty('--fall-delay', (c * 0.008) + 's');
+          el.style.transform = '';
         }));
-      } else { el.style.transition = ''; el.style.transform = ''; el.className = 'orb ' + t; }
+      }
     }
+    vanishing = new Set();
+    setTimeout(() => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const e = cellEl(r, c); if (e) e.classList.remove('drop-fast'); } }, 140 + maxFall * 22 + COLS * 6 + 120);
   }
   // 敵のHPを、相手の画面と同じ値にする（減った分は着弾の演出つき。倒れたらドロップも）
   function hitEnemies(hps, cb, attr, slot) {
@@ -583,7 +609,7 @@
     cb(d) {
       const cells = asArr(d.k).map(a => ({ r: a[0], c: a[1] }));
       if (!d.add) {
-        cells.forEach(({ r, c }) => { try { revealBlind(r, c); } catch (_) {} const el = cellEl(r, c); if (el) el.className = 'orb ' + d.c + ' glow'; });
+        cells.forEach(({ r, c }) => { vanishing.add(r + ',' + c); try { revealBlind(r, c); } catch (_) {} const el = cellEl(r, c); if (el) el.className = 'orb ' + d.c + ' glow'; });
         setTimeout(() => cells.forEach(({ r, c }) => { const el = cellEl(r, c); if (el && el.className.indexOf('glow') >= 0) el.className = 'orb ' + d.c + ' vanish'; }), 220);
         setTimeout(() => cells.forEach(({ r, c }) => { const el = cellEl(r, c); if (el && el.className.indexOf('vanish') >= 0) grid[r][c] = null; }), 360);
       }

@@ -60,3 +60,6 @@
   padding:1px 9px; border-radius:999px; font-size:10px; font-weight:900; letter-spacing:.03em; color:#fff;
   background:rgba(40,40,60,.88); border:1px solid rgba(255,255,255,.45); box-shadow:0 1px 4px rgba(0,0,0,.6);
 }
+
+/* オンライン：自分の番ではない間は盤面を暗くする（敵の攻撃中 #game.enemy-acting と同じ暗さ） */
+#game.mt-wait #grid { filter:brightness(.72); transition:filter .25s ease; }
