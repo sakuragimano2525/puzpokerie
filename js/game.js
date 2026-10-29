@@ -5565,6 +5565,7 @@ function chipSpotEnterable(area, stageKey) {
   const stages = getStageList(area);
   const i = stages.findIndex(st => st.key === stageKey);
   if (i < 0) return false;
+  if (isMultiArea(area)) return true;   // マルチは解放条件を満たしたステージだけが一覧に出る
   return i === 0 || isStageCleared(area, stages[i - 1].key);
 }
 function getChipSpots(itemId) {
@@ -7675,6 +7676,18 @@ const EVENT_INFO = (typeof EVENT_AREA_DATA !== 'undefined' && EVENT_AREA_DATA) |
 const EVENT_UNLOCK = (typeof EVENT_UNLOCK_AREA !== 'undefined' && EVENT_UNLOCK_AREA) || 6;
 function isEventArea(a) { return typeof a === 'string' && Object.prototype.hasOwnProperty.call(EVENT_INFO, a); }
 function isMultiArea(a) { return typeof MULTI_AREA_IDS !== 'undefined' && MULTI_AREA_IDS.indexOf(a) >= 0; }
+// マルチステージの解放判定（areas.js の MULTI_UNLOCK_DATA）。条件を満たすまで一覧に出さない
+function isMultiStageUnlocked(area, stageKey) {
+  const cond = typeof MULTI_UNLOCK_DATA !== 'undefined' && MULTI_UNLOCK_DATA[area] && MULTI_UNLOCK_DATA[area][stageKey];
+  if (!cond) return true;
+  const i = String(cond).indexOf('-');
+  if (i < 0) return true;
+  const a = Number(String(cond).slice(0, i)), k = String(cond).slice(i + 1);
+  return isStageCleared(a, k);
+}
+function hasUnlockedMultiStage() {
+  return typeof MULTI_AREA_IDS !== 'undefined' && MULTI_AREA_IDS.some(id => isEventArea(id) && getStageList(id).length > 0);
+}
 function isEventUnlocked() { return isAreaBossCleared(EVENT_UNLOCK); }
 function areaNameOf(a) { return isEventArea(a) ? (EVENT_INFO[a].name || String(a)) : (AREA_NAMES[a] || `エリア${a}`); }
 function areaHue(a) {
@@ -7834,6 +7847,7 @@ function getStageList(area) {
   const pre = area + '-';
   const keys = Object.keys(DUNGEON_DATA).filter(k => k.startsWith(pre)).map(k => k.slice(pre.length));
   if (!keys.length && isEventArea(area)) return [];   // イベントは仮ステージを出さない
+  if (!keys.length && isMultiArea(area)) return [];
   if (!keys.length) {
     return [ { key:'1', label:`ステージ ${area}-1`, battles:3, boss:false },
              { key:'2', label:`ステージ ${area}-2`, battles:5, boss:false },
@@ -7841,6 +7855,7 @@ function getStageList(area) {
   }
   const ord = k => /^\d+$/.test(k) ? Number(k) : (k === 'boss' ? 1e9 : 1e6);
   keys.sort((a, b) => ord(a) - ord(b) || a.localeCompare(b));
+  if (isMultiArea(area)) { const ok = keys.filter(k => isMultiStageUnlocked(area, k)); keys.length = 0; keys.push(...ok); }   // マルチ：未解放のステージは一覧に出さない
   return keys.map(key => {
     const boss = key === 'boss', dk = pre + key, d = DUNGEON_DATA[dk];
     const battles = dungeonBattleCount(dk) || (d && d.battles && d.battles.length) || 3;
@@ -7866,6 +7881,7 @@ function applyAreaBackground(elId, n) {
 let homeMode = 'main';   // 'main' | 'event' | 'multi'
 function buildStageMap() {
   if (homeMode === 'event' && !isEventUnlocked()) homeMode = 'main';
+  if (homeMode === 'multi' && !hasUnlockedMultiStage()) homeMode = 'main';
   if (homeMode === 'event') buildEventMap(); else if (homeMode === 'multi') buildMultiMap(); else buildMainMap();
   updateModeBtn();
 }
@@ -7891,6 +7907,7 @@ function renderModeMenu() {
   if (!menu) return;
   menu.innerHTML = '';
   HOME_MODES.forEach(m => {
+    if (m.key === 'multi' && !hasUnlockedMultiStage()) return;   // マルチが1つも解放されていないうちは「マルチ」自体を出さない
     const it = document.createElement('button');
     it.type = 'button'; it.setAttribute('role', 'menuitem');
     const locked = m.key === 'event' && !isEventUnlocked();
@@ -7922,6 +7939,7 @@ function selectHomeMode(key) {
     homeToast(`エリア${EVENT_UNLOCK}をクリアするとイベントステージが開放されます`, 2200);
     return;
   }
+  if (key === 'multi' && !hasUnlockedMultiStage()) return;
   if (key === homeMode) return;
   homeMode = key;
   buildStageMap();
@@ -8123,6 +8141,29 @@ document.getElementById('mode-toggle-btn').addEventListener('click', (e) => {
   const menu = document.getElementById('mode-menu');
   if (menu && menu.hidden) openModeMenu(); else closeModeMenu();
 });
+// マルチステージが新しく解放されたら、ホームに戻ったときに「VSメタモン を解放しました！」と知らせる（知らせたものは覚えておく）
+const MULTI_UNLOCK_SEEN_KEY = 'puzzdra_multiUnlockSeen';
+let _multiNoticeBusy = false;
+function checkMultiUnlockNotice() {
+  if (_multiNoticeBusy || typeof MULTI_AREA_IDS === 'undefined') return;
+  let seen = [];
+  try { seen = JSON.parse(localStorage.getItem(MULTI_UNLOCK_SEEN_KEY) || '[]'); } catch (e) {}
+  const fresh = [];
+  MULTI_AREA_IDS.forEach(id => {
+    if (!isEventArea(id)) return;
+    getStageList(id).forEach(st => {
+      const k = `${id}-${st.key}`;
+      if (seen.indexOf(k) < 0) fresh.push({ k, name: (EVENT_INFO[id].stageNames && EVENT_INFO[id].stageNames[st.key]) || st.label });
+    });
+  });
+  if (!fresh.length) return;
+  try { localStorage.setItem(MULTI_UNLOCK_SEEN_KEY, JSON.stringify(seen.concat(fresh.map(f => f.k)))); } catch (e) {}
+  _multiNoticeBusy = true;
+  fresh.forEach((f, i) => setTimeout(() => {
+    homeToast(`${f.name} を解放しました！`, 2200);
+    if (i === fresh.length - 1) setTimeout(() => { _multiNoticeBusy = false; }, 2400);
+  }, i * 2500));
+}
 document.addEventListener('click', closeModeMenu);
 window.addEventListener('resize', closeModeMenu);
 // ホームが表示されるたびに、マップ・パーティ表示を更新して進行中のエリアへスクロール
@@ -8131,6 +8172,7 @@ new MutationObserver(() => {
   buildStageMap(); scrollHomeToFrontier();
   updateMailBadge();   // 赤丸は未読/未受取があるときだけ
   setTimeout(checkLoginBonus, 400);   // ログインボーナス（24時間たっていれば）
+  setTimeout(checkMultiUnlockNotice, 900);   // マルチステージの解放のお知らせ
 }).observe(document.getElementById('home'), { attributes:true, attributeFilter:['style'] });
 
 function openStageSelect(areaNum) {
@@ -8179,7 +8221,7 @@ function renderStageSelect() {
   stages.forEach((stage, idx) => {
     // 前のステージ（3-2 なら 3-1）をクリアするまでロック。各エリアの最初のステージは常に挑戦可能
     const prev = idx > 0 ? stages[idx - 1] : null;
-    const locked = !!prev && !isStageCleared(currentAreaNum, prev.key);
+    const locked = !isMultiArea(currentAreaNum) && !!prev && !isStageCleared(currentAreaNum, prev.key);   // マルチは前のステージに関係なく、解放条件を満たしたものだけが出る
     const btn = document.createElement('button');
     btn.className = `ss-stage-btn ${stage.boss ? 'boss' : 'normal'}${locked ? ' locked' : ''}`;
     const num = isEventArea(currentAreaNum) ? (stage.boss ? 'B' : stage.key) : (stage.boss ? `${currentAreaNum}-B` : `${currentAreaNum}-${stage.key}`);

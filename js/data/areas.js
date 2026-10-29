@@ -67,14 +67,20 @@ const AREA_DATA = {
 const EVENT_UNLOCK_AREA = 6;   // このエリアのボスをクリアするとイベントステージが開放される
 // ホームの「マルチ」ボタンで一覧に出すエリアID（EVENT_AREA_DATA のキー）。マルチ用ステージを足すときはここに足す
 const MULTI_AREA_IDS = ['multi'];
+// マルチダンジョンの解放条件（「エリア-ステージ」をクリアすると、そのマルチステージが一覧に出る。未解放のうちは一覧に表示されない＝存在も分からない）
+//   書き方： マルチID: { マルチのステージ番号: 'クリアするステージ' }   例）1: '4-boss' = 4-BOSS をクリアで「マルチ1」が出現
+//   ここに書いていないステージは、最初から出ている
+const MULTI_UNLOCK_DATA = {
+  multi: { 1: '4-boss', 2: '7-boss', 3: '10-3', 4: '11-boss', 5: '13-1', 6: '13-3', 7: '12-boss', 8: '13-boss' }
+};
 const EVENT_AREA_DATA = {
   keiken: { name: 'けいけんパーク', desc: 'モンスターを育てよう！', bg: 'dungeon1.png', hue: 200, entryItem: 'ohuda1', entryCost: 1 },
   halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
 
 
   // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──
-  //   ダンジョンのキーは「multi-番号」。中身は js/data/multi-dungeons.js（いまは 1-1 のコピー）
-  multi: { name: 'マルチダンジョン', bannerName: 'マルチ\nダンジョン', desc: 'なかまと協力！（仮）', bg: 'dungeon1.png', hue: 175, hidden: true, stageNames: { 1: 'マルチ-1' }, stageLevels: { 1: '初級' } },
+  //   ダンジョンのキーは「multi-番号」。中身は js/data/dungeons.js の「multi-番号」（ダンジョン設定ツールでメイン・イベントと同じように編集・保存できる）
+  multi: { name: 'マルチダンジョン', bannerName: 'マルチ\nダンジョン', desc: '協力プレイ', bg: 'dungeon1.png', hue: 175, hidden: true, stageNames: { 1: 'VSケンタロス', 2: 'VSカイリュー', 3: 'VSメタモン', 4: 'VSサンダー', 5: 'VSニドキング', 6: 'VSカビゴン', 7: 'VSフリーザー', 8: 'VSファイヤー' }, stageLevels: { 1: '初級', 2: '初級', 3: '初級', 4: '初級', 5: '中級', 6: '中級', 7: '上級', 8: '上級' }},
 
   // ── 日替わりダンジョン（月〜日の7つ。今日の曜日のものだけが、イベント一覧の「日替わりダンジョン」から遊べる） ──
   //   ダンジョンのキーは「イベントID-番号」。  例  daily_mon-1（月曜のステージ1） / daily_mon-boss
