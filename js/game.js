@@ -465,7 +465,7 @@ function leaderHasEffect(type) {
   });
 }
 function applyLeaderEffects(effects, context) {
-  let result = { hpMultiplier: 1.0, atkMultiplier: 1.0, dmgReduction: null, moveTimeFixed: null, comboAdd: 0, hpRecovery: 0, noDrop: false };
+  let result = { hpMultiplier: 1.0, atkMultiplier: 1.0, recMultiplier: 1.0, dmgReduction: null, moveTimeFixed: null, comboAdd: 0, hpRecovery: 0, noDrop: false };
   if (!effects || !effects.length) return result;
 
   for (const eff of effects) {
@@ -538,6 +538,12 @@ function applyLeaderEffects(effects, context) {
           if (context.comboCount >= eff.count) apply = true;
         } else if (cond === 'exact4') {
           if (context.exact4Count > 0) apply = true;
+        } else if (cond === 'eraseAttr') {
+          // ○属性を消す度：その属性の塊を消した数だけ倍率が重なる（例: 火を消す度に攻撃1.2倍）
+          if (((context.attrCombos || {})[eff.attr] || 0) > 0) apply = true;
+        } else if (cond === 'eraseAny') {
+          // ドロップを消す度：消した塊（コンボ）の数だけ倍率が重なる
+          if ((context.comboCount || 0) > 0) apply = true;
         } else if (cond === 'poison') {
           if ((context.poisonCount || 0) >= 3) apply = true;
         } else if (cond === 'fireCombos') {
@@ -560,15 +566,19 @@ function applyLeaderEffects(effects, context) {
 
         if (apply) {
           // 攻撃倍率が未設定(0)で、軽減・コンボ加算だけ設定された効果は、攻撃倍率1倍として扱う
-          const av = (rampMult !== null) ? rampMult : (eff.value > 0) ? eff.value : ((eff.reduce > 0 || eff.comboAdd > 0) ? 1 : eff.value);
+          const av = (rampMult !== null) ? rampMult : (eff.value > 0) ? eff.value : ((eff.reduce > 0 || eff.comboAdd > 0 || eff.recValue > 0) ? 1 : eff.value);
           let expCount = 1;
-          if (eff.exponential) {
+          if (eff.exponential || cond === 'eraseAttr' || cond === 'eraseAny') {
             if (cond === 'lShapes') expCount = (eff.shapeAttr ? (context.lAttrs || {})[eff.shapeAttr] : context.lShapes) || 1;
             else if (cond === 'cross') expCount = (eff.shapeAttr ? (context.crossAttrs || {})[eff.shapeAttr] : context.crossCount) || 1;
             else if (cond === 'exact4') expCount = context.exact4Count || 1;
+            else if (cond === 'eraseAttr') expCount = (context.attrCombos || {})[eff.attr] || 1;
+            else if (cond === 'eraseAny') expCount = context.comboCount || 1;
             result.atkMultiplier *= Math.pow(av, expCount);
+            if (eff.recValue > 0) result.recMultiplier *= Math.pow(eff.recValue, expCount);   // 回復力倍率も同じ回数だけ重なる
           } else {
             result.atkMultiplier *= av;
+            if (eff.recValue > 0) result.recMultiplier *= eff.recValue;
           }
           // 同じ効果に「ダメージ軽減」も設定されていれば、条件達成時に軽減も有効
           if (eff.reduce > 0) {
@@ -7323,13 +7333,14 @@ function isLShape(cells) {
 //     ・ちょうど4個消し(exact4) ・L字消し(lShapes) ・十字消し(cross)
 //     ・〇個以上つなげて消し(orbConnect／2属性同時つなげ) ・ちょうど〇個消し(exactCount)
 // ============================================================
-const LS_SHAPE_CONDS = ['exact4', 'lShapes', 'cross', 'orbConnect', 'exactCount'];
+const LS_SHAPE_CONDS = ['exact4', 'lShapes', 'cross', 'orbConnect', 'exactCount', 'combo', 'attrCombos', 'fireCombos', 'darkCombos', 'healCombos'];   // 〇コンボ以上系もここ
 function lsShapeEffects() {
   return lsAllEffects().filter(e => e && LS_SHAPE_CONDS.includes(e.condition) && (e.type === 'atk' || e.type === 'dmgReduction'));
 }
-const LS_SHAPE_COLOR = { cross: '#ffd700', lShapes: '#d9a6ff', exact4: '#7fe9ff' };
+const LS_SHAPE_COLOR = { cross: '#ffd700', lShapes: '#d9a6ff', exact4: '#7fe9ff', combo: '#ffb347' };
+const LS_COMBO_ATTR = { fireCombos: 'fire', darkCombos: 'dark', healCombos: 'heal' };   // 旧形式の属性コンボ条件
 // この1グループが、リーダースキルのどの条件を満たしたか（満たしていなければ null）
-//   info: { color, cells, isCross, isL, maxConnect, passMax }
+//   info: { color, cells, isCross, isL, maxConnect, passMax, totalCombo, attrCombos }
 function lsShapeMatch(effects, info) {
   const { color, cells, isCross, isL } = info;
   const n = cells.length;
@@ -7338,6 +7349,13 @@ function lsShapeMatch(effects, info) {
       case 'cross':  if (isCross && (!e.shapeAttr || e.shapeAttr === color)) return LS_SHAPE_COLOR.cross; break;
       case 'lShapes': if (isL && (!e.shapeAttr || e.shapeAttr === color)) return LS_SHAPE_COLOR.lShapes; break;
       case 'exact4': if (n === 4) return LS_SHAPE_COLOR.exact4; break;
+      case 'combo':   // 〇コンボ以上：条件のコンボ数に届いてから消えた塊が光る
+        if ((info.totalCombo || 0) >= (e.count || 0)) return LS_SHAPE_COLOR.combo; break;
+      case 'attrCombos': case 'fireCombos': case 'darkCombos': case 'healCombos': {   // 〇属性の〇コンボ以上
+        const a = e.attr || LS_COMBO_ATTR[e.condition];
+        if (a === color && ((info.attrCombos || {})[color] || 0) >= (e.count || 0)) return ATTR_FX_COLOR[color] || '#fff';
+        break;
+      }
       case 'exactCount':
         if (e.attr === color && n === e.count) return ATTR_FX_COLOR[color] || '#fff'; break;
       case 'orbConnect': {
@@ -9680,7 +9698,7 @@ async function _evaluateInner() {
 
       // ★ リーダースキルの条件を満たした塊だけ、その形に光る（条件にない普通の消しは演出なし） ★
       if (shapeFxEffects.length) {
-        const hit = lsShapeMatch(shapeFxEffects, { color, cells, isCross, isL, maxConnect, passMax });
+        const hit = lsShapeMatch(shapeFxEffects, { color, cells, isCross, isL, maxConnect, passMax, totalCombo, attrCombos });
         if (typeof hit === 'string') {
           lsShapeFx(cells, hit);
           // 先に消えた相方の塊も、条件がそろったので光らせる
@@ -9950,12 +9968,16 @@ async function _evaluateInner() {
     if (attrCounts.heal >= 3) {
       let totalRec = 0;
       const recEffects = [];
+      const recCondEffects = [];   // 回復力倍率（recValue）つきの攻撃効果
       [0, 5].forEach(idx => {
         if (partyUids.length > idx && partyUids[idx] !== null) {
           const leaderEntry = box.find(b => b.uid === partyUids[idx]);
           const leader = leaderEntry && MONSTER_DATA[leaderEntry.monsterId];
           if (leader && leader.leaderSkill && leader.leaderSkill.effects) {
-            for (const eff of leader.leaderSkill.effects) if (eff.type === 'rec') recEffects.push(eff);
+            for (const eff of leader.leaderSkill.effects) {
+              if (eff.type === 'rec') recEffects.push(eff);
+              else if (eff.type === 'atk' && eff.recValue > 0) recCondEffects.push(eff);
+            }
           }
         }
       });
@@ -9970,6 +9992,12 @@ async function _evaluateInner() {
             for (const eff of recEffects) {
               const apply = eff.condition === 'type' ? mon.type === eff.attr : (!eff.attr || mon.attr === eff.attr);
               if (apply) rec *= eff.value;
+            }
+            // 条件つきリーダースキルの「回復力倍率」（例: 火ドロップを消す度に攻撃1.2倍、回復力1.3倍）
+            if (recCondEffects.length) {
+              const _hpN = playerCurrentHP / Math.max(1, playerMaxHP);
+              const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: Math.max(_hpStartRatio, _hpN), hpRatioLow: Math.min(_hpStartRatio, _hpN), skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, remainingOrbs });
+              rec *= rc.recMultiplier;
             }
             totalRec += rec;
           }

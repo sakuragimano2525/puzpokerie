@@ -345,8 +345,9 @@ const cleanEff = d=>{
   d=structuredClone(d);
   if(!(d.reduce>0)) delete d.reduce;
   if(!(d.comboAdd>0)) delete d.comboAdd;
+  if(!(d.recValue>0)) delete d.recValue;
   if(!d.needHeal) delete d.needHeal;
-  if(!(d.value>0) && (d.reduce||d.comboAdd)) d.value=1;
+  if(!(d.value>0) && (d.reduce||d.comboAdd||d.recValue)) d.value=1;
   return d;
 };
 const leaderTemplates = {
@@ -363,23 +364,25 @@ const leaderTemplates = {
   typeRec:{label:'タイプの回復力倍率',data:{type:'rec',condition:'type',attr:'かいふく',value:2},fields:[typeF('attr','対象タイプ'),numF('value','回復力倍率')]},
   allRec:{label:'全属性の回復力倍率',data:{type:'rec',value:1.5},fields:[numF('value','回復力倍率')]},
   dmgReduction:{label:'ダメージ軽減',data:{type:'dmgReduction',value:0.35},fields:[numF('value','軽減率（35%=0.35）')]},
-  attrCombos:{label:'○属性ドロップの○コンボ以上で',data:{type:'atk',condition:'attrCombos',attr:'light',count:2,value:2},fields:[attrF('attr','属性（火・水・木・光・闇・回復・毒・お邪魔）'),numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
-  combo:{label:'○コンボ以上で',data:{type:'atk',condition:'combo',count:7,value:2},fields:[numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
-  orbConnect:{label:'属性を○個以上つなげて',data:{type:'atk',condition:'orbConnect',attr:'fire',count:5,value:2},fields:[attrF('attr','属性（1つ目）'),['attr2','同時につなげる2つ目の属性（指定なし＝1属性のみ）','attrAny'],numF('count','必要個数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
-  hpCond:{label:'HP○%以上／以下で',data:{type:'atk',condition:'hpAbove',threshold:0.8,value:2},fields:[['condition','HPの条件','select','hpAbove:HP○%以上|hpBelow:HP○%以下'],numF('threshold','HP割合（80%=0.8）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&['hpAbove','hpBelow'].includes(e.condition)},
-  colorCountCond:{label:'○色以上同時に消すと',data:{type:'atk',condition:'colorCount',count:4,value:2},fields:[numF('count','必要な色数（火・水・木・光・闇のうち3個以上消した色の数。2〜5）'),['needHeal','回復ドロップも消すことが必要（5色＋回復など）','bool'],numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&(e.condition==='colorCount'||e.condition==='fourColors')},
-  colorCountHealCond:{label:'回復も数えて○色以上同時に消すと',data:{type:'atk',condition:'colorCountHeal',count:5,value:2},fields:[numF('count','必要な色数（回復も1色に数える。2〜6　※6＝5色＋回復）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='colorCountHeal'},
-  colorRampCond:{label:'色が増えるほど攻撃倍率アップ',data:{type:'atk',condition:'colorRamp',count:3,healCounts:true,value:2,maxValue:4},fields:[numF('count','最低限必要な色数（この色数で「最低倍率」）'),['healCounts','回復も1色に数える（ONなら最大＝5色＋回復／OFFなら最大＝5色）','bool'],numF('value','最低倍率（最低色数のとき）'),numF('maxValue','最大倍率（最大の色数のとき。間は色数に応じて段階的に上がる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>e.type==='atk'&&e.condition==='colorRamp'},
-  remainingCond:{label:'残りドロップ○個以下で',data:{type:'atk',condition:'remainingOrbs',threshold:3,value:4},fields:[numF('threshold','残りドロップ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='remainingOrbs'},
-  crossCond:{label:'十字消しで',data:{type:'atk',condition:'cross',value:2},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!e.shapeAttr},
-  hpFullAtk:{label:'HP満タンで',data:{type:'atk',condition:'hpFull',value:1.5},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')]},
-  lShapeAtk:{label:'L字消しで',data:{type:'atk',condition:'lShapes',value:1.2},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!e.shapeAttr},
-  crossAttrCond:{label:'○属性の十字消しで',data:{type:'atk',condition:'cross',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップで十字を作ると発動）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!!e.shapeAttr},
-  lShapeAttrAtk:{label:'○属性のL字消しで',data:{type:'atk',condition:'lShapes',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップでL字を作ると発動）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!!e.shapeAttr},
-  skillUsedAtk:{label:'スキル使用時に',data:{type:'atk',condition:'skillUsed',value:1.3},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')]},
-  poisonAtk:{label:'毒ドロップを消して',data:{type:'atk',condition:'poison',value:1.5},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
-  exact4Atk:{label:'ちょうど4個消しで',data:{type:'atk',condition:'exact4',value:1.5},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','4個消しの数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')]},
-  exactCountAtk:{label:'属性をちょうど○個消して',data:{type:'atk',condition:'exactCount',attr:'fire',count:4,value:2},fields:[attrF('attr','属性'),numF('count','ちょうどの個数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')]},
+  attrCombos:{label:'○属性ドロップの○コンボ以上で',data:{type:'atk',condition:'attrCombos',attr:'light',count:2,value:2},fields:[attrF('attr','属性（火・水・木・光・闇・回復・毒・お邪魔）'),numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  combo:{label:'○コンボ以上で',data:{type:'atk',condition:'combo',count:7,value:2},fields:[numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  orbConnect:{label:'属性を○個以上つなげて',data:{type:'atk',condition:'orbConnect',attr:'fire',count:5,value:2},fields:[attrF('attr','属性（1つ目）'),['attr2','同時につなげる2つ目の属性（指定なし＝1属性のみ）','attrAny'],numF('count','必要個数'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  hpCond:{label:'HP○%以上／以下で',data:{type:'atk',condition:'hpAbove',threshold:0.8,value:2},fields:[['condition','HPの条件','select','hpAbove:HP○%以上|hpBelow:HP○%以下'],numF('threshold','HP割合（80%=0.8）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&['hpAbove','hpBelow'].includes(e.condition)},
+  colorCountCond:{label:'○色以上同時に消すと',data:{type:'atk',condition:'colorCount',count:4,value:2},fields:[numF('count','必要な色数（火・水・木・光・闇のうち3個以上消した色の数。2〜5）'),['needHeal','回復ドロップも消すことが必要（5色＋回復など）','bool'],numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&(e.condition==='colorCount'||e.condition==='fourColors')},
+  colorCountHealCond:{label:'回復も数えて○色以上同時に消すと',data:{type:'atk',condition:'colorCountHeal',count:5,value:2},fields:[numF('count','必要な色数（回復も1色に数える。2〜6　※6＝5色＋回復）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='colorCountHeal'},
+  colorRampCond:{label:'色が増えるほど攻撃倍率アップ',data:{type:'atk',condition:'colorRamp',count:3,healCounts:true,value:2,maxValue:4},fields:[numF('count','最低限必要な色数（この色数で「最低倍率」）'),['healCounts','回復も1色に数える（ONなら最大＝5色＋回復／OFFなら最大＝5色）','bool'],numF('value','最低倍率（最低色数のとき）'),numF('maxValue','最大倍率（最大の色数のとき。間は色数に応じて段階的に上がる）'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>e.type==='atk'&&e.condition==='colorRamp'},
+  remainingCond:{label:'残りドロップ○個以下で',data:{type:'atk',condition:'remainingOrbs',threshold:3,value:4},fields:[numF('threshold','残りドロップ数'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='remainingOrbs'},
+  crossCond:{label:'十字消しで',data:{type:'atk',condition:'cross',value:2},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!e.shapeAttr},
+  hpFullAtk:{label:'HP満タンで',data:{type:'atk',condition:'hpFull',value:1.5},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')]},
+  lShapeAtk:{label:'L字消しで',data:{type:'atk',condition:'lShapes',value:1.2},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!e.shapeAttr},
+  crossAttrCond:{label:'○属性の十字消しで',data:{type:'atk',condition:'cross',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップで十字を作ると発動）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!!e.shapeAttr},
+  lShapeAttrAtk:{label:'○属性のL字消しで',data:{type:'atk',condition:'lShapes',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップでL字を作ると発動）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!!e.shapeAttr},
+  skillUsedAtk:{label:'スキル使用時に',data:{type:'atk',condition:'skillUsed',value:1.3},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')]},
+  poisonAtk:{label:'毒ドロップを消して',data:{type:'atk',condition:'poison',value:1.5},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  exact4Atk:{label:'ちょうど4個消しで',data:{type:'atk',condition:'exact4',value:1.5},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','4個消しの数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')]},
+  eraseAttrAtk:{label:'○属性を消す度に',data:{type:'atk',condition:'eraseAttr',attr:'fire',value:1.2},fields:[attrF('attr','属性（この属性のドロップを消すたびに倍率が重なる）'),numF('value','攻撃倍率（1回ごと）'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  eraseAnyAtk:{label:'ドロップを消す度に',data:{type:'atk',condition:'eraseAny',value:1.2},fields:[numF('value','攻撃倍率（1回ごと）'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  exactCountAtk:{label:'属性をちょうど○個消して',data:{type:'atk',condition:'exactCount',attr:'fire',count:4,value:2},fields:[attrF('attr','属性'),numF('count','ちょうどの個数'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')]},
   noDrop:{label:'落ちコンなし',data:{type:'noDrop',value:true},fields:[]},
   poisonImmune:{label:'毒ダメージを無効にする',data:{type:'poisonImmune',value:true},fields:[]},
   moveTimeFixed:{label:'操作時間固定',data:{type:'moveTimeFixed',value:3000},fields:[numF('value','ミリ秒（3秒=3000）')]},
@@ -586,14 +589,14 @@ function mergeLeaderEffs(effs){
   for(let i=0;i<list.length;i++){
     if(used.has(i)) continue;
     const e=list[i];
-    if(['hp','atk','rec'].includes(e.type)&&(!e.condition||e.condition==='type')&&!e.reduce&&!e.comboAdd){
-      const same=t=>list.findIndex((x,k)=>!used.has(k)&&k!==i&&x.type===t&&(x.condition||null)===(e.condition||null)&&x.attr===e.attr&&x.value===e.value&&!x.reduce&&!x.comboAdd);
+    if(['hp','atk','rec'].includes(e.type)&&(!e.condition||e.condition==='type')&&!e.reduce&&!e.comboAdd&&!e.recValue){
+      const same=t=>list.findIndex((x,k)=>!used.has(k)&&k!==i&&x.type===t&&(x.condition||null)===(e.condition||null)&&x.attr===e.attr&&x.value===e.value&&!x.reduce&&!x.comboAdd&&!x.recValue);
       const need=['hp','atk','rec'].filter(t=>t!==e.type);
       const idx=need.map(same);
       if(idx.every(k=>k>=0)){ idx.forEach(k=>used.add(k)); const m={type:'allStat',value:e.value}; if(e.condition) m.condition=e.condition; if(e.attr!==undefined) m.attr=e.attr; res.push(m); continue; }
     }
     if(e.type==='atk'&&e.condition==='cross'&&!e.shapeAttr){
-      const k=list.findIndex((x,n)=>!used.has(n)&&n!==i&&x.type==='atk'&&x.condition==='lShapes'&&!x.shapeAttr&&x.value===e.value&&!!x.exponential===!!e.exponential&&(x.reduce||0)===(e.reduce||0)&&(x.comboAdd||0)===(e.comboAdd||0));
+      const k=list.findIndex((x,n)=>!used.has(n)&&n!==i&&x.type==='atk'&&x.condition==='lShapes'&&!x.shapeAttr&&x.value===e.value&&!!x.exponential===!!e.exponential&&(x.reduce||0)===(e.reduce||0)&&(x.comboAdd||0)===(e.comboAdd||0)&&(x.recValue||0)===(e.recValue||0));
       if(k>=0){ used.add(k); res.push({...e,condition:'crossL'}); continue; }
     }
     res.push(e);
@@ -643,6 +646,8 @@ function describeLeader(effs){
           case 'darkCombos': out.push(`闇の${e.count}コンボ以上で${w}${mult}`); break;
           case 'healCombos': out.push(`回復の${e.count}コンボ以上で${w}${mult}`); break;
           case 'exact4': out.push(`ドロップをちょうど4個消${e.exponential?'す度に':'すと'}${w}${mult}`); break;
+          case 'eraseAttr': out.push(`${a}ドロップを消す度に${w}${mult}`); break;
+          case 'eraseAny': out.push(`ドロップを消す度に${w}${mult}`); break;
           case 'exactCount': out.push(`${a}をちょうど${e.count}個消すと${w}${mult}`); break;
           case 'waterDarkConnect': out.push(`水と闇を5個以上つなげて消すと${w}${mult}`); break;
           default: out.push(`${targ}${w}${mult}`);
@@ -654,11 +659,17 @@ function describeLeader(effs){
         out.push(`${c}受けるダメージ${pct(e.value)}軽減`); break;
       }
     }
-    if(e.type==='atk'&&(e.reduce>0||e.comboAdd>0)&&out.length>_n){
+    if(e.type==='atk'&&(e.reduce>0||e.comboAdd>0||e.recValue>0)&&out.length>_n){
       let t=out[out.length-1];
-      if(!(e.value>0&&e.value!==1)) t=t.replace(/(攻撃|)[01]倍$/,'').replace(/攻撃$/,'');   // 攻撃倍率なし（軽減・コンボ加算だけ）
+      const hasAtk=e.value>0&&e.value!==1;
+      if(!hasAtk) t=t.replace(/(攻撃|)[01]倍$/,'').replace(/攻撃$/,'');   // 攻撃倍率なし（軽減・コンボ加算・回復力だけ）
       t=t.replace(/、+$/,'、');
-      const sep=(s)=>t&&!/(と|で|、)$/.test(t)?'、'+s:s;
+      const sep=(s)=>t&&!/(と|で|、|に)$/.test(t)?'、'+s:s;
+      if(e.recValue>0){
+        // 攻撃と回復力が同じ倍率なら「攻撃と回復力1.2倍」にまとめる
+        if(hasAtk&&fmt(e.recValue)===fmt(e.value)&&e.condition!=='colorRamp'&&/攻撃[\d.]+倍$/.test(t)) t=t.replace(/攻撃([\d.]+倍)$/,'攻撃と回復力$1');
+        else t+=sep(`回復力${fmt(e.recValue)}倍`);
+      }
       if(e.reduce>0) t+=sep(`受けるダメージ${pct(e.reduce)}軽減`);
       if(e.comboAdd>0) t+=sep(`${fmt(e.comboAdd)}コンボ加算`);
       out[out.length-1]=t;
@@ -812,7 +823,7 @@ function collectSkills(){
 const SORT_ATTR = ['fire','water','wood','light','dark','heal','poison','ojama'];
 const attrRankOf = a => { const i = SORT_ATTR.indexOf(({'回復':'heal','火':'fire','水':'water','木':'wood','光':'light','闇':'dark','毒':'poison','お邪魔':'ojama'})[a]||a); return i<0 ? 99 : i; };
 // リーダースキル：①火のソウル→火炎のソウル→水のソウル…（属性別の攻撃倍率）②タイプ・全属性の攻撃 ③HP(オーラ) ④回復力(ルーン) ⑤条件付き攻撃 ⑥その他
-const LS_COND_ORDER = ['hpAbove','hpBelow','hpFull','combo','attrCombos','orbConnect','exactCount','exact4','colorCount','colorCountHeal','colorRamp','cross','lShapes','poison','remainingOrbs','skillUsed'];
+const LS_COND_ORDER = ['hpAbove','hpBelow','hpFull','combo','attrCombos','orbConnect','exactCount','exact4','eraseAttr','eraseAny','colorCount','colorCountHeal','colorRamp','cross','lShapes','poison','remainingOrbs','skillUsed'];
 function leaderSortKey(ls){
   const effs = (ls.effects||[]);
   const e = effs.find(x=>x&&['atk','hp','rec'].includes(x.type)) || effs[0] || {};

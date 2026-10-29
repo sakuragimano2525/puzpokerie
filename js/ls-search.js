@@ -78,6 +78,8 @@
         case 'waterDarkConnect': add('cnd:connect'); add('num:connect:5'); orb('water'); orb('dark'); add('cnd:dual'); break;
         case 'exactCount': add('cnd:exactCount'); add('num:exact:' + n); orb(e.attr); break;
         case 'exact4': add('cnd:exact4'); break;
+        case 'eraseAttr': add('cnd:erase'); orb(e.attr); break;
+        case 'eraseAny': add('cnd:erase'); break;
         case 'cross': add('cnd:cross'); orb(e.shapeAttr); break;
         case 'lShapes': add('cnd:lShapes'); orb(e.shapeAttr); break;
         case 'crossL': add('cnd:cross'); add('cnd:lShapes'); break;
@@ -108,6 +110,7 @@
             else if (!conditional) { add('cnd:none'); add(e.attr ? 'tgt:' + normAttr(e.attr) : 'tgt:all'); }
             else add('tgt:all');
           }
+          if (e.type === 'atk' && Number(e.recValue) > 1) { add('eff:rec'); maxMult = Math.max(maxMult, Number(e.recValue)); }
           if (Number(e.reduce) > 0) { add('eff:reduce'); maxReduce = Math.max(maxReduce, Number(e.reduce)); }
           if (Number(e.comboAdd) > 0) add('ext:comboAdd');
           if (e.exponential) add('ext:exp');
@@ -126,6 +129,7 @@
     if (/十字/.test(desc)) add('cnd:cross');
     if (/L字/.test(desc)) add('cnd:lShapes');
     if (/ドロップをちょうど4個消|ちょうど4個消しで/.test(desc)) add('cnd:exact4');
+    if (/消す度に/.test(desc) && !/ちょうど4個消す度に/.test(desc)) add('cnd:erase');
     if (/スキル使用時/.test(desc)) add('cnd:skill');
     if (/HP満タン/.test(desc)) add('cnd:hpFull');
     let m, re;
@@ -223,6 +227,7 @@
     addBasic('cnd:cross', '十字消し');
     addBasic('cnd:lShapes', 'L字消し');
     addBasic('cnd:exact4', 'ちょうど4個消し');
+    addBasic('cnd:erase', '消す度に', 'ドロップを消す度に');
     addBasic('cnd:dual', '2属性つなげ', '2属性を同時につなげる');
     const numbered = [];
     // コンボ
