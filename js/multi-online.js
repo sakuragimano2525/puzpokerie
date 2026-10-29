@@ -9,15 +9,19 @@
 //                                 state.snap に「共有する状態（盤面・敵・バフ/デバフ）」のJSON文字列を入れる（js/multi-share.js）
 //     4b. sendEvent(type,data) … クリア／ゲームオーバーなどの知らせ（onEvent で受け取る）
 //     4c. sendLive(obj)        … 相手が指を動かしている最中の盤面（onLive で受け取る。見せるだけ）
+//     4d. sendParty(obj)       … 自分のパーティー情報（onParty で相手の分を受け取る）
+//     4e. sendFx(obj)          … 操作中の出来事を1つ流す（onFx で受け取る）／ clearFx() で自分のターンの始めに消す
 //     5. leave()               … 退出（相手には「退出」が伝わる）
 //
 //   DB の形
 //     mt_queue/{ステージ}            … 待機中の1人 { id, ts }   ※transactionで取り合い
 //     mt_match/{待機者id}            … 待機者への通知 { room, seat }
-//     mt_rooms/{room}/players/{0,1}  … { id, present, ready, team }
-//     mt_rooms/{room}/turn           … { n, by, count, current, round, kind, snap }
+//     mt_rooms/{room}/players/{0,1}  … { id, present, ready, team, dead }   ※dead = ゲームオーバーになって観戦中
+//     mt_rooms/{room}/turn           … { n, by, count, current, round, kind, snap, dead }   ※kind = turn / sync / dead（脱落の知らせ）
 //     mt_rooms/{room}/ev             … { n, by, type, data }          （クリア / ゲームオーバー）
 //     mt_rooms/{room}/live           … { by, cur, round, g }          （操作中の盤面のミラー）
+//     mt_rooms/{room}/pt/{seat}      … 各自のパーティー情報（モンスター・HP・SP・バインド）。相手の画面に「相手のパーティー」を出すのに使う
+//     mt_rooms/{room}/fx/{push}      … 操作中の出来事の流れ { by, tk, t, d }（コンボ・攻撃・HP・敵の行動…）。自分のターンの始めに消す
 //
 //   seat 0 = 先に待っていた人（A / 先攻）、seat 1 = あとから来た人（B）
 // ============================================================
@@ -136,10 +140,13 @@
     const turnRef = rRef.child('turn');
     const evRef = rRef.child('ev');
     const liveRef = rRef.child('live');
-    const ctx = { rRef, mine, oppRef, turnRef, evRef, liveRef, started: false, lastTurn: 0, lastEv: 0, handlers: handlers || {}, opp: null };
+    const ptRef = rRef.child('pt/' + (1 - seat));
+    const myPtRef = rRef.child('pt/' + seat);
+    const fxRef = rRef.child('fx');
+    const ctx = { rRef, mine, oppRef, turnRef, evRef, liveRef, ptRef, myPtRef, fxRef, started: false, lastTurn: 0, lastEv: 0, handlers: handlers || {}, opp: null };
     MO._room = ctx;
 
-    mine.update({ id: myId(), present: true, ready: false, team: '' });
+    mine.update({ id: myId(), present: true, ready: false, team: '', dead: false });
     try { mine.child('present').onDisconnect().set(false); mine.child('ready').onDisconnect().set(false); } catch (e) {}
 
     const evalStart = () => {
@@ -171,6 +178,27 @@
       if (!v || v.by === MO.seat) return;
       if (ctx.handlers.onLive) ctx.handlers.onLive(v);
     });
+    ptRef.on('value', s => {
+      const v = s.val();
+      if (!v) return;
+      if (ctx.handlers.onParty) ctx.handlers.onParty(v);
+    });
+    // 出来事の流れ：1つずつ順番どおりに届く（child_added）。自分が流したものは無視
+    fxRef.on('child_added', s => {
+      const v = s.val();
+      if (!v || v.by === MO.seat) return;
+      if (ctx.handlers.onFx) ctx.handlers.onFx(v);
+    });
+  };
+
+  // あいての今の状態（入っていなければ null）／あいてが観戦中（脱落）かどうか
+  MO.opponent = function () { return MO._room ? MO._room.opp : null; };
+
+  // 自分が脱落した（ゲームオーバーになって観戦に回った）ことを、あいてに知らせる
+  MO.setDead = function (dead) {
+    const c = MO._room;
+    if (!c) return;
+    c.mine.update({ dead: !!dead });
   };
 
   // ---------- 3. 決定（準備OK / 取り消し） ----------
@@ -190,7 +218,7 @@
     if (!c || !state) return;
     turnN = Math.max(turnN, c.lastTurn) + 1;
     c.lastTurn = turnN;
-    c.turnRef.set({ n: turnN, by: MO.seat, count: state.count, current: state.current, round: state.round, kind: state.kind || 'turn', snap: state.snap || null });
+    c.turnRef.set({ n: turnN, by: MO.seat, count: state.count, current: state.current, round: state.round, kind: state.kind || 'turn', snap: state.snap || null, dead: state.dead || null });
   };
 
   // ---------- 4b. できごと（クリア / ゲームオーバー）の送信 ----------
@@ -210,12 +238,31 @@
     c.liveRef.set({ by: MO.seat, cur: obj.cur, round: obj.round, g: obj.g });
   };
 
+  // ---------- 4d. パーティー情報（相手の画面に「相手のパーティー」を出す） ----------
+  MO.sendParty = function (obj) {
+    const c = MO._room;
+    if (!c || !obj) return;
+    c.myPtRef.set(obj);
+  };
+
+  // ---------- 4e. 操作中の出来事の流れ（リアルタイム表示） ----------
+  MO.sendFx = function (obj) {
+    const c = MO._room;
+    if (!c || !obj) return;
+    c.fxRef.push(Object.assign({ by: MO.seat }, obj));
+  };
+  MO.clearFx = function () {
+    const c = MO._room;
+    if (!c) return;
+    c.fxRef.remove().catch(() => {});
+  };
+
   // ---------- 5. 退出 ----------
   MO.leave = function (silent) {
     const c = MO._room;
     if (!c) { MO.room = null; MO.seat = null; MO.ready = false; return; }
     MO._room = null;
-    try { c.oppRef.off(); c.turnRef.off(); c.evRef.off(); c.liveRef.off(); } catch (e) {}
+    try { c.oppRef.off(); c.turnRef.off(); c.evRef.off(); c.liveRef.off(); c.ptRef.off(); c.fxRef.off(); } catch (e) {}
     try { c.mine.child('present').onDisconnect().cancel(); c.mine.child('ready').onDisconnect().cancel(); } catch (e) {}
     c.mine.update({ present: false, ready: false }).catch(() => {});
     // 2人とも抜けたら部屋ごと消す

@@ -219,7 +219,9 @@ function stopClearSE() { _stopSEByName('clear'); }   // クリア音（ホーム
 // ============================================================
 let _gameOverActive = false;
 function triggerGameOver() {
-  if (_gameOverActive) return;
+  if (_gameOverActive || (window.MultiShare && MultiShare.spectating)) return;
+  // マルチ：のこりの人がいるなら全滅ではない → 自分は観戦に回り、あいてがひとりで続ける
+  if (window.MultiShare && MultiShare.tryDie()) return;
   _gameOverActive = true;
   if (window.MultiShare) MultiShare.sendOver();   // マルチ：相手の画面もゲームオーバー（2人で1つの戦場）
   busy = true;
@@ -328,8 +330,9 @@ function _gameOverGoHome() {
   if (ov) ov.remove();
   const wrap = document.getElementById('grid-wrap');
   if (wrap) wrap.classList.remove('go-collapsing');
+  resetClearState();   // マルチ：観戦中のCLEAR画面（報酬なし）を片づける
   const gameEl = document.getElementById('game');
-  if (gameEl) { gameEl.classList.remove('game-over'); gameEl.style.display = 'none'; }
+  if (gameEl) { gameEl.classList.remove('game-over', 'mt-spectate'); gameEl.style.display = 'none'; }
   document.getElementById('home').style.display = 'flex';
   stopDungeonBGM();
   startMenuBGM();
@@ -1866,7 +1869,13 @@ function rollDropCount(count) {
   return count || 1;
 }
 
-function tryDrop(enemy, silent = false) {   // silent=true：演出なし（マルチで、相手が倒した階層の報酬だけ受け取る時）
+function tryDrop(enemy, silent = false) {
+  // マルチ(オンライン)：ドロップ抽選を「部屋ID＋階層＋何体目か」のシード乱数にして、2人とも同じ報酬になるようにする
+  const key = window.MultiShare ? MultiShare.dropKey(enemy) : null;
+  if (!key) return _tryDropImpl(enemy, silent);
+  return MultiShare.withSeed(key, () => _tryDropImpl(enemy, silent));
+}
+function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし（マルチで、相手が倒した階層の報酬だけ受け取る時）
   if (enemy._killCombo === undefined) enemy._killCombo = attackPhaseCombo;   // マルチ：倒した時のコンボ数を控える（相手の端末で10コンボ確定ドロップを判定するため）
   if (enemy._fled) { enemy._dropChecked = true; return; }   // にげた敵は何も落とさない
   if (enemy._dropChecked) return;
@@ -2552,6 +2561,7 @@ async function showEnemyAttackEffect(enemy, actionName, selectedAction, isPreemp
   // ダメージ技が無い行動（先制のシールド・バインド等）は弾も被ダメージ演出も出さない
   // 割合ダメージを含む行動は、ほかのダメージ技が混ざっていても「覇気の一撃」を1回だけ（以前は damage_mult + damage_ratio で2発に割れていた）
   const hasRatio = !!(selectedAction && selectedAction.skills && selectedAction.skills.some(sk => sk.type === 'damage_ratio'));
+  if (window.MultiShare) MultiShare.fx('ea', { i: eIdx, n: String(actionName || ''), w: (isPreemptive || forceWindow || !isPlainEnemyAttack(actionName, selectedAction)) ? 1 : 0 });   // マルチ：敵の行動を相手の画面へ
   const hitCount = hasRatio ? 1 : (selectedAction && selectedAction.skills
     ? selectedAction.skills.reduce((s, sk) => s + ((sk.type === 'damage' || sk.type === 'damage_mult') ? (sk.repeat || 1) : 0), 0)
     : 1);
@@ -3595,6 +3605,7 @@ function hidePoisonPreview(delay) {
 }
 
 function updatePlayerHP(delta) {
+  if (window.MultiShare && MultiShare.remoteView) { MultiShare.paintRemoteHp(); return; }   // マルチ：相手のパーティーを表示中
   const maxHP = calcTotalHP();
   playerMaxHP = maxHP;
   if (playerCurrentHP > playerMaxHP) playerCurrentHP = playerMaxHP;
@@ -3626,6 +3637,7 @@ function updatePlayerHP(delta) {
       el._timer = setTimeout(() => { el.style.display = 'none'; }, 1700);
     }
   }
+  if (window.MultiShare) MultiShare.fx('hp', { hp: Math.round(playerCurrentHP), mx: Math.round(playerMaxHP) });   // マルチ：相手の画面のHPバーへ
 }
 
 let enemyDefeatedHandled = false;
@@ -4099,6 +4111,49 @@ async function playDungeonClear(unlockedArea) {
 
   // ホームへ戻るまで待つ（busy を保つ）
   await new Promise(resolve => { _clearResolve = resolve; });
+}
+
+// マルチ：ゲームオーバーで観戦していた人に出す、報酬なしのCLEAR画面（クリア済み扱い・エナ・経験値・ドロップはなし）
+async function playSpectatorClear() {
+  _clearActive = true;
+  busy = true;
+  try { stopTimer(); } catch (e) {}
+  timerStarted = false;
+  dragging = false;
+  const gameEl = document.getElementById('game');
+  if (gameEl) { gameEl.classList.add('game-clear'); gameEl.classList.remove('mt-spectate'); }
+  const lbl = document.getElementById('combo-label');
+  if (lbl) lbl.textContent = '';
+  while (_defeatPending.length) { const list = _defeatPending; _defeatPending = []; await Promise.all(list); }
+  await sleep(250);
+  stopDungeonBGM();
+  stopClearSE();
+  playSE('clear');
+  const ea = document.getElementById('enemy-area');
+  if (ea) { ea.style.transition = 'opacity .35s'; ea.style.opacity = '0'; }
+  const dungeon = document.getElementById('dungeon');
+  if (dungeon) {
+    const t = document.createElement('div');
+    t.id = 'clear-text-overlay';
+    t.innerHTML = '<div id="clear-text">' + clearLogoSVG() + '</div>';
+    dungeon.appendChild(t);
+    requestAnimationFrame(() => { const x = t.querySelector('#clear-text'); if (x) x.classList.add('show'); });
+  }
+  startClearFireworks();
+  const wrap = document.getElementById('grid-wrap');
+  if (wrap) {
+    const ov = document.createElement('div');
+    ov.id = 'clear-board-overlay';
+    ov.className = 'spec';
+    ov.innerHTML = '<div class="mt-spec-note">観戦のため、クリア報酬はありません</div><button id="clear-home-btn" class="btn btn-primary btn-cta" type="button">ホームへ</button>';
+    wrap.appendChild(ov);
+    ['touchstart', 'touchmove', 'mousedown'].forEach(ev => ov.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+    const btn = ov.querySelector('#clear-home-btn');
+    requestAnimationFrame(() => { ov.classList.add('show'); btn.classList.add('show'); });
+    btn.addEventListener('click', () => { _gameOverGoHome(); });   // 報酬なし・クリア記録なしでホームへ
+  } else {
+    _gameOverGoHome();
+  }
 }
 
 function resetClearState() {
@@ -6095,6 +6150,7 @@ let skillTargetUid = null;
 let skillUsedThisTurn = false;
 
 function updateLeaderSkill2() {
+  if (window.MultiShare && MultiShare.remoteView) { MultiShare.paintRemoteLs(); return; }   // マルチ：相手のパーティーを表示中
   let text0 = '（なし）', text1 = '（なし）';
   if (partyUids.length > 0 && partyUids[0] !== null) {
     const e0 = box.find(b => b.uid === partyUids[0]);
@@ -6177,6 +6233,7 @@ function checkSkillReadySE() {
 let _liftedSkillUids = new Set();   // いま「スキルが溜まって持ち上がっている」モンスターのuid（描き直しても状態を引き継ぐ）
 
 function updateSpGaugeUI() {
+  if (window.MultiShare && MultiShare.remoteView) { MultiShare.paintRemoteSp(); return; }   // マルチ：相手のパーティーを表示中
   checkSkillReadySE();
   const bar = document.getElementById('sp-common-bar');
   const countEl = document.getElementById('sp-common-count');
@@ -6193,6 +6250,7 @@ function updateSpGaugeUI() {
     bar.appendChild(seg);
   }
   if (countEl) countEl.textContent = `${partySp} / ${SP_CAP}`;
+  if (window.MultiShare) MultiShare.fx('sp', { sp: partySp, mem: partyMemory });   // マルチ：相手の画面のSPへ
 }
 
 function openSkillConfirm(uid) {
@@ -6699,9 +6757,11 @@ async function confirmSkill() {
   skillUsedThisTurn = true;
   playSkillSound();
 
+  if (window.MultiShare) MultiShare.fx('sk', { n: mon.skill.name });   // マルチ：スキル発動を相手の画面へ
   if (mon.skill.effects && mon.skill.effects.length) {
     runSkillEffects(mon.skill.effects, entry, mon);
   }
+  if (window.MultiShare) { MultiShare.fxGrid(); MultiShare.fx('en', { hp: enemyList.map(e => e.hp) }); }   // スキルで変わった盤面・敵のHP
 
   partySp -= requiredSp;
   if (partySp < 0) partySp = 0;
@@ -8620,9 +8680,12 @@ function moOnOpponent(o) {
     moRenderOpp(); moRefreshBtn();
     return;
   }
+  // マルチ：あいてが脱落（ゲームオーバー）した → のこりの自分だけで続ける／自分も脱落済みなら全滅
+  if (window.MultiShare && MultiTurn.online && MultiTurn.active && o && o.present) MultiShare.onPartnerState(o);
   // ダンジョン中にあいてが抜けたら、のこりは自由に操作できるようにする
   if (window.MultiTurn && MultiTurn.online && MultiTurn.active && !(o && o.present)) {
     if (_gameOverActive || _clearActive) return;   // クリア／ゲームオーバー画面の間は、あいてが先にホームへ戻っても何もしない
+    if (window.MultiShare && MultiShare.spectating) { if (MultiTurn.banner) MultiTurn.banner('MULTI', 'あいてが退出しました', 1); return; }   // 観戦中：もう見るものがない（ホームへは上のボタンから）
     const waiting = !MultiTurn.isMyTurn();
     MultiTurn.localId = null;
     if (MultiTurn.banner) MultiTurn.banner('MULTI', 'あいてが退出しました', 1);
@@ -8655,6 +8718,8 @@ async function startMultiMatching(areaNum, stageKey) {
       onTurn: s => { if (window.MultiTurn) MultiTurn.receive(s); },
       onEvent: v => { if (window.MultiShare) MultiShare.onEvent(v); },   // クリア／ゲームオーバー
       onLive: v => { if (window.MultiShare) MultiShare.onLive(v); },     // 相手が動かしている盤面
+      onParty: v => { if (window.MultiShare) MultiShare.onParty(v); },   // 相手のパーティー（モンスター・HP・SP）
+      onFx: v => { if (window.MultiShare) MultiShare.onFx(v); },         // 相手の操作中の出来事（コンボ・攻撃・HP…）
     });
     openDungeonEntry(areaNum, stageKey);
   } catch (e) {
@@ -8786,7 +8851,7 @@ function init() {
   _gameOverActive = false;
   stopGameOverSE();
   resetClearState();
-  { const o = document.getElementById('gameover-overlay'); if (o) o.remove(); const w = document.getElementById('grid-wrap'); if (w) w.classList.remove('go-collapsing'); const g = document.getElementById('game'); if (g) g.classList.remove('game-over'); }
+  { const o = document.getElementById('gameover-overlay'); if (o) o.remove(); const w = document.getElementById('grid-wrap'); if (w) w.classList.remove('go-collapsing'); const g = document.getElementById('game'); if (g) g.classList.remove('game-over', 'mt-spectate'); }
   moveTimeFixed = null;
   leaderMoveAddMs = 0;
   lastTurnCtx = null;
@@ -8908,6 +8973,7 @@ function attachSkillHold(slot, mon, entry) { slot._sk = { mon, entry }; }
 })();
 
 function renderParty() {
+  if (window.MultiShare && MultiShare.remoteView) { MultiShare.paintRemote(); return; }   // マルチ：相手のパーティーを表示中
   const grid = document.getElementById('party-grid');
   grid.innerHTML = '';
   damageElements = [];
@@ -9355,6 +9421,7 @@ async function _evaluateInner() {
 
       playComboSound(totalCombo);
       cells.forEach(({r,c}) => { revealBlind(r, c); orbEls[r][c].className = `orb ${color} glow`; });
+      if (window.MultiShare) MultiShare.fx('cb', { n: totalCombo, c: color, k: cells.map(q => [q.r, q.c]) });   // マルチ：相手の画面にもコンボを流す
 
       const lsEffects = [];
       [0, 5].forEach(idx => {
@@ -9407,6 +9474,7 @@ async function _evaluateInner() {
         for (let ca = 0; ca < Math.floor(ce.comboAdd); ca++) {
           comboIndex++; totalCombo = comboIndex;
           addComboChip(totalCombo, [{ r: Math.min(ROWS - 0.5, avgR + ca * 0.5), c: avgC }], 1.0);
+          if (window.MultiShare) MultiShare.fx('cb', { n: totalCombo, add: 1, k: [[Math.min(ROWS - 0.5, avgR + ca * 0.5), avgC]] });
           playComboSound(totalCombo);
           await sleep(220);
         }
@@ -9447,6 +9515,7 @@ async function _evaluateInner() {
           }
         }
       }
+      if (window.MultiShare) MultiShare.fx('pd', pendingDamages.slice());   // マルチ：各モンスターの攻撃力の積み上がりを相手の画面へ
     }
 
     if (!comboAddTriggered && hasWaterConnect5 && hasDarkConnect5) {
@@ -9467,6 +9536,7 @@ async function _evaluateInner() {
           totalCombo = comboIndex;
           const bonusCells = [{r: 2, c: Math.min(ca * 2, COLS - 1)}];
           addComboChip(totalCombo, bonusCells, 1.0);
+          if (window.MultiShare) MultiShare.fx('cb', { n: totalCombo, add: 1, k: bonusCells.map(q => [q.r, q.c]) });
           playComboSound(totalCombo);
           await sleep(180);
         }
@@ -9672,6 +9742,7 @@ async function _evaluateInner() {
         }
       }
     }
+    if (window.MultiShare) MultiShare.fx('fd', finalDamages.slice());   // マルチ：溜め→最終ダメージを相手の画面へ
     await sleep(900);
     slots.forEach(slot => slot.classList.remove('charging'));
     damageElements.forEach(el => { if (el) el.classList.remove('boosting'); });
@@ -9708,13 +9779,17 @@ async function _evaluateInner() {
         if (plannedIdx === -2) {
           if (!enemyList.some(e => e.hp > 0)) continue;
           // 全体攻撃：単体攻撃と同じく弾を飛ばし、当たったら ATK_GAP_MS 後に次へ（演出は裏で流れ続ける）
+          if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: -2 });
           await allAttackAnimation(slotIdx, dmg, attr);
+          if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp) });
           continue;
         }
         let eIdx = plannedIdx;
         if (eIdx === -1) eIdx = getTargetIdx();   // 1匹倒しても、次の敵（ロック中ならその敵）へ自動で狙いを移す
         if (eIdx < 0 || !enemyList[eIdx] || enemyList[eIdx].hp <= 0) continue;
+        if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: eIdx });
         await attackAnimation(slotIdx, dmg, attr, eIdx);
+        if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp) });
         await sleep(ATK_GAP_MS);   // 当たったあと、次の攻撃までの間（全体攻撃と共通）
       }
       if (window.DamageTotal) DamageTotal.finish();   // 全員の攻撃が終わった：合計は0.3秒残ってから、上がって消える
@@ -9785,7 +9860,7 @@ async function _evaluateInner() {
   if (window.DamageTotal) DamageTotal.clear();   // 敵のターンに入るので、合計ダメージを消す
   if (enemyList.some(e => e.hp > 0) && playerCurrentHP > 0 && !enemyDefeatedHandled) {
     try { await doEnemyAttack(); } finally { enemyJudgeBoard = null; }
-    if (_gameOverActive) return;   // ゲームオーバー演出中は以降の処理をしない
+    if (_gameOverActive || (window.MultiShare && MultiShare.spectating)) return;   // ゲームオーバー演出中／観戦中は以降の処理をしない
   }
   enemyJudgeBoard = null;
 
@@ -9802,7 +9877,7 @@ async function _evaluateInner() {
   if (enemyDefeatedHandled) await handleBattleEnd();
 
   // マルチ：1人分のパズルが終わったら、同じ盤面のまま次の人へ交代（クリア／ゲームオーバー／ホーム復帰中は交代しない）
-  if (window.MultiTurn && MultiTurn.active && !_gameOverActive && !_clearActive && document.getElementById('game').style.display === 'flex') {
+  if (window.MultiTurn && MultiTurn.active && !_gameOverActive && !(window.MultiShare && MultiShare.spectating) && !_clearActive && document.getElementById('game').style.display === 'flex') {
     await MultiTurn.endTurn();
   }
 
@@ -9879,6 +9954,7 @@ async function drop(fill = true, noMatch = false) {
       });
     }
   }
+  if (window.MultiShare) MultiShare.fxGrid();   // マルチ：消えたあとの詰め・補充を相手の画面へ
   const waitMs = 140 + maxFall * 22 + COLS * 6;
   await sleep(waitMs);
   for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) orbEls[r][c].classList.remove('drop-fast');

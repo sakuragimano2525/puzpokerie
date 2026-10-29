@@ -40,3 +40,23 @@
 #mt-banner .mt-b-main { font-size:30px; font-weight:900; letter-spacing:.06em; text-shadow:0 2px 10px rgba(0,0,0,.6); }
 #mt-banner.p0 .mt-b-main { color:var(--mt-c0); } #mt-banner.p1 .mt-b-main { color:var(--mt-c1); }
 #mt-banner.p2 .mt-b-main { color:var(--mt-c2); } #mt-banner.p3 .mt-b-main { color:var(--mt-c3); }
+
+/* 脱落（ゲームオーバー）した人：HUDで灰色＋「観戦中／脱落」、観戦中だけ「ホームへ」ボタン */
+.mt-pl.dead { opacity:.45; filter:grayscale(1); }
+.mt-tag.x { color:#ff9c9c; font-weight:700; }
+#mt-spec-leave { display:none; pointer-events:auto; border:0; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:800;
+  color:#fff; background:#d83a3a; cursor:pointer; }
+#game.mt-spectate #mt-spec-leave { display:inline-block; }
+#game.game-clear #mt-spec-leave { display:none; }
+/* 観戦して見たあとのCLEAR画面（報酬なしの一言つき） */
+#clear-board-overlay.spec { flex-direction:column; gap:14px; }
+#clear-board-overlay .mt-spec-note { padding:0 14px; text-align:center; font-weight:900; font-size:15px; line-height:1.4; color:#fff;
+  text-shadow:0 2px 6px rgba(0,0,0,.75); }
+
+/* 相手のパーティーを表示している間：触れない＋「Bのパーティー」の札 */
+#game.mt-remote #party-grid { pointer-events:none; }
+#game.mt-remote #party-area::after {
+  content: attr(data-who); position:absolute; left:8px; top:-9px; z-index:3; pointer-events:none;
+  padding:1px 9px; border-radius:999px; font-size:10px; font-weight:900; letter-spacing:.03em; color:#fff;
+  background:rgba(40,40,60,.88); border:1px solid rgba(255,255,255,.45); box-shadow:0 1px 4px rgba(0,0,0,.6);
+}
