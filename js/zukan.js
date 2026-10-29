@@ -27,6 +27,7 @@
   const LONGPRESS_MS = 250;      // 長押しと判定する時間
   const MOVE_CANCEL_PX = 10;     // これ以上指が動いたらスクロールとみなして長押しをやめる
   const $ = id => document.getElementById(id);
+  const HIDDEN_FROM = 152;       // この番号以降は、ゲットするまで図鑑に表示しない（まだ登場しないため）
 
   // ── 記録 ───────────────────────────────────────────────────
   const seen = new Set();    // 出会った or 持った（owned も含む）
@@ -106,7 +107,9 @@
   const sortCtx = { monsters: null, stats: e => calcMonsterStats(e) };
 
   function allIds() {
-    return Object.keys(MONSTER_DATA).map(Number).filter(id => id > 0 && MONSTER_DATA[id]).sort((a, b) => a - b);
+    return Object.keys(MONSTER_DATA).map(Number)
+      .filter(id => id > 0 && MONSTER_DATA[id] && (id < HIDDEN_FROM || owned.has(id)))   // 152番以降は、ゲットするまで図鑑に出さない
+      .sort((a, b) => a - b);
   }
   const maxLvOf = mon => (typeof getMonsterMaxLevel === 'function') ? getMonsterMaxLevel(mon) : 99;
   // 図鑑用の仮のBOXデータ（最大Lvのモンスター1体 = 図鑑の1マス）
@@ -253,7 +256,7 @@
   // ── ステータスのポップアップ ───────────────────────────────────
   const ATTR_IMG = { fire: '1', water: '2', wood: '3', light: '4', dark: '5' };
   const ATTR_JP = { fire: '火', water: '水', wood: '木', light: '光', dark: '闇' };
-  const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', '回復': 'typ3', 'バランス': 'typ4' };
+  const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', 'バランス': 'typ4' };
   let infoOpenedAt = 0;
 
   function el(tag, cls, text) {

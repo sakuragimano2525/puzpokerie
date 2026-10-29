@@ -29,7 +29,8 @@
 #mo-opp .mo-opp-tag { font: 900 0.8rem/1 var(--ff); white-space: nowrap; }
 #mo-opp .mo-opp-tag b { margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 0.72rem; }
 #mo-opp .mo-opp-mons { display: flex; gap: 3px; flex: 1; min-width: 0; }
-#mo-opp .mo-opp-mons span { position: relative; flex: 1 1 0; max-width: 34px; aspect-ratio: 1; border-radius: 8px; background: rgba(28, 31, 79, 0.1); overflow: hidden; }
+#mo-opp .mo-opp-mons span { position: relative; flex: 1 1 0; max-width: 34px; aspect-ratio: 1; border-radius: 8px; background: none; overflow: hidden; }
+#mo-opp .mo-opp-mons span:empty { background: rgba(28, 31, 79, 0.1); }   /* モンスターのいない空き枠だけ、うすい四角で枠を見せる */
 #mo-opp .mo-opp-mons img { width: 100%; height: 100%; object-fit: contain; display: block; }
 #mo-opp .mo-opp-state { font: 900 0.78rem/1.2 var(--ff); white-space: nowrap; color: var(--ink-2); }
 #mo-opp.ready .mo-opp-state { color: #1c9a54; }

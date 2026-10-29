@@ -84,6 +84,16 @@
     '_comboAbsorb', '_statusShield', '_dmgReduce', '_attrGuards', '_superGut', 'defDown'];
   const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
   const gridStr = () => grid.map(r => r.map(v => v || '').join(',')).join('|');
+  // ロック：盤面は2人で共通なので、ロックの位置も一緒に渡す（'1'＝ロック。blindと同じ形式）
+  const lockStr = () => (typeof lockCells === 'undefined' ? '' : lockCells.map((row, r) => row.map((b, c) => (b && grid[r] && grid[r][c] ? 1 : 0)).join('')).join('|'));
+  function applyLocks(str) {
+    if (typeof lockCells === 'undefined' || typeof setLockEl !== 'function') return;
+    const rows = String(str || '').split('|');
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      lockCells[r][c] = !!(rows[r] && rows[r][c] === '1' && grid[r][c]);
+      setLockEl(r, c);
+    }
+  }
 
   function getBuffs() {
     return {
@@ -115,6 +125,7 @@
       bi: currentBattleIndex,
       g: gridStr(),
       bl: blindCells.map(r => r.map(b => (b ? 1 : 0)).join('')).join('|'),
+      lk: lockStr(),
       rl: roulettes.map(o => ({ r: o.r, c: o.c, turns: o.turns, period: o.period, t: o.t })),
       en: enemyList.map(e => { const o = {}; for (const k of ENEMY_KEYS) if (e[k] !== undefined) o[k] = clone(e[k]); return o; }),
       bf: getBuffs(),
@@ -130,7 +141,7 @@
   };
 
   // ---------- 共有する状態：反映 ----------
-  function setGridFromStr(str) {
+  function setGridFromStr(str, lk) {
     const rows = String(str).split('|');
     if (rows.length !== ROWS) return false;
     const cells = rows.map(r => r.split(','));
@@ -141,6 +152,7 @@
       const el = orbEls[r] && orbEls[r][c];
       if (el) { el.className = 'orb' + (t ? ' ' + t : ''); el.style.transform = ''; }
     }
+    applyLocks(lk);   // ロックの位置も相手の盤面と同じにする
     return true;
   }
   function applyBlind(str) {
@@ -253,7 +265,13 @@
       try { clearComboChips(); rdmg.forEach(el => { if (el) { el.textContent = ''; el.classList.remove('show', 'pop', 'boosting'); } }); } catch (e) {}
       if (s.bi > currentBattleIndex) await advanceTo(s);
       if (Array.isArray(s.en)) applyEnemies(s.en);
-      if (s.g) setGridFromStr(s.g);
+      const _prevLk = (typeof lockCells !== 'undefined') ? lockCells.map(r => r.slice()) : null;
+      if (s.g) setGridFromStr(s.g, s.lk);
+      if (_prevLk && s.g && typeof lockFx === 'function') {   // 相手の番に新しくロックされたドロップ：自分の画面でも鍵の演出
+        const added = [];
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (lockCells[r][c] && !(_prevLk[r] && _prevLk[r][c])) added.push([r, c]);
+        if (added.length) lockFx(added);
+      }
       applyBlind(s.bl);
       restoreRoulettes(s.rl);
       setBuffs(s.bf);
@@ -353,7 +371,7 @@
     const send = () => {
       liveTimer = null; liveT = performance.now();
       if (!on() || !MultiTurn.isMyTurn()) return;
-      MultiOnline.sendLive({ cur: MultiTurn.current, round: MultiTurn.round, g: gridStr() });
+      MultiOnline.sendLive({ cur: MultiTurn.current, round: MultiTurn.round, g: gridStr(), lk: lockStr() });
     };
     cancelLive();
     const wait = 140 - (performance.now() - liveT);
@@ -362,7 +380,7 @@
   MS.onLive = function (v) {
     if (!on() || !v || MultiTurn.isMyTurn() || MS.applying || MultiTurn._receiving) return;
     if (v.cur !== MultiTurn.current || v.round !== MultiTurn.round) return;   // 前のターンの古い盤面は無視
-    if (typeof v.g === 'string') setGridFromStr(v.g);
+    if (typeof v.g === 'string') setGridFromStr(v.g, v.lk);
   };
 
 
@@ -519,7 +537,7 @@
     if (MultiTurn.localId === null || !MultiTurn.isMyTurn()) return;
     try { MultiOnline.sendFx({ tk: MultiTurn.current + ':' + MultiTurn.round, t, d: d === undefined ? null : d }); } catch (e) {}
   };
-  MS.fxGrid = function () { MS.fx('g', gridStr()); };
+  MS.fxGrid = function () { MS.fx('g', { g: gridStr(), lk: lockStr() }); };
 
   // ---- 相手の出来事を、届いた順に再生する ----
   let fxChain = Promise.resolve();
@@ -542,8 +560,9 @@
   //   消えたあとの空きマスの分だけ、残ったドロップは「元の位置から」下へ詰まり、新しいドロップは上から降ってくる
   //   （以前は変わったマスをぜんぶ上から出し直していたので、瞬間移動に見えた）
   let vanishing = new Set();   // cb で消えはじめたマス（まだ grid には残っている分）："r,c"
-  function applyGridAnimated(str) {
+  function applyGridAnimated(str, lk) {
     const rows = String(str || '').split('|').map(s => s.split(',').map(v => v || null));
+    const lkRows = String(lk || '').split('|');
     const cellH = $id('grid').getBoundingClientRect().height / ROWS;
     let maxFall = 0;
     for (let c = 0; c < COLS; c++) {
@@ -561,6 +580,7 @@
         const el = cellEl(destR, c);
         const old = grid[destR][c];
         grid[destR][c] = t;
+        if (typeof lockCells !== 'undefined' && lockCells[destR]) { lockCells[destR][c] = !!(t && lkRows[destR] && lkRows[destR][c] === '1'); if (typeof setLockEl === 'function') setLockEl(destR, c); }   // ロックはドロップと一緒に落ちる
         let blind = false, startRows = 0;
         if (consistent && destR >= fillCount) { const ex = existing[destR - fillCount]; blind = ex.blind; startRows = destR - ex.origR; }
         else if (consistent) startRows = destR + 1;                         // 新しいドロップ：盤面の上から
@@ -609,14 +629,14 @@
     cb(d) {
       const cells = asArr(d.k).map(a => ({ r: a[0], c: a[1] }));
       if (!d.add) {
-        cells.forEach(({ r, c }) => { vanishing.add(r + ',' + c); try { revealBlind(r, c); } catch (_) {} const el = cellEl(r, c); if (el) el.className = 'orb ' + d.c + ' glow'; });
+        cells.forEach(({ r, c }) => { vanishing.add(r + ',' + c); try { revealBlind(r, c); } catch (_) {} try { setOrbLock(r, c, false); } catch (_) {} const el = cellEl(r, c); if (el) el.className = 'orb ' + d.c + ' glow'; });
         setTimeout(() => cells.forEach(({ r, c }) => { const el = cellEl(r, c); if (el && el.className.indexOf('glow') >= 0) el.className = 'orb ' + d.c + ' vanish'; }), 220);
         setTimeout(() => cells.forEach(({ r, c }) => { const el = cellEl(r, c); if (el && el.className.indexOf('vanish') >= 0) grid[r][c] = null; }), 360);
       }
       try { playComboSound(d.n); } catch (_) {}
       try { addComboChip(d.n, cells, 1); } catch (_) {}
     },
-    g(str) { applyGridAnimated(str); },
+    g(d) { if (typeof d === 'string') applyGridAnimated(d); else if (d) applyGridAnimated(d.g, d.lk); },
     // 各モンスターの攻撃力が積み上がる数字
     pd(a) {
       asArr(a).forEach((v, i) => { const el = rdmg[i]; if (el && v > 0) { el.textContent = Number(v).toLocaleString(); el.classList.add('show'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } });

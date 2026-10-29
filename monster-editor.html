@@ -273,7 +273,17 @@ const $ = id => document.getElementById(id);
 // ---------- 定数 ----------
 const ATTRS = [['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['poison','毒'],['ojama','お邪魔']];
 const ATTR_NAME = Object.fromEntries(ATTRS);
-const DEFAULT_TYPES = ['バランス','こうげき','たいりょく','かいふく','回復','バード','マター','悪魔'];
+const DEFAULT_TYPES = ['バランス','こうげき','たいりょく','かいふく','バード','マター','悪魔'];
+// 旧表記「回復」（漢字）は「かいふく」に統一。読み込み時・保存時にデータ内のタイプ名を自動で直す
+const normType = t => (t === '回復' ? 'かいふく' : t);
+function normalizeMonsterTypes(m){
+  if(!m || typeof m !== 'object') return m;
+  if(m.type) m.type = normType(m.type);
+  const fix = list => (list||[]).forEach(e=>{ if(!e) return; if(e.condition==='type' && e.attr) e.attr = normType(e.attr); if(e.monType) e.monType = normType(e.monType); });
+  if(m.skill) fix(m.skill.effects);
+  if(m.leaderSkill) fix(m.leaderSkill.effects);
+  return m;
+}
 const KNOWN_KEYS = ['id','name','img','rarity','attr','type','maxLevel','baseExp','stats','skill','leaderSkill','evolutions'];
 const EXP_TABLE_LEN = 99; // js/data/exp.js の長さ。これより上の最大レベルは設定できない
 const DEFAULT_HEADER = `// ============================================================
@@ -296,32 +306,34 @@ const numF = (key,label)=>[key,label,'number'];
 const attrF = (key,label)=>[key,label,'attr'];
 const typeF = (key,label)=>[key,label,'type'];
 const activeTemplates = {
-  damageAll:{label:'敵に固定ダメージ（全体/単体）',data:{type:'damageAll',target:'all',value:2000},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダメージ')]},
-  damageSelfAtkMult:{label:'自分の攻撃力×倍率の属性ダメージ（全体/単体）',data:{type:'damageSelfAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
-  damageAttrAtkMult:{label:'○属性の攻撃力×倍率の属性ダメージ（全体/単体）',data:{type:'damageAttrAtkMult',target:'all',value:10,srcAttr:'fire',attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('srcAttr','参照する味方の属性（その属性の攻撃力合計）'),attrF('attr','攻撃の属性')]},
-  damagePartyAtkMult:{label:'（旧）味方全員の攻撃力合計×倍率',data:{type:'damagePartyAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
-  atkBuff:{label:'攻撃エンハンス（属性/タイプの攻撃を○ターン○倍）',data:{type:'atkBuff',attr:'water',monType:'',value:1.5,turns:1},fields:[['attr','属性（指定なし=全属性）','attrAny'],typeF('monType','タイプ（空欄=指定なし）'),numF('value','攻撃倍率'),numF('turns','ターン数')]},
-  defenseDown:{label:'敵の防御力を○ターン○%ダウン（全体/単体）',data:{type:'defenseDown',target:'all',value:0.5,turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダウン率（50%=0.5）'),numF('turns','ターン数')]},
-  selfDamage:{label:'【自傷系】HPを減らす（○%減少／HPが1になる）',data:{type:'selfDamage',mode:'percent',value:0.2},fields:[['mode','種類','select','percent:最大HPの○%減少|toOne:HPが1になる'],numF('value','減少割合（20%=0.2。「HPが1になる」の時は無視）')]},
+  damageAll:{label:'敵に固定ダメージ',data:{type:'damageAll',target:'all',value:2000},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダメージ')]},
+  damageSelfAtkMult:{label:'自分の攻撃力×倍率の属性ダメージ',data:{type:'damageSelfAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
+  damageAttrAtkMult:{label:'○属性の攻撃力×倍率の属性ダメージ',data:{type:'damageAttrAtkMult',target:'all',value:10,srcAttr:'fire',attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('srcAttr','参照する味方の属性（その属性の攻撃力合計）'),attrF('attr','攻撃の属性')]},
+  damagePartyAtkMult:{label:'味方全員の攻撃力合計×倍率',data:{type:'damagePartyAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
+  atkBuff:{label:'攻撃エンハンス',data:{type:'atkBuff',attr:'water',monType:'',value:1.5,turns:1},fields:[['attr','属性（指定なし=全属性）','attrAny'],typeF('monType','タイプ（空欄=指定なし）'),numF('value','攻撃倍率'),numF('turns','ターン数')]},
+  defenseDown:{label:'敵の防御力を○ターン○%ダウン',data:{type:'defenseDown',target:'all',value:0.5,turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダウン率（50%=0.5）'),numF('turns','ターン数')]},
+  selfDamage:{label:'【自傷系】HPを減らす',data:{type:'selfDamage',mode:'percent',value:0.2},fields:[['mode','種類','select','percent:最大HPの○%減少|toOne:HPが1になる'],numF('value','減少割合（20%=0.2。「HPが1になる」の時は無視）')]},
   heal:{label:'最大HP割合を回復',data:{type:'heal',value:0.2},fields:[numF('value','割合（20%=0.2）')]},
   orbChangeRandom:{label:'ランダムにドロップ生成',data:{type:'orbChangeRandom',attr:'light',count:3},fields:[attrF('attr','生成属性'),numF('count','個数')]},
-  orbChangeLine:{label:'列を変換（横○列／縦○列）',data:{type:'orbChangeLine',dir:'row',index:0,count:1,attr:'fire'},fields:[['dir','方向','select','row:横（行）|col:縦（列）'],numF('index','開始位置（横=上から0〜4／縦=左から0〜5）'),numF('count','列数（1〜）'),attrF('attr','属性')]},
+  orbChangeLine:{label:'列を変換',data:{type:'orbChangeLine',dir:'row',index:0,count:1,attr:'fire'},fields:[['dir','方向','select','row:横（行）|col:縦（列）'],numF('index','開始位置（横=上から0〜4／縦=左から0〜5）'),numF('count','列数（1〜）'),attrF('attr','属性')]},
   orbChangeCross:{label:'十字の形に生成',data:{type:'orbChangeCross',row:1,col:1,attr:'fire'},fields:[numF('row','中心の行（0〜4）'),numF('col','中心の列（0〜5）'),attrF('attr','属性')]},
   orbChangeReverseL:{label:'左上に逆L字で生成',data:{type:'orbChangeReverseL',attr:'wood'},fields:[attrF('attr','属性')]},
-  orbChange5ColorHeal:{label:'全ドロップを5属性＋回復に変化（各3個以上）',data:{type:'orbChange5ColorHeal'},fields:[]},
-  orbChangeMulti:{label:'全ドロップを選んだ色に変化（各3個以上。例：火,水,回復）',data:{type:'orbChangeMulti',orb_fire:true,orb_water:true,orb_heal:true},fields:[['orb_fire','火ドロップ','bool'],['orb_water','水ドロップ','bool'],['orb_wood','木ドロップ','bool'],['orb_light','光ドロップ','bool'],['orb_dark','闇ドロップ','bool'],['orb_heal','回復ドロップ','bool'],['orb_ojama','お邪魔ドロップ','bool']]},
+  orbChange5ColorHeal:{label:'全ドロップを5属性＋回復に変化',data:{type:'orbChange5ColorHeal'},fields:[]},
+  orbChangeMulti:{label:'全ドロップを選んだ色に変化',data:{type:'orbChangeMulti',orb_fire:true,orb_water:true,orb_heal:true},fields:[['orb_fire','火ドロップ','bool'],['orb_water','水ドロップ','bool'],['orb_wood','木ドロップ','bool'],['orb_light','光ドロップ','bool'],['orb_dark','闇ドロップ','bool'],['orb_heal','回復ドロップ','bool'],['orb_ojama','お邪魔ドロップ','bool']]},
   orbConvert:{label:'ドロップを一括変換',data:{type:'orbConvert',from:'fire',to:'heal'},fields:[attrF('from','変換元'),attrF('to','変換先')]},
-  enemyDelay:{label:'敵の行動を遅延（全体/単体）',data:{type:'enemyDelay',target:'all',turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('turns','ターン')]},
+  orbUnlock:{label:'ロックを解除',data:{type:'orbUnlock',target:'all'},fields:[['target','対象のドロップ','select','all:全ドロップ|attrs:下で選んだ色のドロップ'],['orb_fire','火ドロップ','bool'],['orb_water','水ドロップ','bool'],['orb_wood','木ドロップ','bool'],['orb_light','光ドロップ','bool'],['orb_dark','闇ドロップ','bool'],['orb_heal','回復ドロップ','bool'],['orb_ojama','お邪魔ドロップ','bool'],['orb_poison','毒ドロップ','bool']]},
+  orbLock:{label:'ドロップをロックする',data:{type:'orbLock',target:'attrs',orb_fire:true},fields:[['target','対象のドロップ','select','all:全ドロップ|attrs:下で選んだ色のドロップ'],['orb_fire','火ドロップ','bool'],['orb_water','水ドロップ','bool'],['orb_wood','木ドロップ','bool'],['orb_light','光ドロップ','bool'],['orb_dark','闇ドロップ','bool'],['orb_heal','回復ドロップ','bool'],['orb_ojama','お邪魔ドロップ','bool'],['orb_poison','毒ドロップ','bool']]},
+  enemyDelay:{label:'敵の行動を遅延',data:{type:'enemyDelay',target:'all',turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('turns','ターン')]},
   dmgReductionBuff:{label:'○ターンの間、ダメージを○%軽減',data:{type:'dmgReductionBuff',turns:1,value:0.5},fields:[numF('turns','ターン数'),numF('value','軽減率（50%=0.5、100%=1）')]},
-  recMult:{label:'○ターンの間、回復力が○倍（0倍＝回復力0）',data:{type:'recMult',turns:1,value:0},fields:[numF('turns','ターン数'),numF('value','回復力の倍率（0=回復できない／2=2倍／0.5=半分）')]},
-  moveTimeBuff:{label:'○ターンの間、操作時間を○秒延長＋○倍（短縮も可）',data:{type:'moveTimeBuff',turns:1,seconds:2,mult:1},fields:[numF('turns','ターン数'),numF('mult','操作時間の倍率（1=変えない／1.5=1.5倍／0.5=半分）'),numF('seconds','延長する秒数（短縮はマイナス、0=変えない）')]},
+  recMult:{label:'○ターンの間、回復力が○倍',data:{type:'recMult',turns:1,value:0},fields:[numF('turns','ターン数'),numF('value','回復力の倍率（0=回復できない／2=2倍／0.5=半分）')]},
+  moveTimeBuff:{label:'○ターンの間、操作時間を○秒延長＋○倍',data:{type:'moveTimeBuff',turns:1,seconds:2,mult:1},fields:[numF('turns','ターン数'),numF('mult','操作時間の倍率（1=変えない／1.5=1.5倍／0.5=半分）'),numF('seconds','延長する秒数（短縮はマイナス、0=変えない）')]},
   allAttackBuff:{label:'○ターンの間、敵全体に攻撃',data:{type:'allAttackBuff',turns:1},fields:[numF('turns','ターン数')]},
   damageHalfHp:{label:'敵のHPを半分にする',data:{type:'damageHalfHp'},fields:[]},
   timeStop:{label:'○秒間、時を止める',data:{type:'timeStop',seconds:5},fields:[numF('seconds','時間停止の秒数（0.5など小数もOK。時計の針・カチカチ音・演出の長さもこの秒数に合わせて変わる）')]},
-  transformRandom:{label:'ランダムで他のモンスターに変身（そのダンジョン中）',data:{type:'transformRandom',ids:[1,8]},fields:[['ids','変身先のモンスターID（カンマ区切り。例: 1,8 → フシギダネかカメールのどれかに変身）','idlist']]},
+  transformRandom:{label:'ランダムで他のモンスターに変身',data:{type:'transformRandom',ids:[1,8]},fields:[['ids','変身先のモンスターID（カンマ区切り。例: 1,8 → フシギダネかカメールのどれかに変身）','idlist']]},
   bindRecover:{label:'バインドを○ターン回復',data:{type:'bindRecover',turns:1},fields:[numF('turns','回復するターン数（大きい数で全回復）')]},
-  roulette:{label:'○ターンの間、ルーレットを○つ生成（速さ：低速／標準／高速／超高速）',data:{type:'roulette',turns:3,count:3,sec:'1'},fields:[numF('turns','ターン数'),numF('count','ルーレットの数（盤面のランダムなマスに生成）'),['sec','ルーレットの速さ（針が1周する時間。1周するたびにドロップが 火→水→木→光→闇→回復 の順に変化）','select','2:2秒（低速ルーレット）|1:1秒（ルーレット）|0.5:0.5秒（高速ルーレット）|0.2:0.2秒（超高速ルーレット）']]},
-  custom:{label:'カスタムJSON（上にない効果）',data:{type:'note'},fields:[['$json','効果JSON','json']]}
+  roulette:{label:'○ターンの間、ルーレットを○つ生成',data:{type:'roulette',turns:3,count:3,sec:'1'},fields:[numF('turns','ターン数'),numF('count','ルーレットの数（盤面のランダムなマスに生成）'),['sec','ルーレットの速さ（針が1周する時間。1周するたびにドロップが 火→水→木→光→闇→回復 の順に変化）','select','2:2秒（低速ルーレット）|1:1秒（ルーレット）|0.5:0.5秒（高速ルーレット）|0.2:0.2秒（超高速ルーレット）']]},
+  custom:{label:'カスタムJSON',data:{type:'note'},fields:[['$json','効果JSON','json']]}
 };
 // 「攻撃倍率」か「ダメージ軽減」かを選べる条件付き効果
 const effSel=['type','効果','select','atk:攻撃倍率|dmgReduction:ダメージ軽減'];
@@ -338,26 +350,26 @@ const cleanEff = d=>{
   return d;
 };
 const leaderTemplates = {
-  attrAtk:{label:'属性の攻撃倍率（例: 火属性の攻撃1.2倍）',data:{type:'atk',attr:'fire',value:1.2},fields:[attrF('attr','属性'),numF('value','攻撃倍率')]},
-  typeAtk:{label:'タイプの攻撃倍率',data:{type:'atk',condition:'type',attr:'回復',value:2},fields:[typeF('attr','対象タイプ'),numF('value','攻撃倍率')]},
+  attrAtk:{label:'属性の攻撃倍率',data:{type:'atk',attr:'fire',value:1.2},fields:[attrF('attr','属性'),numF('value','攻撃倍率')]},
+  typeAtk:{label:'タイプの攻撃倍率',data:{type:'atk',condition:'type',attr:'かいふく',value:2},fields:[typeF('attr','対象タイプ'),numF('value','攻撃倍率')]},
   allAtk:{label:'全属性の攻撃倍率',data:{type:'atk',value:1.5},fields:[numF('value','攻撃倍率')]},
   attrHp:{label:'属性のHP倍率',data:{type:'hp',attr:'fire',value:1.5},fields:[attrF('attr','属性'),numF('value','HP倍率')]},
-  typeHp:{label:'タイプのHP倍率',data:{type:'hp',condition:'type',attr:'回復',value:1.5},fields:[typeF('attr','対象タイプ'),numF('value','HP倍率')]},
+  typeHp:{label:'タイプのHP倍率',data:{type:'hp',condition:'type',attr:'かいふく',value:1.5},fields:[typeF('attr','対象タイプ'),numF('value','HP倍率')]},
   allHp:{label:'全属性のHP倍率',data:{type:'hp',value:1.2},fields:[numF('value','HP倍率')]},
-  allStatAll:{label:'全パラメータ倍率（HP・攻撃・回復力すべて）',data:{type:'allStat',value:1.5},fields:[numF('value','全パラメータ倍率（HP・攻撃・回復力が全部この倍率）')]},
-  attrAllStat:{label:'属性の全パラメータ倍率（例: 光属性の全パラメータ1.2倍）',data:{type:'allStat',attr:'light',value:1.2},fields:[attrF('attr','属性'),numF('value','全パラメータ倍率')]},
-  typeAllStat:{label:'タイプの全パラメータ倍率（例: 回復タイプの全パラメータ1.5倍）',data:{type:'allStat',condition:'type',attr:'回復',value:1.5},fields:[typeF('attr','対象タイプ'),numF('value','全パラメータ倍率')]},
+  allStatAll:{label:'全パラメータ倍率',data:{type:'allStat',value:1.5},fields:[numF('value','全パラメータ倍率（HP・攻撃・回復力が全部この倍率）')]},
+  attrAllStat:{label:'属性の全パラメータ倍率',data:{type:'allStat',attr:'light',value:1.2},fields:[attrF('attr','属性'),numF('value','全パラメータ倍率')]},
+  typeAllStat:{label:'タイプの全パラメータ倍率',data:{type:'allStat',condition:'type',attr:'かいふく',value:1.5},fields:[typeF('attr','対象タイプ'),numF('value','全パラメータ倍率')]},
   attrRec:{label:'属性の回復力倍率',data:{type:'rec',attr:'light',value:1.5},fields:[attrF('attr','属性'),numF('value','回復力倍率')]},
-  typeRec:{label:'タイプの回復力倍率',data:{type:'rec',condition:'type',attr:'回復',value:2},fields:[typeF('attr','対象タイプ'),numF('value','回復力倍率')]},
+  typeRec:{label:'タイプの回復力倍率',data:{type:'rec',condition:'type',attr:'かいふく',value:2},fields:[typeF('attr','対象タイプ'),numF('value','回復力倍率')]},
   allRec:{label:'全属性の回復力倍率',data:{type:'rec',value:1.5},fields:[numF('value','回復力倍率')]},
   dmgReduction:{label:'ダメージ軽減',data:{type:'dmgReduction',value:0.35},fields:[numF('value','軽減率（35%=0.35）')]},
   attrCombos:{label:'○属性ドロップの○コンボ以上で',data:{type:'atk',condition:'attrCombos',attr:'light',count:2,value:2},fields:[attrF('attr','属性（火・水・木・光・闇・回復・毒・お邪魔）'),numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   combo:{label:'○コンボ以上で',data:{type:'atk',condition:'combo',count:7,value:2},fields:[numF('count','必要コンボ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
-  orbConnect:{label:'属性を○個以上つなげて（2属性を同時につなげるも可）',data:{type:'atk',condition:'orbConnect',attr:'fire',count:5,value:2},fields:[attrF('attr','属性（1つ目）'),['attr2','同時につなげる2つ目の属性（指定なし＝1属性のみ）','attrAny'],numF('count','必要個数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
+  orbConnect:{label:'属性を○個以上つなげて',data:{type:'atk',condition:'orbConnect',attr:'fire',count:5,value:2},fields:[attrF('attr','属性（1つ目）'),['attr2','同時につなげる2つ目の属性（指定なし＝1属性のみ）','attrAny'],numF('count','必要個数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   hpCond:{label:'HP○%以上／以下で',data:{type:'atk',condition:'hpAbove',threshold:0.8,value:2},fields:[['condition','HPの条件','select','hpAbove:HP○%以上|hpBelow:HP○%以下'],numF('threshold','HP割合（80%=0.8）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&['hpAbove','hpBelow'].includes(e.condition)},
-  colorCountCond:{label:'○色以上同時に消すと（回復は数えない／5色＋回復も可）',data:{type:'atk',condition:'colorCount',count:4,value:2},fields:[numF('count','必要な色数（火・水・木・光・闇のうち3個以上消した色の数。2〜5）'),['needHeal','回復ドロップも消すことが必要（5色＋回復など）','bool'],numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&(e.condition==='colorCount'||e.condition==='fourColors')},
-  colorCountHealCond:{label:'○色（回復含む）以上同時に消すと',data:{type:'atk',condition:'colorCountHeal',count:5,value:2},fields:[numF('count','必要な色数（回復も1色に数える。2〜6　※6＝5色＋回復）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='colorCountHeal'},
-  colorRampCond:{label:'色が増えるほど攻撃倍率アップ（5色＋回復で最大○倍）',data:{type:'atk',condition:'colorRamp',count:3,healCounts:true,value:2,maxValue:4},fields:[numF('count','最低限必要な色数（この色数で「最低倍率」）'),['healCounts','回復も1色に数える（ONなら最大＝5色＋回復／OFFなら最大＝5色）','bool'],numF('value','最低倍率（最低色数のとき）'),numF('maxValue','最大倍率（最大の色数のとき。間は色数に応じて段階的に上がる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>e.type==='atk'&&e.condition==='colorRamp'},
+  colorCountCond:{label:'○色以上同時に消すと',data:{type:'atk',condition:'colorCount',count:4,value:2},fields:[numF('count','必要な色数（火・水・木・光・闇のうち3個以上消した色の数。2〜5）'),['needHeal','回復ドロップも消すことが必要（5色＋回復など）','bool'],numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&(e.condition==='colorCount'||e.condition==='fourColors')},
+  colorCountHealCond:{label:'回復も数えて○色以上同時に消すと',data:{type:'atk',condition:'colorCountHeal',count:5,value:2},fields:[numF('count','必要な色数（回復も1色に数える。2〜6　※6＝5色＋回復）'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='colorCountHeal'},
+  colorRampCond:{label:'色が増えるほど攻撃倍率アップ',data:{type:'atk',condition:'colorRamp',count:3,healCounts:true,value:2,maxValue:4},fields:[numF('count','最低限必要な色数（この色数で「最低倍率」）'),['healCounts','回復も1色に数える（ONなら最大＝5色＋回復／OFFなら最大＝5色）','bool'],numF('value','最低倍率（最低色数のとき）'),numF('maxValue','最大倍率（最大の色数のとき。間は色数に応じて段階的に上がる）'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>e.type==='atk'&&e.condition==='colorRamp'},
   remainingCond:{label:'残りドロップ○個以下で',data:{type:'atk',condition:'remainingOrbs',threshold:3,value:4},fields:[numF('threshold','残りドロップ数'),numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')],match:e=>isAtkOrRed(e)&&e.condition==='remainingOrbs'},
   crossCond:{label:'十字消しで',data:{type:'atk',condition:'cross',value:2},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!e.shapeAttr},
   hpFullAtk:{label:'HP満タンで',data:{type:'atk',condition:'hpFull',value:1.5},fields:[numF('value','攻撃倍率'),numF('reduce','ダメージ軽減（35%=0.35）')]},
@@ -371,9 +383,9 @@ const leaderTemplates = {
   noDrop:{label:'落ちコンなし',data:{type:'noDrop',value:true},fields:[]},
   poisonImmune:{label:'毒ダメージを無効にする',data:{type:'poisonImmune',value:true},fields:[]},
   moveTimeFixed:{label:'操作時間固定',data:{type:'moveTimeFixed',value:3000},fields:[numF('value','ミリ秒（3秒=3000）')]},
-  moveTimeAdd:{label:'操作時間を○秒延長／短縮（マイナスで短縮）',data:{type:'moveTimeAdd',value:1},fields:[numF('value','秒数（延長＝1、短縮＝-1。0.5などもOK。「操作時間固定」があればそちらが優先）')]},
+  moveTimeAdd:{label:'操作時間を○秒延長／短縮',data:{type:'moveTimeAdd',value:1},fields:[numF('value','秒数（延長＝1、短縮＝-1。0.5などもOK。「操作時間固定」があればそちらが優先）')]},
   hpRecovery:{label:'消した時にHP回復',data:{type:'hpRecovery',value:0.2},fields:[numF('value','最大HP割合')]},
-  custom:{label:'カスタムJSON（上にない効果）',data:{type:'note'},fields:[['$json','効果JSON','json']]}
+  custom:{label:'カスタムJSON',data:{type:'note'},fields:[['$json','効果JSON','json']]}
 };
 
 // 旧形式のバフ（type:'buff' や moveTimeMult/moveTimeAdjust）→ 個別の新効果に変換して読み込む
@@ -502,7 +514,7 @@ function buildMonster(){
   const evos = evolutions.filter(e=>e.to!==''&&e.to!=null).map(e=>({to:Number(e.to),materials:e.materials.filter(x=>x.item).map(x=>({item:x.item,count:Number(x.count)||1}))}));
   if(evos.length) m.evolutions = evos;
   Object.assign(m, Object.fromEntries(Object.entries(extraKeys).filter(([k])=>!(k in m))));
-  return m;
+  return normalizeMonsterTypes(m);
 }
 function loadMonsterToForm(m){
   $('monId').value = m.id ?? '';
@@ -654,6 +666,14 @@ function describeLeader(effs){
   }
   return pre.join('')+out.join('。\n')+(out.length?'。':'');
 }
+// ロック／ロック解除の対象：「全ドロップ」「火ドロップ」「火と水ドロップ」「火・水・木ドロップ」
+const LOCK_KEYS=['fire','water','wood','light','dark','heal','poison','ojama'];
+function lockIsAll(e){ if(e.target==='all') return true; return e.target!=='attrs' && !LOCK_KEYS.some(k=>e['orb_'+k]); }
+function lockTargetText(e){
+  if(lockIsAll(e)) return '全ドロップ';
+  const ks=LOCK_KEYS.filter(k=>e['orb_'+k]); if(!ks.length) ks.push('fire');
+  return joinNames(ks.map(k=>ATTR_NAME[k]))+'ドロップ';
+}
 function describeActiveOne(e0){
   const out=[];
   for(const e of [e0]){
@@ -674,9 +694,11 @@ function describeActiveOne(e0){
       case 'selfDamage': out.push(e.mode==='toOne'?'HPが1になる':`HPが最大HPの${pct(e.value)}減る`); break;
       case 'orbChangeCross': out.push(`${a}ドロップを十字の形に生成`); break;
       case 'orbChangeReverseL': out.push(`左上に${a}を逆L字型に生成`); break;
-      case 'orbChange5ColorHeal': out.push('ドロップを5属性＋回復ドロップに変化（各3個以上）'); break;
-      case 'orbChangeMulti': { const ks=[['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['ojama','お邪魔']].filter(([k])=>e['orb_'+k]).map(x=>x[1]); out.push(`ドロップを${(ks.length?ks:['火']).join('・')}ドロップに変化${ks.length>1?'（各3個以上）':''}`); break; }
+      case 'orbChange5ColorHeal': out.push('ドロップを5属性＋回復ドロップに変化'); break;
+      case 'orbChangeMulti': { const ks=[['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['ojama','お邪魔']].filter(([k])=>e['orb_'+k]).map(x=>x[1]); out.push(`ドロップを${(ks.length?ks:['火']).join('・')}ドロップに変化`); break; }
       case 'orbConvert': out.push(`${ATTR_NAME[e.from]}ドロップを${ATTR_NAME[e.to]}ドロップに変化`); break;
+      case 'orbLock': out.push(`${lockTargetText(e)}をロック`); break;
+      case 'orbUnlock': out.push(`${lockTargetText(e)}のロックを解除`); break;
       case 'enemyDelay': out.push(`敵${e.target==='single'?'単体':'全体'}の行動を${e.turns}ターン遅らせる`); break;
       case 'dmgReductionBuff': out.push(`${e.turns||1}ターンの間、ダメージを${pct(e.value)}軽減`); break;
       case 'recMult': out.push(Number(e.value)===0?`${e.turns||1}ターンの間、回復力が0になる`:`${e.turns||1}ターンの間、回復力が${fmt(e.value)}倍`); break;
@@ -750,14 +772,26 @@ function describeGroup(f,g){
   return out;
 }
 function describeActive(effs){
-  const out=[];
+  const out=[]; let carry='';
+  // ロック／解除のあとに別の効果が続くときは「ロックを解除し、火ドロップをランダムで3つ生成」のように1文につなぐ
+  const push=t=>{ if(carry){ t=carry+'し、'+t; carry=''; } out.push(t); };
   const arr=(effs||[]).filter(Boolean);
   const FAM={orbConvert:'cv',orbChangeLine:'ln',orbChangeRow:'ln',orbChangeRandom:'rd',orbChangeCross:'cr'};
   for(let i=0;i<arr.length;){
-    const f=FAM[arr[i].type];
-    if(f){ let j=i; while(j<arr.length&&FAM[arr[j].type]===f) j++; out.push(...describeGroup(f,arr.slice(i,j))); i=j; continue; }
-    const t=describeActiveOne(arr[i]); if(t) out.push(t); i++;
+    const e=arr[i];
+    if(e.type==='orbLock'||e.type==='orbUnlock'){
+      let t=describeActiveOne(e);
+      const hasNext=i+1<arr.length;
+      if(hasNext&&e.type==='orbUnlock'&&lockIsAll(e)) t='ロックを解除';   // 全解除は「ロックを解除し、…」と短く
+      if(carry){ t=carry+'し、'+t; carry=''; }
+      if(hasNext) carry=t; else out.push(t);
+      i++; continue;
+    }
+    const f=FAM[e.type];
+    if(f){ let j=i; while(j<arr.length&&FAM[arr[j].type]===f) j++; describeGroup(f,arr.slice(i,j)).forEach(push); i=j; continue; }
+    const t=describeActiveOne(e); if(t) push(t); i++;
   }
+  if(carry) out.push(carry);
   return out.join('。\n')+(out.length?'。':'');
 }
 
@@ -801,7 +835,7 @@ function cmpKey(a,b){
   return 0;
 }
 // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','heal','atkBuff','allAttackBuff','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','allAttackBuff','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
 function skillSortKey(sk){
   const e = (sk.effects||[])[0] || {};
   const i = SK_TYPE_ORDER.indexOf(e.type);
@@ -1043,6 +1077,7 @@ function applyMonsterData(data,code,name){
   {
     if(!data||typeof data!=='object') throw new Error('MONSTER_DATA が見つかりません');
     db=structuredClone(data);
+    Object.values(db).forEach(normalizeMonsterTypes);
     code=code||'';
     const hi=code.indexOf('const MONSTER_DATA');
     const end=code.lastIndexOf('\n};');

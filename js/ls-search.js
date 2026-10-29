@@ -31,7 +31,6 @@
   const ATTR_IMG = { fire: '1.png', water: '2.png', wood: '3.png', light: '4.png', dark: '5.png' };
   const JP2ATTR = { '火': 'fire', '水': 'water', '木': 'wood', '光': 'light', '闇': 'dark', '回復': 'heal', '毒': 'poison', 'お邪魔': 'ojama' };
   const normAttr = a => JP2ATTR[a] || a;
-  const normType = t => (t === '回復' ? 'かいふく' : t);
   const TYPE_ORDER = ['バランス', 'こうげき', 'たいりょく', 'かいふく'];
   const TYPE_ICON = { 'たいりょく': 'typ1.png', 'こうげき': 'typ2.png', 'かいふく': 'typ3.png', 'バランス': 'typ4.png' };
   const pct = x => Math.round(Number(x) * 100);
@@ -105,7 +104,7 @@
             maxMult = Math.max(maxMult, v, maxV);
             if (e.type === 'allStat') { add('eff:all'); add('eff:atk'); add('eff:hp'); add('eff:rec'); }
             else add('eff:' + e.type);
-            if (e.condition === 'type') { add('tgt:t:' + normType(e.attr)); add('cnd:none'); }
+            if (e.condition === 'type') { add('tgt:t:' + e.attr); add('cnd:none'); }
             else if (!conditional) { add('cnd:none'); add(e.attr ? 'tgt:' + normAttr(e.attr) : 'tgt:all'); }
             else add('tgt:all');
           }

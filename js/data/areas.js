@@ -73,10 +73,17 @@ const MULTI_AREA_IDS = ['multi'];
 const MULTI_UNLOCK_DATA = {
   multi: { 1: '4-boss', 2: '7-boss', 3: '10-3', 4: '11-boss', 5: '13-1', 6: '13-3', 7: '12-boss', 8: '13-boss' }
 };
+// 進化先の解放条件（「進化先のモンスターID: 'クリアするダンジョン'」。条件を満たすまで、その進化先は進化画面に出ない＝存在も分からない）
+//   ダンジョンの書き方は「エリア-ステージ」。イベント・マルチも同じ（例：'kourin-boss' / 'multi-3' / '4-boss'）
+//   ここに書いていない進化先は、最初から選べる
+//   例）700: 'kourin-boss' = ニンフィア(700) への進化は、kourin-boss をクリアすると出現
+const EVO_UNLOCK_DATA = {
+  700: 'kourin-boss'
+};
 const EVENT_AREA_DATA = {
   keiken: { name: 'けいけんパーク', desc: 'モンスターを育てよう！', bg: 'dungeon1.png', hue: 200, entryItem: 'ohuda1', entryCost: 1 },
   halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
-
+  kourin: { multiOnly: true, name: 'ニンフィア降臨', desc: 'クリアでニンフィアが解放！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ニンフィア降臨'} , stageLevels: { boss: '上級' }},
 
   // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──
   //   ダンジョンのキーは「multi-番号」。中身は js/data/dungeons.js の「multi-番号」（ダンジョン設定ツールでメイン・イベントと同じように編集・保存できる）
@@ -94,6 +101,19 @@ const EVENT_AREA_DATA = {
   daily_sat: { name: 'エナスポットの森',   desc: '土曜日のダンジョン', bg: 'daily_sat.png', hue: 25,  hidden: true, weekday: 6, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '初級', 2: '中級' } },
   daily_sun: { name: 'エナスポットの森',     desc: '日曜日のダンジョン', bg: 'daily_sat.png', hue: 52,  hidden: true, weekday: 0, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '中級', 2: '上級' } },
 };
+
+// ★マルチ限定にする方法★
+//   EVENT_AREA_DATA のイベントに  multiOnly: true  と書くだけ。
+//     ・イベント一覧には出ない（hidden 扱い）／ホームの「マルチ」一覧に出る／入ると自動マッチング（協力プレイ）になる
+//     ・ふつうのイベントに戻したいときは  multiOnly: true  を消す（または false）
+//     ・出現条件を付けたいときは、上の MULTI_UNLOCK_DATA に  イベントID: { ステージ: 'クリアするステージ' }  を足す
+//       例）MULTI_UNLOCK_DATA の中に   kourin: { boss: '13-boss' }
+Object.keys(EVENT_AREA_DATA).forEach(function (id) {
+  var ev = EVENT_AREA_DATA[id];
+  if (!ev || !ev.multiOnly) return;
+  ev.hidden = true;                                   // イベント一覧には出さない
+  if (MULTI_AREA_IDS.indexOf(id) < 0) MULTI_AREA_IDS.push(id);   // マルチ一覧に出す
+});
 
 // ============================================================
 // ★ 日替わりダンジョン ★

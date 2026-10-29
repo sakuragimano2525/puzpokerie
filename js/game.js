@@ -2,7 +2,7 @@
 // リーダースキル「全パラメータ○倍」(allStat) を HP/攻撃/回復 の3効果に展開（起動時に1回）
 //   { type:'allStat', value:1.5 }                          → 全属性の全パラメータ1.5倍
 //   { type:'allStat', attr:'light', value:1.2 }            → 光属性の全パラメータ1.2倍
-//   { type:'allStat', condition:'type', attr:'回復', value:1.5 } → 回復タイプの全パラメータ1.5倍
+//   { type:'allStat', condition:'type', attr:'かいふく', value:1.5 } → かいふくタイプの全パラメータ1.5倍
 // ============================================================
 (function expandAllStatLeader() {
   try {
@@ -154,6 +154,7 @@ const BATTLE_SE = {
   bind:        { file: 'bind.mp3',        pool: 2, vol: 0.9 },  // バインドされた時（スキル使用不可もこの音）
   dna:         { file: 'dna.mp3',         pool: 2, vol: 0.9 },  // 敵の「落ちコンなし」妨害を受けた時
   lock:        { file: 'drop.mp3',        pool: 2, vol: 0.8 },  // ロックオン
+  orblock:     { file: 'lock.mp3',        pool: 2, vol: 0.9 },  // ドロップがロックされた時（敵スキル）
   chip:        { file: 'chip.mp3',        pool: 3, vol: 0.8 },  // 敵からエッグ／チップ
   skilldamage: { file: 'skilldamage.mp3', pool: 2, vol: 0.8 },  // スキルで敵にダメージ
   combok:      { file: 'bshield.mp3',     pool: 1, vol: 0.9 },  // 敵 コンボ吸収（bshield.mp3）
@@ -502,7 +503,7 @@ function applyLeaderEffects(effects, context) {
         let rampMult = null;   // colorRamp のときの、色数に応じた倍率
         const cond = eff.condition;
         if (cond === 'type') {
-          // 特定タイプ限定の攻撃倍率（例: 回復タイプの攻撃力2倍）
+          // 特定タイプ限定の攻撃倍率（例: かいふくタイプの攻撃力2倍）
           if (context.monsterType === eff.attr) apply = true;
         } else if (cond === 'orbConnect') {
           if (eff.attr2) {
@@ -813,7 +814,7 @@ function buildEnemyActionFn(skills, enemyRef) {
               : (Array.isArray(sk.orbs) ? sk.orbs.filter(k => ALL.includes(k)) : ALL.filter(k => sk['orb_' + k]));
             if (kinds.length === 0) kinds = ['fire'];   // 未選択の保険
             const cells = [];
-            for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) cells.push([r, c]);
+            for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (!isOrbLocked(r, c)) cells.push([r, c]);   // ロック中のドロップは変わらない
             cells.sort(() => Math.random() - 0.5);
             const minEach = Math.min(3, Math.floor(cells.length / kinds.length));
             let i = 0;
@@ -824,6 +825,7 @@ function buildEnemyActionFn(skills, enemyRef) {
             const ORB_KINDS = ['fire','water','wood','light','dark','heal','poison','ojama'];   // 変換先・生成には毒・お邪魔も指定できる
             const ORB_SRC = ['fire','water','wood','light','dark','heal'];   // random_to の変換元（毒は対象外）
             const paint = (r, c, t) => {
+              if (isOrbLocked(r, c)) return;   // ロック中のドロップは変換・生成されない
               grid[r][c] = t; revealBlind(r, c);
               if (orbEls[r] && orbEls[r][c]) orbEls[r][c].className = 'orb ' + t;
             };
@@ -834,7 +836,7 @@ function buildEnemyActionFn(skills, enemyRef) {
             } else if (sk.pattern === 'spawn') {
               // 盤面に〇ドロップを〇個生成（すでに to の場所以外からランダムに選ぶ）
               const cells = [];
-              for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (grid[r][c] !== to) cells.push([r, c]);
+              for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (grid[r][c] !== to && !isOrbLocked(r, c)) cells.push([r, c]);
               cells.sort(() => Math.random() - 0.5);
               const n = Math.max(0, Math.min(cells.length, Math.floor(sk.count || 0)));
               for (let i = 0; i < n; i++) paint(cells[i][0], cells[i][1], to);
@@ -857,7 +859,7 @@ function buildEnemyActionFn(skills, enemyRef) {
               }
             } else if (sk.pattern === 'random_to') {
               // ランダムな1色（盤面にある、to以外の色）を〇ドロップに変換
-              const present = ORB_SRC.filter(k => k !== to && grid.some(row => row.includes(k)));
+              const present = ORB_SRC.filter(k => k !== to && grid.some((row, rr) => row.some((v, cc) => v === k && !isOrbLocked(rr, cc))));   // ロックされていない分だけ数える
               if (present.length > 0) {
                 const from = present[Math.floor(Math.random() * present.length)];
                 for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (grid[r][c] === from) paint(r, c, to);
@@ -866,9 +868,44 @@ function buildEnemyActionFn(skills, enemyRef) {
           }
           break;
         }
+        case 'orb_lock': {
+          // ドロップロック：盤面のドロップをロックする。ロックされたドロップは生成・変換されない（消すとロックは解ける）
+          //   pattern: 'random'（count個）／'all'（盤面全体）／'row'・'col'（lines本。pos='random' か 1〜）
+          //   orb: 'any'（全ての色）／fire〜ojama（その色のドロップだけロック）
+          const want = (sk.orb && sk.orb !== 'any') ? sk.orb : null;
+          const okCell = (r, c) => grid[r][c] && !isOrbLocked(r, c) && (!want || grid[r][c] === want);
+          const targets = [];
+          if (sk.pattern === 'all') {
+            for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (okCell(r, c)) targets.push([r, c]);
+          } else if (sk.pattern === 'row' || sk.pattern === 'col') {
+            const isRow = sk.pattern === 'row', max = isRow ? ROWS : COLS;
+            const n = Math.max(1, Math.min(max, Math.floor(Number(sk.lines) || 1)));
+            let idx = [];
+            const pos = Math.floor(Number(sk.pos));
+            if (sk.pos !== 'random' && Number.isFinite(pos) && pos >= 1) {
+              const st = Math.min(pos - 1, max - n);
+              for (let i = 0; i < n; i++) idx.push(st + i);
+            } else {
+              idx = Array.from({ length: max }, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, n);
+            }
+            for (const k of idx) {
+              if (isRow) { for (let c = 0; c < COLS; c++) if (okCell(k, c)) targets.push([k, c]); }
+              else { for (let r = 0; r < ROWS; r++) if (okCell(r, k)) targets.push([r, k]); }
+            }
+          } else {
+            const cells = [];
+            for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (okCell(r, c)) cells.push([r, c]);
+            cells.sort(() => Math.random() - 0.5);
+            const n = Math.max(0, Math.min(cells.length, Math.floor(Number(sk.count) || 1)));
+            for (let i = 0; i < n; i++) targets.push(cells[i]);
+          }
+          lockFx(targets);   // ロック状態にして、鍵でロックされる演出＋lock.mp3
+          break;
+        }
         case 'dark_board': {
           playSE('pahu');   // 敵からドロップ生成音（tedrop.mp3）
           for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) {
+            if (isOrbLocked(r, c)) continue;
             grid[r][c] = 'dark'; revealBlind(r, c);
             if (orbEls[r] && orbEls[r][c]) orbEls[r][c].className = 'orb dark';
           }
@@ -5239,7 +5276,7 @@ function renderMonsterDetail() {
     document.getElementById('md-exp-text').textContent = `${(curExpD - thisLvE).toLocaleString()} / ${(nextLvE - thisLvE).toLocaleString()}`;
   }
   const lvStats = calcMonsterStats(entry);
-  const skill = mon.skill;
+  const skill = mon.skill || { name: 'なし', desc: '---' };   // スキル未設定のモンスター対策
   const requiredSp = getRequiredSp(entry, mon);
   const skillLabel = document.querySelector('#md-skill-header .md-section-label');
   if (skillLabel) skillLabel.textContent = `スキル：${skill.name}`;
@@ -5253,7 +5290,7 @@ function renderMonsterDetail() {
   // タイプはアイコンで名前の右に表示（たいりょく=typ1 / こうげき=typ2 / かいふく=typ3 / バランス=typ4）。他のタイプは文字
   const typeEl = document.getElementById('md-type');
   if (typeEl) {
-    const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', '回復': 'typ3', 'バランス': 'typ4' };
+    const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', 'バランス': 'typ4' };
     const tf = TYPE_ICON[mon.type];
     typeEl.innerHTML = '';
     typeEl.title = mon.type || '';
@@ -5339,7 +5376,12 @@ if (_saved && _saved.mail) {
   MAIL_DATA.forEach(m => { const sm = _saved.mail[m.id]; if (sm) { m.received = !!sm.received; m.unread = !!sm.unread; } });
 }
 function getItemCount(id) { return itemInventory[id] || 0; }
-function getEvolutions(monsterId) { const m = MONSTER_DATA[monsterId]; return ((m && m.evolutions) || []).filter(e => MONSTER_DATA[e.to]); }
+// 進化先の解放判定（areas.js の EVO_UNLOCK_DATA）。条件のダンジョンをクリアするまで、その進化先は出さない
+function isEvoUnlocked(toId) {
+  const cond = typeof EVO_UNLOCK_DATA !== 'undefined' && EVO_UNLOCK_DATA[toId];
+  return !cond || (typeof isDungeonCleared === 'function' && isDungeonCleared(String(cond)));
+}
+function getEvolutions(monsterId) { const m = MONSTER_DATA[monsterId]; return ((m && m.evolutions) || []).filter(e => MONSTER_DATA[e.to] && isEvoUnlocked(e.to)); }
 // 進化に必要なLv：最大Lvが75以下なら最大Lv、75を超えるなら75
 const EVO_REQUIRED_LV_CAP = 75;
 function evoRequiredLevel(monsterId) {
@@ -5413,17 +5455,36 @@ function renderEvoScreen() {
   const fromMon = MONSTER_DATA[entry.monsterId];
   const toMon = MONSTER_DATA[evo.to];
 
-  // 分岐進化の選択ボタン
+  // 分岐進化の「進化先を選ぶタブ」（進化先が2つ以上あるときだけ出る）
   const branch = document.getElementById('evo-branch');
   branch.innerHTML = '';
   if (evos.length > 1) {
+    const lab = document.createElement('div');
+    lab.className = 'evo-branch-label';
+    lab.textContent = '進化先をえらぶ';
+    branch.appendChild(lab);
+    const tabs = document.createElement('div');
+    tabs.className = 'evo-tabs';
+    tabs.setAttribute('role', 'tablist');
     evos.forEach((ev, i) => {
+      const toM = MONSTER_DATA[ev.to];
       const b = document.createElement('button');
-      b.className = 'evo-branch-btn' + (i === evoIndex ? ' active' : '');
-      b.textContent = MONSTER_DATA[ev.to].name;
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', i === evoIndex ? 'true' : 'false');
+      b.className = 'evo-tab' + (i === evoIndex ? ' active' : '') + (canEvolve(ev, entry) ? ' ready' : '');
+      const im = document.createElement('img');
+      im.alt = '';
+      im.onerror = () => { im.style.visibility = 'hidden'; };
+      im.src = monsterImg(toM);
+      const nm = document.createElement('span');
+      nm.className = 'evo-tab-name';
+      nm.textContent = toM.name;
+      b.appendChild(im); b.appendChild(nm);
       b.addEventListener('click', () => { evoIndex = i; renderEvoScreen(); });
-      branch.appendChild(b);
+      tabs.appendChild(b);
     });
+    branch.appendChild(tabs);
     branch.style.display = 'flex';
   } else {
     branch.style.display = 'none';
@@ -5852,6 +5913,110 @@ let grid = [], orbEls = [];
 //  ・ドロップを「持った」だけでは消えない。実際に動かして入れ替わったドロップだけ暗闇が解ける。
 //  ・消えたドロップ／新しく落ちてきたドロップ／スキルで変換されたドロップは暗闇ではない。
 let blindCells = [];
+// ── ロックギミック ──
+// lockCells[r][c] === true のマスのドロップは「ロック」されている（ドロップの左上に lock.png を表示）。
+//  ・ロックされたドロップは、ドロップの生成／変換（敵スキル・味方スキル・ルーレットなど）の対象にならない。
+//  ・動かす・消す・落下するのは普通のドロップと同じ。ロックはドロップと一緒に動き、そのドロップを消すとロックも解ける。
+//  ・敵スキル { type:'orb_lock', ... } で盤面にかかる（dungeon-editor.html の「ドロップロック」）。
+//  不要になったら：lockCells／isOrbLocked／setOrbLock を使っている箇所、css の .orb[data-lock]、editor の orb_lock を消せばOK。
+let lockCells = [];
+function isOrbLocked(r, c) { return !!(lockCells[r] && lockCells[r][c] && grid[r] && grid[r][c]); }
+function setLockEl(r, c) {
+  const el = orbEls[r] && orbEls[r][c];
+  if (!el) return;
+  if (isOrbLocked(r, c)) el.dataset.lock = '1'; else delete el.dataset.lock;
+}
+function setOrbLock(r, c, on) {
+  if (!lockCells[r]) return;
+  lockCells[r][c] = !!on;
+  setLockEl(r, c);
+}
+// ドロップがロックされた演出：大きな錠前が現れ → 鍵が差し込まれて回り（カチッ）→ 錠前が左上に収まる。盤面も金色に光る。lock.mp3 を鳴らす
+//   targets: [[r,c], …]（ロックをかけるマス。ここでロック状態にもする）
+function lockFx(targets) {
+  if (!targets || !targets.length) return;
+  playSE('orblock');
+  // 大量ロック（全ドロップなど）：ドロップ1個ずつの派手な演出を同時に出すとチカチカして目に悪いので、
+  //   盤面全体で1回だけの穏やかな演出（lockFxCalm）に切り替える
+  if (targets.length >= LOCK_CALM_MIN) { lockFxCalm(targets); return; }
+  const gridEl = document.getElementById('grid');
+  if (gridEl) {
+    gridEl.classList.remove('lock-flash'); void gridEl.offsetWidth; gridEl.classList.add('lock-flash');
+    setTimeout(() => gridEl.classList.remove('lock-flash'), 1100);
+  }
+  const KEY = '<svg class="lkf-key" viewBox="0 0 64 32"><g fill="#f4c430" stroke="#5a3a08" stroke-width="2.2" stroke-linejoin="round"><path d="M6 14h30v4H6z"/><path d="M26 18h4v7h-4zM18 18h4v5h-4z"/><circle cx="50" cy="16" r="10"/></g><circle cx="50" cy="16" r="4" fill="#5a3a08"/></svg>';
+  for (const [r, c] of targets) {
+    setOrbLock(r, c, true);
+    const el = orbEls[r] && orbEls[r][c];
+    if (!el) continue;
+    const d = Math.floor(Math.random() * 280);   // 全部が同時ではなく、少しずつずれてかかる
+    el.style.setProperty('--lk-d', d + 'ms');
+    el.dataset.lockfx = '1';
+    const fx = document.createElement('div');
+    fx.className = 'lock-fx';
+    fx.innerHTML = '<i class="lkf-ring"></i><i class="lkf-lock"></i>' + KEY;
+    el.appendChild(fx);
+    setTimeout(() => { fx.remove(); delete el.dataset.lockfx; el.style.removeProperty('--lk-d'); }, d + 1150);
+  }
+}
+// ---- 大量ロック用の穏やかな演出（点滅なし・ランダムなズレなし）----
+//   ① 各ドロップの左上の錠前が「上の段から下の段へ」なめらかな波でふわっと現れる（光らせない・拡縮も小さめ）
+//   ② 盤面の中央に大きな錠前が1つだけ、ゆっくり現れて少し沈み込み（カチッ）、ゆっくり消える
+//   ③ 盤面の縁がうっすら金色になって、ゆっくり戻る（明るさの急変なし）
+const LOCK_CALM_MIN = 6;   // この個数以上を同時にロックする時は穏やかな演出にする
+function lockFxCalm(targets) {
+  const wrap = document.getElementById('grid-wrap');
+  // ① 各ドロップ：行ごとに少しずつ遅らせて、錠前がふわっと定着する
+  for (const [r, c] of targets) {
+    setOrbLock(r, c, true);
+    const el = orbEls[r] && orbEls[r][c];
+    if (!el) continue;
+    el.style.setProperty('--lkc-d', (r * 70 + c * 12) + 'ms');
+    el.dataset.lockcalm = '1';
+    setTimeout(() => { delete el.dataset.lockcalm; el.style.removeProperty('--lkc-d'); }, r * 70 + c * 12 + 700);
+  }
+  if (!wrap) return;
+  // ②③ 盤面全体に1回だけ
+  wrap.querySelectorAll('.lock-board-fx').forEach(n => n.remove());
+  const fx = document.createElement('div');
+  fx.className = 'lock-board-fx';
+  fx.innerHTML = '<i class="lbf-glow"></i><i class="lbf-lock"></i>';
+  wrap.appendChild(fx);
+  setTimeout(() => fx.remove(), 1700);
+}
+// ---- プレイヤースキル「ロックする／ロックを解除」 ----
+//   effect: { type:'orbLock'|'orbUnlock', target:'all' }                      … 全ドロップ
+//           { type:'orbLock'|'orbUnlock', target:'attrs', orb_fire:true, orb_water:true, ... } … 選んだ色だけ
+//   戻り値 null = 全ドロップ ／ 配列 = その色のドロップだけ
+function lockSkillKinds(eff) {
+  if (eff.target === 'all') return null;
+  const ALLK = ['fire','water','wood','light','dark','heal','poison','ojama'];
+  const k = Array.isArray(eff.orbs) ? eff.orbs.filter(x => ALLK.includes(x)) : ALLK.filter(x => eff['orb_' + x]);
+  if (!k.length) return eff.target === 'attrs' ? ['fire'] : null;   // 色の指定が空：attrs なら火／指定自体がなければ全ドロップ
+  return k;
+}
+// ロック解除の演出（lock.png が上に跳ねて消える）。targets: [[r,c], …]
+function unlockFx(targets) {
+  if (!targets || !targets.length) return;
+  playSE('orblock', 1.5);
+  for (const [r, c] of targets) {
+    setOrbLock(r, c, false);
+    const el = orbEls[r] && orbEls[r][c];
+    if (!el) continue;
+    const d = Math.floor(Math.random() * 200);
+    el.style.setProperty('--ul-d', d + 'ms');
+    el.dataset.unlockfx = '1';
+    const fx = document.createElement('div');
+    fx.className = 'unlock-fx';
+    fx.innerHTML = '<i class="ulf-ring"></i><i class="ulf-lock"></i>';
+    el.appendChild(fx);
+    setTimeout(() => { fx.remove(); delete el.dataset.unlockfx; el.style.removeProperty('--ul-d'); }, d + 800);
+  }
+}
+function clearLockAll() {
+  lockCells = Array.from({length:ROWS}, () => Array(COLS).fill(false));
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) setLockEl(r, c);
+}
 // 直前のプレイヤーのターン（消した結果）。敵の攻撃時の「ダメージ軽減」条件の判定に使う
 let lastTurnCtx = null;
 function defenseCtx(enemy) {
@@ -6093,6 +6258,7 @@ function startRouletteLoop() {
 function rouletteStep(o, steps) {
   const cur = grid[o.r] && grid[o.r][o.c];
   if (!cur) return;
+  if (isOrbLocked(o.r, o.c)) return;   // ロック中のドロップはルーレットでも変わらない
   const i = ROULETTE_SEQ.indexOf(cur);   // 毒などの順番にない色は、火から始める
   const nxt = ROULETTE_SEQ[(i + steps + 6) % 6];
   grid[o.r][o.c] = nxt;
@@ -6268,7 +6434,7 @@ function openSkillConfirm(uid) {
   const entry = box.find(b => b.uid === uid);
   if (!entry) return;
   const mon = MONSTER_DATA[entry.monsterId];
-  if (!mon) return;
+  if (!mon || !mon.skill) return;   // スキル未設定のモンスターは発動できない
   const requiredSp = getRequiredSp(entry, mon);
   if (partySp < requiredSp) return;
 
@@ -6287,7 +6453,7 @@ function closeSkillConfirm() {
 function generateWoodReverseL() {
   const shape = [[0,0],[0,1],[0,2],[1,0],[2,0]];
   for (const [r,c] of shape) {
-    if (r < ROWS && c < COLS) {
+    if (r < ROWS && c < COLS && !isOrbLocked(r, c)) {
       grid[r][c] = 'wood'; revealBlind(r, c);
       if (orbEls[r] && orbEls[r][c]) orbEls[r][c].className = 'orb wood';
     }
@@ -6297,7 +6463,7 @@ function generateWoodReverseL() {
 function generateCross(r, c, color) {
   const positions = [[r,c],[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
   for (const [cr, cc] of positions) {
-    if (cr >= 0 && cr < ROWS && cc >= 0 && cc < COLS) {
+    if (cr >= 0 && cr < ROWS && cc >= 0 && cc < COLS && !isOrbLocked(cr, cc)) {
       grid[cr][cc] = color; revealBlind(cr, cc);
       if (orbEls[cr] && orbEls[cr][cc]) orbEls[cr][cc].className = `orb ${color}`;
     }
@@ -6327,6 +6493,7 @@ function getEmptyCellsForSkill() {
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       if (_skillUsedCells.has(r + '_' + c)) continue;
+      if (isOrbLocked(r, c)) continue;   // ロック中は選ばない
       if (grid[r][c] === null || grid[r][c] === undefined) cells.push({ r, c });
     }
   }
@@ -6334,7 +6501,7 @@ function getEmptyCellsForSkill() {
     // 空きマスが尽きたら、まだ使っていない全マスから選ぶ（既存仕様を踏襲）
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
-        if (!_skillUsedCells.has(r + '_' + c)) cells.push({ r, c });
+        if (!_skillUsedCells.has(r + '_' + c) && !isOrbLocked(r, c)) cells.push({ r, c });
       }
     }
   }
@@ -6342,6 +6509,7 @@ function getEmptyCellsForSkill() {
 }
 
 function setOrb(r, c, attr) {
+  if (isOrbLocked(r, c)) return;   // ロック中のドロップは生成・変換されない
   grid[r][c] = attr; revealBlind(r, c);
   if (orbEls[r] && orbEls[r][c]) orbEls[r][c].className = 'orb ' + attr;
   _skillUsedCells.add(r + '_' + c);
@@ -6512,6 +6680,7 @@ function runSkillEffect(eff, context) {
     // ── 回復系 ──
     case 'heal': { // 自分の最大HPの割合分を回復
       const heal = Math.floor(playerMaxHP * eff.value);
+      playSE('healk');   // 割合回復スキルの回復音：healk.mp3
       playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + heal);
       updatePlayerHP();
       if (eff.message) showSkillMessage(eff.message, 1000);
@@ -6628,7 +6797,7 @@ function runSkillEffect(eff, context) {
         : (Array.isArray(eff.orbs) ? eff.orbs.filter(k => ALLK.includes(k)) : ALLK.filter(k => eff['orb_' + k]));
       if (kinds.length === 0) kinds = ['fire'];   // 未選択の保険
       const cells = [];
-      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells.push([r, c]);
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!isOrbLocked(r, c)) cells.push([r, c]);   // ロック中は除く
       cells.sort(() => Math.random() - 0.5);
       const minEach = Math.min(3, Math.floor(cells.length / kinds.length));
       let ci = 0;
@@ -6642,6 +6811,31 @@ function runSkillEffect(eff, context) {
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
         if (grid[r][c] === eff.from) setOrb(r, c, eff.to);
       }
+      if (eff.message) showSkillMessage(eff.message, 1000);
+      break;
+    }
+
+    // ── ロック系（プレイヤースキル）──
+    //   ロック中のドロップは lock.png が付き、スキルでの生成・変換の対象外／操作は可能（既存の敵ロックと同じ扱い）
+    case 'orbLock': { // 全ドロップ／選んだ色のドロップをロックする
+      const kinds = lockSkillKinds(eff);
+      const targets = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const t = grid[r][c];
+        if (t && !isOrbLocked(r, c) && (!kinds || kinds.includes(t))) targets.push([r, c]);
+      }
+      lockFx(targets);
+      if (eff.message) showSkillMessage(eff.message, 1000);
+      break;
+    }
+    case 'orbUnlock': { // 全ドロップ／選んだ色のドロップのロックを解除する
+      const kinds = lockSkillKinds(eff);
+      const targets = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const t = grid[r][c];
+        if (t && isOrbLocked(r, c) && (!kinds || kinds.includes(t))) targets.push([r, c]);
+      }
+      unlockFx(targets);
       if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
@@ -6756,7 +6950,7 @@ async function confirmSkill() {
   const entry = box.find(b => b.uid === skillTargetUid);
   if (!entry) return;
   const mon = MONSTER_DATA[entry.monsterId];
-  if (!mon) return;
+  if (!mon || !mon.skill) return;
   const requiredSp = getRequiredSp(entry, mon);
   if (partySp < requiredSp || isSkillSealed()) { closeSkillConfirm(); return; }
 
@@ -8557,11 +8751,11 @@ function renderDungeonEntry() {
   let ls2Name = '', ls2Desc = '（なし）';
   if (currentTeam[0] !== null) {
     const e = box.find(b => b.uid === currentTeam[0]);
-    if (e) { const m = MONSTER_DATA[e.monsterId]; if (m) { ls1Name = m.name; ls1Desc = m.leaderSkill.desc; } }
+    if (e) { const m = MONSTER_DATA[e.monsterId]; if (m) { ls1Name = m.name; ls1Desc = (m.leaderSkill && m.leaderSkill.desc) || '（なし）'; } }
   }
   if (currentTeam[5] !== null) {
     const e = box.find(b => b.uid === currentTeam[5]);
-    if (e) { const m = MONSTER_DATA[e.monsterId]; if (m) { ls2Name = m.name; ls2Desc = m.leaderSkill.desc; } }
+    if (e) { const m = MONSTER_DATA[e.monsterId]; if (m) { ls2Name = m.name; ls2Desc = (m.leaderSkill && m.leaderSkill.desc) || '（なし）'; } }
   }
   document.getElementById('de-ls1-name').textContent = ls1Name;
   setSkillText(document.getElementById('de-ls1-desc'), ls1Desc);
@@ -8972,6 +9166,7 @@ function buildDOM() {
   orbEls = [];
   clearRoulettes();
   blindCells = Array.from({length:ROWS}, () => Array(COLS).fill(false));
+  lockCells = Array.from({length:ROWS}, () => Array(COLS).fill(false));
   for (let r = 0; r < ROWS; r++) {
     orbEls[r] = [];
     for (let c = 0; c < COLS; c++) {
@@ -9265,6 +9460,7 @@ function onMove(e) {
       if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break;
       if (!timerStarted && !timeStopActive) { timerStarted = true; startTimer(); }
       [grid[dragR][dragC], grid[nr][nc]] = [grid[nr][nc], grid[dragR][dragC]];
+      { const _lk = lockCells[dragR][dragC]; lockCells[dragR][dragC] = lockCells[nr][nc]; lockCells[nr][nc] = _lk; setLockEl(dragR, dragC); setLockEl(nr, nc); }   // ロックはドロップと一緒に動く
       grabMoved = true;   // 入れ替えが起きた（中身が同じ属性でも動かした扱い）
       revealBlind(dragR, dragC); revealBlind(nr, nc);   // 動かしたドロップは暗闇が解ける（掴んだだけでは解けない）
       const otherEl = orbEls[nr][nc];
@@ -9498,7 +9694,7 @@ async function _evaluateInner() {
       }
 
       playComboSound(totalCombo);
-      cells.forEach(({r,c}) => { revealBlind(r, c); orbEls[r][c].className = `orb ${color} glow`; });
+      cells.forEach(({r,c}) => { revealBlind(r, c); setOrbLock(r, c, false); orbEls[r][c].className = `orb ${color} glow`; });   // 消すとロックも解ける
       if (window.MultiShare) MultiShare.fx('cb', { n: totalCombo, c: color, k: cells.map(q => [q.r, q.c]) });   // マルチ：相手の画面にもコンボを流す
 
       const lsEffects = [];
@@ -9521,7 +9717,7 @@ async function _evaluateInner() {
       await sleep(140);
       if (attrCounts[color] !== undefined) attrCounts[color] += cells.length;
       if (color === 'poison') showPoisonPreview(attrCounts.poison);   // 毒ダメージ予告（HPバーを紫に）
-      cells.forEach(({r,c}) => { grid[r][c] = null; });
+      cells.forEach(({r,c}) => { grid[r][c] = null; lockCells[r][c] = false; });
 
       // ★ コンボ加算：リーダー効果の「comboAdd」。その効果の条件を達成したドロップが消えた場所に、コンボが加算されて出る ★
       //   各効果は1ターンに1回だけ発動
@@ -9900,6 +10096,7 @@ async function _evaluateInner() {
     });
     for (const val of hpRecoveryEffects) {
       const rec = Math.floor(playerMaxHP * val);
+      playSE('heal');   // リーダースキル（生命など）の回復音：heal.mp3
       const prevHP4 = playerCurrentHP;
       playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + rec);
       updatePlayerHP(playerCurrentHP - prevHP4);
@@ -9983,7 +10180,7 @@ async function drop(fill = true, noMatch = false) {
   let maxFall = 0;
   for (let c = 0; c < COLS; c++) {
     const existing = [];
-    for (let r = 0; r < ROWS; r++) { if (grid[r][c] !== null) existing.push({type: grid[r][c], origR: r, blind: !!(blindCells[r] && blindCells[r][c])}); }
+    for (let r = 0; r < ROWS; r++) { if (grid[r][c] !== null) existing.push({type: grid[r][c], origR: r, blind: !!(blindCells[r] && blindCells[r][c]), lock: !!(lockCells[r] && lockCells[r][c])}); }
     const fillCount = ROWS - existing.length;
     const newCol = [];
     for (let i = 0; i < fillCount; i++) {
@@ -10001,6 +10198,8 @@ async function drop(fill = true, noMatch = false) {
       grid[destR][c] = type;
       blindCells[destR][c] = destR >= fillCount ? existing[destR - fillCount].blind : false;   // 暗闇のドロップは一緒に落ちる。新しいドロップは見える
       setBlindEl(destR, c);
+      lockCells[destR][c] = destR >= fillCount ? existing[destR - fillCount].lock : false;   // ロックされたドロップはロックごと落ちる。新しいドロップはロックなし
+      setLockEl(destR, c);
       const el = orbEls[destR][c];
       if (type === null) {
         // 補充しない空きマス：見えない状態にしておく
@@ -10113,12 +10312,13 @@ function openMailDetail(id) {
   receiveBtn.style.display = 'none';
   receivedArea.innerHTML = '';
   if (mail.reward) {
-    const mon = MONSTER_DATA[mail.reward.monsterId];
+    const multiIds = Array.isArray(mail.reward.monsterIds) ? mail.reward.monsterIds.filter(id => MONSTER_DATA[id]) : null;   // 複数まとめて送るメール
+    const mon = multiIds ? null : MONSTER_DATA[mail.reward.monsterId];
     const box2 = document.createElement('div');
     box2.className = 'md2-reward-box';
     const imgHtml = mon ? `<img class="md2-reward-img" src="${monsterImg(mon)}" onerror="this.style.display='none'" alt="${mon.name}">` : '';
-    const displayName = mon ? mon.name : mail.reward.name;
-    const displaySub  = mon ? `No.${mon.id}  ★${mon.rarity}  ${mon.attr}属性` : '';
+    const displayName = multiIds ? `${mail.reward.name || 'ポケモン'} ${multiIds.length}匹` : (mon ? mon.name : mail.reward.name);
+    const displaySub  = multiIds ? (multiIds.length ? `No.${Math.min(...multiIds)}〜${Math.max(...multiIds)} を1匹ずつ` : '') : (mon ? `No.${mon.id}  ★${mon.rarity}${mon.attr ? '  ' + mon.attr + '属性' : ''}` : '');
     box2.innerHTML = `
       <div class="md2-reward-label"><svg class="ic"><use href="#i-gift"/></svg>プレゼント内容</div>
       <div class="md2-reward-item">
@@ -10152,6 +10352,18 @@ document.getElementById('md2-back-btn').addEventListener('click', closeMailDetai
 document.getElementById('md2-receive-btn').addEventListener('click', () => {
   const mail = MAIL_DATA.find(m => m.id === currentMailId);
   if (!mail || !mail.reward || mail.received) return;
+  if (Array.isArray(mail.reward.monsterIds)) {   // 複数まとめて：1匹ずつボックスへ
+    const ids = mail.reward.monsterIds.filter(id => MONSTER_DATA[id]);
+    if (!ids.length) return;
+    ids.forEach(monsterId => box.push({ uid: nextUid++, monsterId, level: 1, exp: 0, sp: 0, memory: 0, plusHp: 0, plusAtk: 0, plusRec: 0 }));
+    mail.received = true;
+    saveGame();
+    document.getElementById('md2-receive-btn').style.display = 'none';
+    document.getElementById('md2-received-area').innerHTML = `<div class="md2-received-stamp">${ids.length}匹を受け取りました！</div>`;
+    updateMailBadge();
+    renderMailList();
+    return;
+  }
   const monsterId = mail.reward.monsterId;
   const mon = MONSTER_DATA[monsterId];
   if (mon) {

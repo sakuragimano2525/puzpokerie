@@ -60,7 +60,7 @@
     return [cat, effs.length > 1 ? 1 : 0, attrRankOf(_sa), cnt, val, String(ls.name || '')];
   }
   // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-  const SK_TYPE_ORDER = ['damageAll', 'damageSingle', 'damageSelfAtkMult', 'selfDamage', 'orbChangeLine', 'orbChangeRow', 'orbChangeCross', 'orbChangeReverseL', 'orbChangeRandom', 'orbChangeMulti', 'orbChange5ColorHeal', 'orbConvert', 'heal', 'atkBuff', 'allAttackBuff', 'dmgReductionBuff', 'enemyDelay', 'defenseDown', 'timeStop'];
+  const SK_TYPE_ORDER = ['damageAll', 'damageSingle', 'damageSelfAtkMult', 'selfDamage', 'orbChangeLine', 'orbChangeRow', 'orbChangeCross', 'orbChangeReverseL', 'orbChangeRandom', 'orbChangeMulti', 'orbChange5ColorHeal', 'orbConvert', 'orbUnlock', 'orbLock', 'heal', 'atkBuff', 'allAttackBuff', 'dmgReductionBuff', 'enemyDelay', 'defenseDown', 'timeStop'];
   function skillSortKey(sk) {
     sk = sk || {};
     const e = (sk.effects || [])[0] || {};
@@ -77,7 +77,7 @@
   }
 
   // タイプの並び（monster-editor.html の DEFAULT_TYPES と同じ。ないタイプは最後）
-  const TYPE_ORDER = ['バランス', 'こうげき', 'たいりょく', 'かいふく', '回復', 'バード', 'マター', '悪魔'];
+  const TYPE_ORDER = ['バランス', 'こうげき', 'たいりょく', 'かいふく', 'バード', 'マター', '悪魔'];
   const typeRank = t => { const i = TYPE_ORDER.indexOf(t); return i < 0 ? TYPE_ORDER.length : i; };
 
   // 同じモンスターのスキル・リーダースキルのキーは何度も作らない
