@@ -241,7 +241,11 @@
     await playEnemyAppear();
   }
 
-  MS.apply = async function (json) {
+  // 反映は1つずつ順番に（相手の操作の流れの途中の階層移動と、ターン終わりの反映が重ならないように）
+  let applyLock = Promise.resolve();
+  function locked(fn) { const p = applyLock.then(fn, fn); applyLock = p.catch(() => {}); return p; }
+  MS.apply = function (json) { return locked(() => doApply(json)); };
+  async function doApply(json) {
     const s = typeof json === 'string' ? JSON.parse(json) : json;
     if (!s) return;
     MS.applying = true;
@@ -264,7 +268,7 @@
     } finally {
       MS.applying = false;
     }
-  };
+  }
 
   // 全員ゲームオーバー（観戦中の人も、いっしょにゲームオーバー画面へ）
   function allDead() {
@@ -523,14 +527,14 @@
     if (!on() || !v) return;
     fxChain = fxChain.then(() => handleFx(v)).catch(e => console.error('[multi-share] fx', e));
   };
-  // ターン終わりのスナップショットを反映する前に、流れてきた分を再生し終える（最大2.5秒）
-  MS.drainFx = function () { return Promise.race([fxChain, new Promise(r => setTimeout(r, 2500))]); };
+  // ターン終わりのスナップショットを反映する前に、流れてきた分を再生し終える（最大9秒）
+  MS.drainFx = function () { return Promise.race([fxChain, new Promise(r => setTimeout(r, 9000))]); };
   function handleFx(v) {
     if (MS.applying) return;
     if (v.tk !== MultiTurn.current + ':' + MultiTurn.round) return;   // 前のターンの遅れて届いた分は捨てる
     if (MultiTurn.isMyTurn()) return;
     const fn = FX[v.t];
-    if (fn) fn(v.d);
+    return fn ? fn(v.d) : undefined;   // 階層移動など時間のかかるものは、終わるまで次を待つ
   }
 
   function cellEl(r, c) { return orbEls[r] && orbEls[r][c]; }
@@ -620,15 +624,46 @@
     at1(d) { hitEnemies(d.hp, d.cb, d.a, d.s); },
     // スキルなどで敵のHPが変わった
     en(d) { hitEnemies(d.hp, 0, null, null); },
-    // 敵の行動
+    // 敵の行動：スキルウインドウ／カットイン・ため・弾・着弾（フラッシュ・揺れ）を、自分の画面と同じ演出で再生する
+    //   （攻撃の効果そのものは適用しない：ダメージ数字は eh、HPは hp / ターン終わりの本物で）
     ea(d) {
       const e = enemyList[d.i];
       if (!e) return;
-      if (d.w) { try { showEnemySkillWindow(e, d.n || '攻撃'); } catch (_) {} return; }
-      const unit = document.querySelectorAll('#enemy-area .enemy-unit')[d.i];
-      const wrap = unit && unit.querySelector('.enemy-img-wrap');
-      if (wrap && wrap.animate) wrap.animate([{ transform: 'scale(1) translateX(0)' }, { transform: 'scale(1.16) translateX(-8px)' }, { transform: 'scale(1.23) translateX(10px)' }, { transform: 'scale(1) translateX(0)' }], { duration: 280, easing: 'ease-out' });
+      const synth = d.r ? { skills: [{ type: 'damage_ratio' }] } : { skills: d.h > 0 ? [{ type: 'damage', repeat: d.h }] : [] };
+      window._mtReplayN = (window._mtReplayN || 0) + 1;
+      window._mtReplayNoWin = !d.w;
+      let p;
+      try { p = showEnemyAttackEffect(e, String(d.n || ''), synth, !!d.p, !!d.w); } catch (_) { p = null; }
+      window._mtReplayNoWin = false;
+      const done = () => { window._mtReplayN = Math.max(0, (window._mtReplayN || 1) - 1); };
+      if (p && p.then) p.then(done, done); else done();
     },
+    // 敵から受けた1ヒット分の数字（相手のパーティー側）＋HPバーを少しずつ減らす
+    eh(d) {
+      const bars = $id('bars-wrap');
+      if (bars) {
+        const r = bars.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+        const pop = document.createElement('div');
+        const hi = d.hi || 0;
+        pop.style.cssText = d.au
+          ? 'position:fixed;left:' + x + 'px;top:' + (y - 36) + 'px;transform:translate(-50%,-50%);font-size:1.7rem;font-weight:900;color:#fff;text-shadow:0 0 8px #f55,0 0 18px #f55,0 2px 0 rgba(0,0,0,.85);pointer-events:none;z-index:240;white-space:nowrap;animation:enemyDmgPop 1.3s ease-out forwards;'
+          : 'position:fixed;left:' + (x + (hi % 2 === 0 ? -20 : 20)) + 'px;top:' + (y - 40 - (hi % 6) * 28) + 'px;transform:translate(-50%,-50%);font-size:1.05rem;font-weight:900;color:#ff4444;text-shadow:0 0 8px rgba(0,0,0,.9),0 1px 0 rgba(0,0,0,.8);pointer-events:none;z-index:200;white-space:nowrap;animation:enemyDmgPop 1.0s ease-out forwards;';
+        pop.textContent = '-' + Number(d.d || 0).toLocaleString();
+        document.body.appendChild(pop);
+        setTimeout(() => pop.remove(), d.au ? 1400 : 1100);
+      }
+      if (MS.rp) { MS.rp.hp = Math.max(0, (MS.rp.hp || 0) - (d.d || 0)); paintRemoteHp(); }   // 本当のHPは、直後の hp で合わせる
+    },
+    // 次の階層へ：バナー・敵の登場を、相手の画面でも同時に（終わるまで次の流れを待つ）
+    nf(d) {
+      return locked(async () => {
+        if (!(d.bi > currentBattleIndex)) return;
+        MS.applying = true;
+        try { await advanceTo({ bi: d.bi, k: asArr(d.k) }); } finally { MS.applying = false; }
+      });
+    },
+    // 次の階層の敵の状態（先制攻撃の結果など）・盤面・バフを、相手の画面へそろえる
+    ss(snap) { return MS.apply(snap); },
     // 相手のHP
     hp(d) {
       if (!MS.rp) return;

@@ -2561,14 +2561,18 @@ async function showEnemyAttackEffect(enemy, actionName, selectedAction, isPreemp
   // ダメージ技が無い行動（先制のシールド・バインド等）は弾も被ダメージ演出も出さない
   // 割合ダメージを含む行動は、ほかのダメージ技が混ざっていても「覇気の一撃」を1回だけ（以前は damage_mult + damage_ratio で2発に割れていた）
   const hasRatio = !!(selectedAction && selectedAction.skills && selectedAction.skills.some(sk => sk.type === 'damage_ratio'));
-  if (window.MultiShare) MultiShare.fx('ea', { i: eIdx, n: String(actionName || ''), w: (isPreemptive || forceWindow || !isPlainEnemyAttack(actionName, selectedAction)) ? 1 : 0 });   // マルチ：敵の行動を相手の画面へ
   const hitCount = hasRatio ? 1 : (selectedAction && selectedAction.skills
     ? selectedAction.skills.reduce((s, sk) => s + ((sk.type === 'damage' || sk.type === 'damage_mult') ? (sk.repeat || 1) : 0), 0)
     : 1);
+  const _noWin = !!(window._mtReplayNoWin);   // マルチ：相手の画面で再生するとき、相手の画面と同じ「ウインドウあり／なし」に合わせる
+  window._mtReplayNoWin = false;
+  const _hasWin = !_noWin && (isPreemptive || forceWindow || !isPlainEnemyAttack(actionName, selectedAction));
+  // マルチ：敵の行動を相手の画面へ（スキルウインドウ・弾・着弾を、相手の画面でも同時に再生する）
+  if (window.MultiShare) MultiShare.fx('ea', { i: eIdx, n: String(actionName || ''), w: (isPreemptive || forceWindow || !isPlainEnemyAttack(actionName, selectedAction)) ? 1 : 0, h: hitCount, r: hasRatio ? 1 : 0, p: isPreemptive ? 1 : 0 });
 
   // 通常攻撃以外（と先制）：パズドラ風の青いスキルウインドウを出し、効果音が終わるまで敵の行動を止める（モンスターは点滅）
   // 先制は専用の表示を持たず、敵がスキルを使うときと同じ青ウインドウ＋同じ効果演出に統一
-  if (isPreemptive || forceWindow || !isPlainEnemyAttack(actionName, selectedAction)) {
+  if (_hasWin) {
     if (window.EnemyCutIn && window.EnemyCutIn.isCutin(actionName, selectedAction)) {
       // ⚠️付きの必殺技：青いスキルウインドウの代わりに、属性色のカットイン（js/cutin.js・効果音 cutin.mp3）
       await window.EnemyCutIn.show(enemy, actionName);
@@ -2710,6 +2714,7 @@ function showEnemyHitEffect(x, y, enemy, hitIdx, totalHits, selectedAction, isPr
   if (auraFx) setTimeout(() => battleShake(11), 130);
   const bars = document.getElementById('bars-wrap');
   if (bars && bars.animate) bars.animate([{filter:'brightness(1)'},{filter:'brightness(2.3) saturate(1.8)'},{filter:'brightness(1)'}],{duration:260,easing:'ease-out'});
+  if (window._mtReplayN > 0) { playSE('damage'); return; }   // マルチ：相手の画面での再生。被ダメ数字とHPは、相手から届く値（eh / hp）で出す
 
   // 表示用の軽減後ダメージを計算（実際のHP減算は applyPlayerDamage 側で実施）
   const rawPerHit = getRawPerHitDmg(enemy, selectedAction);
@@ -2744,6 +2749,7 @@ function showEnemyHitEffect(x, y, enemy, hitIdx, totalHits, selectedAction, isPr
     ? `position:fixed;left:${x}px;top:${y - 36}px;transform:translate(-50%,-50%);font-size:1.7rem;font-weight:900;color:#fff;text-shadow:0 0 6px ${th.main},0 0 14px ${th.main},0 0 26px ${th.glow},0 2px 0 rgba(0,0,0,0.85);pointer-events:none;z-index:240;white-space:nowrap;animation:enemyDmgPop 1.3s ease-out forwards;`
     : `position:fixed;left:${x + offsetX}px;top:${y + offsetY}px;transform:translate(-50%,-50%);font-size:1.05rem;font-weight:900;color:#ff4444;text-shadow:0 0 8px rgba(0,0,0,0.9),0 1px 0 rgba(0,0,0,0.8);pointer-events:none;z-index:200;white-space:nowrap;animation:enemyDmgPop 1.0s ease-out forwards;`;
   pop.textContent = `-${finalHitDmg.toLocaleString()}`;   // ダメージは常に「-」表記
+  if (dealsDamage && window.MultiShare) MultiShare.fx('eh', { d: finalHitDmg, hi: hitIdx, au: auraFx ? 1 : 0 });   // マルチ：被ダメ数字を相手の画面へ
   document.body.appendChild(pop);
   setTimeout(() => pop.remove(), auraFx ? 1400 : 1100);
 }
@@ -3669,6 +3675,7 @@ async function handleBattleEnd() {
       return;
     }
     currentBattleIndex++;
+    if (window.MultiShare) MultiShare.fx('nf', { bi: currentBattleIndex, k: MultiShare.kills });   // マルチ：次の階層への移動を、相手の画面でも同時に始める
     const nextNum = currentBattleIndex + 1;
     const totalNum = currentDungeonBattles.length;
     // 前のバトルの敵のHP・「あと〇」表示を消してから BATTLE n / m を出す
@@ -3686,6 +3693,7 @@ async function handleBattleEnd() {
     // 先制攻撃の演出が終わるまで待つ（待たないと呼び出し元の busy=false の後に
     // loadBattle が busy=true を書き戻し、操作不能になる）
     await loadBattle(currentDungeonBattles[currentBattleIndex]);
+    if (window.MultiShare) MultiShare.fx('ss', MultiShare.snapshot());   // マルチ：次の階層の敵の状態（先制攻撃の結果など）を相手の画面へ
     // 次のバトルの先制「にげる」で敵が全員いなくなった場合も、そのまま先へ進める
     if (enemyList.length && enemyList.every(e => e.hp <= 0)) {
       _battleEndRunning = false;
