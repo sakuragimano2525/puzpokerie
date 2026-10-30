@@ -993,6 +993,9 @@ body {
   box-shadow:0 0 22px rgba(255,255,255,.7) !important;
   transition:none !important;
 }
+/* ドロップを掴んで動かしている間は、盤面のドロップの動きアニメを止める（入れ替えは瞬間切り替え）。
+   JS(setDragFx)が掴んでいる間だけ付ける。離すと外れて、元の戻りアニメ(.12s)が働く */
+#grid.drag-active .orb { transition:none; }
 .orb.glow { animation:glow .22s ease-out forwards; }
 @keyframes glow {
   0%   { filter:brightness(1); }

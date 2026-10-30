@@ -56,7 +56,7 @@
     add('itembox.png'); add('hcoin.png'); add('ojama.png');   // お邪魔ドロップ
     Array.from(document.images).forEach(im => add(im.getAttribute('src')));   // index.html に直接書かれた画像も先読み
     ['1','2','3','4','5'].forEach(n => { add(n + '.png'); add('gift' + n + '.png'); add('gift' + n + 's.png'); });
-    ['j1','j2','j3','j4','j5','j6'].forEach(n => add(n + '.png'));
+    ['j1','j2','j3','j4','j5','j6','j8'].forEach(n => add(n + '.png'));
   }
 
   // 失敗してもすぐ諦めず、少し待って最大3回やり直す（一瞬の通信エラーで画像が欠けるのを防ぐ）

@@ -84,6 +84,7 @@ const EVENT_AREA_DATA = {
   keiken: { name: 'けいけんパーク', desc: 'モンスターを育てよう！', bg: 'dungeon1.png', hue: 200, entryItem: 'ohuda1', entryCost: 1 },
   halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
   kourin: { multiOnly: true, name: 'ニンフィア降臨', desc: 'クリアでニンフィアが解放！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ニンフィア降臨'} , stageLevels: { boss: '上級' }},
+  BLLU: { name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ブルアカコラボ-BOSS'} , stageLevels: { boss: '上級' }},
 
   // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──
   //   ダンジョンのキーは「multi-番号」。中身は js/data/dungeons.js の「multi-番号」（ダンジョン設定ツールでメイン・イベントと同じように編集・保存できる）

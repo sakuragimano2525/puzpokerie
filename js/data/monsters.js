@@ -3275,7 +3275,8 @@ const MONSTER_DATA = {
       name: 'シックスセンス・小',
       desc: '6コンボ以上で攻撃1.5倍。',
       effects: [ { type: 'atk', condition: 'combo', count: 6, value: 1.5 } ]
-    }
+    },
+    evolutions: [ { to: 662, materials: [ { item: 'puzzle1', count: 3 }, { item: 'spuzzle_1', count: 2 } ] } ]
   },
   662: {
     id: 662,
@@ -3291,7 +3292,8 @@ const MONSTER_DATA = {
       name: 'シックスセンス',
       desc: '6コンボ以上で攻撃1.8倍。',
       effects: [ { type: 'atk', condition: 'combo', count: 6, value: 1.8 } ]
-    }
+    },
+    evolutions: [ { to: 663, materials: [ { item: 'puzzle13', count: 1 }, { item: 'puzzle12', count: 2 } ] } ]
   },
   663: {
     id: 663,
@@ -3340,13 +3342,22 @@ const MONSTER_DATA = {
     id: 666,
     name: 'ビビヨン',
     rarity: 3,
-    attr: 'fire',
+    attr: 'wood',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 410, max: 2700 }, atk: { min: 170, max: 1130 }, rec: { min: 139, max: 398 } },
-    skill: { name: '', sp: 1, desc: '', effects: [] },
-    leaderSkill: { name: '', desc: '', effects: [] }
+    skill: {
+      name: 'いやしのりんぷん',
+      sp: 2,
+      desc: '回復ドロップをランダムで3つ生成。\n1ターンの間、火と水属性の攻撃が激減。',
+      effects: [
+        { type: 'orbChangeRandom', attr: 'heal', count: 3 },
+        { type: 'atkBuff', attr: 'fire', value: 0.25, turns: 1 },
+        { type: 'atkBuff', attr: 'water', value: 0.25, turns: 1 }
+      ]
+    },
+    leaderSkill: { name: '木のアミュレット', desc: '木属性の全パラメータが1.2倍。', effects: [ { type: 'allStat', attr: 'wood', value: 1.2 } ] }
   },
   667: {
     id: 667,
@@ -3381,7 +3392,8 @@ const MONSTER_DATA = {
       desc: '光ドロップを回復ドロップに変化。',
       effects: [ { type: 'orbConvert', from: 'light', to: 'heal' } ]
     },
-    leaderSkill: { name: '闇のルーン', desc: '闇属性の回復力1.3倍。', effects: [ { type: 'rec', attr: 'dark', value: 1.3 } ] }
+    leaderSkill: { name: '闇のルーン', desc: '闇属性の回復力1.3倍。', effects: [ { type: 'rec', attr: 'dark', value: 1.3 } ] },
+    evolutions: [ { to: 670, materials: [ { item: 'spuzzle_5', count: 4 }, { item: 'puzzle32', count: 1 } ] } ]
   },
   670: {
     id: 670,
@@ -3391,14 +3403,15 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 50,
     baseExp: 300,
-    stats: { hp: { min: 300, max: 1080 }, atk: { min: 120, max: 420 }, rec: { min: 70, max: 155 } },
+    stats: { hp: { min: 300, max: 2580 }, atk: { min: 120, max: 800 }, rec: { min: 70, max: 250 } },
     skill: {
-      name: 'チェンジハート・闇',
+      name: 'スリードロップ・木闇',
       sp: 3,
-      desc: '光ドロップを回復ドロップに変化。',
-      effects: [ { type: 'orbConvert', from: 'light', to: 'heal' } ]
+      desc: '木と闇ドロップをランダムで3つずつ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'wood', count: 3 }, { type: 'orbChangeRandom', attr: 'dark', count: 3 } ]
     },
-    leaderSkill: { name: '闇のルーン・中', desc: '闇属性の回復力1.7倍。', effects: [ { type: 'rec', attr: 'dark', value: 1.7 } ] }
+    leaderSkill: { name: '闇のルーン・中', desc: '闇属性の回復力1.7倍。', effects: [ { type: 'rec', attr: 'dark', value: 1.7 } ] },
+    evolutions: [ { to: 671, materials: [ { item: 'puzzle33', count: 1 }, { item: 'puzzle5', count: 2 } ] } ]
   },
   671: {
     id: 671,
@@ -3420,9 +3433,9 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'フラワーベール',
-      desc: '木と闇ドロップを同時に5個以上つなげて消すと攻撃2倍。\nかいふくタイプの回復力1.2倍。',
+      desc: '木と闇ドロップを同時に5個以上つなげて消すと攻撃2倍、1コンボ加算。\nかいふくタイプの回復力1.2倍。',
       effects: [
-        { type: 'atk', condition: 'orbConnect', attr: 'wood', count: 5, value: 2, attr2: 'dark' },
+        { type: 'atk', condition: 'orbConnect', attr: 'wood', count: 5, value: 2, attr2: 'dark', comboAdd: 1 },
         { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.25 }
       ]
     }
@@ -3442,7 +3455,8 @@ const MONSTER_DATA = {
       desc: '水ドロップを木ドロップに変化。',
       effects: [ { type: 'orbConvert', from: 'water', to: 'wood' } ]
     },
-    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.2 } ] }
+    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.2 } ] },
+    evolutions: [ { to: 673, materials: [ { item: 'puzzle32', count: 4 } ] } ]
   },
   673: {
     id: 673,
@@ -3528,28 +3542,66 @@ const MONSTER_DATA = {
     id: 679,
     name: 'ヒトツキ',
     rarity: 1,
+    attr: 'fire',
     type: 'たいりょく',
     maxLevel: 25,
     baseExp: 100,
-    stats: { hp: { min: 260, max: 570 }, atk: { min: 90, max: 200 }, rec: { min: 7, max: 12 } }
+    stats: { hp: { min: 260, max: 570 }, atk: { min: 90, max: 200 }, rec: { min: 7, max: 12 } },
+    skill: {
+      name: 'ダークエンハンス',
+      sp: 2,
+      desc: '1ターンの間、闇属性の攻撃が1.2倍。',
+      effects: [ { type: 'atkBuff', attr: 'dark', value: 1.2, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'フォースパワー',
+      desc: 'ドロップをちょうど4個消す度に攻撃1.1倍。',
+      effects: [ { type: 'atk', condition: 'exact4', value: 1.1, exponential: true } ]
+    },
+    evolutions: [ { to: 680, materials: [ { item: 'puzzle5', count: 5 } ] } ]
   },
   680: {
     id: 680,
     name: 'ニダンギル',
     rarity: 2,
-    type: 'たいりょく',
+    attr: 'dark',
+    type: 'こうげき',
     maxLevel: 50,
     baseExp: 300,
-    stats: { hp: { min: 470, max: 1690 }, atk: { min: 170, max: 600 }, rec: { min: 16, max: 36 } }
+    stats: { hp: { min: 210, max: 2100 }, atk: { min: 160, max: 1600 }, rec: { min: 6, max: 60 } },
+    skill: {
+      name: 'ダークエンハンス・中',
+      sp: 4,
+      desc: '1ターンの間、闇属性の攻撃が1.5倍。',
+      effects: [ { type: 'atkBuff', attr: 'dark', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'つるぎのまい',
+      desc: 'ドロップをちょうど4個消す度に攻撃1.1倍。',
+      effects: [ { type: 'atk', condition: 'exact4', value: 1.17, exponential: true } ]
+    },
+    evolutions: [ { to: 681, materials: [ { item: 'puzzle53', count: 1 }, { item: 'spuzzle_52', count: 2 } ] } ]
   },
   681: {
     id: 681,
     name: 'ギルガルド',
     rarity: 4,
+    attr: 'dark',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 1000,
-    stats: { hp: { min: 680, max: 4570 }, atk: { min: 200, max: 1500 }, rec: { min: 32, max: 90 } }
+    baseExp: 5000,
+    stats: { hp: { min: 680, max: 4570 }, atk: { min: 200, max: 1500 }, rec: { min: 32, max: 90 } },
+    skill: {
+      name: 'キングシールド',
+      sp: 7,
+      desc: '1ターンの間、ダメージを75%軽減。',
+      effects: [ { type: 'dmgReductionBuff', turns: 1, value: 0.75 } ]
+    },
+    leaderSkill: {
+      name: 'ハイシールド',
+      desc: 'HP満タン時、受けるダメージ50%軽減。',
+      effects: [ { type: 'atk', condition: 'hpFull', value: 1, reduce: 0.5 } ]
+    }
   },
   682: {
     id: 682,
@@ -4101,10 +4153,13 @@ const MONSTER_DATA = {
     id: 720,
     name: 'フーパ',
     rarity: 5,
+    attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 2500,
-    stats: { hp: { min: 430, max: 2850 }, atk: { min: 330, max: 2180 }, rec: { min: 26, max: 74 } }
+    baseExp: 50000,
+    stats: { hp: { min: 430, max: 2850 }, atk: { min: 330, max: 2180 }, rec: { min: 26, max: 74 } },
+    skill: { name: '', sp: 1, desc: '', effects: [] },
+    leaderSkill: { name: '', desc: '', effects: [] }
   },
   721: {
     id: 721,
@@ -4202,9 +4257,9 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '白衣の天使',
-      desc: 'かいふくタイプの攻撃1.25倍。\n回復ドロップの2コンボで攻撃と回復力1.5倍、ダメージ3%軽減。',
+      desc: 'かいふくタイプの攻撃1.5倍。\n回復ドロップの2コンボで攻撃と回復力1.5倍、ダメージ3%軽減。',
       effects: [
-        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.25 },
+        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.5 },
         { type: 'atk', condition: 'attrCombos', attr: 'heal', count: 2, value: 1.5, recValue: 1.5, reduce: 0.03 }
       ]
     }
@@ -4221,9 +4276,9 @@ const MONSTER_DATA = {
     skill: { name: '治療の時間ですよ～！', sp: 3, desc: '1ターンの間、回復力が1.5倍。', effects: [ { type: 'recMult', turns: 1, value: 1.5 } ] },
     leaderSkill: {
       name: 'ハッピースマイリー',
-      desc: 'かいふくタイプのHP1.2倍。\n回復ドロップの2コンボ以上で攻撃2倍。',
+      desc: 'かいふくタイプのHP1.3倍。\n回復ドロップの2コンボ以上で攻撃2倍。',
       effects: [
-        { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.2 },
+        { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.3 },
         { type: 'atk', condition: 'attrCombos', attr: 'heal', count: 2, value: 2 }
       ]
     }
@@ -4245,8 +4300,8 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'バーチャル・メイドウェポン！',
-      desc: '火と木属性の攻撃1.5倍。',
-      effects: [ { type: 'atk', attr: 'fire', value: 1.5 }, { type: 'atk', attr: 'wood', value: 1.5 } ]
+      desc: '火と木属性の攻撃1.4倍。',
+      effects: [ { type: 'atk', attr: 'fire', value: 1.4 }, { type: 'atk', attr: 'wood', value: 1.4 } ]
     }
   },
   5006: {
@@ -4266,11 +4321,11 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'バーチャル・メイドショット',
-      desc: '火と木属性の攻撃1.2倍。\n火と木のドロップを同時に4個以上つなげて消すと攻撃1.3倍。',
+      desc: '火と木属性の攻撃1.2倍。\n火と木のドロップを同時に4個以上つなげて消すと攻撃1.2倍。',
       effects: [
         { type: 'atk', attr: 'fire', value: 1.2 },
         { type: 'atk', attr: 'wood', value: 1.2 },
-        { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 4, value: 1.3, attr2: 'wood' }
+        { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 4, value: 1.2, attr2: 'wood' }
       ]
     }
   },

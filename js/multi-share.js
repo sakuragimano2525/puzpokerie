@@ -314,6 +314,7 @@
     timerStarted = false;
     try { if (dragEl) { dragEl.style.transform = ''; dragEl.classList.remove('dragging'); dragEl = null; } } catch (e) {}
     dragging = false;
+    try { setDragFx(false); } catch (e) {}
     const g = document.getElementById('game');
     if (g) g.classList.add('game-over', 'mt-spectate');   // 盤面・パーティ・Menuの操作を止める（見るだけ）
     const lbl = document.getElementById('combo-label');

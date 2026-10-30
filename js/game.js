@@ -6518,11 +6518,47 @@ function getEmptyCellsForSkill() {
   return cells.sort(() => Math.random() - 0.5);
 }
 
+// ── スキルのドロップ生成演出（js/orb-spawn-fx.js）──
+//   盤面データ(grid)はこれまでどおり「すぐ」書き換える（判定・マルチ同期・次の効果は新しい盤面で動く）。
+//   見た目（クラス・暗闇）の差し替えだけをここに溜めておき、confirmSkill が flushOrbSpawnFx で演出つきで差し替える。
+//   演出が終わるまで busy のままなので、盤面は触れない。orb-spawn-fx.js が無い時は今までどおり即差し替え。
+let _orbFxQueue = null;   // Map 'r_c' → { r, c, el, from, to }
 function setOrb(r, c, attr) {
   if (isOrbLocked(r, c)) return;   // ロック中のドロップは生成・変換されない
-  grid[r][c] = attr; revealBlind(r, c);
-  if (orbEls[r] && orbEls[r][c]) orbEls[r][c].className = 'orb ' + attr;
+  const from = grid[r][c];
+  grid[r][c] = attr;
+  const el = orbEls[r] && orbEls[r][c];
+  if (window.OrbSpawnFx && el) {
+    if (blindCells[r]) blindCells[r][c] = false;   // 暗闇は見た目の差し替え（_orbFxSwap）の瞬間に解ける
+    if (!_orbFxQueue) _orbFxQueue = new Map();
+    const q = _orbFxQueue.get(r + '_' + c);
+    if (q) q.to = attr; else _orbFxQueue.set(r + '_' + c, { r, c, el, from, to: attr });   // 同じマスを2回変えたら from は最初のまま
+  } else {
+    revealBlind(r, c);
+    if (el) el.className = 'orb ' + attr;
+  }
   _skillUsedCells.add(r + '_' + c);
+}
+// 見た目を「いまの盤面データ」にそろえる。演出の途中で盤面が作り直されていたら何もしない
+function _orbFxSwap(it) {
+  const { r, c, el } = it;
+  if (!el || !(orbEls[r] && orbEls[r][c] === el)) return;
+  el.className = 'orb ' + (grid[r][c] || '') + (el.classList.contains('dragging') ? ' dragging' : '');
+  setBlindEl(r, c);
+}
+// 溜めたドロップの変化を演出つきで見た目に反映する。終わったら resolve する Promise を返す（reject しない）
+function flushOrbSpawnFx() {
+  const q = _orbFxQueue;
+  _orbFxQueue = null;
+  if (!q || !q.size) return Promise.resolve();
+  const items = Array.from(q.values());
+  const wrap = document.getElementById('grid-wrap');
+  if (window.OrbSpawnFx && wrap) {
+    try { return OrbSpawnFx.play(items, { rows: ROWS, cols: COLS, wrap, swap: _orbFxSwap }); }
+    catch (e) { console.warn('flushOrbSpawnFx', e); }
+  }
+  items.forEach(_orbFxSwap);
+  return Promise.resolve();
 }
 
 function damageAllEnemies(rawDmg, attr, se = 'skilldamage', ignoreDef = false) {
@@ -6950,6 +6986,7 @@ async function runPendingTransforms() {
 function runSkillEffects(effects, entry, mon) {
   _dropcPlayed = false;
   _skillUsedCells = new Set();
+  _orbFxQueue = new Map();   // このスキルで変わるドロップ（演出は confirmSkill が flushOrbSpawnFx で再生）
   const context = { entry, mon };
   for (const eff of effects) runSkillEffect(eff, context);
   clearFiredSuperGut();   // スキルダメージで超根性が発動していたら、このスキルの終わりで消滅（次の攻撃まで残さない）
@@ -6974,6 +7011,7 @@ async function confirmSkill() {
   if (mon.skill.effects && mon.skill.effects.length) {
     runSkillEffects(mon.skill.effects, entry, mon);
   }
+  const orbSpawnFx = flushOrbSpawnFx();   // ドロップ生成・変換の演出を開始（盤面データはもう新しい。見た目は演出で入れ替わる）
   if (window.MultiShare) { MultiShare.fxGrid(); MultiShare.fx('en', { hp: enemyList.map(e => e.hp) }); }   // スキルで変わった盤面・敵のHP
 
   partySp -= requiredSp;
@@ -6983,6 +7021,7 @@ async function confirmSkill() {
   renderBuffIcons();
   document.getElementById('combo-label').textContent = 'スキル発動！';
   setTimeout(() => { if (document.getElementById('combo-label').textContent === 'スキル発動！') document.getElementById('combo-label').textContent = ''; }, 800);
+  await orbSpawnFx;   // ドロップ生成の演出が終わるまで待つ（busy のままなので、この間は盤面を動かせない）
   isUsingSkill = false;
 
   await runPendingTransforms();   // 「ランダム変身」の演出と入れ替え
@@ -7184,16 +7223,38 @@ function buildBuffItems() {
     items.push({ icon: up ? 'j3.png' : 'j4.png', turns: buffMoveTimeTurns, name: up ? '操作時間アップ' : '操作時間ダウン', text: `ドロップ操作時間が${parts.join('・')}になる` });
   }
   if (buffAllAttack)       items.push({ icon:'zen.png', turns: buffAllAttackTurns, name:'全体攻撃', text:'敵全体に攻撃する' });
-  for (const b of atkBuffs) items.push({ icon:'j1.png', turns: b.turns, name:'攻撃力アップ', text: atkBuffLabel(b).replace(/^\d+ターン\s*/, '') });
+  // 自分のスキルの攻撃倍率：1より大きい→j1（アップ）／1より小さい→j8（ダウン）
+  // 同じ倍率・同じ残りターンの「ダウン」は、属性ごとにバラけず1つのアイコンにまとめる
+  const atkDownGroups = [];
+  for (const b of atkBuffs) {
+    if (b.value < 1) {
+      let g = atkDownGroups.find(x => x.value === b.value && x.turns === b.turns);
+      if (!g) { g = { value: b.value, turns: b.turns, list: [] }; atkDownGroups.push(g); }
+      g.list.push(b);
+    } else {
+      items.push({ icon:'j1.png', turns: b.turns, name:'攻撃力アップ', text: atkBuffLabel(b).replace(/^\d+ターン\s*/, '') });
+    }
+  }
+  for (const g of atkDownGroups) {
+    items.push({ icon:'j8.png', turns: g.turns, name:'攻撃力ダウン', text: g.list.map(b => atkBuffLabel(b).replace(/^\d+ターン\s*/, '')).join('、') });
+  }
   if (enemyMoveDown && !moveTimeFixed) items.push({ icon:'j4.png', turns: enemyMoveDown.turns, name:'操作時間ダウン', text:`敵の効果でドロップ操作時間が${enemyMoveDown.seconds}秒短くなる` });
   if (enemyRecDown) items.push({ icon:'j6.png', turns: enemyRecDown.turns, name: enemyRecDown.value === 0 ? '回復力ダウン（0）' : `回復力ダウン（${enemyRecDown.value}倍）`, text: enemyRecDown.value === 0 ? '敵の効果で回復ドロップで回復できない' : `敵の効果で回復力が${enemyRecDown.value}倍になる` });
   if (enemySkillSeal) items.push({ icon: ICON_SKILL_SEAL, turns: enemySkillSeal.turns, name:'スキル使用不可', text:'敵の効果で、チーム全員のスキルが使えない' });
   if (enemyNoFall) items.push({ icon: ICON_NO_FALL, turns: enemyNoFall.turns, name:'落ちコンなし', text:'敵の効果で、ドロップを消しても新しいドロップが降ってこない（消し終わってから補充される）' });
   if (buffMoveTimeShort && !moveTimeFixed) items.push({ icon:'j4.png', turns: buffMoveTimeShortTurns, name:'操作時間ダウン', text:'敵の効果でドロップ操作時間が1秒短くなる' });
+  // 光・闇など複数属性の攻撃力ダウンは、同じ割合・同じ残りターンなら1つのアイコンにまとめる
+  const enemyDownGroups = [];
   for (const d of enemyAtkDowns) {
     if (d.turns <= 0) continue;
-    const nm = d.attr === 'all' ? '全属性' : (ATTR_NAME_JP[d.attr] || d.attr) + '属性';
-    items.push({ icon:'j8.png', turns: d.turns, name:`${nm}の攻撃力ダウン`, text:`${nm}のモンスターの攻撃力が${Math.round(d.rate * 100)}%下がっている` });
+    let g = enemyDownGroups.find(x => x.rate === d.rate && x.turns === d.turns);
+    if (!g) { g = { rate: d.rate, turns: d.turns, attrs: [] }; enemyDownGroups.push(g); }
+    g.attrs.push(d.attr);
+  }
+  for (const g of enemyDownGroups) {
+    const nm = g.attrs.includes('all') ? '全属性'
+      : g.attrs.map(a => ATTR_NAME_JP[a] || a).join('・') + '属性';
+    items.push({ icon:'j8.png', turns: g.turns, name:`${nm}の攻撃力ダウン`, text:`${nm}のモンスターの攻撃力が${Math.round(g.rate * 100)}%下がっている` });
   }
   // バインドはモンスター側のオーバーレイ（バインド〇T）だけで表現するので、バフアイコン／詳細表示は出さない
   return items;
@@ -9095,6 +9156,7 @@ document.getElementById('quit-yes').addEventListener('click', function() {      
   if (timeStopActive) abortTimeStop();
   if (dragEl) { dragEl.style.transform = ''; dragEl.classList.remove('dragging'); dragEl = null; }
   dragging = false; busy = false; grabSnapshot = null; grabMoved = false;
+  setDragFx(false);
   restoreTransforms();   // リタイアしたら変身は解ける
   setHomeFocusFromCurrent();
   const got = grantDrops();   // リタイアしても、ここまでに手に入れたドロップは受け取れる
@@ -9157,6 +9219,7 @@ function init() {
 function buildDOM() {
   const con = document.getElementById('grid');
   con.innerHTML = '';
+  con.classList.remove('drag-active');
   orbEls = [];
   clearRoulettes();
   blindCells = Array.from({length:ROWS}, () => Array(COLS).fill(false));
@@ -9173,6 +9236,7 @@ function buildDOM() {
   con.addEventListener('touchstart', onStart, {passive:false});
   con.addEventListener('touchmove',  onMove,  {passive:false});
   con.addEventListener('touchend',   onEnd);
+  con.addEventListener('touchcancel', onEnd);
   con.addEventListener('mousedown',  onStart);
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup',   onEnd);
@@ -9355,7 +9419,7 @@ function startTimer() {
     setTimerRatio(ratio);
     if (ratio <= 0) {
       stopTimer(); timerStarted = false;
-      if (dragging) { dragging = false; if (dragEl) { dragEl.style.transform = ''; dragEl.classList.remove('dragging'); dragEl = null; } gridRectCache = null; evaluateIfMoved(); }
+      if (dragging) { dragging = false; if (dragEl) { dragEl.style.transform = ''; dragEl.classList.remove('dragging'); dragEl = null; } gridRectCache = null; setDragFx(false); evaluateIfMoved(); }
       return;
     }
     timerRaf = requestAnimationFrame(tick);
@@ -9366,8 +9430,8 @@ function stopTimer() { cancelAnimationFrame(timerRaf); setTimerRatio(1); }
 
 const pt = e => { const t = e.touches?.[0] ?? e; return [t.clientX, t.clientY]; };
 function cellAt(x, y) {
-  const g = document.getElementById('grid');
-  const b = g.getBoundingClientRect();
+  // ドラッグ中は onStart で測った盤面の位置を使い回す（動かすたびに測り直すと、そのたびにレイアウト計算が走って重くなる）
+  const b = gridRectCache || document.getElementById('grid').getBoundingClientRect();
   const c = Math.floor((x - b.left) / (b.width / COLS));
   const r = Math.floor((y - b.top) / (b.height / ROWS));
   return (r>=0&&r<ROWS&&c>=0&&c<COLS) ? {r,c} : null;
@@ -9396,6 +9460,12 @@ function evaluateIfMoved() {
   evaluate();
 }
 
+// 掴んでいる間だけ #grid に drag-active を付ける（CSS側でドロップの transition を止める）。
+// 付けっぱなしだと落ちコンのアニメが消えてしまうので、離した時・評価の開始時・盤面の作り直し時に必ず外す。
+function setDragFx(on) {
+  const g = document.getElementById('grid');
+  if (g) g.classList.toggle('drag-active', !!on);
+}
 function onStart(e) {
   if (busy) return;
   e.preventDefault();
@@ -9404,6 +9474,7 @@ function onStart(e) {
   if (!cell) return;
   const g = document.getElementById('grid');
   gridRectCache = g.getBoundingClientRect();
+  setDragFx(true);
   curCellW = gridRectCache.width / COLS;
   curCellH = gridRectCache.height / ROWS;
   dragging = true;
@@ -9457,18 +9528,14 @@ function onMove(e) {
       { const _lk = lockCells[dragR][dragC]; lockCells[dragR][dragC] = lockCells[nr][nc]; lockCells[nr][nc] = _lk; setLockEl(dragR, dragC); setLockEl(nr, nc); }   // ロックはドロップと一緒に動く
       grabMoved = true;   // 入れ替えが起きた（中身が同じ属性でも動かした扱い）
       revealBlind(dragR, dragC); revealBlind(nr, nc);   // 動かしたドロップは暗闇が解ける（掴んだだけでは解けない）
+      // ※ 掴んでいる間は #grid.drag-active でドロップの transition を止めてあるので、
+      //    以前のように「transition を切る→強制リフロー→戻す」をしなくても、入れ替えは一瞬で切り替わる（見た目は同じ）
       const otherEl = orbEls[nr][nc];
-      otherEl.style.transition = 'none';
       otherEl.className = 'orb ' + grid[nr][nc];
       otherEl.style.transform = '';
-      void otherEl.offsetWidth;
-      otherEl.style.transition = '';
       const vacatedEl = orbEls[dragR][dragC];
-      vacatedEl.style.transition = 'none';
       vacatedEl.className = 'orb ' + grid[dragR][dragC];
       vacatedEl.style.transform = '';
-      void vacatedEl.offsetWidth;
-      vacatedEl.style.transition = '';
       dragR = nr; dragC = nc;
       dragEl = orbEls[dragR][dragC];
       dragEl.classList.add('dragging');
@@ -9491,6 +9558,7 @@ function onEnd(e) {
   dragging = false;
   if (!timeStopActive) { stopTimer(); timerStarted = false; }
   if (dragEl) { dragEl.style.transform = ''; dragEl.classList.remove('dragging'); }
+  setDragFx(false);
   dragEl = null; gridRectCache = null;
   if (window.MultiShare) MultiShare.live(true);   // マルチ：指を離した時の盤面
   if (!timeStopActive) { _rlHold = roulettes.length > 0; setTimeout(evaluateIfMoved, 80); }
@@ -9587,6 +9655,7 @@ function clearComboChips() { comboChips.forEach(el => el.remove()); comboChips =
 // 自分の攻撃（消す→コンボ→ダメージ）中もMenuを押せないようにする（見た目用に #game へ player-acting を付ける）
 async function evaluate() {
   if (busy) return;
+  setDragFx(false);
   const g = document.getElementById('game');
   if (g) g.classList.add('player-acting');
   try { await _evaluateInner(); }
