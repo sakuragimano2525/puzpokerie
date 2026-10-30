@@ -4,19 +4,6 @@
    ============================================================ */
 #zukan-screen { z-index: 60; }
 
-/* ── ホームの図鑑ボタン：アイコンが4つ並ぶので、幅の狭い端末では少しつめる ── */
-@media (max-width: 380px) {
-  #hh-coin { min-width: 84px; margin-right: 8px; }
-  .hh-icons { gap: 8px; }
-}
-@media (max-width: 420px) {   /* ホームのアイコンが5つになったので、少しせまく */
-  .hh-icon-btn { width: 42px; height: 42px; }
-  #hh-coin { min-width: 76px; margin-right: 6px; }
-}
-@media (max-width: 340px) {
-  .hh-icon-btn { width: 42px; height: 42px; }
-}
-
 /* ── 一覧 ─────────────────────────────────────── */
 /* 1行目：ゲット／発見の数（横いっぱい）、2行目：リダスキ・並び替えのボタン（折り返してゆったり並べる） */
 #zukan-hint { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 10px; padding: 2px var(--gutter) 10px; }

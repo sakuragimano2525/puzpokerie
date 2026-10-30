@@ -1,0 +1,228 @@
+/* ============================================================
+   ガチャ画面（js/gacha.js ／ index.html の #gacha-screen）
+   縦画面：上にタイトル → ガチャマシン → 「まわす」（大）→「ラインナップ」（小）／左下にもどる
+   横画面：左にマシン、右に「まわす」「ラインナップ」
+   色・縁・影・文字は css/ui.css の「ステッカー・スカイ」に合わせています
+   ============================================================ */
+#gacha-screen {
+  z-index: 75;   /* バッグ(80)・メール(80)の下、出撃準備(70)の上 */
+  position: fixed;
+  -webkit-user-select: none; user-select: none;
+  /* 全体の色（右上の光＋ドット）を残しつつ、薄い水色の空にする */
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255,247,214,0.95) 0, rgba(255,247,214,0) 40%),   /* 右上のやわらかい光（黄色のままだと水色と混ざって緑っぽくなるので、白に近い暖色） */
+    radial-gradient(rgba(28,31,79,0.06) 1.6px, transparent 1.8px) 0 0 / 18px 18px,
+    linear-gradient(180deg, #b9ddff 0%, #d3eaff 42%, #eaf5ff 100%);
+}
+#gacha-screen > * { position: relative; z-index: 1; }
+
+/* ── 背景の雲 ───────────────────────────────── */
+#gacha-screen > .gs-sky { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.gs-cloud { animation: gsDrift 16s ease-in-out infinite alternate; }
+.gs-cloud.c2 { animation-duration: 21s; animation-delay: -6s; }
+.gs-cloud.c3 { animation-duration: 18s; animation-delay: -3s; animation-direction: alternate-reverse; }
+.gs-cloud.c4 { animation-duration: 24s; animation-delay: -9s; }
+.gs-cloud.c5 { animation-duration: 19s; animation-delay: -12s; animation-direction: alternate-reverse; }
+@keyframes gsDrift { from { transform: translateX(-10px); } to { transform: translateX(14px); } }
+
+/* ── 左上のタイトル ─────────────────────────── */
+#gacha-header { flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: calc(12px + env(safe-area-inset-top)) var(--gutter) 0 0; }
+.gs-title {
+  display: inline-flex; align-items: center; gap: 10px; flex: 0 1 auto; min-width: 0; box-sizing: border-box;
+  padding: 7px 20px 7px calc(var(--gutter) + 6px);
+  background: var(--paper);
+  border: var(--bw) solid var(--ink); border-left: 0; border-radius: 0 20px 20px 0;
+  box-shadow: 0 4px 0 var(--ink);
+}
+.gs-emblem {
+  flex-shrink: 0; width: 32px; height: 32px; display: grid; place-items: center;
+  color: #fff; background: var(--coral); border: var(--bw) solid var(--ink); border-radius: 50%;
+}
+.gs-emblem .ic { width: 1.1rem; height: 1.1rem; stroke-width: 2.4; }
+#gacha-title {
+  margin: 0; min-width: 0; white-space: nowrap;
+  font: 900 clamp(0.95rem, 4.7vw, 1.3rem)/1.2 var(--ff); letter-spacing: 0.04em; color: var(--ink);
+}
+
+/* ── まんなか：マシン → まわす → ラインナップ ── */
+#gacha-main {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(10px, 2.4vh, 22px);
+  padding: 6px var(--gutter);
+}
+.gs-machine-wrap { flex: 0 1 auto; min-height: 0; height: clamp(190px, 48vh, 440px); max-width: 82vw; display: flex; justify-content: center; }
+.gs-machine { display: block; height: 100%; width: auto; max-width: 100%; overflow: visible; transform-origin: 50% 92%; }
+.gs-actions { flex-shrink: 0; width: min(100%, 380px); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+/* まわす：いちばん大きい黄色のボタン（btn-cta のツヤつき） */
+#gacha-spin-btn { width: 100%; min-height: 84px; flex-direction: column; gap: 4px; border-radius: 22px; }
+.gs-spin-txt { font-size: 1.9rem; line-height: 1; letter-spacing: 0.26em; text-indent: 0.26em; }
+.gs-spin-cost { display: inline-flex; align-items: center; gap: 4px; font: 900 0.74rem/1 var(--ff); letter-spacing: 0.04em; color: var(--ink); opacity: 0.8; }
+.gs-spin-cost img { width: 16px; height: 16px; object-fit: contain; }
+.gs-spin-cost.short { color: #c8321f; opacity: 1; }   /* コインが足りないとき */
+/* ラインナップ：ひとまわり小さい白のボタン */
+#gacha-lineup-btn { width: 72%; min-height: 46px; font-size: 0.95rem; }
+#gacha-lineup-btn .ic { width: 1.1em; height: 1.1em; stroke-width: 2.6; }
+
+/* ── 左下：もどる ───────────────────────────── */
+#gacha-footer { flex-shrink: 0; padding: 6px var(--gutter) calc(14px + env(safe-area-inset-bottom)); }
+
+/* ── ひとことメッセージ（準備中など） ───────── */
+#gacha-toast {
+  position: absolute; z-index: 5; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); transform: translate(-50%, 6px);
+  width: max-content; max-width: min(88vw, 420px); box-sizing: border-box; text-align: center; text-wrap: balance;
+  padding: 10px 18px; font: 900 0.82rem/1.45 var(--ff); color: #fff; background: var(--ink); border-radius: 18px; box-shadow: 3px 3px 0 var(--sun);
+  opacity: 0; pointer-events: none; transition: opacity 0.18s, transform 0.18s;
+}
+#gacha-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── きらめき／「まわす」を押したときの動き ──── */
+.gm-sp { transform-box: fill-box; transform-origin: center; animation: gsTwinkle 2.8s ease-in-out infinite; }
+.gm-sp.s2 { animation-delay: -0.9s; }
+.gm-sp.s3 { animation-delay: -1.8s; }
+@keyframes gsTwinkle { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.55); opacity: 0.55; } }
+.gm-knob { transform-box: fill-box; transform-origin: center; }
+#gacha-screen.spinning .gs-machine { animation: gsShake 0.9s ease-in-out; }
+#gacha-screen.spinning .gm-knob { animation: gsKnob 0.9s cubic-bezier(0.55, 0, 0.3, 1); }
+#gacha-screen.spinning .gm-caps { animation: gsJiggle 0.9s ease-in-out; }
+@keyframes gsKnob { to { transform: rotate(360deg); } }
+@keyframes gsShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  14% { transform: translateX(-5px) rotate(-1.6deg); } 30% { transform: translateX(5px) rotate(1.6deg); }
+  46% { transform: translateX(-4px) rotate(-1.2deg); } 62% { transform: translateX(4px) rotate(1.2deg); }
+  80% { transform: translateX(-2px) rotate(-0.6deg); }
+}
+@keyframes gsJiggle {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-7px); } 40% { transform: translateY(3px); } 60% { transform: translateY(-5px); } 80% { transform: translateY(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gs-cloud, .gm-sp, #gacha-screen.spinning .gs-machine, #gacha-screen.spinning .gm-knob, #gacha-screen.spinning .gm-caps { animation: none; }
+}
+
+/* ── 横画面：左にマシン／右にボタン、もどるは左下に重ねる ── */
+@media (orientation: landscape) {
+  #gacha-header { padding-top: calc(8px + env(safe-area-inset-top)); }
+  .gs-title { padding-top: 5px; padding-bottom: 5px; }
+  .gs-emblem { width: 28px; height: 28px; }
+  #gacha-title { font-size: clamp(0.9rem, 2.4vw, 1.2rem); }
+  #gacha-main {
+    flex-direction: row; gap: clamp(24px, 9vw, 96px);
+    padding: 0 max(24px, env(safe-area-inset-right)) 8px max(24px, env(safe-area-inset-left));
+  }
+  .gs-machine-wrap { height: min(calc(var(--app-h, 100dvh) - 96px), 380px); max-width: 40vw; }
+  .gs-actions { width: min(46vw, 360px); }
+  #gacha-spin-btn { min-height: 74px; }
+  .gs-spin-txt { font-size: 1.6rem; }
+  #gacha-footer { position: absolute; z-index: 3; left: 0; bottom: 0; padding: 0 max(12px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)); }
+  #gacha-toast { bottom: calc(18px + env(safe-area-inset-bottom)); }
+}
+
+/* ── ガチャコインの所持数（右上） ───────────── */
+.gs-coin {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px 0 8px; box-sizing: border-box;
+  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 14px; box-shadow: 0 4px 0 var(--ink);
+}
+.gs-coin img { width: 26px; height: 26px; object-fit: contain; }
+.gs-coin b { font: 400 1.2rem/1 var(--ff-num); letter-spacing: 0.02em; color: var(--ink); white-space: nowrap; }
+.gs-coin.empty b { color: #c8321f; }
+.gs-coin.bump { animation: gsBump 0.4s ease; }
+@keyframes gsBump { 30% { transform: translateX(-4px); } 60% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .gs-coin.bump { animation: none; } }
+
+/* ── ダイアログ（ラインナップ／結果）共通 ───── */
+#gacha-screen > .gs-modal {   /* ※ 上の「#gacha-screen > *」より強く指定しないと、画面の流れに入り込んでマシンを押しつぶす */
+  position: absolute; z-index: 10; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(28, 31, 79, 0.64);
+}
+#gacha-screen > .gs-modal[hidden] { display: none; }
+.gs-card {
+  width: min(100%, 400px); max-height: 100%; overflow-y: auto; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px 16px 18px;
+  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 22px; box-shadow: 0 6px 0 var(--ink);
+  animation: gsPop 0.26s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+@keyframes gsPop { from { opacity: 0; transform: scale(0.86) translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gs-card { animation: none; } }
+.gs-card .btn { min-width: 160px; }
+.gs-card-title { align-self: stretch; margin: -16px -16px 2px; padding: 10px 0; text-align: center; font: 900 1.2rem/1.2 var(--ff); letter-spacing: 0.14em; color: var(--ink); background: var(--sun); border-bottom: var(--bw) solid var(--ink); border-radius: 19px 19px 0 0; }
+.gs-card-sub { margin: 0; font: 700 0.8rem/1.4 var(--ff); color: var(--ink-2); text-align: center; }
+
+/* ── ラインナップ ──────────────────────────── */
+.gs-lu-grid { align-self: stretch; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 8px; margin: 4px 0 6px; }
+.gs-lu-item { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.gs-mon { position: relative; width: 100%; aspect-ratio: 1; }   /* 下地・枠・影なし：画像だけ */
+.gs-mon img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.gs-lu-stars { font: 900 0.56rem/1 var(--ff); letter-spacing: 0; color: #e69a00; white-space: nowrap; }
+.gs-lu-name { max-width: 100%; font: 900 0.7rem/1.2 var(--ff); color: var(--ink); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── 結果 ──────────────────────────────────── */
+.gs-res-tile { position: relative; width: min(52vw, 180px); aspect-ratio: 1; margin-top: 6px; }   /* 下地・枠・影なし：画像だけ */
+.gs-res-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.gs-new { position: absolute; z-index: 2; top: -10px; left: -8px; padding: 4px 9px 3px; font: 400 0.8rem/1 var(--ff-num); letter-spacing: 0.06em; color: #fff; background: var(--coral); border: 2px solid var(--ink); border-radius: 8px; transform: rotate(-8deg); }
+.gs-new[hidden] { display: none; }
+.gs-res-stars { font: 900 1.1rem/1 var(--ff); letter-spacing: 0.08em; color: #e69a00; text-shadow: 0 1px 0 var(--ink); }
+.gs-res-name { font: 900 1.5rem/1.2 var(--ff); letter-spacing: 0.06em; color: var(--ink); text-align: center; }
+.gs-res.rare .gs-res-tile img { filter: drop-shadow(0 0 10px rgba(255, 212, 59, 0.95)) drop-shadow(0 0 22px rgba(255, 180, 0, 0.6)); }
+.gs-res.rare .gs-card-title { background: linear-gradient(90deg, #ffd43b, #ffb400, #ffd43b); }
+
+@media (orientation: landscape) {
+  .gs-modal { padding: 8px 20px; }
+  .gs-card { flex-direction: column; padding: 12px 14px 14px; gap: 6px; }
+  .gs-card-title { margin: -12px -14px 0; padding: 7px 0; font-size: 1.05rem; }
+  .gs-res-tile { width: min(26vh, 120px); }
+  .gs-res-name { font-size: 1.2rem; }
+  .gs-lu-grid { gap: 8px 8px; }
+  #gacha-lineup .gs-card { width: min(100%, 640px); }
+  .gs-lu-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }   /* 横画面は1列にならべる */
+}
+
+/* ============================================================
+   カプセル演出（js/gacha.js の runSequence が動かす）
+   取り出し口に落ちる → 外にころがり出る → 画面中央でゆれる → タップでパカッ
+   ============================================================ */
+#gacha-screen > .gc-stage {   /* ※ 「#gacha-screen > *」より強く指定する */
+  position: absolute; z-index: 12; inset: 0; overflow: hidden; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+#gacha-screen > .gc-stage[hidden] { display: none; }
+.gc-dim { position: absolute; inset: 0; background: rgba(28, 31, 79, 0.58); opacity: 0; }
+
+/* カプセル本体：位置・大きさは JS が transform で動かす（箱の大きさは JS の E と同じ 120px） */
+.gc-obj { position: absolute; left: 0; top: 0; width: 120px; height: 120px; opacity: 0; will-change: transform; pointer-events: none; }
+.gc-capsvg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.gc-top, .gc-bot { transform-origin: 0 0; }   /* 開くとき、カプセルの中心を軸に回す */
+.gc-aura {
+  position: absolute; left: 50%; top: 50%; width: 210%; height: 210%; margin: -105% 0 0 -105%; border-radius: 50%;
+  background: radial-gradient(circle, currentColor 0%, rgba(255, 255, 255, 0) 62%); opacity: 0;
+}
+.gc-obj.wait .gc-capsvg { animation: gcWobble 1.05s ease-in-out infinite; }
+.gc-obj.wait .gc-aura { animation: gcAura 1.1s ease-in-out infinite alternate; }
+@keyframes gcWobble {
+  0%, 100% { transform: rotate(0) scale(1); }
+  15% { transform: rotate(-10deg) scale(1.04); } 32% { transform: rotate(9deg) scale(1.04); }
+  48% { transform: rotate(-6deg) scale(1.02); } 62% { transform: rotate(4deg) scale(1); }
+  80% { transform: rotate(0) scale(1); }
+}
+@keyframes gcAura { from { opacity: 0.28; transform: scale(0.92); } to { opacity: 0.62; transform: scale(1.06); } }
+
+/* 「タップ！」 */
+.gc-tap {
+  position: absolute; left: 0; top: 0; z-index: 2; padding: 7px 22px 6px; opacity: 0; pointer-events: none; white-space: nowrap;
+  font: 900 1rem/1 var(--ff); letter-spacing: 0.14em; text-indent: 0.14em; color: var(--ink);
+  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 999px; box-shadow: 0 4px 0 var(--ink);
+}
+.gc-tap.show { animation: gcTap 0.7s ease-in-out infinite alternate; }
+@keyframes gcTap { from { opacity: 1; margin-top: 0; } to { opacity: 1; margin-top: -6px; } }
+
+/* 開いたときの光・ひかりのつぶ（JS が作って、終わったら消す） */
+.gc-fx { position: absolute; inset: 0; pointer-events: none; }
+.gc-fx > * { position: absolute; pointer-events: none; }
+.gc-flash { width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, #fff 38%, rgba(255, 255, 255, 0) 72%); }
+.gc-ring { width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; box-sizing: border-box; border: 7px solid currentColor; }
+.gc-p { border-radius: 50%; }
+.gc-p.star { border-radius: 0; clip-path: polygon(50% 0, 62% 36%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 36%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-obj.wait .gc-capsvg, .gc-obj.wait .gc-aura, .gc-tap.show { animation: none; }
+}

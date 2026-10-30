@@ -256,7 +256,7 @@
   // ── ステータスのポップアップ ───────────────────────────────────
   const ATTR_IMG = { fire: '1', water: '2', wood: '3', light: '4', dark: '5' };
   const ATTR_JP = { fire: '火', water: '水', wood: '木', light: '光', dark: '闇' };
-  const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', 'バランス': 'typ4' };
+  const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', 'バランス': 'typ4', '神秘': 'typ5' };
   let infoOpenedAt = 0;
 
   function el(tag, cls, text) {

@@ -11,5 +11,13 @@ const MAIL_DATA = [
     received: false,
     unread: true,
   },
-  
+  {
+    id: 2,
+    title: '【デバッグ】ガチャコイン',
+    date: '2026.10.30',
+    body: 'ガチャのテスト用に、ガチャコインを100枚お送りします。',
+    reward: { item: 'fcoin', count: 100 },   // アイテムを送るときは { item: アイテムID, count: 個数 }
+    received: false,
+    unread: true,
+  },
 ];

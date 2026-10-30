@@ -68,7 +68,12 @@ const ITEM_DATA = {
   //   ※ どのイベントでどのおふだを何枚使うかは areas.js（EVENT_AREA_DATA の entryItem / entryCost）で決める
   //   ※ モンスターからのドロップは、ダンジョン設定ツールの「おふだドロップ」（敵データの ofudaDrop）で設定
   youbi:  { id: 'youbi',  name: 'ようびのおふだ',     img: 'youbi.png',  kind: 'ofuda', desc: '日替わりダンジョンに挑戦するときに1枚つかう' },
-  ohuda1: { id: 'ohuda1', name: 'けいけんちのおふだ', img: 'ohuda1.png', kind: 'ofuda', desc: 'けいけんパークに入るときに1枚つかう' }
+  ohuda1: { id: 'ohuda1', name: 'けいけんちのおふだ', img: 'ohuda1.png', kind: 'ofuda', desc: 'けいけんパークに入るときに1枚つかう' },
+
+  // ── ガチャコイン（ガチャを1回まわすときに消費する。画像はゲームのフォルダ直下の fcoin.png） ──
+  //   ※ ガチャの設定（使うコイン・枚数・ラインナップ）は js/data/gacha.js
+  //   ※ 手に入れ方（ドロップ・ボーナスなど）は、おふだと同じ仕組みで増やせます
+  fcoin:  { id: 'fcoin',  name: 'ガチャコイン',       img: 'fcoin.png',  kind: 'coin',  desc: 'ガチャを1回まわすときに1枚つかう' }
 };
 
 // ゲーム開始時の所持数（いまは何も持たずに開始。持たせたいときは { puzzle1: 5 } のように書く）

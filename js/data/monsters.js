@@ -2869,8 +2869,8 @@ const MONSTER_DATA = {
       name: 'アイスウインドコンボ',
       desc: '水の十字消しをすると攻撃1.4倍、受けるダメージ8%軽減。\nL字消しをすると攻撃1.4倍、受けるダメージ8%軽減。',
       effects: [
-        { type: 'atk', condition: 'cross', shapeAttr: 'water', value: 1.4, reduce: 0.08 },
-        { type: 'atk', condition: 'lShapes', value: 1.4, reduce: 0.08 }
+        { type: 'atk', condition: 'cross', shapeAttr: 'water', value: 1.4, reduce: 0.09 },
+        { type: 'atk', condition: 'lShapes', value: 1.4, reduce: 0.09 }
       ]
     }
   },
@@ -4114,6 +4114,189 @@ const MONSTER_DATA = {
     maxLevel: 99,
     baseExp: 2500,
     stats: { hp: { min: 510, max: 3420 }, atk: { min: 250, max: 1650 }, rec: { min: 74, max: 212 } }
+  },
+  5000: {
+    id: 5000,
+    name: 'ホシノ',
+    rarity: 4,
+    attr: 'fire',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 210, max: 2100 }, atk: { min: 210, max: 2100 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: '制圧射撃',
+      sp: 5,
+      desc: '1ターンの間、敵全体の防御力を85%ダウン。',
+      effects: [ { type: 'defenseDown', target: 'all', value: 0.85, turns: 1, message: '💥 防御力ダウン！' } ]
+    },
+    leaderSkill: {
+      name: '集中突破',
+      desc: '火ドロップを消す度に攻撃1.1倍。',
+      effects: [ { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.09 } ]
+    }
+  },
+  5001: {
+    id: 5001,
+    name: 'ミカ',
+    rarity: 4,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 300, max: 2500 }, atk: { min: 300, max: 2500 }, rec: { min: 10, max: 100 } },
+    skill: {
+      name: '星の呼び声',
+      sp: 5,
+      desc: '1ターンの間、超高速ルーレットを1つ生成。\n1ターンの間、操作時間が2倍。',
+      effects: [
+        { type: 'roulette', turns: 1, count: 1, sec: '0.2' },
+        { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 2 }
+      ]
+    },
+    leaderSkill: {
+      name: 'Kyrie Eleison',
+      desc: 'ドロップを消す度に攻撃1.08倍。',
+      effects: [ { type: 'atk', condition: 'eraseAny', value: 1.08 } ]
+    }
+  },
+  5002: {
+    id: 5002,
+    name: 'ヒナ',
+    rarity: 4,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 490, max: 2800 }, atk: { min: 490, max: 2490 }, rec: { min: -999, max: -999 } },
+    skill: {
+      name: '終幕：イシュ・ボシェテ',
+      sp: 7,
+      desc: '敵全体に攻撃力×20倍の闇属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', value: 20, attr: 'dark' } ]
+    },
+    leaderSkill: {
+      name: '冷徹な風紀委員会',
+      desc: '闇ドロップを消す度に攻撃1.1倍。',
+      effects: [ { type: 'atk', condition: 'eraseAttr', attr: 'dark', value: 1.09 } ]
+    }
+  },
+  5003: {
+    id: 5003,
+    name: 'セリナ',
+    rarity: 1,
+    attr: 'light',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 120, max: 3200 }, atk: { min: 20, max: 800 }, rec: { min: 300, max: 800 } },
+    skill: {
+      name: '集中治療セットA',
+      sp: 7,
+      desc: 'HPとバインドを全回復。\n回復ドロップをランダムで6つ生成。',
+      effects: [
+        { type: 'heal', value: 1 },
+        { type: 'bindRecover', turns: 99 },
+        { type: 'orbChangeRandom', attr: 'heal', count: 6 }
+      ]
+    },
+    leaderSkill: {
+      name: '白衣の天使',
+      desc: 'かいふくタイプの攻撃1.25倍。\n回復ドロップの2コンボで攻撃と回復力1.5倍、ダメージ3%軽減。',
+      effects: [
+        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.25 },
+        { type: 'atk', condition: 'attrCombos', attr: 'heal', count: 2, value: 1.5, recValue: 1.5, reduce: 0.03 }
+      ]
+    }
+  },
+  5004: {
+    id: 5004,
+    name: 'ハナエ',
+    rarity: 2,
+    attr: 'light',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 120, max: 3100 }, atk: { min: 20, max: 1100 }, rec: { min: 300, max: 600 } },
+    skill: { name: '治療の時間ですよ～！', sp: 3, desc: '1ターンの間、回復力が1.5倍。', effects: [ { type: 'recMult', turns: 1, value: 1.5 } ] },
+    leaderSkill: {
+      name: 'ハッピースマイリー',
+      desc: 'かいふくタイプのHP1.2倍。\n回復ドロップの2コンボ以上で攻撃2倍。',
+      effects: [
+        { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.2 },
+        { type: 'atk', condition: 'attrCombos', attr: 'heal', count: 2, value: 2 }
+      ]
+    }
+  },
+  5005: {
+    id: 5005,
+    name: 'モモイ',
+    rarity: 3,
+    attr: 'fire',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 500, max: 2700 }, atk: { min: 200, max: 1600 }, rec: { min: 50, max: 100 } },
+    skill: {
+      name: 'せっかくだし、赤で！	',
+      sp: 3,
+      desc: '水ドロップを火ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'water', to: 'fire' } ]
+    },
+    leaderSkill: {
+      name: 'バーチャル・メイドウェポン！',
+      desc: '火と木属性の攻撃1.5倍。',
+      effects: [ { type: 'atk', attr: 'fire', value: 1.5 }, { type: 'atk', attr: 'wood', value: 1.5 } ]
+    }
+  },
+  5006: {
+    id: 5006,
+    name: 'ミドリ',
+    rarity: 3,
+    attr: 'wood',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 500, max: 2700 }, atk: { min: 100, max: 1200 }, rec: { min: 100, max: 200 } },
+    skill: {
+      name: 'せっかくですから、緑で',
+      sp: 3,
+      desc: '回復ドロップを木ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'heal', to: 'wood' } ]
+    },
+    leaderSkill: {
+      name: 'バーチャル・メイドショット',
+      desc: '火と木属性の攻撃1.2倍。\n火と木のドロップを同時に4個以上つなげて消すと攻撃1.3倍。',
+      effects: [
+        { type: 'atk', attr: 'fire', value: 1.2 },
+        { type: 'atk', attr: 'wood', value: 1.2 },
+        { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 4, value: 1.3, attr2: 'wood' }
+      ]
+    }
+  },
+  5007: {
+    id: 5007,
+    name: 'キサキ',
+    rarity: 4,
+    attr: 'water',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 1000,
+    stats: { hp: { min: 400, max: 3030 }, atk: { min: 200, max: 1500 }, rec: { min: 50, max: 300 } },
+    skill: {
+      name: '詔令：格物致知',
+      sp: 4,
+      desc: '1ターンの間、水属性の攻撃が1.5倍。',
+      effects: [ { type: 'atkBuff', attr: 'water', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: '勅令：修身斉家',
+      desc: '十字消しをすると攻撃1.4倍、受けるダメージ9%軽減。\n水のL字消しをすると攻撃1.4倍、受けるダメージ9%軽減。',
+      effects: [
+        { type: 'atk', condition: 'cross', value: 1.4, reduce: 0.1 },
+        { type: 'atk', condition: 'lShapes', shapeAttr: 'water', value: 1.4, reduce: 0.1 }
+      ]
+    }
   }
 };
 

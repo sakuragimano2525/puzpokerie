@@ -383,9 +383,9 @@ function playTapSound()  { playUiSE('tap'); }
 function playModoSound() { playUiSE('modo'); }
 
 // 戻る・閉じる系のボタン
-const UI_BACK_SELECTOR = '#de-back-btn, #ss-back-btn, #md-back-btn, #te-back, #iku-back, #evo-list-back, #pz-back-btn, #zukan-back, #zukan-info-close, #mail-close-btn, #md2-back-btn, #res-close-btn, #sp-no, #menu-btn, #quit-no, #menu-drops-back, #cs-close, #cj-no, #menu-retire-no, .te-back-btn, #gameover-home-btn';
+const UI_BACK_SELECTOR = '#de-back-btn, #ss-back-btn, #md-back-btn, #te-back, #iku-back, #evo-list-back, #pz-back-btn, #zukan-back, #zukan-info-close, #mail-close-btn, #md2-back-btn, #res-close-btn, #sp-no, #gacha-back, #gacha-lineup-close, #menu-btn, #quit-no, #menu-drops-back, #cs-close, #cj-no, #menu-retire-no, .te-back-btn, #gameover-home-btn';
 // 「進む」操作（画面遷移・決定・挑戦など）だけ tap.mp3
-const UI_FORWARD_SELECTOR = '#start, #btn-team, #btn-grow, #btn-evo, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
+const UI_FORWARD_SELECTOR = '#start, #btn-team, #btn-grow, #btn-evo, #btn-gacha, #gacha-spin-btn, #gacha-lineup-btn, #gacha-res-ok, .ht-tab, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
 document.addEventListener('click', (e) => {
   const t = e.target;
   if (!(t instanceof Element)) return;
@@ -5300,7 +5300,7 @@ function renderMonsterDetail() {
   // タイプはアイコンで名前の右に表示（たいりょく=typ1 / こうげき=typ2 / かいふく=typ3 / バランス=typ4）。他のタイプは文字
   const typeEl = document.getElementById('md-type');
   if (typeEl) {
-    const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', 'バランス': 'typ4' };
+    const TYPE_ICON = { 'たいりょく': 'typ1', 'こうげき': 'typ2', 'かいふく': 'typ3', 'バランス': 'typ4', '神秘': 'typ5' };
     const tf = TYPE_ICON[mon.type];
     typeEl.innerHTML = '';
     typeEl.title = mon.type || '';
@@ -8095,58 +8095,34 @@ function buildStageMap() {
   if (homeMode === 'event' && !isEventUnlocked()) homeMode = 'main';
   if (homeMode === 'multi' && !hasUnlockedMultiStage()) homeMode = 'main';
   if (homeMode === 'event') buildEventMap(); else if (homeMode === 'multi') buildMultiMap(); else buildMainMap();
-  updateModeBtn();
+  renderHomeTabs();
 }
 const HOME_MODES = [
   { key: 'main',  label: 'メイン',   icon: '#i-map' },
   { key: 'event', label: 'イベント', icon: '#i-event' },
   { key: 'multi', label: 'マルチ',   icon: '#i-multi' },
 ];
-function updateModeBtn() {
-  const btn = document.getElementById('mode-toggle-btn');
-  if (!btn) return;
-  const cur = HOME_MODES.find(m => m.key === homeMode) || HOME_MODES[0];
-  btn.classList.toggle('is-multi', homeMode === 'multi');
-  btn.setAttribute('aria-label', `表示中：${cur.label}（タップで切り替え）`);
-  const use = btn.querySelector('use');
-  if (use) use.setAttribute('href', cur.icon);          // いま表示中のモードのアイコン
-  const lbl = btn.querySelector('.hh-lbl');
-  if (lbl) lbl.textContent = cur.label;
-  renderModeMenu();
-}
-function renderModeMenu() {
-  const menu = document.getElementById('mode-menu');
-  if (!menu) return;
-  menu.innerHTML = '';
+// ホーム上部のタブ（メイン／イベント／マルチ）。1タップで切り替え。
+//  ・マルチは1つも解放されていないうちはタブ自体を出さない
+//  ・イベントはエリア6（EVENT_UNLOCK）クリアまで鍵つき（押すと理由が出る）
+function renderHomeTabs() {
+  const bar = document.getElementById('home-tabs');
+  if (!bar) return;
+  bar.innerHTML = '';
   HOME_MODES.forEach(m => {
-    if (m.key === 'multi' && !hasUnlockedMultiStage()) return;   // マルチが1つも解放されていないうちは「マルチ」自体を出さない
-    const it = document.createElement('button');
-    it.type = 'button'; it.setAttribute('role', 'menuitem');
+    if (m.key === 'multi' && !hasUnlockedMultiStage()) return;
     const locked = m.key === 'event' && !isEventUnlocked();
-    it.className = 'mm-item ' + m.key + (m.key === homeMode ? ' on' : '') + (locked ? ' locked' : '');
-    it.innerHTML = `<svg class="ic"><use href="${m.icon}"/></svg><span>${m.label}</span>`;
-    it.addEventListener('click', (e) => { e.stopPropagation(); selectHomeMode(m.key); });
-    menu.appendChild(it);
+    const on = m.key === homeMode;
+    const tab = document.createElement('button');
+    tab.type = 'button'; tab.setAttribute('role', 'tab'); tab.setAttribute('aria-selected', on ? 'true' : 'false');
+    tab.dataset.mode = m.key;
+    tab.className = 'ht-tab ' + m.key + (on ? ' on' : '') + (locked ? ' locked' : '');
+    tab.innerHTML = `<svg class="ic"><use href="${locked ? '#i-lock' : m.icon}"/></svg><span>${m.label}</span>`;
+    tab.addEventListener('click', () => selectHomeMode(m.key));
+    bar.appendChild(tab);
   });
 }
-function closeModeMenu() {
-  const menu = document.getElementById('mode-menu'), btn = document.getElementById('mode-toggle-btn');
-  if (menu) menu.hidden = true;
-  if (btn) btn.setAttribute('aria-expanded', 'false');
-}
-function openModeMenu() {
-  const menu = document.getElementById('mode-menu'), btn = document.getElementById('mode-toggle-btn');
-  if (!menu || !btn) return;
-  renderModeMenu();
-  menu.hidden = false;
-  btn.setAttribute('aria-expanded', 'true');
-  const r = btn.getBoundingClientRect();
-  menu.style.top = (r.bottom + 8) + 'px';
-  const mw = menu.offsetWidth;
-  menu.style.left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw)) + 'px';
-}
 function selectHomeMode(key) {
-  closeModeMenu();
   if (key === 'event' && !isEventUnlocked()) {
     homeToast(`エリア${EVENT_UNLOCK}をクリアするとイベントステージが開放されます`, 2200);
     return;
@@ -8342,17 +8318,19 @@ function scrollHomeToFrontier() {
 let homeToastTimer = null;
 function homeToast(msg, ms = 1400) {
   const t = document.getElementById('home-toast');
+  const dock = document.getElementById('home-bottom');
+  if (dock && dock.offsetHeight) t.style.bottom = (dock.offsetHeight + 12) + 'px';   // ドックのすぐ上（親指の近く）に出す
   t.textContent = msg; t.classList.add('show');
   clearTimeout(homeToastTimer);
   homeToastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
 document.querySelectorAll('#home [data-soon]').forEach(b => b.addEventListener('click', () => homeToast('準備中です')));
-// 右上ボタン：タップするとタブ（メイン／イベント／マルチ）が開いて選べる。イベントはエリア6（EVENT_UNLOCK）クリアまで使えない
-document.getElementById('mode-toggle-btn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const menu = document.getElementById('mode-menu');
-  if (menu && menu.hidden) openModeMenu(); else closeModeMenu();
-});
+// ガチャ（ホーム右下）。ガチャ画面は js/gacha.js ／ css/gacha.css ／ index.html の #gacha-screen
+function openGacha() {
+  if (window.GachaScreen) GachaScreen.open();
+  else homeToast('ガチャは準備中です');
+}
+document.getElementById('btn-gacha').addEventListener('click', openGacha);
 // マルチステージが新しく解放されたら、ホームに戻ったときに「VSメタモン を解放しました！」と知らせる（知らせたものは覚えておく）
 const MULTI_UNLOCK_SEEN_KEY = 'puzzdra_multiUnlockSeen';
 let _multiNoticeBusy = false;
@@ -8376,8 +8354,6 @@ function checkMultiUnlockNotice() {
     if (i === fresh.length - 1) setTimeout(() => { _multiNoticeBusy = false; }, 2400);
   }, i * 2500));
 }
-document.addEventListener('click', closeModeMenu);
-window.addEventListener('resize', closeModeMenu);
 // ホームが表示されるたびに、マップ・パーティ表示を更新して進行中のエリアへスクロール
 new MutationObserver(() => {
   if (document.getElementById('home').style.display !== 'flex') return;
@@ -10301,10 +10277,18 @@ function closeMailScreen() { document.getElementById('mail-screen').style.displa
 function renderMailList() {
   const list = document.getElementById('mail-list');
   list.innerHTML = '';
-  if (MAIL_DATA.length === 0) {
-    list.innerHTML = '<div class="mail-empty">メールはありません</div>';
-    return;
-  }
+  // ずっと残る「ふしぎなおくりもの」（ID入力）
+  const gift = document.createElement('div');
+  gift.className = 'mail-item';
+  gift.innerHTML = `
+      <span class="mail-ico"><svg class="ic"><use href="#i-gift"/></svg></span>
+      <div class="mail-main">
+        <div class="mail-item-title">ふしぎなおくりもの</div>
+        <div class="mail-item-preview">IDを入力してモンスターを受け取ろう</div>
+        <div class="mail-item-date">いつでも<span class="mail-tag"><svg class="ic"><use href="#i-gift"/></svg>ID入力</span></div>
+      </div>`;
+  gift.addEventListener('click', openGiftScreen);
+  list.appendChild(gift);
   MAIL_DATA.forEach(mail => {
     const item = document.createElement('div');
     item.className = 'mail-item' + (mail.unread ? ' unread' : '');
@@ -10339,14 +10323,16 @@ function openMailDetail(id) {
   rewardArea.innerHTML = '';
   receiveBtn.style.display = 'none';
   receivedArea.innerHTML = '';
+  document.getElementById('md2-code-area').style.display = 'none';
   if (mail.reward) {
     const multiIds = Array.isArray(mail.reward.monsterIds) ? mail.reward.monsterIds.filter(id => MONSTER_DATA[id]) : null;   // 複数まとめて送るメール
-    const mon = multiIds ? null : MONSTER_DATA[mail.reward.monsterId];
+    const itemDef = mail.reward.item ? ITEM_DATA[mail.reward.item] : null;   // アイテムを送るメール（reward: { item:'fcoin', count:100 }）
+    const mon = (multiIds || itemDef) ? null : MONSTER_DATA[mail.reward.monsterId];
     const box2 = document.createElement('div');
     box2.className = 'md2-reward-box';
-    const imgHtml = mon ? `<img class="md2-reward-img" src="${monsterImg(mon)}" onerror="this.style.display='none'" alt="${mon.name}">` : '';
-    const displayName = multiIds ? `${mail.reward.name || 'ポケモン'} ${multiIds.length}匹` : (mon ? mon.name : mail.reward.name);
-    const displaySub  = multiIds ? (multiIds.length ? `No.${Math.min(...multiIds)}〜${Math.max(...multiIds)} を1匹ずつ` : '') : (mon ? `No.${mon.id}  ★${mon.rarity}${mon.attr ? '  ' + mon.attr + '属性' : ''}` : '');
+    const imgHtml = itemDef ? `<img class="md2-reward-img" src="${itemDef.img}" onerror="this.style.display='none'" alt="${itemDef.name}">` : mon ? `<img class="md2-reward-img" src="${monsterImg(mon)}" onerror="this.style.display='none'" alt="${mon.name}">` : '';
+    const displayName = itemDef ? `${itemDef.name} ×${Math.max(1, Math.floor(Number(mail.reward.count)) || 1)}` : multiIds ? `${mail.reward.name || 'ポケモン'} ${multiIds.length}匹` : (mon ? mon.name : mail.reward.name);
+    const displaySub  = itemDef ? (itemDef.desc || '') : multiIds ? (multiIds.length ? `No.${Math.min(...multiIds)}〜${Math.max(...multiIds)} を1匹ずつ` : '') : (mon ? `No.${mon.id}  ★${mon.rarity}${mon.attr ? '  ' + mon.attr + '属性' : ''}` : '');
     box2.innerHTML = `
       <div class="md2-reward-label"><svg class="ic"><use href="#i-gift"/></svg>プレゼント内容</div>
       <div class="md2-reward-item">
@@ -10368,6 +10354,51 @@ function openMailDetail(id) {
   document.getElementById('mail-detail').style.display = 'flex';
   renderMailList();
 }
+function openGiftScreen() {
+  currentMailId = null;
+  document.getElementById('md2-title').textContent = 'ふしぎなおくりもの';
+  document.getElementById('md2-content-text').textContent = 'おくりものIDを入力してください。\n正しいIDなら、モンスターが1匹ボックスに届きます。（何度でも使えます）';
+  document.getElementById('md2-reward-area').innerHTML = '';
+  document.getElementById('md2-receive-btn').style.display = 'none';
+  document.getElementById('md2-received-area').innerHTML = '';
+  document.getElementById('md2-code-area').style.display = 'block';
+  document.getElementById('md2-code-input').value = '';
+  const msg = document.getElementById('md2-code-msg'); msg.textContent = ''; msg.className = '';
+  document.getElementById('mail-detail').style.display = 'flex';
+}
+function redeemGiftCode() {
+  const input = document.getElementById('md2-code-input');
+  const msg = document.getElementById('md2-code-msg');
+  // 全角→半角、空白除去、大文字化
+  const code = input.value.replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\s+/g, '').toUpperCase();
+  const m = /^DESAYA(\d+)$/.exec(code);
+  const monsterId = m ? parseInt(m[1], 10) : NaN;
+  const mon = m ? MONSTER_DATA[monsterId] : null;
+  if (!mon) { msg.className = 'ng'; msg.textContent = 'IDがまちがっています'; return; }
+  box.push({ uid: nextUid++, monsterId, level: 1, exp: 0, sp: 0, memory: 0, plusHp: 0, plusAtk: 0, plusRec: 0 });
+  saveGame();
+  msg.className = 'ok'; msg.textContent = mon.name + ' を受け取りました！';
+  input.value = '';
+}
+// ガチャ用（js/gacha.js から使う）：アイテムを n 個つかう（足りなければ false を返して何もしない）
+function consumeItem(id, n) {
+  n = Math.max(1, Math.floor(Number(n)) || 1);
+  if (getItemCount(id) < n) return false;
+  itemInventory[id] = getItemCount(id) - n;
+  saveGame();
+  return true;
+}
+// ガチャ用：モンスターを1匹BOXに入れて保存する。返り値 { uid, isNew }（isNew = 図鑑にまだ載っていなかった）
+function grantMonsterToBox(monsterId) {
+  if (!MONSTER_DATA[monsterId]) return null;
+  const isNew = !(window.Zukan && Zukan.isOwned(monsterId)) && !box.some(b => b.monsterId === monsterId);
+  const uid = nextUid++;
+  box.push({ uid, monsterId, level: 1, exp: 0, sp: 0, memory: 0, plusHp: 0, plusAtk: 0, plusRec: 0 });
+  saveGame();
+  return { uid, isNew };
+}
+document.getElementById('md2-code-btn').addEventListener('click', redeemGiftCode);
+document.getElementById('md2-code-input').addEventListener('keydown', e => { if (e.key === 'Enter') redeemGiftCode(); });
 function closeMailDetail() { document.getElementById('mail-detail').style.display = 'none'; }
 function updateMailBadge() {
   const hasUnread = MAIL_DATA.some(m => m.unread) || MAIL_DATA.some(m => m.reward && !m.received);
@@ -10380,6 +10411,19 @@ document.getElementById('md2-back-btn').addEventListener('click', closeMailDetai
 document.getElementById('md2-receive-btn').addEventListener('click', () => {
   const mail = MAIL_DATA.find(m => m.id === currentMailId);
   if (!mail || !mail.reward || mail.received) return;
+  if (mail.reward.item) {   // アイテム（ガチャコインなど）
+    const def = ITEM_DATA[mail.reward.item];
+    if (!def) return;
+    const n = Math.max(1, Math.floor(Number(mail.reward.count)) || 1);
+    itemInventory[def.id] = getItemCount(def.id) + n;
+    mail.received = true;
+    saveGame();
+    document.getElementById('md2-receive-btn').style.display = 'none';
+    document.getElementById('md2-received-area').innerHTML = `<div class="md2-received-stamp">${def.name} ×${n} を受け取りました！</div>`;
+    updateMailBadge();
+    renderMailList();
+    return;
+  }
   if (Array.isArray(mail.reward.monsterIds)) {   // 複数まとめて：1匹ずつボックスへ
     const ids = mail.reward.monsterIds.filter(id => MONSTER_DATA[id]);
     if (!ids.length) return;

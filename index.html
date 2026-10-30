@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="css/ls-search.css">
 <link rel="stylesheet" href="css/multi-turn.css">
 <link rel="stylesheet" href="css/multi-online.css">
+<link rel="stylesheet" href="css/gacha.css">
 <!-- 画像の自動再読み込み（ページ前半の画像も拾うため、必ず head の中で読み込む） -->
 <script src="js/img-retry.js"></script>
 </head>
@@ -57,6 +58,8 @@
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M6.5 3.5H19v13H6.5a2 2 0 0 0-2 2v-13a2 2 0 0 1 2-2Z"/><path d="M4.5 18.5a2 2 0 0 0 2 2H19v-4"/><path d="M9 8h6M9 11.5h4"/></symbol>
     <symbol id="i-multi" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19.5c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.6-.2 4.5 1.7 4.5 4.6"/></symbol>
     <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.5c.7 4.6 2.4 6.3 7 7-4.6.7-6.3 2.4-7 7-.7-4.6-2.4-6.3-7-7 4.6-.7 6.3-2.4 7-7Z"/><path d="M19 3v3.4M17.3 4.7h3.4"/></symbol>
+    <!-- ガチャ：カプセル（上半分をうっすら塗って、曲がったつなぎ目・ツヤ・きらめきを入れたもの） -->
+    <symbol id="i-gacha" viewBox="0 0 24 24"><path d="M3.5 12.6a8.5 8.5 0 0 1 17 0c-5 1.8-12 1.8-17 0Z" fill="currentColor" fill-opacity=".3" stroke="none"/><circle cx="12" cy="12.5" r="8.5"/><path d="M3.5 12.6c5 1.8 12 1.8 17 0"/><path d="M7.2 8.3a5.6 5.6 0 0 1 3.1-2.2"/><path d="M20.4 2.4v2.8M19 3.8h2.8"/></symbol>
   </defs>
 </svg>
 
@@ -64,30 +67,37 @@
      ホーム
      ============================================================ -->
 <div id="home" class="ui-screen">
+  <!-- 上：エナ ＋ 図鑑/メール/カバン。その下に「メイン/イベント/マルチ」のタブ（js/game.js の renderHomeTabs が中身を作る） -->
   <div id="home-header">
     <div id="hh-coin" aria-label="所持エナ"><img id="hh-coin-icon" src="hcoin.png" alt="エナ"><span id="hh-coin-num">0</span></div>
     <div class="hh-icons">
       <button id="zukan-open-btn" class="hh-icon-btn zukan" type="button" aria-label="モンスター図鑑"><svg class="ic"><use href="#i-book"/></svg></button>
-      <button id="mail-open-btn" class="hh-icon-btn mail" aria-label="メール"><svg class="ic"><use href="#i-mail"/></svg><span class="hh-badge"></span></button>
-      <button id="bag-open-btn" class="hh-icon-btn bag" aria-label="カバン"><svg class="ic"><use href="#i-bag"/></svg></button>
-      <button id="mode-toggle-btn" class="hh-icon-btn mode" type="button" aria-label="ステージ一覧を選ぶ" aria-haspopup="menu" aria-expanded="false"><svg class="ic"><use href="#i-map"/></svg><span class="hh-lbl">メイン</span></button>
+      <button id="mail-open-btn" class="hh-icon-btn mail" type="button" aria-label="メール"><svg class="ic"><use href="#i-mail"/></svg><span class="hh-badge"></span></button>
+      <button id="bag-open-btn" class="hh-icon-btn bag" type="button" aria-label="カバン"><svg class="ic"><use href="#i-bag"/></svg></button>
     </div>
+    <nav id="home-tabs" role="tablist" aria-label="ステージの種類"></nav>
   </div>
-  <div id="mode-menu" role="menu" hidden></div>
   <div id="home-main"><div id="home-scroll"><div id="stage-map"></div></div></div>
+  <!-- 下：よく使うボタンを親指の届く位置に。ガチャは右端（金色） -->
   <div id="home-bottom">
     <div class="hb-row">
-      <button class="hb-btn team" id="btn-team">
+      <button class="hb-btn team" id="btn-team" type="button" aria-label="チーム編成（6体を選ぶ）">
         <span class="hb-ico"><svg class="ic"><use href="#i-team"/></svg></span>
-        <span class="hb-txt"><b>チーム編成</b><small>6体を選ぶ</small></span>
+        <span class="hb-txt"><b>編成</b></span>
       </button>
-      <button class="hb-btn grow" id="btn-grow">
+      <button class="hb-btn grow" id="btn-grow" type="button" aria-label="育成（レベルアップ）">
         <span class="hb-ico"><svg class="ic"><use href="#i-grow"/></svg></span>
-        <span class="hb-txt"><b>育成</b><small>レベルアップ</small></span>
+        <span class="hb-txt"><b>育成</b></span>
       </button>
-      <button class="hb-btn evo" id="btn-evo">
+      <button class="hb-btn evo" id="btn-evo" type="button" aria-label="進化（素材で進化させる）">
         <span class="hb-ico"><svg class="ic"><use href="#i-sparkle"/></svg></span>
-        <span class="hb-txt"><b>進化</b><small>素材で進化させる</small></span>
+        <span class="hb-txt"><b>進化</b></span>
+      </button>
+      <button class="hb-btn gacha" id="btn-gacha" type="button" aria-label="ガチャ">
+        <span class="hb-ico"><svg class="ic"><use href="#i-gacha"/></svg></span>
+        <span class="hb-txt"><b>ガチャ</b></span>
+        <!-- 「無料ガチャあり」などを知らせたいときは、この赤丸を style.display='block' で出せます -->
+        <span class="hh-badge"></span>
       </button>
     </div>
   </div>
@@ -102,6 +112,159 @@
     <span id="bag-total"></span>
   </div>
   <div id="bag-grid"></div>
+</div>
+
+<!-- ============================================================
+     ガチャ画面（ホームの「ガチャ」ボタンから開く）  js/gacha.js ／ css/gacha.css
+     いまは見た目だけ。マシン → まわす → ラインナップ の順に並べています
+     ============================================================ -->
+<div id="gacha-screen" class="ui-screen">
+  <!-- 背景：薄い水色の空と雲（絵は CSS/SVG だけ。画像ファイルは使っていません） -->
+  <svg class="gs-sky" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="gs-cloud" viewBox="0 0 130 70"><g fill="#fff"><circle cx="30" cy="38" r="22"/><circle cx="62" cy="28" r="28"/><circle cx="98" cy="38" r="22"/><rect x="8" y="38" width="114" height="24" rx="12"/></g></symbol>
+    </defs>
+    <g class="gs-cloud c1"><use href="#gs-cloud" x="-34" y="110" width="170" height="92" opacity=".95"/></g>
+    <g class="gs-cloud c2"><use href="#gs-cloud" x="268" y="52" width="130" height="70" opacity=".9"/></g>
+    <g class="gs-cloud c3"><use href="#gs-cloud" x="282" y="430" width="150" height="81" opacity=".85"/></g>
+    <g class="gs-cloud c4"><use href="#gs-cloud" x="-48" y="560" width="160" height="86" opacity=".85"/></g>
+    <g class="gs-cloud c5"><use href="#gs-cloud" x="150" y="690" width="210" height="113" opacity=".9"/></g>
+  </svg>
+
+  <div id="gacha-header">
+    <div class="gs-title">
+      <span class="gs-emblem"><svg class="ic"><use href="#i-gacha"/></svg></span>
+      <h1 id="gacha-title">コラボガチャ</h1>
+    </div>
+    <!-- 持っているガチャコインの数 -->
+    <div class="gs-coin" id="gacha-coin" aria-label="所持ガチャコイン"><img id="gacha-coin-img" src="fcoin.png" alt="ガチャコイン" onerror="this.style.visibility='hidden'"><b id="gacha-coin-num">×0</b></div>
+  </div>
+
+  <div id="gacha-main">
+    <!-- ガチャマシン -->
+    <div class="gs-machine-wrap">
+      <svg class="gs-machine" viewBox="0 0 240 316" role="img" aria-label="ガチャマシン">
+        <defs>
+          <linearGradient id="gm-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfe4ff"/></linearGradient>
+          <clipPath id="gm-dome"><circle cx="120" cy="96" r="76"/></clipPath>
+          <clipPath id="gm-outlet"><rect x="136" y="224" width="54" height="48" rx="12"/></clipPath>
+          <!-- カプセル1個：色は use の color で決める -->
+          <symbol id="gm-cap" viewBox="-20 -20 40 40">
+            <circle r="17" fill="currentColor"/>
+            <path d="M-17 0a17 17 0 0 1 34 0Z" fill="#fff" fill-opacity=".5"/>
+            <path d="M-17 0h34" stroke="#1c1f4f" stroke-width="3"/>
+            <circle r="17" fill="none" stroke="#1c1f4f" stroke-width="3.2"/>
+            <path d="M-10 -8a11 11 0 0 1 5-5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          </symbol>
+        </defs>
+        <!-- きらめき -->
+        <g transform="translate(26 48) scale(1)"><path class="gm-sp s1" d="M0 -11C1 -4 4 -1 11 0C4 1 1 4 0 11C-1 4 -4 1 -11 0C-4 -1 -1 -4 0 -11Z" fill="#ffd43b" stroke="#1c1f4f" stroke-width="2.6" stroke-linejoin="round"/></g><g transform="translate(216 70) scale(0.8)"><path class="gm-sp s2" d="M0 -11C1 -4 4 -1 11 0C4 1 1 4 0 11C-1 4 -4 1 -11 0C-4 -1 -1 -4 0 -11Z" fill="#ffd43b" stroke="#1c1f4f" stroke-width="2.6" stroke-linejoin="round"/></g><g transform="translate(18 200) scale(0.65)"><path class="gm-sp s3" d="M0 -11C1 -4 4 -1 11 0C4 1 1 4 0 11C-1 4 -4 1 -11 0C-4 -1 -1 -4 0 -11Z" fill="#ffd43b" stroke="#1c1f4f" stroke-width="2.6" stroke-linejoin="round"/></g><g transform="translate(222 150) scale(0.6)"><path class="gm-sp s1" d="M0 -11C1 -4 4 -1 11 0C4 1 1 4 0 11C-1 4 -4 1 -11 0C-4 -1 -1 -4 0 -11Z" fill="#ffd43b" stroke="#1c1f4f" stroke-width="2.6" stroke-linejoin="round"/></g>
+        <!-- 影と足 -->
+        <ellipse cx="120" cy="306" rx="88" ry="8" fill="#1c1f4f" fill-opacity=".16"/>
+        <rect x="48" y="282" width="42" height="20" rx="8" fill="#1c1f4f"/>
+        <rect x="150" y="282" width="42" height="20" rx="8" fill="#1c1f4f"/>
+        <!-- 本体 -->
+        <rect x="34" y="158" width="172" height="130" rx="24" fill="#ff5f4a" stroke="#1c1f4f" stroke-width="4"/>
+        <path d="M49 184v62" stroke="#fff" stroke-opacity=".38" stroke-width="8" stroke-linecap="round"/>
+        <path d="M44 272h152" stroke="#1c1f4f" stroke-opacity=".18" stroke-width="10" stroke-linecap="round"/>
+        <!-- 上のドーム（ガラス）＋カプセル -->
+        <circle cx="120" cy="96" r="76" fill="url(#gm-glass)"/>
+        <g clip-path="url(#gm-dome)"><g class="gm-caps">
+          <g transform="translate(110 60) rotate(-20)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#22b866"/></g>
+          <g transform="translate(144 60) rotate(10)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#8a5cf6"/></g>
+          <g transform="translate(60 86) rotate(35)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#ff5a3d"/></g>
+          <g transform="translate(94 86) rotate(-15)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#2b86ff"/></g>
+          <g transform="translate(128 86) rotate(25)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#22b866"/></g>
+          <g transform="translate(162 86) rotate(-35)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#ffb400"/></g>
+          <g transform="translate(74 112) rotate(15)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#8a5cf6"/></g>
+          <g transform="translate(108 112) rotate(-30)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#ffb400"/></g>
+          <g transform="translate(142 112) rotate(20)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#2b86ff"/></g>
+          <g transform="translate(176 112) rotate(-15)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#ff5a3d"/></g>
+          <g transform="translate(56 138) rotate(-20)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#2b86ff"/></g>
+          <g transform="translate(90 138) rotate(25)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#22b866"/></g>
+          <g transform="translate(124 138) rotate(-10)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#ff5a3d"/></g>
+          <g transform="translate(158 138) rotate(30)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#8a5cf6"/></g>
+          <g transform="translate(192 138) rotate(-25)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#ffb400"/></g>
+        </g></g>
+        <circle cx="120" cy="96" r="76" fill="none" stroke="#1c1f4f" stroke-width="4"/>
+        <path d="M62 72a62 62 0 0 1 30-32" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-opacity=".95"/>
+        <circle cx="56" cy="90" r="4" fill="#fff" fill-opacity=".95"/>
+        <!-- ドームと本体のつなぎ（金色の輪） -->
+        <rect x="44" y="152" width="152" height="22" rx="11" fill="#ffd43b" stroke="#1c1f4f" stroke-width="4"/>
+        <path d="M58 160h40" stroke="#fff" stroke-opacity=".7" stroke-width="4" stroke-linecap="round"/>
+        <!-- 星の札 -->
+        <rect x="62" y="182" width="116" height="26" rx="13" fill="#fff" stroke="#1c1f4f" stroke-width="3.5"/>
+        <path transform="translate(94 195)" d="M0 -7 L1.76 -2.43 L6.66 -2.16 L2.85 0.93 L4.11 5.66 L0 3 L-4.11 5.66 L-2.85 0.93 L-6.66 -2.16 L-1.76 -2.43Z" fill="#ffd43b" stroke="#1c1f4f" stroke-width="1.8" stroke-linejoin="round"/><path transform="translate(120 195)" d="M0 -7 L1.76 -2.43 L6.66 -2.16 L2.85 0.93 L4.11 5.66 L0 3 L-4.11 5.66 L-2.85 0.93 L-6.66 -2.16 L-1.76 -2.43Z" fill="#ffd43b" stroke="#1c1f4f" stroke-width="1.8" stroke-linejoin="round"/><path transform="translate(146 195)" d="M0 -7 L1.76 -2.43 L6.66 -2.16 L2.85 0.93 L4.11 5.66 L0 3 L-4.11 5.66 L-2.85 0.93 L-6.66 -2.16 L-1.76 -2.43Z" fill="#ffd43b" stroke="#1c1f4f" stroke-width="1.8" stroke-linejoin="round"/>
+        <!-- つまみ（まわすと回る） -->
+        <circle cx="88" cy="246" r="30" fill="#fff" stroke="#1c1f4f" stroke-width="4"/>
+        <circle cx="88" cy="246" r="23" fill="#ffd43b" stroke="#1c1f4f" stroke-width="3"/>
+        <g transform="translate(88 246)"><g class="gm-knob"><rect x="-22" y="-6.5" width="44" height="13" rx="6.5" fill="#1c1f4f"/><circle r="5" fill="#fff"/></g></g>
+        <!-- とりだし口（カプセルがのぞく） -->
+        <rect x="136" y="224" width="54" height="48" rx="12" fill="#1c1f4f"/>
+        <g clip-path="url(#gm-outlet)">
+          <g id="gm-peek" transform="translate(163 268) rotate(-12)"><use href="#gm-cap" x="-20" y="-20" width="40" height="40" style="color:#ffb400"/></g>
+          <!-- まわしたときに上から落ちてくるカプセル（js/gacha.js が色と動きを付ける） -->
+          <g id="gm-drop" style="display:none"><use id="gm-drop-cap" href="#gm-cap" x="-20" y="-20" width="40" height="40"/></g>
+        </g>
+        <rect x="136" y="224" width="54" height="11" rx="5.5" fill="#3a3f8f"/>
+        <rect x="136" y="224" width="54" height="48" rx="12" fill="none" stroke="#1c1f4f" stroke-width="4"/>
+      </svg>
+    </div>
+
+    <!-- まわす（大）／ラインナップ（小） -->
+    <div class="gs-actions">
+      <button id="gacha-spin-btn" class="btn btn-primary btn-cta" type="button"><span class="gs-spin-txt">まわす</span><small class="gs-spin-cost" id="gacha-spin-cost"><img id="gacha-cost-img" src="fcoin.png" alt="" onerror="this.style.display='none'"><span id="gacha-cost-txt">ガチャコイン ×1</span></small></button>
+      <button id="gacha-lineup-btn" class="btn" type="button">ラインナップ<svg class="ic"><use href="#i-chev"/></svg></button>
+    </div>
+  </div>
+
+  <div id="gacha-footer">
+    <button id="gacha-back" class="btn-back" type="button" aria-label="ホームへもどる"><svg class="ic"><use href="#i-back"/></svg></button>
+  </div>
+  <div id="gacha-toast" role="status" aria-live="polite"></div>
+
+  <!-- カプセル演出：取り出し口から出たカプセルが画面中央にきて、タップで開く（js/gacha.js が動かす） -->
+  <div id="gacha-stage" class="gc-stage" hidden>
+    <div class="gc-dim"></div>
+    <div class="gc-obj" id="gacha-obj">
+      <div class="gc-aura"></div>
+      <svg class="gc-capsvg" id="gacha-capsvg" viewBox="-24 -24 48 48" aria-hidden="true" focusable="false">
+        <g class="gc-bot"><path d="M-17 0a17 17 0 0 0 34 0Z" fill="currentColor" stroke="#1c1f4f" stroke-width="3.2" stroke-linejoin="round"/></g>
+        <g class="gc-top">
+          <path d="M-17 0a17 17 0 0 1 34 0Z" fill="currentColor" stroke="#1c1f4f" stroke-width="3.2" stroke-linejoin="round"/>
+          <path d="M-17 0a17 17 0 0 1 34 0Z" fill="#fff" fill-opacity=".5"/>
+          <path d="M-10 -8a11 11 0 0 1 5-5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+    <div class="gc-tap" id="gacha-tap">タップ！</div>
+    <div class="gc-fx" id="gacha-fx"></div>
+  </div>
+
+  <!-- ラインナップ（出るモンスターの一覧。js/gacha.js が中身を作る） -->
+  <div id="gacha-lineup" class="gs-modal" hidden>
+    <div class="gs-card" role="dialog" aria-label="ラインナップ">
+      <div class="gs-card-title">ラインナップ</div>
+      <p class="gs-card-sub" id="gacha-lineup-sub">この中から1匹が出ます</p>
+      <div class="gs-lu-grid" id="gacha-lineup-grid"></div>
+      <button id="gacha-lineup-close" class="btn" type="button">とじる</button>
+    </div>
+  </div>
+
+  <!-- 結果（出たモンスター） -->
+  <div id="gacha-result" class="gs-modal" hidden>
+    <div class="gs-card gs-res" role="dialog" aria-label="ガチャ結果">
+      <div class="gs-card-title" id="gacha-res-head">GET！</div>
+      <div class="gs-res-tile" id="gacha-res-tile" data-attr="fire">
+        <img id="gacha-res-img" src="" alt="" onerror="this.style.visibility='hidden'">
+        <span class="gs-new" id="gacha-res-new">NEW</span>
+      </div>
+      <div class="gs-res-stars" id="gacha-res-stars"></div>
+      <div class="gs-res-name" id="gacha-res-name"></div>
+      <p class="gs-card-sub">ボックスに入りました</p>
+      <button id="gacha-res-ok" class="btn btn-primary" type="button">OK</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================
@@ -634,6 +797,11 @@
   <div id="mail-detail-body">
     <p id="md2-content-text"></p>
     <div id="md2-reward-area"></div>
+    <div id="md2-code-area" style="display:none;">
+      <input id="md2-code-input" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ID を入力">
+      <button id="md2-code-btn" class="btn btn-primary btn-cta">受け取る</button>
+      <div id="md2-code-msg"></div>
+    </div>
     <button id="md2-receive-btn" class="btn btn-primary btn-cta" style="display:none;"><svg class="ic"><use href="#i-gift"/></svg>受け取る</button>
     <div id="md2-received-area"></div>
   </div>
@@ -764,6 +932,7 @@
 <script src="js/data/exp.js"></script>
 <script src="js/data/mail.js"></script>
 <script src="js/data/items.js"></script>
+<script src="js/data/gacha.js"></script>
 <!-- ゲーム本体 -->
 <script src="js/damage-number.js"></script>
 <script src="js/skill-text.js"></script>
@@ -783,6 +952,7 @@
 <script src="js/evo-puzzle.js"></script>
 <script src="js/evo-scene.js"></script>
 <script src="js/zukan.js"></script>
+<script src="js/gacha.js"></script>
 <script src="js/allattack-fx.js"></script>
 <script src="js/enemy-attack-fx.js"></script>
 <script src="js/cutin.js"></script>

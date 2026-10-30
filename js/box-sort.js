@@ -77,7 +77,7 @@
   }
 
   // タイプの並び（monster-editor.html の DEFAULT_TYPES と同じ。ないタイプは最後）
-  const TYPE_ORDER = ['バランス', 'こうげき', 'たいりょく', 'かいふく', 'バード', 'マター', '悪魔'];
+  const TYPE_ORDER = ['バランス', 'こうげき', 'たいりょく', 'かいふく', 'バード', 'マター', '悪魔', '神秘'];
   const typeRank = t => { const i = TYPE_ORDER.indexOf(t); return i < 0 ? TYPE_ORDER.length : i; };
 
   // 同じモンスターのスキル・リーダースキルのキーは何度も作らない

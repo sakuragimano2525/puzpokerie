@@ -158,36 +158,61 @@
   position: relative; width: 100vw; height: 100vh; height: var(--app-h, 100dvh);
   overflow: hidden;
 }
-#home-header { flex-shrink: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: calc(12px + env(safe-area-inset-top)) var(--gutter) 10px; }
-/* 所持コイン: 右のアイコンボタンと同じ白カード＋太い縁＋下影 */
-#hh-coin { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 112px; max-width: 240px; height: 46px; padding: 0 14px 0 8px; margin-right: 12px; box-sizing: border-box; overflow: hidden; color: var(--ink); background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 15px; box-shadow: 0 4px 0 var(--ink); }
-#hh-coin-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
-#hh-coin-num { flex: 1; min-width: 0; text-align: right; font: 400 1.35rem/1 var(--ff-num); letter-spacing: 0.02em; color: var(--ink); white-space: nowrap; }
+/* ── 上：1行目＝エナ＋図鑑/メール/カバン　2行目＝メイン/イベント/マルチのタブ ──
+   （ガチャはエナの右に置くと桁数で窮屈になるので、下のドックに置いている） */
+#home-header {
+  flex-shrink: 0; z-index: 10;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) var(--gutter) 10px;
+}
+/* 所持エナ: 白カード＋太い縁＋下影。右のボタンは3つだけなので横にゆとりがある（桁が増えたら文字を縮めて枠に収める） */
+#hh-coin { order: 1; display: flex; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0; max-width: 260px; height: 48px; padding: 0 14px 0 8px; box-sizing: border-box; overflow: hidden; color: var(--ink); background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); }
+#hh-coin-icon { width: 30px; height: 30px; object-fit: contain; flex-shrink: 0; }
+#hh-coin-num { flex: 1; min-width: 0; text-align: right; font: 400 1.4rem/1 var(--ff-num); letter-spacing: 0.02em; color: var(--ink); white-space: nowrap; }
 /* 桁が増えたら文字を小さくして、枠に収める（9,999,999 でも入る） */
 #hh-coin-num[data-len="6"], #hh-coin-num[data-len="7"] { font-size: 1.2rem; }
 #hh-coin-num[data-len="8"], #hh-coin-num[data-len="9"] { font-size: 1.05rem; letter-spacing: 0; }
 #hh-coin-num[data-len="10"], #hh-coin-num[data-len="11"], #hh-coin-num[data-len="12"] { font-size: 0.9rem; letter-spacing: 0; }
-.hh-icons { display: flex; flex-shrink: 0; gap: 12px; }
+.hh-icons { order: 2; display: flex; flex-shrink: 0; gap: 8px; margin-left: auto; }
 .hh-icon-btn {
-  position: relative; width: 46px; height: 46px; padding: 0;
+  position: relative; width: 48px; height: 48px; padding: 0;
   display: grid; place-items: center; font-size: 1.35rem;
   color: var(--ink); background: var(--paper);
-  border: var(--bw) solid var(--ink); border-radius: 15px; box-shadow: 0 4px 0 var(--ink);
+  border: var(--bw) solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink);
   cursor: pointer; touch-action: manipulation; transition: transform 0.06s, box-shadow 0.06s;
 }
 .hh-icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
-/* イベント／メイン切替ボタン（右上）。イベント一覧表示中は黄色、未開放のあいだはグレー */
-/* ラベル付き：押すと行き先が文字でわかる。イベントへ＝オレンジ、メインへ戻る＝紺（下の編成=青／育成=緑／進化=紫と色をかぶらせない） */
-.hh-icon-btn.mode { flex-direction: column; gap: 1px; align-content: center; justify-items: center; padding-top: 3px; color: #fff; background: #ff8a1f; }
-.hh-icon-btn.mode .ic { width: 1.25rem; height: 1.25rem; stroke-width: 2.4; }
-.hh-icon-btn.mode .hh-lbl { display: block; font: 900 0.52rem/1 var(--ff); letter-spacing: 0; white-space: nowrap; }
-.hh-icon-btn.mode.on { background: var(--ink); }
-/* マルチ一覧ボタン（図鑑の左）。ふだん=ティール、表示中=紺（押すとメインへ戻る） */
-.hh-icon-btn.mode.is-multi { background: #12a594; }
-.hh-icon-btn.mode.multi.on { background: var(--ink); }
-.hh-icon-btn.mode.locked { color: var(--ink-3); border-color: var(--ink-3); box-shadow: 0 4px 0 var(--ink-3); background: #f3f6fd; }
-.hh-icon-btn.mode.locked::after { content: ''; position: absolute; right: -6px; bottom: -6px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10.5' width='14' height='10' rx='3'/%3E%3Cpath d='M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5'/%3E%3C/svg%3E") center/10px no-repeat; border: 2px solid #fff; }
 .hh-badge { display: none; position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; border-radius: 50%; background: var(--coral); border: var(--bw) solid var(--ink); }
+/* 幅のせまい端末（〜380px）は少しつめる */
+@media (max-width: 380px) {
+  #home-header { gap: 8px; }
+  .hh-icons { gap: 6px; }
+  .hh-icon-btn { width: 44px; height: 44px; border-radius: 14px; }
+  #hh-coin { height: 44px; border-radius: 14px; padding: 0 10px 0 6px; }
+  #hh-coin-icon { width: 26px; height: 26px; }
+}
+
+/* ステージの種類タブ（メイン / イベント / マルチ）。1タップで切り替え。選んでいるタブはその色で塗る */
+#home-tabs { order: 3; flex: 1 0 100%; display: flex; gap: 4px; padding: 3px; box-sizing: border-box; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 17px; box-shadow: 0 4px 0 var(--ink); }
+.ht-tab {
+  --tc: #3b6ff0;
+  appearance: none; -webkit-appearance: none;
+  position: relative; flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font: 900 0.9rem/1 var(--ff); letter-spacing: 0.06em; white-space: nowrap;
+  color: var(--ink-2); background: transparent;
+  border: var(--bw) solid transparent; border-radius: 13px;
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.12s, color 0.12s, transform 0.06s;
+}
+.ht-tab .ic { width: 1.15rem; height: 1.15rem; stroke-width: 2.4; }
+.ht-tab.main  { --tc: #3b6ff0; }
+.ht-tab.event { --tc: #ff8a1f; }
+.ht-tab.multi { --tc: #12a594; }
+.ht-tab:active { transform: translateY(1px); }
+.ht-tab.on { color: #fff; background: var(--tc); border-color: var(--ink); box-shadow: 0 2px 0 var(--ink); }
+.ht-tab.locked { color: var(--ink-3); }   /* 未開放（イベントはエリア6クリアまで）。押すと理由が出る */
+.ht-tab:focus-visible { outline: 3px solid var(--water); outline-offset: 2px; }
 
 #home-main { flex: 1; min-height: 0; position: relative; overflow: hidden; }
 #home-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px); mask-image: linear-gradient(to bottom, transparent 0, #000 16px); }
@@ -199,7 +224,7 @@
 /* ---- イベントステージ一覧（メインのマップと入れ替わる、シンプルな表示） ---- */
 #stage-map.event { gap: 14px; padding: 10px var(--gutter) 24px var(--gutter); }
 #stage-map.event::before { display: none; }
-.ev-head { font: 900 0.8rem/1.3 var(--ff); letter-spacing: 0.12em; color: var(--ink-2); padding: 2px 4px 0; }
+.ev-head { display: none; }   /* 見出しは上のタブ（イベント／マルチ）が兼ねるので出さない */
 /* イベントのカードはメインと同じ「右にダンジョン画像」のバンド（番号・エリア表記・道すじ点は無し） */
 .area-band.evt { background: var(--paper); }
 .area-band.evt::after { content: none; }
@@ -285,24 +310,24 @@
 .area-band.locked .area-node::after { background: var(--ink-3); }
 .area-band.locked .area-state { color: var(--ink-3); border-color: var(--ink-3); box-shadow: 0 3px 0 var(--ink-3); }
 
-/* 下のドック */
+/* 下のドック：編成 / 育成 / 進化 / ガチャ（親指で押しやすい高さ。説明文は省いて、アイコン＋短い名前に） */
 #home-bottom {
   flex-shrink: 0; z-index: 10; position: relative;
   display: flex; flex-direction: column; gap: 12px;
-  padding: 14px var(--gutter) calc(12px + env(safe-area-inset-bottom));
+  padding: 12px var(--gutter) calc(10px + env(safe-area-inset-bottom));
   background: var(--paper); border-top: var(--bw) solid var(--ink);
 }
-.hb-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hb-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.22fr); gap: 8px; }
 .hb-btn {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  min-height: 92px; padding: 10px 6px; text-align: center;
+  min-height: 82px; padding: 9px 2px 8px; text-align: center;
   color: var(--ink); background: var(--paper);
   border: var(--bw) solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink);
   cursor: pointer; touch-action: manipulation; transition: transform 0.06s, box-shadow 0.06s;
 }
 .hb-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
-.hb-ico { width: 42px; height: 42px; flex-shrink: 0; display: grid; place-items: center; font-size: 1.35rem; color: #fff; border: var(--bw) solid var(--ink); border-radius: 13px; }
-/* 3ボタンを色で見分けやすく：アイコン色＋うっすら同色の背景＋同色の文字（編成=青／育成=緑／進化=紫） */
+.hb-ico { width: 40px; height: 40px; flex-shrink: 0; display: grid; place-items: center; font-size: 1.35rem; color: #fff; border: var(--bw) solid var(--ink); border-radius: 12px; }
+/* 4ボタンを色で見分けやすく：アイコン色＋うっすら同色の背景（編成=青／育成=緑／進化=紫／ガチャ=金） */
 .hb-btn.team { background: var(--water-t); }
 .hb-btn.grow { background: var(--wood-t); }
 .hb-btn.evo  { background: var(--dark-t); }
@@ -311,13 +336,27 @@
 .hb-btn.evo .hb-ico { background: var(--dark); }
 .hb-ico .ic { width: 1.5rem; height: 1.5rem; stroke-width: 2.4; }
 .hb-txt { min-width: 0; }
-.hb-txt b { display: block; font: 900 0.98rem/1.15 var(--ff); letter-spacing: 0.04em; }
-.hb-txt small { display: block; margin-top: 3px; text-align: center; font: 700 0.66rem/1.2 var(--ff); color: var(--ink-2); }
+.hb-txt b { display: block; font: 900 0.88rem/1.1 var(--ff); letter-spacing: 0.04em; white-space: nowrap; }
+/* ガチャ：横幅が少し広い金色のボタン。ときどきツヤが横切る */
+.hb-btn.gacha { background: linear-gradient(180deg, #fff7d1 0%, var(--light-t) 100%); }
+.hb-btn.gacha .hb-ico { background: linear-gradient(155deg, #ffd24d 0%, #ff8a1f 100%); }
+.hb-btn.gacha .hb-ico .ic { width: 1.8rem; height: 1.8rem; stroke-width: 2.2; }
+.hb-btn.gacha > .hb-ico, .hb-btn.gacha > .hb-txt { position: relative; z-index: 1; }   /* ツヤは文字やアイコンの後ろを通す */
+.hb-btn.gacha::after {
+  content: ''; position: absolute; z-index: 0; inset: 0; border-radius: 15px; pointer-events: none;
+  background: linear-gradient(105deg, transparent 44%, rgba(255,255,255,0.8) 50%, transparent 56%) 100% 0 / 250% 100% no-repeat;
+  animation: gachaShine 3.8s ease-in-out infinite;
+}
+@keyframes gachaShine { 0%, 62% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .hb-btn.gacha::after { animation: none; display: none; } }
+.hb-btn .hh-badge { top: -9px; right: -7px; z-index: 2; }
+/* 一言メッセージ（「準備中です」など）：親指の近く＝ドックのすぐ上に出す。位置は game.js の homeToast がドックの高さに合わせる */
 #home-toast, #ss-toast {
   position: absolute; left: 50%; top: calc(76px + env(safe-area-inset-top)); transform: translate(-50%, -6px); z-index: 20;
   padding: 10px 18px; font: 900 0.82rem/1 var(--ff); color: #fff; background: var(--ink); border-radius: 999px; box-shadow: 3px 3px 0 var(--sun);
   opacity: 0; pointer-events: none; transition: opacity 0.18s, transform 0.18s;
 }
+#home-toast { top: auto; bottom: calc(112px + env(safe-area-inset-bottom)); transform: translate(-50%, 6px); width: max-content; max-width: min(88vw, 420px); box-sizing: border-box; text-align: center; line-height: 1.45; border-radius: 18px; text-wrap: balance; }
 #home-toast.show, #ss-toast.show { opacity: 1; transform: translate(-50%, 0); }
 #ss-toast { white-space: nowrap; position: fixed; top: auto; bottom: calc(40px + env(safe-area-inset-bottom)); z-index: 90; }
 
@@ -1169,17 +1208,10 @@ button.cs-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--in
 #evo-result.quick.play #evo-result-text  { animation: evoFade 0.5s 1.3s forwards; }
 #evo-result.quick.play #evo-result-ok    { animation: evoFade 0.4s 1.6s forwards; }
 
-/* 右上のモード切替ボタン → タブ（メイン／イベント／マルチ） */
-.hh-icon-btn.mode.is-multi { background: #12a594; }
-#mode-menu { position: fixed; z-index: 500; display: flex; flex-direction: column; gap: 6px; padding: 8px;
-  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); min-width: 132px; }
-#mode-menu[hidden] { display: none; }
-#mode-menu .mm-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; cursor: pointer;
-  font: 900 0.95rem/1 var(--ff); color: #fff; border: var(--bw) solid var(--ink); border-radius: 12px; background: #ff8a1f; touch-action: manipulation; }
-#mode-menu .mm-item .ic { width: 1.35rem; height: 1.35rem; stroke-width: 2.4; flex-shrink: 0; }
-#mode-menu .mm-item.main  { background: #3b6ff0; }
-#mode-menu .mm-item.event { background: #ff8a1f; }
-#mode-menu .mm-item.multi { background: #12a594; }
-#mode-menu .mm-item.on { outline: 3px solid var(--ink); outline-offset: 1px; }
-#mode-menu .mm-item.locked { color: var(--ink-3); background: #f3f6fd; border-color: var(--ink-3); }
-#mode-menu .mm-item:active { transform: translateY(2px); }
+
+/* ふしぎなおくりもの */
+#md2-code-area { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+#md2-code-input { width: 100%; box-sizing: border-box; padding: 12px 14px; font: 800 1rem/1.2 var(--ff); letter-spacing: 0.06em; background: var(--paper); color: var(--ink); border: var(--bw) solid var(--ink); border-radius: 14px; outline: none; }
+#md2-code-input:focus { box-shadow: 0 0 0 3px var(--sun); }
+#md2-code-msg { min-height: 1.2em; text-align: center; font: 800 0.88rem/1.4 var(--ff); }
+#md2-code-msg.ok { color: var(--ink); } #md2-code-msg.ng { color: var(--coral); }
