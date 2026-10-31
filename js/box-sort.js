@@ -269,8 +269,26 @@
     host.querySelectorAll(':scope > .sort-sheet').forEach(s => s.remove());
   }
 
+  // ── 属性検索（主属性・副属性）──────────────────────────────
+  //   主属性が選んだ属性に当てはまる … 0（上）／副属性だけが当てはまる … 1（下）／どちらも外れ … -1
+  function attrMatchRank(mon, sel) {
+    if (!mon || !sel || !sel.size) return 0;
+    if (sel.has(mon.attr)) return 0;
+    if (mon.sub && sel.has(mon.sub)) return 1;
+    return -1;
+  }
+  // 並び替えが済んだ一覧を、主属性で当てはまる組 → 副属性だけで当てはまる組 の順に分ける（それぞれの中の並びは変えない）
+  function groupByAttrMatch(list, sel, monsters) {
+    if (!sel || !sel.size) return list;
+    const m = monsters || global.MONSTER_DATA || {};
+    const top = [], low = [];
+    list.forEach(e => { (attrMatchRank(m[e.monsterId], sel) === 1 ? low : top).push(e); });
+    return top.concat(low);
+  }
+
   global.BoxSort = {
     MODES, MODE_BY_ID,
+    attrMatchRank, groupByAttrMatch,
     makeState, saveState, pick, effDir, buttonLabel,
     sort: sortList, valueText, attachValue, hasValue,
     openSheet, closeSheet,

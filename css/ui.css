@@ -1236,3 +1236,9 @@ button.cs-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--in
 #md2-code-input:focus { box-shadow: 0 0 0 3px var(--sun); }
 #md2-code-msg { min-height: 1.2em; text-align: center; font: 800 0.88rem/1.4 var(--ff); }
 #md2-code-msg.ok { color: var(--ink); } #md2-code-msg.ng { color: var(--coral); }
+
+/* ═══ 副属性（2属性モンスター）：主属性アイコンの右下に、副属性アイコンを小さく重ねる ═══ */
+.attr-dual { position: relative; display: inline-block; flex-shrink: 0; line-height: 0; }
+.attr-dual-sub { position: absolute; right: -1px; bottom: -1px; width: 50%; height: 50%; object-fit: cover; border-radius: 50%; border: 2px solid var(--ink, #222); background: #fff; box-shadow: 0 1px 0 var(--ink, #222); pointer-events: none; }
+.zk-info-namerow .attr-dual { width: 30px; height: 30px; }
+.zk-info-namerow .attr-dual .zk-info-attr { width: 100%; height: 100%; }

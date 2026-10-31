@@ -129,9 +129,9 @@
     const entries = allIds().map(entryOf);
     if (filterOn()) {
       const hit = entries.filter(e => statusOf(e.monsterId) > 0
-        && (!attrOn() || attrSel.has(MONSTER_DATA[e.monsterId].attr))
+        && (!attrOn() || BoxSort.attrMatchRank(MONSTER_DATA[e.monsterId], attrSel) >= 0)   // 主属性 or 副属性
         && (!lsOn() || lsFilter.match(MONSTER_DATA[e.monsterId])));
-      return BoxSort.sort(hit, sortState, sortCtx);
+      return BoxSort.groupByAttrMatch(BoxSort.sort(hit, sortState, sortCtx), attrSel, MONSTER_DATA);   // 主属性が合う順 → 副属性だけ合う順
     }
     if (sortState.mode === 'acq') return BoxSort.sort(entries, sortState, sortCtx);   // ID順（向きを逆にすると大きい番号から）
     const shown = entries.filter(e => statusOf(e.monsterId) > 0);
@@ -349,7 +349,16 @@
       ai.onerror = () => { ai.style.display = 'none'; };
       ai.onload = () => { ai.style.display = ''; };
       ai.src = ATTR_IMG[mon.attr] + '.png';
-      nameRow.appendChild(ai);
+      if (mon.sub && ATTR_IMG[mon.sub]) {   // 副属性：主属性アイコンの右下に小さく重ねる
+        const wrap = el('span', 'attr-dual');
+        wrap.appendChild(ai);
+        const si = el('img', 'attr-dual-sub');
+        si.alt = ATTR_JP[mon.sub] || mon.sub;
+        si.onerror = () => { si.style.display = 'none'; };
+        si.src = ATTR_IMG[mon.sub] + '.png';
+        wrap.appendChild(si);
+        nameRow.appendChild(wrap);
+      } else nameRow.appendChild(ai);
     }
     nameRow.appendChild(el('span', 'zk-info-name', mon.name));
     nameRow.appendChild(typeNode(mon));

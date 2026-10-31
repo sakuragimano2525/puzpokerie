@@ -4736,7 +4736,7 @@ function renderTeMonsterGrid() {
   const filtered = box.filter(entry => {
     const mon = MONSTER_DATA[entry.monsterId];
     if (!mon) return false;
-    if (activeAttrFilters.size > 0 && !activeAttrFilters.has(mon.attr)) return false;
+    if (BoxSort.attrMatchRank(mon, activeAttrFilters) < 0) return false;   // 主属性 or 副属性
     if (activeTypeFilters.size > 0 && !activeTypeFilters.has(mon.type)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -4747,7 +4747,7 @@ function renderTeMonsterGrid() {
   });
   const teamMap = {};
   for (let i = 0; i < 6; i++) if (currentTeam[i] !== null) teamMap[currentTeam[i]] = i;
-  const sorted = BoxSort.sort(filtered, teSort, { monsters: MONSTER_DATA, stats: calcMonsterStats });   // 編成済みでも先頭には移動しない
+  const sorted = BoxSort.groupByAttrMatch(BoxSort.sort(filtered, teSort, { monsters: MONSTER_DATA, stats: calcMonsterStats }), activeAttrFilters, MONSTER_DATA);   // 主属性が合う順 → 副属性だけ合う順   // 編成済みでも先頭には移動しない
   detailListOrder['team-edit'] = sorted.map(e => e.uid);   // ステータス画面の左右ボタンは、この並び順で巡回する
   let anyVal = false;
   sorted.forEach(entry => {
@@ -5086,7 +5086,7 @@ function renderIkuGrid() {
   const filtered = box.filter(entry => {
     const mon = MONSTER_DATA[entry.monsterId];
     if (!mon) return false;
-    if (ikuAttrFilter.size > 0 && !ikuAttrFilter.has(mon.attr)) return false;
+    if (BoxSort.attrMatchRank(mon, ikuAttrFilter) < 0) return false;   // 主属性 or 副属性
     if (ikuLS && !ikuLS.match(mon)) return false;   // リーダースキル検索
     return true;
   });
@@ -5100,7 +5100,7 @@ function renderIkuGrid() {
     teamUids: currentTeam,
     expOf: e => ikuMatExp(e, baseMonForSort)
   };
-  const sorted = BoxSort.sort(filtered, ikuSort, sortCtx);
+  const sorted = BoxSort.groupByAttrMatch(BoxSort.sort(filtered, ikuSort, sortCtx), ikuAttrFilter, MONSTER_DATA);   // 主属性が合う順 → 副属性だけ合う順
   detailListOrder['iku-screen'] = sorted.map(e => e.uid);   // ステータス画面の左右ボタンは、この並び順で巡回する
   let anyVal = false;
 
@@ -5331,7 +5331,19 @@ function renderMonsterDetail() {
   aImg.src = `${ATTR_TO_IMG[mon.attr] || '1'}.png`;
   aImg.alt = mon.attr;
   aImg.onerror = () => { aImg.style.display = 'none'; };
-  attrEl.appendChild(aImg);
+  const subA = subAttrOf(mon);
+  if (subA && ATTR_TO_IMG[subA]) {   // 副属性：主属性アイコンの右下に小さく重ねる
+    const wrap = document.createElement('span');
+    wrap.className = 'attr-dual';
+    wrap.appendChild(aImg);
+    const sImg = document.createElement('img');
+    sImg.className = 'attr-dual-sub';
+    sImg.src = `${ATTR_TO_IMG[subA]}.png`;
+    sImg.alt = subA;
+    sImg.onerror = () => { sImg.style.display = 'none'; };
+    wrap.appendChild(sImg);
+    attrEl.appendChild(wrap);
+  } else attrEl.appendChild(aImg);
   document.getElementById('md-name').textContent = mon.name;
   const maxLvD = getMonsterMaxLevel(mon);
   document.getElementById('md-level').textContent = `Lv${entry.level} / ${maxLvD}`;
