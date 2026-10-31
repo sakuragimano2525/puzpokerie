@@ -9731,7 +9731,8 @@ const DUNGEON_DATA = {
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
-              "rate": 0.05
+              "rate": 0.05,
+              "monsterId": 92
             },
             "drops": [
               {
@@ -9894,7 +9895,8 @@ const DUNGEON_DATA = {
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
-              "rate": 0.05
+              "rate": 0.05,
+              "monsterId": 92
             },
             "drops": [
               {
