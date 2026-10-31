@@ -182,7 +182,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'wood',
     type: 'かいふく',
-    maxLevel: 1,
+    maxLevel: 25,
     baseExp: 100,
     stats: { hp: { min: 46, max: 271 }, atk: { min: 105, max: 207 }, rec: { min: 25, max: 109 } },
     skill: { name: 'いやしのひかり', sp: 2, desc: 'HPを最大HPの20%回復。', effects: [ { type: 'heal', value: 0.2 } ] },
@@ -2819,7 +2819,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 250,
+    baseExp: 1500,
     stats: { hp: { min: 460, max: 3050 }, atk: { min: 290, max: 1950 }, rec: { min: 21, max: 60 } },
     skill: {
       name: 'げんしのほうこう',

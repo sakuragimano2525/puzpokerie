@@ -74,7 +74,7 @@
     grid-area:skill; z-index:3;
     padding:3px 8px;
   }
-  .ls-text { font-size:0.62rem; -webkit-line-clamp:2; }
+  .ls-text { font-size:0.62rem; max-height:2.6em; }
 
   /* ── その下：操作時間バー（右カラム用に移動した #time-row） ── */
   #ls-timer-slot {

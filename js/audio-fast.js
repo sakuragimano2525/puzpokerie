@@ -24,7 +24,10 @@
   const held = () => { try { return !!(window.AssetHold && AssetHold.active()); } catch (e) { return false; } };   // ダンジョンに入る前後は裏の読み込みを止める（preload.js の合図）
   const SE_MAX_BYTES  = 450 * 1024;                          // これより大きい音（長いジングル等）は変換せず、今まで通りに鳴らす（メモリ節約）
   const BGM_BUDGET    = (IS_IOS ? 40 : 120) * 1024 * 1024;   // BGMをメモリに置く合計の上限
-  const NO_FAST_SE    = { cutin: 1 };                        // cutin.js が <audio> の長さで表示時間を決めている音
+  const NO_FAST_SE    = { cutin: 1, skillwin: 1 };           // <audio> の長さで表示時間を決めている音（cutin.js／敵スキルのウインドウ）
+  const KEEP_FILES   = ['skillwin.wav', 'cutin.mp3'];        // 上の2つ：メモリ(blob)に置いて、いつでもすぐ鳴らせる状態にしておく
+  const PRIO_SE       = ['damage','damageh','down','bind','dna','orblock','bshield','combok','kei','barrier','ikari','healk','darkness','change','pahu','roo','poison','kieru','chip'];   // 敵スキル・敵の行動で鳴る音：先に読み込む
+  const SE_MAX_BYTES_PRIO = 1200 * 1024;                     // 敵スキル系は少し大きくても変換する（変換できないと遅い方法で鳴るため）
 
   let ctx = null;
   try { ctx = new AC({ latencyHint: 'interactive' }); } catch (e) { try { ctx = new AC(); } catch (e2) { return; } }
@@ -47,6 +50,8 @@
   const skipped = new Set();   // 大きすぎ・失敗（今まで通りに鳴らす）
   const queued  = new Set();
   const queue   = [];
+  const prioQueue = [];       // 敵スキル系：ダンジョンに入る前後でも止めずに読み込む
+  const PRIO_FILES = new Set();
   let running = 0;
   const CONC = LOW_END ? 2 : 3;
 
@@ -59,7 +64,11 @@
     return fetch(file)
       .then(r => { if (!r.ok) throw new Error('http'); return r.arrayBuffer(); })
       .then(ab => {
-        if (ab.byteLength > SE_MAX_BYTES) { skipped.add(file); return; }
+        if (ab.byteLength > (PRIO_FILES.has(file) ? SE_MAX_BYTES_PRIO : SE_MAX_BYTES)) {
+          skipped.add(file);
+          prefetchBGM(file, false);   // 変換しない大きな音も、メモリ(blob)に置いておく → <audio> で鳴らす時もすぐ鳴る
+          return;
+        }
         return decode(ab).then(buf => { buffers.set(file, buf); });
       })
       .catch(() => {
@@ -69,18 +78,20 @@
   }
   let _pumpTimer = null;
   function pump() {
-    if (held() && queue.length) {                       // ダンジョンに入る前後：少し待ってから再開
-      if (!_pumpTimer) _pumpTimer = setTimeout(() => { _pumpTimer = null; pump(); }, 400);
-      return;
-    }
-    while (running < CONC && queue.length) {
-      const f = queue.shift(); running++;
+    while (running < CONC && (prioQueue.length || (queue.length && !held()))) {
+      const f = prioQueue.length ? prioQueue.shift() : queue.shift(); running++;
       loadSE(f).then(() => { running--; if (LOW_END) setTimeout(pump, 30); else pump(); });   // 軽量モードは1つずつ間をあける
     }
+    if (queue.length && !prioQueue.length && held() && !_pumpTimer) _pumpTimer = setTimeout(() => { _pumpTimer = null; pump(); }, 400);   // ダンジョンに入る前後：少し待ってから再開
   }
-  function enqueueSE(file) {
-    if (!file || queued.has(file) || !/\.(mp3|wav|ogg|m4a)$/i.test(file)) return;
-    queued.add(file); queue.push(file); pump();
+  function enqueueSE(file, prio) {
+    if (!file || !/\.(mp3|wav|ogg|m4a)$/i.test(file)) return;
+    if (prio) PRIO_FILES.add(file);
+    if (queued.has(file)) {                               // すでに順番待ちなら、急ぎの列へ移す
+      if (prio) { const i = queue.indexOf(file); if (i >= 0) { queue.splice(i, 1); prioQueue.push(file); pump(); } }
+      return;
+    }
+    queued.add(file); (prio ? prioQueue : queue).push(file); pump();
   }
 
   // ---- BGM：メモリ(blob)に置く ------------------------------------------------------
@@ -95,7 +106,8 @@
   let bgmRunning = 0, bgmUrgentRunning = 0, _bgmTimer = null;
   const BGM_CONC = LOW_END ? 1 : 2;      // 急ぎでない読み込みの同時数
   const BGM_URGENT_CONC = 2;             // 急ぎ（道中＋ボス）は軽量モードでも2本同時
-  const wanted = new Set(['menu.mp3']);  // いま必要な曲（メモリから手放さない）
+  const ALWAYS = ['menu.mp3'].concat(KEEP_FILES);
+  const wanted = new Set(ALWAYS);        // いま必要な曲・音（メモリから手放さない）
   const warmEls = new Map();             // file -> 待機中の <audio>（最大3つ）
   const nowPlayingBGM = () => { try { return (typeof dungeonBGMFile !== 'undefined' && dungeonBGMFile) || null; } catch (e) { return null; } };
 
@@ -105,14 +117,15 @@
     try { a.removeAttribute('src'); a.load(); } catch (e) {}
   }
   function warm(file) {
-    if (warmEls.has(file) || warmEls.size >= 3 || file === nowPlayingBGM()) return;
+    if (warmEls.has(file) || warmEls.size >= 5 || file === nowPlayingBGM()) return;
     const b = blobs.get(file); if (!b) return;
     try { const a = new NativeAudio(b.url); a.preload = 'auto'; a.load(); warmEls.set(file, a); } catch (e) {}
   }
   function setWanted(files) {
-    wanted.clear(); wanted.add('menu.mp3');
+    wanted.clear(); ALWAYS.forEach(f => wanted.add(f));
     files.forEach(f => { if (f) wanted.add(f); });
     Array.from(warmEls.keys()).forEach(f => { if (!wanted.has(f)) dropWarm(f); });
+    KEEP_FILES.forEach(f => { if (blobs.has(f)) warm(f); });
     files.forEach(f => { if (f && blobs.has(f)) warm(f); });
   }
   // 上限に収まるよう、必要でない古い曲から手放す。収まらなければ false
@@ -182,9 +195,9 @@
   function FastAudio(src) {
     if (typeof src === 'string') {
       const w = warmEls.get(src);
-      if (w) { warmEls.delete(src); return w; }
+      if (w) { warmEls.delete(src); if (KEEP_FILES.indexOf(src) >= 0) setTimeout(() => warm(src), 0); return w; }   // 敵スキルの音などは、使ったらすぐ次の分を待機させる
       const b = blobs.get(src);
-      if (b) { b.t = Date.now(); return new NativeAudio(b.url); }
+      if (b) { b.t = Date.now(); if (KEEP_FILES.indexOf(src) >= 0) setTimeout(() => warm(src), 0); return new NativeAudio(b.url); }
     }
     return src === undefined ? new NativeAudio() : new NativeAudio(src);
   }
@@ -263,7 +276,10 @@
   // ---- 開始 ---------------------------------------------------------------------
   // 1) 画面に最初に出る音を先に
   prefetchBGM('menu.mp3', true);
-  ['tap.mp3', 'modo.mp3', 'combo.mp3', 'drop.mp3', 'swipe.mp3'].forEach(enqueueSE);
+  KEEP_FILES.forEach(f => prefetchBGM(f, true));   // 敵スキルのウインドウ音(skillwin.wav)・必殺技の音(cutin.mp3)
+  ['tap.mp3', 'modo.mp3', 'combo.mp3', 'drop.mp3', 'swipe.mp3'].forEach(f => enqueueSE(f, true));   // 画面を触ってすぐ使う音は最優先
+  // 敵のスキル・行動で鳴る効果音を、他の効果音より先に
+  try { PRIO_SE.forEach(k => { if (BATTLE_SE[k] && !NO_FAST_SE[k]) enqueueSE(BATTLE_SE[k].file, true); }); } catch (e) {}
   // 2) バトル効果音（定義の順）
   try { for (const k in BATTLE_SE) if (!NO_FAST_SE[k]) enqueueSE(BATTLE_SE[k].file); } catch (e) {}
   try { for (const k in UI_SE) enqueueSE(UI_SE[k].file); } catch (e) {}

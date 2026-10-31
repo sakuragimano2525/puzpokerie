@@ -133,8 +133,6 @@ body {
   position:relative; z-index:5; flex-shrink:0;
   padding:3px 8px;
   display:flex; flex-direction:column; justify-content:center;
-  /* iPhone(Safari)対策：下の演出レイヤーや半透明の重なりで暗く見えないよう、独立した層にして不透明の背景を敷く */
-  isolation:isolate; -webkit-transform:translateZ(0); transform:translateZ(0);
   -webkit-text-size-adjust:100%; text-size-adjust:100%;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.08) 0, rgba(255,255,255,0) 50%),
@@ -176,9 +174,11 @@ body {
   text-shadow:none;   /* 小さい文字に暗い影を付けると、iPhoneでは文字が濁って暗く見える */
   -webkit-font-smoothing:antialiased;
   white-space:normal; word-break:break-all;
-  display:-webkit-box; -webkit-box-orient:vertical;
-  -webkit-line-clamp:2; overflow:hidden;
+  /* iPhone(Safari)対策：-webkit-line-clamp と画像入りの文章を一緒にすると、画像・文字が荒く(モザイク状)／暗く描かれることがある。
+     → line-clamp をやめ、2行ぶんの高さで切る方式にした（見た目は同じ：最大2行） */
+  display:block; max-height:2.6em; overflow:hidden;
 }
+.ls-text .sk-ic { image-rendering:auto; -webkit-transform:none; transform:none; }
 .ls-num { color:#ffe08a; font-weight:800; font-style:normal; }
 .leader-skill-row.empty .ls-tag { opacity:0.7; filter:saturate(0.5); }
 .leader-skill-row.empty .ls-text { color:rgba(214,206,240,0.62); }
