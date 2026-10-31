@@ -21,13 +21,13 @@
   box-shadow:0 0 4px 1px rgba(255,255,255,.75);
 }
 .cutin-flash {
-  position:absolute; inset:0; opacity:0; background:var(--c-light); mix-blend-mode:screen;
+  position:absolute; inset:0; opacity:0; background:var(--c-light);
 }
 
 /* 帯の後ろのぼんやりした属性色の光 */
 .cutin-halo {
   position:absolute; left:-5%; right:-5%; opacity:0;
-  background:var(--c-glow); filter:blur(22px); border-radius:50%;
+  background:radial-gradient(ellipse closest-side at 50% 50%, var(--c-glow) 0%, var(--c-glow) 32%, transparent 100%);
 }
 
 /* 帯全体（左から滑り込む） */
@@ -48,18 +48,15 @@
 /* 放射状の集中線（ゆっくり回る） */
 .cutin-rays {
   position:absolute; border-radius:50%;
-  -webkit-mask-image:radial-gradient(circle, #000 12%, transparent 68%);
-          mask-image:radial-gradient(circle, #000 12%, transparent 68%);
 }
 /* 左側の大きな爆ぜる光 */
 .cutin-burst {
   position:absolute; left:-18%; top:-8%; width:62%; height:112%; opacity:0;
   background:radial-gradient(closest-side, #fff 0%, var(--c-light) 18%, var(--c-glow) 42%, transparent 100%);
-  mix-blend-mode:screen;
 }
 /* 最初に走る斬撃のような光の帯 */
 .cutin-slash {
-  position:absolute; top:-10%; height:120%; opacity:0; mix-blend-mode:screen;
+  position:absolute; top:-10%; height:120%; opacity:0;
   background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.95) 46%, var(--c-glow) 56%, transparent 100%);
 }
 
@@ -67,7 +64,6 @@
 .cutin-monwrap { position:absolute; }
 .cutin-mon {
   display:block; width:100%; height:100%; object-fit:contain; object-position:50% 40%;
-  filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 14px var(--c-glow)) drop-shadow(0 6px 10px rgba(0,0,0,.55));
   transform-origin:50% 40%;
 }
 
@@ -88,11 +84,11 @@
   box-shadow:0 -2px 0 #000, 0 2px 0 #000, 0 7px 14px rgba(0,0,0,.55);
 }
 .cutin-hit {
-  position:absolute; left:0; right:0; opacity:0; mix-blend-mode:screen;
+  position:absolute; left:0; right:0; top:0; bottom:0; opacity:0; pointer-events:none;
   background:radial-gradient(ellipse at 50% 50%, #fff 0%, var(--c-light) 25%, transparent 70%);
 }
 .cutin-name {
-  position:relative; display:inline-block; white-space:nowrap; line-height:1; font-weight:900;
+  position:relative; z-index:1; display:inline-block; white-space:nowrap; line-height:1; font-weight:900;
   font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Noto Sans JP','Noto Sans CJK JP','Zen Maru Gothic',sans-serif;
   letter-spacing:.03em; transform:skewX(-11deg);
 }
@@ -108,4 +104,12 @@
   background:linear-gradient(180deg, #fff 0%, #fff 56%, var(--c-light) 100%);
   -webkit-background-clip:text; background-clip:text;
   -webkit-text-fill-color:transparent; color:transparent;
+}
+
+/* ── iPhone / iPad 用：文字をくっきり出す ── */
+@supports (-webkit-touch-callout: none) {
+  .cutin-ch::after {
+    background:none; -webkit-background-clip:border-box; background-clip:border-box;
+    -webkit-text-fill-color:#fff; color:#fff;
+  }
 }

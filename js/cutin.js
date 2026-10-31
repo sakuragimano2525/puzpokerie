@@ -34,6 +34,12 @@
     dark:  { main:'#9b3cff', deep:'#43107f', dark:'#13051f', glow:'#cc84ff', light:'#f2dcff' }
   };
 
+  // iPhone / iPad（iOS Safari は画面メモリが少なく、重い演出で落ちやすい）
+  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent || '') ||
+              (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
+  const STAR_N  = IOS ? 12 : 26;   // 星の数
+  const EMBER_N = IOS ? 8  : 16;   // 火の粉の数
+
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -128,7 +134,7 @@
       // 背景（暗転＋星＋フラッシュ）
       const dim = document.createElement('div'); dim.className = 'cutin-dim';
       const stars = document.createElement('div'); stars.className = 'cutin-stars';
-      for (let i = 0; i < 26; i++) {
+      for (let i = 0; i < STAR_N; i++) {
         const s = document.createElement('i'), z = rnd(1, 3);
         s.style.cssText = `left:${rnd(0, 100)}%;top:${rnd(0, 100)}%;width:${z}px;height:${z}px;`;
         stars.appendChild(s);
@@ -163,9 +169,11 @@
       content.appendChild(bg);
 
       // 集中線
-      const RS = Math.round(Math.max(W, H) * 2.2);
+      const RS = Math.round(Math.max(W, H) * 1.5);
+      const R0 = Math.max(W, H) * 2.2 * Math.SQRT1_2;   // 元の大きさ(2.2倍)のときのマスクの半径
+      const rayMask = `radial-gradient(circle ${R0.toFixed(0)}px at 50% 50%, #000 ${(R0 * .12).toFixed(0)}px, transparent ${(R0 * .68).toFixed(0)}px)`;
       const rays = document.createElement('div'); rays.className = 'cutin-rays';
-      rays.style.cssText = `width:${RS}px;height:${RS}px;left:${Math.round(W * 0.6 - RS / 2)}px;top:${Math.round(H * 0.38 - RS / 2)}px;background:${raysGradient()};`;
+      rays.style.cssText = `width:${RS}px;height:${RS}px;left:${Math.round(W * 0.6 - RS / 2)}px;top:${Math.round(H * 0.38 - RS / 2)}px;background:${raysGradient()};-webkit-mask-image:${rayMask};mask-image:${rayMask};`;
       content.appendChild(rays);
 
       const burst = document.createElement('div'); burst.className = 'cutin-burst';
@@ -188,7 +196,7 @@
 
       // 火の粉（下から舞い上がる光の粒）
       const embers = [];
-      for (let i = 0; i < 16; i++) {
+      for (let i = 0; i < EMBER_N; i++) {
         const e = document.createElement('i'); e.className = 'cutin-ember';
         const z = rnd(3, 8);
         e.style.cssText = `left:${rnd(2, 98)}%;top:${H * rnd(.5, .95)}px;width:${z}px;height:${z}px;opacity:0;`;
@@ -199,15 +207,14 @@
       const strip = document.createElement('div'); strip.className = 'cutin-strip';
       strip.style.cssText = `bottom:${stripBottom}px;height:${stripH}px;`;
       const hit = document.createElement('div'); hit.className = 'cutin-hit';
-      hit.style.cssText = `bottom:${stripBottom}px;height:${stripH}px;`;
       const nameEl = document.createElement('div'); nameEl.className = 'cutin-name';
       const chars = Array.from(name);
       const chEls = chars.map(c => {
         const s = document.createElement('span'); s.className = 'cutin-ch';
         s.dataset.c = c; s.textContent = c; nameEl.appendChild(s); return s;
       });
-      strip.appendChild(nameEl);
-      content.append(strip, hit);
+      strip.append(hit, nameEl);   // hit（白い光）は文字の下
+      content.append(strip);
 
       root.appendChild(stage);
       host.appendChild(root);
@@ -286,11 +293,12 @@
       // 技名：1文字ずつ「ドン！」と叩きつけるように入る
       const TEXT_AT = IN_MS * .75, STEP = Math.min(45, 340 / Math.max(1, chars.length));
       chEls.forEach((c, i) => {
-        A(c, [
+        const an = A(c, [
           { opacity: 0, transform: `translate(${W * .05}px,${-stripH * .35}px) scale(2.8)` },
           { opacity: 1, transform: 'translate(0,0) scale(.9)', offset: .58 },
           { opacity: 1, transform: 'translate(0,0) scale(1)' }
         ], { duration: 280, delay: TEXT_AT + i * STEP, easing: 'cubic-bezier(.2,.8,.3,1)' });
+        if (an) an.onfinish = () => { try { an.cancel(); } catch (e) {} };
       });
       const landAt = TEXT_AT + 280 * .58;
       A(hit, [{ opacity: 0 }, { opacity: .9, offset: .2 }, { opacity: 0 }], { duration: 380, delay: landAt });

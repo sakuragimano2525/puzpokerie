@@ -280,6 +280,7 @@
       try { updateEnemyUI(); } catch (e) {}
       try { updateEnemyTurnBadge(); } catch (e) {}
       currentMoveMs = calcCurrentMoveMs();
+      try { resetLsGuard(); } catch (e) {}   // 相手の番のリーダースキル軽減マークは、自分の番に持ち越さない
       try { renderParty(); } catch (e) {}
       try { renderBuffIcons(); } catch (e) {}
       try { updatePlayerHP(); } catch (e) {}
@@ -505,7 +506,7 @@
     [0, 1].forEach(i => { try { setLeaderSkillText(i, (p.ls && p.ls[i]) || '（なし）'); } catch (e) {} });
   }
   MS.paintRemoteParty = paintRemoteParty; MS.paintRemoteHp = paintRemoteHp; MS.paintRemoteSp = paintRemoteSp; MS.paintRemoteLs = paintRemoteLs;
-  MS.paintRemote = function () { paintRemoteParty(); paintRemoteHp(); paintRemoteSp(); paintRemoteLs(); };
+  MS.paintRemote = function () { paintRemoteParty(); paintRemoteHp(); paintRemoteSp(); paintRemoteLs(); try { renderBuffIcons(); } catch (e) {} };
 
   // ---- 自分⇄相手の切り替え：いまのパーティーが左へ消えて、右から次のパーティーが入ってくる ----
   const VIEW_IDS = ['party-grid', 'sp-common-wrap', 'hp-row'];
@@ -539,6 +540,13 @@
     try { MultiOnline.sendFx({ tk: MultiTurn.current + ':' + MultiTurn.round, t, d: d === undefined ? null : d }); } catch (e) {}
   };
   MS.fxGrid = function () { MS.fx('g', { g: gridStr(), lk: lockStr() }); };
+  // 敵の状態（防御ダウン・行動遅延・攻撃アップ・各種軽減…）と、味方のバフ／敵からのデバフを、操作中の相手の画面へ流す
+  //   （HPは at1 / en で別に流れる。ここは「状態」だけ。本物は、ターン終わりのスナップショットで必ず上書きされる）
+  MS.fxStatus = function () {
+    if (!on() || MS.remote || MS.spectating || MS.applying) return;
+    const en = enemyList.map(e => { const o = {}; for (const k of ENEMY_KEYS) if (k !== 'hp' && k !== 'maxHp' && e[k] !== undefined) o[k] = clone(e[k]); return o; });
+    MS.fx('st', { en, bf: getBuffs(), bi: currentBattleIndex });
+  };
 
   // ---- 相手の出来事を、届いた順に再生する ----
   let fxChain = Promise.resolve();
@@ -635,8 +643,32 @@
         setTimeout(() => cells.forEach(({ r, c }) => { const el = cellEl(r, c); if (el && el.className.indexOf('vanish') >= 0) grid[r][c] = null; }), 360);
       }
       try { playComboSound(d.n); } catch (_) {}
-      try { addComboChip(d.n, cells, 1); } catch (_) {}
+      try { addComboChip(d.n, cells, d.b > 1 ? d.b : 1); } catch (_) {}   // リーダースキルの倍率（×1.5 など）も、相手の画面に出す
+      if (d.lg !== undefined) { try { setLsGuardBadge(d.lg, d.lg > 0); } catch (_) {} }
     },
+    // 状態異常・バフ／デバフ：操作している相手の画面と同じにする（HP以外）
+    st(d) {
+      if (!d || MS.applying) return;
+      if (d.bi !== undefined && d.bi !== currentBattleIndex) return;   // 階層移動の途中の古い知らせは無視
+      asArr(d.en).forEach((o, i) => {
+        const e = enemyList[i];
+        if (!e || !o) return;
+        for (const k of ENEMY_KEYS) {
+          if (k === 'hp' || k === 'maxHp') continue;
+          if (o[k] !== undefined) e[k] = o[k];
+          else if (k[0] === '_' || k === 'defDown') delete e[k];
+        }
+        e._due = false; e._acting = false;
+      });
+      try { setBuffs(d.bf); } catch (_) {}
+      try { updateEnemyUI(); } catch (_) {}
+      try { updateEnemyTurnBadge(); } catch (_) {}
+      try { renderBuffIcons(); } catch (_) {}
+    },
+    // 「残りドロップ○個以下」などの合計倍率（盤面の真ん中の ×○）
+    rm(d) { try { showRemainingOrbsMult(d.m); } catch (_) {} },
+    // リーダースキルのダメージ軽減（HPバー右端のマーク）
+    lg(d) { try { setLsGuardBadge(d.r || 0, false); } catch (_) {} },
     g(d) { if (typeof d === 'string') applyGridAnimated(d); else if (d) applyGridAnimated(d.g, d.lk); },
     // 各モンスターの攻撃力が積み上がる数字
     pd(a) {

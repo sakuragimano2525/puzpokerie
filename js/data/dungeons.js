@@ -428,7 +428,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle3",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -469,7 +469,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle3",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -509,7 +509,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -581,7 +581,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle3",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -641,7 +641,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -677,7 +677,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -713,7 +713,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -797,7 +797,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle1",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -856,7 +856,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -892,7 +892,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -928,7 +928,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -964,7 +964,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1068,7 +1068,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -1126,7 +1126,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -1174,7 +1174,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -1210,7 +1210,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1246,7 +1246,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1282,7 +1282,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1386,7 +1386,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle3",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -1451,7 +1451,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -1487,7 +1487,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1523,7 +1523,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1559,7 +1559,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1609,7 +1609,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1713,7 +1713,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle32",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -1801,7 +1801,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -1837,7 +1837,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1873,7 +1873,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1909,7 +1909,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -1959,7 +1959,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2067,7 +2067,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -2138,7 +2138,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2174,7 +2174,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2210,7 +2210,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2300,7 +2300,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -2361,7 +2361,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2397,7 +2397,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2433,7 +2433,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2469,7 +2469,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2607,7 +2607,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -2662,7 +2662,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -2735,7 +2735,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -2796,7 +2796,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2832,7 +2832,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2868,7 +2868,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -2904,7 +2904,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3042,7 +3042,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -3110,7 +3110,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3146,7 +3146,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3182,7 +3182,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3218,7 +3218,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3272,7 +3272,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3412,7 +3412,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -3564,7 +3564,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3618,7 +3618,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3654,7 +3654,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3690,7 +3690,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3744,7 +3744,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3885,7 +3885,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -3951,7 +3951,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -3988,7 +3988,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4024,7 +4024,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4131,7 +4131,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -4204,7 +4204,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4241,7 +4241,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4277,7 +4277,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4330,7 +4330,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4434,7 +4434,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -4489,7 +4489,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -4550,7 +4550,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4587,7 +4587,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4623,7 +4623,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4676,7 +4676,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4780,7 +4780,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -4817,7 +4817,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -4871,7 +4871,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -4914,7 +4914,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -4970,7 +4970,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5006,7 +5006,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5059,7 +5059,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5139,7 +5139,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -5197,7 +5197,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -5314,7 +5314,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5370,7 +5370,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5406,7 +5406,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5459,7 +5459,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5508,7 +5508,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5626,7 +5626,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_5",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -5701,7 +5701,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5757,7 +5757,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5811,7 +5811,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -5895,7 +5895,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -5953,7 +5953,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle5",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -6033,7 +6033,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6089,7 +6089,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6143,7 +6143,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6197,7 +6197,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6298,7 +6298,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -6356,7 +6356,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_5",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -6411,7 +6411,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_5",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -6466,7 +6466,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_5",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -6527,7 +6527,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6583,7 +6583,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6637,7 +6637,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6691,7 +6691,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6792,7 +6792,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -6851,7 +6851,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -6945,7 +6945,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -6996,7 +6996,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7050,7 +7050,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7104,7 +7104,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7205,7 +7205,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -7263,7 +7263,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -7385,7 +7385,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7436,7 +7436,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7484,7 +7484,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7539,7 +7539,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7641,7 +7641,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -7699,7 +7699,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -7780,7 +7780,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7830,7 +7830,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7866,7 +7866,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -7947,7 +7947,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 15,
+      "rate": 20,
       "monsters": [
         {
           "name": "ラッキー",
@@ -7962,7 +7962,7 @@ const DUNGEON_DATA = {
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.3
+            "rate": 0.5
           },
           "drops": [],
           "actions": [
@@ -8005,7 +8005,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -8084,7 +8084,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8134,7 +8134,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8170,7 +8170,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8251,7 +8251,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -8309,7 +8309,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -8387,7 +8387,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -8465,7 +8465,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -8549,7 +8549,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8599,7 +8599,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8635,7 +8635,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8684,7 +8684,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8773,7 +8773,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -8831,7 +8831,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -8914,7 +8914,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -8964,7 +8964,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -9000,7 +9000,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -9036,7 +9036,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -9125,7 +9125,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -9183,7 +9183,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -9324,7 +9324,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -9374,7 +9374,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -9410,7 +9410,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -9446,7 +9446,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -9535,7 +9535,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 15,
+      "rate": 20,
       "monsters": [
         {
           "name": "ラッキー",
@@ -9678,7 +9678,7 @@ const DUNGEON_DATA = {
       }
     ],
     "intrusion": {
-      "rate": 50,
+      "rate": 55,
       "monsters": [
         {
           "name": "ラッキー",
@@ -9736,7 +9736,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -9815,7 +9815,7 @@ const DUNGEON_DATA = {
             "def": 750,
             "turnInterval": 3,
             "size": "M",
-            "exp": 599,
+            "exp": 899,
             "coin": 10,
             "monsterDrop": {
               "enabled": true,
@@ -9824,7 +9824,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -9899,7 +9899,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -9979,7 +9979,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10020,7 +10020,7 @@ const DUNGEON_DATA = {
           "def": 20,
           "turnInterval": 1,
           "size": "S",
-          "exp": 186,
+          "exp": 486,
           "coin": 14,
           "monsterDrop": {
             "enabled": true,
@@ -10029,7 +10029,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10065,7 +10065,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10120,7 +10120,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10156,7 +10156,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10262,7 +10262,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 10,
       "monsters": [
         {
           "name": "ラッキー",
@@ -10277,7 +10277,7 @@ const DUNGEON_DATA = {
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.2
+            "rate": 1
           },
           "drops": [],
           "actions": [
@@ -10321,7 +10321,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -10416,7 +10416,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10466,7 +10466,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10502,7 +10502,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10557,7 +10557,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10593,7 +10593,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10699,7 +10699,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -10758,7 +10758,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -10853,7 +10853,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10903,7 +10903,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10939,7 +10939,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -10994,7 +10994,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11030,7 +11030,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11136,7 +11136,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -11195,7 +11195,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle32",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -11291,7 +11291,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11341,7 +11341,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11377,7 +11377,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11432,7 +11432,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11468,7 +11468,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11574,7 +11574,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -11633,7 +11633,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -11780,7 +11780,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11830,7 +11830,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11866,7 +11866,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11921,7 +11921,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -11957,7 +11957,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12067,7 +12067,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -12125,7 +12125,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -12210,7 +12210,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12260,7 +12260,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12296,7 +12296,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12351,7 +12351,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12387,7 +12387,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12474,7 +12474,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -12532,7 +12532,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -12628,7 +12628,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12678,7 +12678,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12714,7 +12714,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12769,7 +12769,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12805,7 +12805,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -12892,7 +12892,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -12950,7 +12950,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -13039,7 +13039,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13089,7 +13089,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13125,7 +13125,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13180,7 +13180,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13216,7 +13216,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13303,7 +13303,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -13361,7 +13361,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -13440,7 +13440,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -13525,7 +13525,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13575,7 +13575,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13611,7 +13611,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13666,7 +13666,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13702,7 +13702,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -13789,7 +13789,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -13847,7 +13847,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -13908,7 +13908,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -13944,7 +13944,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14003,7 +14003,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14058,7 +14058,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14113,7 +14113,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14172,7 +14172,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_4",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14222,7 +14222,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14271,7 +14271,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_1",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14324,7 +14324,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14407,7 +14407,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14487,7 +14487,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14551,13 +14551,19 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": true
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.1,
+              "count": 1
+            }
           }
         ]
       }
     ],
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -14615,7 +14621,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -14708,7 +14714,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -14745,7 +14751,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -14796,7 +14802,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -14852,7 +14858,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -14888,7 +14894,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -14975,7 +14981,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -15034,7 +15040,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -15118,7 +15124,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15155,7 +15161,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15206,7 +15212,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15262,7 +15268,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15298,7 +15304,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15385,7 +15391,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -15443,7 +15449,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -15480,7 +15486,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -15518,7 +15524,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle2",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -15560,7 +15566,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15597,7 +15603,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15648,7 +15654,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15704,7 +15710,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15740,7 +15746,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15776,7 +15782,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -15903,7 +15909,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -15962,7 +15968,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -16051,7 +16057,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16088,7 +16094,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16139,7 +16145,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16195,7 +16201,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16231,7 +16237,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16267,7 +16273,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16394,7 +16400,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -16453,7 +16459,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -16578,7 +16584,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16615,7 +16621,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16666,7 +16672,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16722,7 +16728,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16758,7 +16764,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16794,7 +16800,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -16934,7 +16940,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -16993,7 +16999,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle32",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -17077,7 +17083,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17114,7 +17120,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17150,7 +17156,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17187,7 +17193,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17223,7 +17229,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17328,7 +17334,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -17387,7 +17393,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle32",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -17463,7 +17469,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17500,7 +17506,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17536,7 +17542,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17573,7 +17579,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17609,7 +17615,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17714,7 +17720,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -17772,7 +17778,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -17959,7 +17965,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -17996,7 +18002,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18032,7 +18038,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18069,7 +18075,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18105,7 +18111,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18210,7 +18216,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 20,
+      "rate": 25,
       "monsters": [
         {
           "name": "ラッキー",
@@ -18268,7 +18274,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_32",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -18372,7 +18378,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18409,7 +18415,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18445,7 +18451,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18482,7 +18488,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18518,7 +18524,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18623,7 +18629,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -18681,7 +18687,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_32",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -18840,7 +18846,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18877,7 +18883,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18913,7 +18919,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18950,7 +18956,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -18986,7 +18992,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19092,7 +19098,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -19151,7 +19157,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -19240,7 +19246,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19276,7 +19282,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19313,7 +19319,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19419,7 +19425,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -19478,7 +19484,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -19555,7 +19561,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19591,7 +19597,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19628,7 +19634,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19734,7 +19740,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -19793,7 +19799,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -19872,7 +19878,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19908,7 +19914,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -19945,7 +19951,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20051,7 +20057,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -20109,7 +20115,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -20221,7 +20227,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20257,7 +20263,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20294,7 +20300,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20400,7 +20406,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -20458,7 +20464,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle43",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -20645,7 +20651,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20681,7 +20687,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20718,7 +20724,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20771,7 +20777,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -20875,7 +20881,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -20934,7 +20940,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -21025,7 +21031,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21061,7 +21067,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21098,7 +21104,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21155,7 +21161,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21282,7 +21288,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -21341,7 +21347,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -21410,7 +21416,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle5",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -21503,7 +21509,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21539,7 +21545,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21576,7 +21582,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21633,7 +21639,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21760,7 +21766,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -21818,7 +21824,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -21937,7 +21943,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -21973,7 +21979,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22010,7 +22016,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22067,7 +22073,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22194,7 +22200,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -22253,7 +22259,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -22321,7 +22327,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22357,7 +22363,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22394,7 +22400,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22451,7 +22457,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22578,7 +22584,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -22636,7 +22642,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle23",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -22887,7 +22893,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22923,7 +22929,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -22960,7 +22966,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -23017,7 +23023,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -23144,7 +23150,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -23202,7 +23208,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -23245,7 +23251,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -23281,7 +23287,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -23400,7 +23406,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle22",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -23443,7 +23449,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -23479,7 +23485,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -24039,7 +24045,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -24107,7 +24113,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -24143,7 +24149,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -24227,7 +24233,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle53",
-                "rate": 0.25,
+                "rate": 0.3,
                 "count": 1
               }
             ],
@@ -24286,7 +24292,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -24336,7 +24342,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_52",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -24420,7 +24426,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle53",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -24546,7 +24552,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle42",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -24589,7 +24595,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -24632,7 +24638,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -24682,7 +24688,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -24757,7 +24763,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -24815,7 +24821,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -24966,7 +24972,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25009,7 +25015,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25052,7 +25058,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25102,7 +25108,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25177,7 +25183,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -25235,7 +25241,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle33",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -25312,7 +25318,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25354,7 +25360,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25397,7 +25403,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25434,7 +25440,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle22",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25509,7 +25515,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -25568,7 +25574,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -25705,7 +25711,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25753,7 +25759,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25796,7 +25802,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25865,7 +25871,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -25947,7 +25953,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -26005,7 +26011,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle13",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -26214,7 +26220,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26262,7 +26268,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26305,7 +26311,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26374,7 +26380,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26456,7 +26462,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -26515,7 +26521,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle13",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -26619,7 +26625,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26663,7 +26669,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26706,7 +26712,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26743,7 +26749,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -26825,7 +26831,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -26884,7 +26890,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle23",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -26972,7 +26978,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle23",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -27066,7 +27072,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle22",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27115,7 +27121,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle22",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27158,7 +27164,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27195,7 +27201,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_22",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27277,7 +27283,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -27336,7 +27342,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle33",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -27450,7 +27456,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle32",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27494,7 +27500,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle32",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27537,7 +27543,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27574,7 +27580,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_32",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27656,7 +27662,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -27715,7 +27721,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle43",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -27850,7 +27856,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle42",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27894,7 +27900,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle42",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -27937,7 +27943,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -27974,7 +27980,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_42",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -28050,7 +28056,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -28108,7 +28114,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -28307,7 +28313,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -28351,7 +28357,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -28394,7 +28400,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -28431,7 +28437,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -28507,7 +28513,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -28565,7 +28571,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -28661,7 +28667,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle22",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -28764,7 +28770,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle32",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -28839,7 +28845,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -28949,7 +28955,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -29515,7 +29521,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle13",
-                "rate": 0.25,
+                "rate": 0.3,
                 "count": 1
               }
             ],
@@ -29559,7 +29565,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -29596,7 +29602,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -29715,7 +29721,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle23",
-                "rate": 0.25,
+                "rate": 0.3,
                 "count": 1
               }
             ],
@@ -29759,7 +29765,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle22",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -29796,7 +29802,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_22",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -29915,7 +29921,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle32",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -29958,7 +29964,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -29994,7 +30000,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -30087,7 +30093,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle33",
-                "rate": 0.25,
+                "rate": 0.3,
                 "count": 1
               }
             ],
@@ -30131,7 +30137,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle32",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -30168,7 +30174,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_32",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -30287,7 +30293,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle42",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -30330,7 +30336,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -30366,7 +30372,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -30459,7 +30465,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle43",
-                "rate": 0.25,
+                "rate": 0.3,
                 "count": 1
               }
             ],
@@ -30503,7 +30509,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle42",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -30540,7 +30546,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_42",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -31232,7 +31238,7 @@ const DUNGEON_DATA = {
             "def": 500,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 9999,
+            "exp": 19999,
             "coin": 99,
             "monsterDrop": {
               "enabled": true,
@@ -31781,7 +31787,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -31935,7 +31941,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -31971,7 +31977,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32059,7 +32065,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle53",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -32164,7 +32170,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32200,7 +32206,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32287,7 +32293,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.1,
+                "rate": 0.15,
                 "count": 1
               }
             ],
@@ -32410,7 +32416,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32466,7 +32472,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32502,7 +32508,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32555,7 +32561,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32604,7 +32610,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32723,7 +32729,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "spuzzle_42",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -32870,7 +32876,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -32920,7 +32926,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -32956,7 +32962,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -33011,7 +33017,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.1,
+              "rate": 0.15,
               "count": 1
             }
           ],
@@ -33047,7 +33053,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_2",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33157,7 +33163,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 5,
+      "rate": 10,
       "monsters": [
         {
           "name": "ラッキー",
@@ -33215,7 +33221,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle52",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -33402,7 +33408,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33439,7 +33445,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33475,7 +33481,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33513,7 +33519,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle32",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33549,7 +33555,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33654,7 +33660,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 20,
+      "rate": 25,
       "monsters": [
         {
           "name": "ラッキー",
@@ -33712,7 +33718,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle43",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -33899,7 +33905,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33935,7 +33941,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -33972,7 +33978,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34025,7 +34031,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34129,7 +34135,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -34188,7 +34194,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle53",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -34314,7 +34320,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle42",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34357,7 +34363,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34400,7 +34406,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34450,7 +34456,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34525,7 +34531,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -34583,7 +34589,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle33",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -34660,7 +34666,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34702,7 +34708,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_3",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34745,7 +34751,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34782,7 +34788,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_22",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -34857,7 +34863,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -34915,7 +34921,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle23",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -35166,7 +35172,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35202,7 +35208,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35240,7 +35246,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35297,7 +35303,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle5",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35424,7 +35430,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -35482,7 +35488,7 @@ const DUNGEON_DATA = {
             "drops": [
               {
                 "item": "puzzle13",
-                "rate": 0.05,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -35674,7 +35680,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_1",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35722,7 +35728,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35766,7 +35772,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35835,7 +35841,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -35917,7 +35923,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -36234,7 +36240,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_12",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36277,7 +36283,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36320,7 +36326,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle42",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36374,7 +36380,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_32",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36449,7 +36455,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -36493,7 +36499,7 @@ const DUNGEON_DATA = {
             "name": "ミカ",
             "img": "mp5001.png",
             "attr": "dark",
-            "hp": 220000,
+            "hp": 180000,
             "atk": 1800,
             "def": 1000,
             "turnInterval": 1,
@@ -36783,7 +36789,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36839,7 +36845,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle52",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36882,7 +36888,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "puzzle4",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36919,7 +36925,7 @@ const DUNGEON_DATA = {
           "drops": [
             {
               "item": "spuzzle_32",
-              "rate": 0.05,
+              "rate": 0.1,
               "count": 1
             }
           ],
@@ -36994,7 +37000,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 5,
+      "rate": 10,
       "monsters": [
         {
           "name": "ラッキー",

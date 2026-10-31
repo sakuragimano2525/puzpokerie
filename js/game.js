@@ -7122,7 +7122,7 @@ async function confirmSkill() {
     runSkillEffects(mon.skill.effects, entry, mon);
   }
   const orbSpawnFx = flushOrbSpawnFx();   // ドロップ生成・変換の演出を開始（盤面データはもう新しい。見た目は演出で入れ替わる）
-  if (window.MultiShare) { MultiShare.fxGrid(); MultiShare.fx('en', { hp: enemyList.map(e => e.hp) }); }   // スキルで変わった盤面・敵のHP
+  if (window.MultiShare) { MultiShare.fxGrid(); MultiShare.fx('en', { hp: enemyList.map(e => e.hp) }); MultiShare.fxStatus(); }   // スキルで変わった盤面・敵のHP・状態異常
 
   partySp -= requiredSp;
   if (partySp < 0) partySp = 0;
@@ -7176,6 +7176,7 @@ function tickEnemyDebuffsAfterAttack() {
   if (enemySkillSeal && --enemySkillSeal.turns <= 0) { enemySkillSeal = null; _dbgChanged = true; }   // スキル使用不可（このあと renderParty で枠が戻る）
   if (enemyNoFall && --enemyNoFall.turns <= 0) { enemyNoFall = null; _dbgChanged = true; }
   if (_dbgChanged) { renderBuffIcons(); try { renderParty(); } catch (e) {} }
+  if (window.MultiShare) MultiShare.fxStatus();   // マルチ：弱体が切れたことも相手の画面へ
 }
 
 // ============================================================
@@ -9919,7 +9920,6 @@ async function _evaluateInner() {
 
       playComboSound(totalCombo);
       cells.forEach(({r,c}) => { revealBlind(r, c); setOrbLock(r, c, false); orbEls[r][c].className = `orb ${color} glow`; });   // 消すとロックも解ける
-      if (window.MultiShare) MultiShare.fx('cb', { n: totalCombo, c: color, k: cells.map(q => [q.r, q.c]) });   // マルチ：相手の画面にもコンボを流す
 
       const lsEffects = [];
       [0, 5].forEach(idx => {
@@ -9935,6 +9935,7 @@ async function _evaluateInner() {
       const result = applyLeaderEffects(lsEffects, ctx);
       lastGroupCells = cells;
       checkLsGuard(lsEffects, ctx, cells);   // ダメージ軽減が発動（増えた）ならそのドロップの場所で演出
+      if (window.MultiShare) MultiShare.fx('cb', { n: totalCombo, c: color, k: cells.map(q => [q.r, q.c]), b: result.atkMultiplier, lg: lsGuardRate });   // マルチ：相手の画面にもコンボ（リーダースキルの倍率つき）を流す
       addComboChip(totalCombo, cells, result.atkMultiplier);
       await sleep(220);
       cells.forEach(({r,c}) => { orbEls[r][c].className = `orb ${color} vanish`; });
@@ -10095,8 +10096,9 @@ async function _evaluateInner() {
           hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
         if (rr.atkMultiplier > best) best = rr.atkMultiplier;
       }
-      if (best > 1) showRemainingOrbsMult(best);
+      if (best > 1) { showRemainingOrbsMult(best); if (window.MultiShare) MultiShare.fx('rm', { m: best }); }   // マルチ：合計倍率も相手の画面へ
     }
+    if (window.MultiShare) MultiShare.fx('lg', { r: lsGuardRate });   // マルチ：最終的な軽減（HPバー右端のマーク）
   }
 
   if (totalCombo > 0) {
@@ -10390,6 +10392,7 @@ async function _evaluateInner() {
   if (enemyList.some(e => e.hp > 0) && playerCurrentHP > 0 && !enemyDefeatedHandled) {
     try { await doEnemyAttack(); } finally { enemyJudgeBoard = null; }
     if (_gameOverActive || (window.MultiShare && MultiShare.spectating)) return;   // ゲームオーバー演出中／観戦中は以降の処理をしない
+    if (window.MultiShare) MultiShare.fxStatus();   // マルチ：敵の行動でかかった状態異常（攻撃力ダウン・スキル使用不可…）を相手の画面へ
   }
   enemyJudgeBoard = null;
 
@@ -10399,6 +10402,7 @@ async function _evaluateInner() {
 
   tickPlayerBuffs();
   currentMoveMs = calcCurrentMoveMs();
+  if (window.MultiShare) MultiShare.fxStatus();
 
   const allDead = enemyList.every(e => e.hp <= 0);
   if (allDead && !enemyDefeatedHandled) enemyDefeatedHandled = true;

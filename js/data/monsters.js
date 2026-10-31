@@ -778,8 +778,8 @@ const MONSTER_DATA = {
     skill: {
       name: 'かっくう',
       sp: 3,
-      desc: '1ターンの間、操作時間が3秒延長。',
-      effects: [ { type: 'moveTimeBuff', turns: 1, seconds: 3, mult: 1 } ]
+      desc: '1ターンの間、操作時間が1秒延長。',
+      effects: [ { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 } ]
     },
     leaderSkill: {
       name: 'シックスセンス・小',
@@ -798,7 +798,7 @@ const MONSTER_DATA = {
     baseExp: 300,
     stats: { hp: { min: 500, max: 2800 }, atk: { min: 390, max: 2550 }, rec: { min: 5, max: 0 } },
     skill: {
-      name: 'かっくう',
+      name: 'かっくう+',
       sp: 3,
       desc: '1ターンの間、操作時間が3秒延長。',
       effects: [ { type: 'moveTimeBuff', turns: 1, seconds: 3, mult: 1 } ]
@@ -1761,7 +1761,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     baseExp: 150,
-    stats: { hp: { min: 171, max: 471 }, atk: { min: 252, max: 572 }, rec: { min: 0, max: 0 } },
+    stats: { hp: { min: 171, max: 471 }, atk: { min: 252, max: 572 }, rec: { min: 0, max: -100 } },
     skill: {
       name: 'ドロップチェンジ・闇',
       sp: 3,
@@ -1782,7 +1782,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     baseExp: 500,
-    stats: { hp: { min: 565, max: 1275 }, atk: { min: 455, max: 755 }, rec: { min: 0, max: 0 } },
+    stats: { hp: { min: 565, max: 1275 }, atk: { min: 455, max: 755 }, rec: { min: 0, max: -100 } },
     skill: {
       name: 'ドロップチェンジ・闇',
       sp: 3,
@@ -1804,7 +1804,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 1000,
-    stats: { hp: { min: 330, max: 2800 }, atk: { min: 390, max: 2550 }, rec: { min: 0, max: 0 } },
+    stats: { hp: { min: 330, max: 2800 }, atk: { min: 390, max: 2600 }, rec: { min: 0, max: -100 } },
     skill: {
       name: 'ドロップチェンジ・闇',
       sp: 3,
