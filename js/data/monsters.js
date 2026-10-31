@@ -21,7 +21,7 @@ const MONSTER_DATA = {
       effects: [ { type: 'damageAll', value: 1000 }, { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' } ]
     },
     leaderSkill: { name: '木のソウル', desc: '木属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'wood', value: 1.2 } ] },
-    evolutions: [ { to: 2, materials: [ { item: 'puzzle32', count: 2 }, { item: 'spuzzle_3', count: 3 } ] } ]
+    evolutions: [ { to: 2, materials: [ { item: 'puzzle32', count: 2 }, { item: 'spuzzle_3', count: 2 } ] } ]
   },
   2: {
     id: 2,
@@ -135,7 +135,7 @@ const MONSTER_DATA = {
       effects: [ { type: 'damageAll', value: 1000 }, { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'water' } ]
     },
     leaderSkill: { name: '水のソウル', desc: '水属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'water', value: 1.2 } ] },
-    evolutions: [ { to: 8, materials: [ { item: 'puzzle22', count: 2 }, { item: 'spuzzle_2', count: 3 } ] } ]
+    evolutions: [ { to: 8, materials: [ { item: 'puzzle22', count: 2 }, { item: 'spuzzle_2', count: 2 } ] } ]
   },
   8: {
     id: 8,
@@ -2339,7 +2339,7 @@ const MONSTER_DATA = {
     evolutions: [
       {
         to: 121,
-        materials: [ { item: 'puzzle1', count: 3 }, { item: 'puzzle2', count: 3 }, { item: 'puzzle3', count: 3 } ]
+        materials: [ { item: 'puzzle1', count: 6 }, { item: 'puzzle2', count: 6 }, { item: 'puzzle3', count: 6 } ]
       }
     ]
   },
