@@ -2819,7 +2819,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 1500,
+    baseExp: 1250,
     stats: { hp: { min: 460, max: 3050 }, atk: { min: 290, max: 1950 }, rec: { min: 21, max: 60 } },
     skill: {
       name: 'げんしのほうこう',

@@ -25,7 +25,7 @@
   const SE_MAX_BYTES  = 450 * 1024;                          // これより大きい音（長いジングル等）は変換せず、今まで通りに鳴らす（メモリ節約）
   const BGM_BUDGET    = (IS_IOS ? 40 : 120) * 1024 * 1024;   // BGMをメモリに置く合計の上限
   const NO_FAST_SE    = { cutin: 1, skillwin: 1 };           // <audio> の長さで表示時間を決めている音（cutin.js／敵スキルのウインドウ）
-  const KEEP_FILES   = ['skillwin.wav', 'cutin.mp3'];        // 上の2つ：メモリ(blob)に置いて、いつでもすぐ鳴らせる状態にしておく
+  const KEEP_FILES   = ['skillwin.mp3', 'cutin.mp3'];        // 上の2つ：メモリ(blob)に置いて、いつでもすぐ鳴らせる状態にしておく
   const PRIO_SE       = ['damage','damageh','down','bind','dna','orblock','bshield','combok','kei','barrier','ikari','healk','darkness','change','pahu','roo','poison','kieru','chip'];   // 敵スキル・敵の行動で鳴る音：先に読み込む
   const SE_MAX_BYTES_PRIO = 1200 * 1024;                     // 敵スキル系は少し大きくても変換する（変換できないと遅い方法で鳴るため）
 
@@ -276,7 +276,7 @@
   // ---- 開始 ---------------------------------------------------------------------
   // 1) 画面に最初に出る音を先に
   prefetchBGM('menu.mp3', true);
-  KEEP_FILES.forEach(f => prefetchBGM(f, true));   // 敵スキルのウインドウ音(skillwin.wav)・必殺技の音(cutin.mp3)
+  KEEP_FILES.forEach(f => prefetchBGM(f, true));   // 敵スキルのウインドウ音(skillwin.mp3)・必殺技の音(cutin.mp3)
   ['tap.mp3', 'modo.mp3', 'combo.mp3', 'drop.mp3', 'swipe.mp3'].forEach(f => enqueueSE(f, true));   // 画面を触ってすぐ使う音は最優先
   // 敵のスキル・行動で鳴る効果音を、他の効果音より先に
   try { PRIO_SE.forEach(k => { if (BATTLE_SE[k] && !NO_FAST_SE[k]) enqueueSE(BATTLE_SE[k].file, true); }); } catch (e) {}

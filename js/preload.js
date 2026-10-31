@@ -164,7 +164,7 @@
     for (const k in bse) add(bse[k] && bse[k].file);
     const use = safe(() => UI_SE) || {};
     for (const k in use) add(use[k] && use[k].file);
-    ['menu.mp3', 'combo.mp3', 'drop.mp3', 'chip.mp3', 'swipe.mp3', 'skillwin.wav'].forEach(add);
+    ['menu.mp3', 'combo.mp3', 'drop.mp3', 'chip.mp3', 'swipe.mp3', 'skillwin.mp3'].forEach(add);
     // よく使う共通の画像（属性アイコン・バフアイコン・ギフト等）
     add('status.png');
     ['sta1','sta2','sta3'].forEach(n => add(n + '.png'));          // ステータスアイコン

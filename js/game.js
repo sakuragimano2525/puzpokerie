@@ -161,7 +161,7 @@ const BATTLE_SE = {
   barrier:     { file: 'barrier.mp3',     pool: 1, vol: 0.9 },  // 敵 状態異常無効
   ikari:       { file: 'ikari.mp3',       pool: 1, vol: 0.9 },  // 敵 攻撃アップ
   healk:       { file: 'healk.mp3',       pool: 1, vol: 0.9 },  // 敵 HP回復
-  skillwin:    { file: 'skillwin.wav',    pool: 1, vol: 0.9 },  // 敵スキルウインドウ表示
+  skillwin:    { file: 'skillwin.mp3',    pool: 1, vol: 0.9 },  // 敵スキルウインドウ表示
   cutin:       { file: 'cutin.mp3',       pool: 1, vol: 1.0 },  // 敵の必殺技（⚠️付き）のカットイン
   bossk:       { file: 'bossk.mp3',       pool: 1, vol: 0.9 },  // BOSS表示
   mewtwo:      { file: 'mewtwo.mp3',      pool: 1, vol: 1.0 },  // ミュウツーが完全に出てきたとき（ラスボス登場）
@@ -2210,11 +2210,20 @@ function showEnemySkillWindow(enemy, name) {
     };
     // 効果音の長さ分だけ待つ（読み込み失敗時は1.4秒で再開）
     try {
-      const a = new Audio('skillwin.wav');
+      // skillwin.mp3 を鳴らす。まだ mp3 を置いていない場合だけ、これまでの skillwin.wav で鳴らす
+      const a = new Audio('skillwin.mp3');
       a.volume = 0.9;
       a.addEventListener('ended', finish);
-      a.addEventListener('error', () => setTimeout(finish, 1400));
-      a.play().catch(() => setTimeout(finish, 1400));
+      a.addEventListener('error', () => {
+        if (a._fb) { setTimeout(finish, 1400); return; }
+        try {
+          const w = new Audio('skillwin.wav'); w.volume = 0.9; a._fb = true;
+          w.addEventListener('ended', finish);
+          w.addEventListener('error', () => setTimeout(finish, 1400));
+          w.play().catch(() => setTimeout(finish, 1400));
+        } catch (e) { setTimeout(finish, 1400); }
+      });
+      a.play().catch(() => { if (!a._fb) setTimeout(finish, 1400); });
     } catch (e) { setTimeout(finish, 1400); }
     setTimeout(finish, 4000);   // 保険
   });
