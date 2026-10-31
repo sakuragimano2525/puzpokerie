@@ -1686,6 +1686,13 @@ function playEnemyAppear() {
   return new Promise(r => setTimeout(r, total + 80));
 }
 
+// 画像が1枚読み込まれるたびに全体を測り直すと、読み込みの多い場面で何度もレイアウト計算が走って重い。
+// 次の描画フレームに1回だけまとめて実行する（見た目は同じ）
+let _fitRaf = 0;
+function fitEnemyImagesSoon() {
+  if (_fitRaf) return;
+  _fitRaf = requestAnimationFrame(() => { _fitRaf = 0; fitEnemyImages(); });
+}
 // ── 敵画像の自動フィット：縦長の画像（人型など）をL/XLで置いても、画像もHPバーも敵エリアから見切れないようにする ──
 //   画像の幅はサイズ(S/M/L/XL)で決まるため、縦長だと高さが伸びて溢れる。
 //   → 「敵エリアの高さ − HPバー等の高さ」を画像の最大の高さにする（超える時だけ縮む。縦横比はそのまま）。
@@ -1782,7 +1789,8 @@ function renderEnemyUI(hideForAppear = false) {
     img.src = enemy.img || '';
     img.alt = enemy.name || '敵';
     img.onerror = function(){ this.style.display='none'; };
-    img.addEventListener('load', fitEnemyImages);   // 画像が読み込まれたら高さを測り直す
+    img.decoding = 'async';   // 画像のデコードを裏で行う（読み込み中も画面操作が固まらない）
+    img.addEventListener('load', fitEnemyImagesSoon);   // 画像が読み込まれたら高さを測り直す（複数枚ぶんは1回にまとめる）
     if (hideForAppear) img.style.opacity = '0';   // 登場演出（playEnemyAppear）まで見えないようにしておく
     imgWrap.appendChild(img);
     const topLeft = document.createElement('div');      // 「あと〇」と状態アイコンを縦に並べる（重ならない）
@@ -3312,7 +3320,7 @@ function saveGame() {
   } catch (e) {}
 }
 // 保存し忘れ防止：定期保存＋画面を閉じる/切り替えるときに保存
-setInterval(saveGame, 3000);
+setInterval(() => { if (window.requestIdleCallback) requestIdleCallback(saveGame, { timeout: 2000 }); else saveGame(); }, 3000);   // 画面の切り替え中に重い保存が割り込まないよう、ひま時間に行う
 window.addEventListener('pagehide', saveGame);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(); });
 
@@ -4714,7 +4722,7 @@ function renderTePartySlots() {
       }
       _teSlotLastTap = { idx: i, t: now };
       selectedSlotIndex = i;
-      renderTeamEdit();
+      renderTePartySlots();   // 選択の枠が変わるだけ。ボックスの一覧は変わらないので作り直さない
     });
     if (uid !== null) {
       addLongPress(slot, () => {
@@ -4750,6 +4758,7 @@ function renderTeMonsterGrid() {
   const sorted = BoxSort.groupByAttrMatch(BoxSort.sort(filtered, teSort, { monsters: MONSTER_DATA, stats: calcMonsterStats }), activeAttrFilters, MONSTER_DATA);   // 主属性が合う順 → 副属性だけ合う順   // 編成済みでも先頭には移動しない
   detailListOrder['team-edit'] = sorted.map(e => e.uid);   // ステータス画面の左右ボタンは、この並び順で巡回する
   let anyVal = false;
+  const frag = document.createDocumentFragment();   // まとめて1回で追加（途中で何度もレイアウト計算しない）
   sorted.forEach(entry => {
     const mon = MONSTER_DATA[entry.monsterId];
     const card = document.createElement('div');
@@ -4775,8 +4784,9 @@ function renderTeMonsterGrid() {
     if (BoxSort.attachValue(card, teSort.mode, entry, { monsters: MONSTER_DATA, stats: calcMonsterStats })   // HP順などのとき数値を出す
         || (teLS && teLS.attachLabel(card, mon))) anyVal = true;                                              // リダスキ検索中は倍率を出す
     setupCardTap(card, entry);   // ダブルタップ=編成 / 長押し=詳細
-    grid.appendChild(card);
+    frag.appendChild(card);
   });
+  grid.appendChild(frag);
   grid.classList.toggle('has-val', anyVal);
 }
 
@@ -5103,6 +5113,7 @@ function renderIkuGrid() {
   const sorted = BoxSort.groupByAttrMatch(BoxSort.sort(filtered, ikuSort, sortCtx), ikuAttrFilter, MONSTER_DATA);   // 主属性が合う順 → 副属性だけ合う順
   detailListOrder['iku-screen'] = sorted.map(e => e.uid);   // ステータス画面の左右ボタンは、この並び順で巡回する
   let anyVal = false;
+  const frag = document.createDocumentFragment();   // まとめて1回で追加
 
   sorted.forEach(entry => {
     const mon = MONSTER_DATA[entry.monsterId];
@@ -5172,8 +5183,9 @@ function renderIkuGrid() {
       openMonsterDetail(idx, 'iku-screen');
     });
 
-    grid.appendChild(card);
+    frag.appendChild(card);
   });
+  grid.appendChild(frag);
   grid.classList.toggle('has-val', anyVal);
   updateIkuSortUI();
 }
@@ -8261,9 +8273,29 @@ function applyAreaBackground(elId, n) {
   el.style.setProperty('--h', areaHue(n));
 }
 // ホームの表示モード：'main'（メインのエリア一覧）／'event'（イベントステージ一覧）。右上のボタンで切り替え
-function buildStageMap() {
+// ホームのマップは、クリア状況・モード・おふだの数・曜日・向きが前回と同じなら作り直さない
+//（編成・ボックス・ステージ選択から戻るたびに全エリア帯を作り直していたのが、いちばん重かった）
+let _mapSig = '';
+function mapSignature() {
+  const d = new Date();
+  return [
+    homeMode,
+    (window.isLandscapeHome && window.isLandscapeHome()) ? 1 : 0,
+    Array.from(clearedBosses).join(','),
+    clearedDungeons.size,
+    JSON.stringify(itemInventory),
+    todayDow(),
+    d.getDate() + ':' + d.getHours()   // 「あと約N時間」の表示が変わるのは毎時
+  ].join('|');
+}
+let _bandROs = [];   // エリア帯ごとの ResizeObserver（作り直すときに片づける）
+function buildStageMap(force) {
   if (homeMode === 'event' && !isEventUnlocked()) homeMode = 'main';
   if (homeMode === 'multi' && !isMultiUnlocked()) homeMode = 'main';
+  const sig = mapSignature();
+  if (force !== true && sig === _mapSig && document.getElementById('stage-map').childElementCount) return;   // 変わっていない
+  _mapSig = sig;
+  _bandROs.forEach(o => { try { o.disconnect(); } catch (e) {} }); _bandROs = [];
   if (homeMode === 'event') buildEventMap(); else if (homeMode === 'multi') buildMultiMap(); else buildMainMap();
   renderHomeTabs();
 }
@@ -8465,7 +8497,7 @@ function fitAreaName(band) {
   }
 }
 function fitAreaNameObserve(band) {
-  if (typeof ResizeObserver === 'function') new ResizeObserver(() => fitAreaName(band)).observe(band);
+  if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(() => fitAreaName(band)); ro.observe(band); _bandROs.push(ro); }
   else requestAnimationFrame(() => fitAreaName(band));
 }
 let homeFocusArea = 0;   // リタイア/クリアしたエリア番号（ホームのスクロール位置に使う）
@@ -8528,12 +8560,13 @@ function checkMultiUnlockNotice() {
   }, i * 2500));
 }
 // ホームが表示されるたびに、マップ・パーティ表示を更新して進行中のエリアへスクロール
+let _noticeSig = null;
 new MutationObserver(() => {
   if (document.getElementById('home').style.display !== 'flex') return;
   buildStageMap(); scrollHomeToFrontier();
   updateMailBadge();   // 赤丸は未読/未受取があるときだけ
   setTimeout(checkLoginBonus, 400);   // ログインボーナス（24時間たっていれば）
-  setTimeout(checkMultiUnlockNotice, 900);   // マルチステージの解放のお知らせ
+  if (_noticeSig !== _mapSig) { _noticeSig = _mapSig; setTimeout(checkMultiUnlockNotice, 900); }   // マルチステージの解放のお知らせ（クリア状況が変わったときだけ調べる）
 }).observe(document.getElementById('home'), { attributes:true, attributeFilter:['style'] });
 
 function openStageSelect(areaNum) {

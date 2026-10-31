@@ -16,6 +16,8 @@
   if (!AC || typeof fetch !== 'function') return;
 
   const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const LOW_END = IS_IOS || (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+  const held = () => { try { return !!(window.AssetHold && AssetHold.active()); } catch (e) { return false; } };   // ダンジョンに入る前後は裏の読み込みを止める（preload.js の合図）
   const SE_MAX_BYTES  = 450 * 1024;                          // これより大きい音（長いジングル等）は変換せず、今まで通りに鳴らす（メモリ節約）
   const BGM_BUDGET    = (IS_IOS ? 40 : 120) * 1024 * 1024;   // BGMをメモリに置く合計の上限
   const NO_FAST_SE    = { cutin: 1 };                        // cutin.js が <audio> の長さで表示時間を決めている音
@@ -42,7 +44,7 @@
   const queued  = new Set();
   const queue   = [];
   let running = 0;
-  const CONC = 3;
+  const CONC = LOW_END ? 2 : 3;
 
   function decode(ab) {
     return new Promise((res, rej) => {
@@ -61,10 +63,15 @@
         skipped.add(file);
       });
   }
+  let _pumpTimer = null;
   function pump() {
+    if (held() && queue.length) {                       // ダンジョンに入る前後：少し待ってから再開
+      if (!_pumpTimer) _pumpTimer = setTimeout(() => { _pumpTimer = null; pump(); }, 400);
+      return;
+    }
     while (running < CONC && queue.length) {
       const f = queue.shift(); running++;
-      loadSE(f).then(() => { running--; pump(); });
+      loadSE(f).then(() => { running--; if (LOW_END) setTimeout(pump, 30); else pump(); });   // 軽量モードは1つずつ間をあける
     }
   }
   function enqueueSE(file) {
@@ -76,19 +83,40 @@
   const blobs = new Map();     // file -> { url, size }
   const bgmPending = new Map();
   let bgmBytes = 0;
-  function prefetchBGM(file) {
-    if (!file || blobs.has(file) || bgmPending.has(file) || skipped.has('bgm:' + file)) return;
-    if (bgmBytes >= BGM_BUDGET) return;
-    const p = fetch(file)
+  const bgmQueue = [];
+  let bgmRunning = 0, _bgmTimer = null;
+  const BGM_CONC = LOW_END ? 1 : 2;
+  function fetchBGM(file) {
+    return fetch(file)
       .then(r => { if (!r.ok) throw new Error('http'); return r.blob(); })
       .then(b => {
         if (bgmBytes + b.size > BGM_BUDGET) return;   // 上限超え：置かない（今まで通り普通に再生される）
         bgmBytes += b.size;
         blobs.set(file, { url: URL.createObjectURL(b), size: b.size });
       })
-      .catch(() => { skipped.add('bgm:' + file); })
-      .then(() => { bgmPending.delete(file); });
-    bgmPending.set(file, p);
+      .catch(() => { skipped.add('bgm:' + file); });
+  }
+  function bgmPump() {
+    while (bgmRunning < BGM_CONC && bgmQueue.length) {
+      // 急ぎ(urgent)でないものは、ダンジョンに入る前後は待つ
+      const idx = held() ? bgmQueue.findIndex(q => q.urgent) : 0;
+      if (idx < 0) { if (!_bgmTimer) _bgmTimer = setTimeout(() => { _bgmTimer = null; bgmPump(); }, 500); return; }
+      const item = bgmQueue.splice(idx, 1)[0];
+      bgmRunning++;
+      fetchBGM(item.file).then(() => { bgmRunning--; bgmPending.delete(item.file); bgmPump(); });
+    }
+  }
+  function prefetchBGM(file, urgent) {
+    if (!file || blobs.has(file) || skipped.has('bgm:' + file)) return;
+    if (bgmBytes >= BGM_BUDGET) return;
+    if (bgmPending.has(file)) {                        // すでに順番待ち：急ぎなら前に出す
+      if (urgent) { const q = bgmQueue.find(x => x.file === file); if (q) { q.urgent = true; bgmQueue.splice(bgmQueue.indexOf(q), 1); bgmQueue.unshift(q); } }
+      return;
+    }
+    bgmPending.set(file, true);
+    const item = { file, urgent: !!urgent };
+    if (urgent) bgmQueue.unshift(item); else bgmQueue.push(item);
+    bgmPump();
   }
   // new Audio('xxx.mp3') のとき、メモリに置いてあるものがあればそれを使う（すぐ鳴る）
   const NativeAudio = window.Audio;
@@ -170,7 +198,7 @@
 
   // ---- 開始 ---------------------------------------------------------------------
   // 1) 画面に最初に出る音を先に
-  prefetchBGM('menu.mp3');
+  prefetchBGM('menu.mp3', true);
   ['tap.mp3', 'modo.mp3', 'combo.mp3', 'drop.mp3', 'swipe.mp3'].forEach(enqueueSE);
   // 2) バトル効果音（定義の順）
   try { for (const k in BATTLE_SE) if (!NO_FAST_SE[k]) enqueueSE(BATTLE_SE[k].file); } catch (e) {}
@@ -188,6 +216,16 @@
     } catch (e) {}
   }
   wrap('openStageSelect', function (areaNum) { prefetchAreaBGM(areaNum); return false; });
+  // ダンジョン選択画面を開いたら、そのダンジョンの道中BGM・ボスBGMだけを最優先で（挑戦するまでの間に読み終える）
+  wrap('openDungeonEntry', function (areaNum, stageType) {
+    try {
+      const key = (areaNum || 1) + '-' + (stageType || '1');
+      const c = DUNGEON_BGM[key];
+      if (c) { prefetchBGM(c.field, true); prefetchBGM(c.boss, true); }
+      else { const d = DUNGEON_DATA[key]; prefetchBGM((d && d.bgm) || 'dungeon1.mp3', true); }
+    } catch (e) {}
+    return false;
+  });
 
   // 4) ひまな時間に、いちばん進んだエリアのBGMも（ホームにいる間に済ませる）
   try {
