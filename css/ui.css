@@ -528,7 +528,7 @@
 #md-type.as-text { padding: 2px 8px; font: 900 0.68rem/1.3 var(--ff); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 999px; }
 #md-name-row { display: flex; align-items: center; gap: 10px; }
 #md-attr-icons { display: flex; gap: 4px; }
-.md-attr-icon { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: var(--bw) solid var(--ink); background: var(--a, var(--sky-2)); box-shadow: 0 3px 0 var(--ink); }
+.md-attr-icon { width: 38px; height: 38px; object-fit: contain; border: none; border-radius: 0; background: none; box-shadow: none; }
 #md-name { font: 900 1.3rem/1.15 var(--ff); letter-spacing: 0.04em; }
 #md-level-row { display: flex; align-items: center; gap: 10px; padding: 6px 14px; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 14px; box-shadow: 0 3px 0 var(--ink); }
 #md-level { font: 400 1.1rem/1 var(--ff-num); letter-spacing: 0.04em; white-space: nowrap; }
@@ -1239,6 +1239,6 @@ button.cs-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--in
 
 /* ═══ 副属性（2属性モンスター）：主属性アイコンの右下に、副属性アイコンを小さく重ねる ═══ */
 .attr-dual { position: relative; display: inline-block; flex-shrink: 0; line-height: 0; }
-.attr-dual-sub { position: absolute; right: -1px; bottom: -1px; width: 50%; height: 50%; object-fit: cover; border-radius: 50%; border: 2px solid var(--ink, #222); background: #fff; box-shadow: 0 1px 0 var(--ink, #222); pointer-events: none; }
+.attr-dual-sub { position: absolute; right: -1px; bottom: -1px; width: 50%; height: 50%; object-fit: contain; border: none; border-radius: 0; background: none; box-shadow: none; pointer-events: none; }
 .zk-info-namerow .attr-dual { width: 30px; height: 30px; }
 .zk-info-namerow .attr-dual .zk-info-attr { width: 100%; height: 100%; }

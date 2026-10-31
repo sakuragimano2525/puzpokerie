@@ -4479,6 +4479,235 @@ const MONSTER_DATA = {
         { type: 'noDrop', value: true }
       ]
     }
+  },
+  5012: {
+    id: 5012,
+    name: 'コハク',
+    rarity: 4,
+    attr: 'fire',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 400, max: 2400 }, atk: { min: 350, max: 2000 }, rec: { min: 20, max: 40 } },
+    skill: {
+      name: '烈火の華',
+      sp: 3,
+      desc: '火と回復ドロップをランダムで3つずつ生成。\n火と回復ドロップをロック。',
+      effects: [
+        { type: 'orbChangeRandom', attr: 'fire', count: 3, message: '☠️ 毒ドロップ生成！' },
+        { type: 'orbChangeRandom', attr: 'heal', count: 3 },
+        { type: 'orbLock', target: 'attrs', orb_fire: true, orb_heal: true }
+      ]
+    },
+    leaderSkill: {
+      name: '黒猫の気配',
+      desc: '火属性/こうげきタイプのHP1.25倍。',
+      effects: [ { type: 'hp', attr: 'fire', value: 1.25 }, { type: 'hp', condition: 'type', attr: 'こうげき', value: 1.25 } ]
+    },
+    evolutions: [ { to: 5013, materials: [ { item: 'puzzle13', count: 1 }, { item: 'puzzle1', count: 5 } ] } ]
+  },
+  5013: {
+    id: 5013,
+    name: 'コハク(覚醒)',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 400, max: 2400 }, atk: { min: 700, max: 2700 }, rec: { min: 20, max: 40 } },
+    skill: {
+      name: 'アークブラスト',
+      sp: 4,
+      desc: '火ドロップをランダムで3つ生成。\n火と回復ドロップをロックし、1ターンの間、敵全体に攻撃。',
+      effects: [
+        { type: 'orbChangeRandom', attr: 'fire', count: 3, message: '☠️ 毒ドロップ生成！' },
+        { type: 'orbLock', target: 'attrs', orb_fire: true, orb_heal: true },
+        { type: 'allAttackBuff', turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'デュアルファイア',
+      desc: '火ドロップを消す度に攻撃1.2倍、受けるダメージ5%軽減。\nスキル使用時、攻撃1.1倍。',
+      effects: [
+        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.2, reduce: 0.05 },
+        { type: 'atk', condition: 'skillUsed', value: 1.1 }
+      ]
+    }
+  },
+  5015: {
+    id: 5015,
+    name: 'チトセ(覚醒）',
+    rarity: 5,
+    attr: 'water',
+    sub: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 340, max: 2800 }, atk: { min: 260, max: 2400 }, rec: { min: 40, max: 180 } },
+    skill: {
+      name: '漣',
+      sp: 5,
+      desc: '敵単体に攻撃力×20倍の水属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', value: 20, attr: 'water', target: 'single' } ]
+    },
+    leaderSkill: {
+      name: '龍薙閃',
+      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.2倍、受けるダメージ9%軽減。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'water',
+          count: 4,
+          value: 1.21,
+          exponential: true,
+          exact: true,
+          reduce: 0.09
+        },
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'dark',
+          count: 4,
+          value: 1.21,
+          exponential: true,
+          reduce: 0.09,
+          exact: true
+        }
+      ]
+    }
+  },
+  5017: {
+    id: 5017,
+    name: 'ナズナ',
+    rarity: 5,
+    attr: 'wood',
+    sub: 'light',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 260, max: 2600 }, atk: { min: 60, max: 1100 }, rec: { min: 100, max: 300 } },
+    skill: {
+      name: 'ハグしてドカン',
+      sp: 7,
+      desc: '最上段横2列を木と光ドロップに変化。',
+      effects: [
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' },
+        { type: 'orbChangeLine', dir: 'row', index: 1, count: 1, attr: 'light' }
+      ]
+    },
+    leaderSkill: { name: 'なにがでるかな？', desc: 'ダンジョン潜入時にリーダー/フレンドの時、タマゴドロップ率が少し上昇。', effects: [] }
+  },
+  5019: {
+    id: 5019,
+    name: 'セイナ(覚醒)',
+    rarity: 5,
+    attr: 'light',
+    sub: 'water',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 1500,
+    stats: { hp: { min: 350, max: 3350 }, atk: { min: 270, max: 1700 }, rec: { min: 140, max: 240 } },
+    skill: {
+      name: '旋・二重奏！',
+      sp: 3,
+      desc: 'ドロップを5属性＋回復ドロップに変化。\n1ターンの間、敵全体に攻撃。',
+      effects: [ { type: 'orbChange5ColorHeal' }, { type: 'allAttackBuff', turns: 1 } ]
+    },
+    leaderSkill: {
+      name: '無名の剣術',
+      desc: '光ドロップの2コンボ以上で攻撃1.5倍、受けるダメージ5%軽減。\n5色同時に消すと攻撃1.4倍。',
+      effects: [
+        { type: 'atk', condition: 'attrCombos', attr: 'light', count: 2, value: 1.5, reduce: 0.05 },
+        { type: 'atk', condition: 'colorCount', count: 5, value: 1.4 }
+      ]
+    }
+  },
+  5020: {
+    id: 5020,
+    name: 'エレノア',
+    rarity: 4,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 500,
+    stats: { hp: { min: 200, max: 2000 }, atk: { min: 500, max: 2500 }, rec: { min: 50, max: 250 } },
+    skill: {
+      name: 'フリーダムペイント',
+      sp: 4,
+      desc: '左の縦1列を木ドロップに変化、右は闇ドロップに変化。\n木・闇・回復ドロップをロック。',
+      effects: [
+        { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'wood' },
+        { type: 'orbChangeLine', dir: 'col', index: 5, count: 1, attr: 'dark' },
+        { type: 'orbLock', target: 'attrs', orb_wood: true, orb_dark: true, orb_heal: true }
+      ]
+    },
+    leaderSkill: {
+      name: 'フローラルストーム',
+      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍。\n木と闇を同時に5個以上つなげて消すと受けるダメージ8%軽減、1コンボ加算。',
+      effects: [
+        { type: 'atk', condition: 'connectEach', attr: 'wood', count: 5, value: 1.4, exponential: true, exact: true },
+        { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.5, exponential: true, exact: true },
+        {
+          type: 'atk',
+          condition: 'orbConnect',
+          attr: 'wood',
+          count: 5,
+          value: 1,
+          attr2: 'dark',
+          comboAdd: 2,
+          reduce: 0.08
+        }
+      ]
+    },
+    evolutions: [ { to: 5021, materials: [ { item: 'puzzle32', count: 2 }, { item: 'puzzle33', count: 1 } ] } ]
+  },
+  5021: {
+    id: 5021,
+    name: 'エレノア(覚醒)',
+    rarity: 5,
+    attr: 'wood',
+    sub: 'wood',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 600, max: 3000 }, atk: { min: 200, max: 1500 }, rec: { min: 100, max: 500 } },
+    skill: {
+      name: 'ロケットパーティー',
+      sp: 7,
+      desc: 'ドロップを木・闇・回復ドロップに変化。\n敵全体に仲間の絆に比例する無属性の攻撃。',
+      effects: [
+        { type: 'orbChangeMulti', orb_heal: true, orb_wood: true, orb_dark: true },
+        { type: 'damagePartyAtkMult', target: 'all', value: 2, attr: 'poison' }
+      ]
+    },
+    leaderSkill: {
+      name: 'エレガントチェイン',
+      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍、受けるダメージ10%軽減。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'wood',
+          count: 5,
+          value: 1.5,
+          exponential: true,
+          exact: true,
+          reduce: 0.1
+        },
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'dark',
+          count: 5,
+          value: 1.5,
+          exponential: true,
+          exact: true,
+          reduce: 0.1
+        }
+      ]
+    }
   }
 };
 
