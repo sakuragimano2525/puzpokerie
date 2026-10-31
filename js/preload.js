@@ -234,7 +234,11 @@
       await loadPool(rest.slice(i, i + BATCH), BG_CONC, { light: LOW_END });
     }
     // 5) BGMなど残りの音声（軽量モードは全BGMを一括で読み込むとメモリを圧迫するので、再生するときに読み込む）
-    if (!LOW_END) for (const u of audSet) { await nextIdle(); if (holding()) await waitHold(); warmAudio(u); }
+    //   BGM は audio-fast.js が「必要な曲だけ・優先して」読み込むので、ここでは二重に読み込まない（回線とメモリを節約）
+    if (!LOW_END) for (const u of audSet) {
+      if (window.AudioFast && AudioFast.isBGM && AudioFast.isBGM(u)) continue;
+      await nextIdle(); if (holding()) await waitHold(); warmAudio(u);
+    }
   }
 
   // ---- ゲーム側の関数に「合図」だけ足す（中身は今まで通り呼ぶ） ---------------------------------

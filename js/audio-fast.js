@@ -6,7 +6,11 @@
 //     → iPhone(Safari) は <audio> の事前読み込みが効かず、初回は「読み込み→変換」が鳴らす瞬間に走って遅れるため。
 //     ・鳴らし方（音量・速度・同時に鳴る数・設定画面の音量）は今までと同じ
 //     ・準備前／音の長さを使う演出（cutin）は、今までの再生方法のまま（見た目・タイミングは変わらない）
-//   【BGM】menu.mp3 と、開いたエリアのBGMだけ先にメモリへ読み込んでおく（上限あり。超えたら今まで通り）
+//   【BGM】menu.mp3 と、開いたエリアのBGMだけ先にメモリへ読み込んでおく。
+//     ・ダンジョン選択画面を開いた瞬間に、そのダンジョンの道中BGM・ボスBGMを最優先で読み込む（回線も優先）
+//     ・メモリの上限に達したら、使っていない古い曲から手放す（新しい曲が置けなくならない）
+//     ・読み込み失敗は1回やり直し、しばらくしたら再挑戦。バトルが始まるたびにボスBGMの読み込み状況を確認
+//     ・読み込めたら <audio> を先に待機させ、鳴らす瞬間にそのまま使う
 //
 //   読み込みに失敗しても、何も起きず今までの再生方法に戻るだけ。
 // ============================================================
@@ -80,49 +84,109 @@
   }
 
   // ---- BGM：メモリ(blob)に置く ------------------------------------------------------
-  const blobs = new Map();     // file -> { url, size }
+  //   ・「急ぎ(urgent)」＝いま入ろうとしているダンジョンの道中BGM・ボスBGM。回線を優先して読み込む
+  //   ・メモリの上限を超えたら、使っていない古い曲から手放す（以前は上限に達すると新しい曲が一切置けなかった）
+  //   ・読み込めた曲は <audio> を1つ先に作って待機させ、鳴らす瞬間にそのまま使う（初回の再生開始が速い）
+  const blobs = new Map();     // file -> { url, size, t }
   const bgmPending = new Map();
+  const failedAt = new Map();  // file -> 失敗した時刻（しばらくしたらまた挑戦する）
   let bgmBytes = 0;
   const bgmQueue = [];
-  let bgmRunning = 0, _bgmTimer = null;
-  const BGM_CONC = LOW_END ? 1 : 2;
-  function fetchBGM(file) {
-    return fetch(file)
+  let bgmRunning = 0, bgmUrgentRunning = 0, _bgmTimer = null;
+  const BGM_CONC = LOW_END ? 1 : 2;      // 急ぎでない読み込みの同時数
+  const BGM_URGENT_CONC = 2;             // 急ぎ（道中＋ボス）は軽量モードでも2本同時
+  const wanted = new Set(['menu.mp3']);  // いま必要な曲（メモリから手放さない）
+  const warmEls = new Map();             // file -> 待機中の <audio>（最大3つ）
+  const nowPlayingBGM = () => { try { return (typeof dungeonBGMFile !== 'undefined' && dungeonBGMFile) || null; } catch (e) { return null; } };
+
+  function dropWarm(file) {
+    const a = warmEls.get(file); if (!a) return;
+    warmEls.delete(file);
+    try { a.removeAttribute('src'); a.load(); } catch (e) {}
+  }
+  function warm(file) {
+    if (warmEls.has(file) || warmEls.size >= 3 || file === nowPlayingBGM()) return;
+    const b = blobs.get(file); if (!b) return;
+    try { const a = new NativeAudio(b.url); a.preload = 'auto'; a.load(); warmEls.set(file, a); } catch (e) {}
+  }
+  function setWanted(files) {
+    wanted.clear(); wanted.add('menu.mp3');
+    files.forEach(f => { if (f) wanted.add(f); });
+    Array.from(warmEls.keys()).forEach(f => { if (!wanted.has(f)) dropWarm(f); });
+    files.forEach(f => { if (f && blobs.has(f)) warm(f); });
+  }
+  // 上限に収まるよう、必要でない古い曲から手放す。収まらなければ false
+  function makeRoom(size, keepFile) {
+    if (bgmBytes + size <= BGM_BUDGET) return true;
+    const playing = nowPlayingBGM();
+    const olds = Array.from(blobs.entries())
+      .filter(e => e[0] !== keepFile && e[0] !== playing && !wanted.has(e[0]))
+      .sort((x, y) => x[1].t - y[1].t);
+    for (const e of olds) {
+      if (bgmBytes + size <= BGM_BUDGET) break;
+      blobs.delete(e[0]); bgmBytes -= e[1].size; dropWarm(e[0]);
+      try { URL.revokeObjectURL(e[1].url); } catch (err) {}
+    }
+    return bgmBytes + size <= BGM_BUDGET;
+  }
+  function fetchBGM(file, urgent, retried) {
+    return fetch(file, urgent ? { priority: 'high' } : undefined)
       .then(r => { if (!r.ok) throw new Error('http'); return r.blob(); })
       .then(b => {
-        if (bgmBytes + b.size > BGM_BUDGET) return;   // 上限超え：置かない（今まで通り普通に再生される）
+        if (!makeRoom(b.size, file)) return;   // どうしても入らない：置かない（今まで通り普通に再生される）
         bgmBytes += b.size;
-        blobs.set(file, { url: URL.createObjectURL(b), size: b.size });
+        blobs.set(file, { url: URL.createObjectURL(b), size: b.size, t: Date.now() });
+        if (wanted.has(file)) warm(file);
       })
-      .catch(() => { skipped.add('bgm:' + file); });
+      .catch(() => {
+        if (!retried) return new Promise(r => setTimeout(r, 1200)).then(() => fetchBGM(file, urgent, true));
+        failedAt.set(file, Date.now());       // 一時的な通信エラーで永久に諦めない：しばらくしたらまた挑戦できる
+      });
   }
   function bgmPump() {
-    while (bgmRunning < BGM_CONC && bgmQueue.length) {
-      // 急ぎ(urgent)でないものは、ダンジョンに入る前後は待つ
-      const idx = held() ? bgmQueue.findIndex(q => q.urgent) : 0;
-      if (idx < 0) { if (!_bgmTimer) _bgmTimer = setTimeout(() => { _bgmTimer = null; bgmPump(); }, 500); return; }
+    while (bgmQueue.length) {
+      let idx = bgmQueue.findIndex(q => q.urgent);
+      if (idx >= 0) {
+        if (bgmUrgentRunning >= BGM_URGENT_CONC) return;
+      } else {
+        if (held()) { if (!_bgmTimer) _bgmTimer = setTimeout(() => { _bgmTimer = null; bgmPump(); }, 500); return; }   // ダンジョンに入る前後は待つ
+        if (bgmUrgentRunning > 0 || bgmRunning >= BGM_CONC) return;                                                   // 急ぎが動いている間は回線を譲る
+        idx = 0;
+      }
       const item = bgmQueue.splice(idx, 1)[0];
-      bgmRunning++;
-      fetchBGM(item.file).then(() => { bgmRunning--; bgmPending.delete(item.file); bgmPump(); });
+      bgmRunning++; if (item.urgent) bgmUrgentRunning++;
+      fetchBGM(item.file, item.urgent).then(() => {
+        bgmRunning--; if (item.urgent) bgmUrgentRunning--;
+        bgmPending.delete(item.file); bgmPump();
+      });
     }
   }
   function prefetchBGM(file, urgent) {
-    if (!file || blobs.has(file) || skipped.has('bgm:' + file)) return;
-    if (bgmBytes >= BGM_BUDGET) return;
-    if (bgmPending.has(file)) {                        // すでに順番待ち：急ぎなら前に出す
-      if (urgent) { const q = bgmQueue.find(x => x.file === file); if (q) { q.urgent = true; bgmQueue.splice(bgmQueue.indexOf(q), 1); bgmQueue.unshift(q); } }
+    if (!file) return;
+    if (blobs.has(file)) { blobs.get(file).t = Date.now(); return; }
+    const f = failedAt.get(file);
+    if (f && Date.now() - f < 15000) return;
+    if (bgmPending.has(file)) {                        // すでに順番待ち：急ぎなら前に出す（読み込み中ならそのまま待つ）
+      if (urgent) { const q = bgmQueue.find(x => x.file === file); if (q) { q.urgent = true; bgmQueue.splice(bgmQueue.indexOf(q), 1); bgmQueue.unshift(q); bgmPump(); } }
       return;
     }
+    if (!urgent && bgmBytes >= BGM_BUDGET) return;     // 急ぎでないものは、上限いっぱいなら先読みしない（急ぎは古い曲を手放して入れる）
+    if (failedAt.has(file)) failedAt.delete(file);
     bgmPending.set(file, true);
     const item = { file, urgent: !!urgent };
     if (urgent) bgmQueue.unshift(item); else bgmQueue.push(item);
     bgmPump();
   }
-  // new Audio('xxx.mp3') のとき、メモリに置いてあるものがあればそれを使う（すぐ鳴る）
+  // new Audio('xxx.mp3') のとき、待機中の <audio> → メモリに置いてあるもの の順で使う（すぐ鳴る）
   const NativeAudio = window.Audio;
   function FastAudio(src) {
-    const b = (typeof src === 'string') ? blobs.get(src) : null;
-    return b ? new NativeAudio(b.url) : (src === undefined ? new NativeAudio() : new NativeAudio(src));
+    if (typeof src === 'string') {
+      const w = warmEls.get(src);
+      if (w) { warmEls.delete(src); return w; }
+      const b = blobs.get(src);
+      if (b) { b.t = Date.now(); return new NativeAudio(b.url); }
+    }
+    return src === undefined ? new NativeAudio() : new NativeAudio(src);
   }
   FastAudio.prototype = NativeAudio.prototype;
   window.Audio = FastAudio;
@@ -216,14 +280,29 @@
     } catch (e) {}
   }
   wrap('openStageSelect', function (areaNum) { prefetchAreaBGM(areaNum); return false; });
-  // ダンジョン選択画面を開いたら、そのダンジョンの道中BGM・ボスBGMだけを最優先で（挑戦するまでの間に読み終える）
-  wrap('openDungeonEntry', function (areaNum, stageType) {
+  // そのダンジョンの道中BGM・ボスBGMを最優先で（挑戦するまでの間に読み終える）
+  function bgmOfDungeon(key) {
+    const c = DUNGEON_BGM[key];
+    if (c) return { field: c.field || c.boss, boss: c.boss || c.field };
+    const d = DUNGEON_DATA[key], f = (d && d.bgm) || 'dungeon1.mp3';
+    return { field: f, boss: f };
+  }
+  function prepareDungeonBGM(key) {
     try {
-      const key = (areaNum || 1) + '-' + (stageType || '1');
-      const c = DUNGEON_BGM[key];
-      if (c) { prefetchBGM(c.field, true); prefetchBGM(c.boss, true); }
-      else { const d = DUNGEON_DATA[key]; prefetchBGM((d && d.bgm) || 'dungeon1.mp3', true); }
+      const o = bgmOfDungeon(key);
+      setWanted([o.field, o.boss]);
+      prefetchBGM(o.field, true); prefetchBGM(o.boss, true);
     } catch (e) {}
+  }
+  wrap('openDungeonEntry', function (areaNum, stageType) { prepareDungeonBGM((areaNum || 1) + '-' + (stageType || '1')); return false; });
+  // 念のための保険：選択画面を通らずに始まった場合・読み込みに失敗していた場合でも、ここで改めて急ぎにする
+  wrap('startGameFromHome', function () {
+    try { prepareDungeonBGM(currentAreaNum + '-' + (currentStageType === 'boss' ? 'boss' : currentStageType)); } catch (e) {}
+    return false;
+  });
+  // バトルが始まるたびに、ボスBGMがまだ読み込み中なら最優先に引き上げる（置いてあれば何もしない＝軽い）
+  wrap('playBattleBgm', function () {
+    try { if (currentDungeonKey) prepareDungeonBGM(currentDungeonKey); } catch (e) {}
     return false;
   });
 
@@ -239,5 +318,8 @@
     });
   } catch (e) {}
 
-  window.AudioFast = { ctx, buffers, blobs, prefetchBGM, prefetchAreaBGM };
+  // preload.js 用：BGMかどうか（BGMは上の仕組みで読み込むので、preload.js 側では二重に読み込まない）
+  const bgmFileSet = new Set(['menu.mp3']);
+  try { for (const k in DUNGEON_BGM) { const c = DUNGEON_BGM[k]; if (c) { if (c.field) bgmFileSet.add(c.field); if (c.boss) bgmFileSet.add(c.boss); } } } catch (e) {}
+  window.AudioFast = { ctx, buffers, blobs, prefetchBGM, prefetchAreaBGM, isBGM: f => bgmFileSet.has(f) };
 })();
