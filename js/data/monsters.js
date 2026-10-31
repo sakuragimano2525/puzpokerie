@@ -68,6 +68,7 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'fire',
     type: 'こうげき',
+    maxLevel: 25,
     baseExp: 100,
     stats: { hp: { min: 151, max: 852 }, atk: { min: 152, max: 380 }, rec: { min: 19, max: 38 } },
     skill: {
@@ -124,6 +125,7 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'water',
     type: 'バランス',
+    maxLevel: 25,
     baseExp: 100,
     stats: { hp: { min: 154, max: 876 }, atk: { min: 151, max: 365 }, rec: { min: 18, max: 75 } },
     skill: {

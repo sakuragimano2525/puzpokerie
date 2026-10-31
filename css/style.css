@@ -1361,6 +1361,20 @@ body {
   backface-visibility:hidden; -webkit-backface-visibility:hidden;
 }
 .bn-side.bn-back { transform:rotateY(180deg); }
+/* iPhone(Safari)対策：backface-visibility は子要素に影・回転・overflow があると効かず、
+   表面の「Battle n/n」が透けて残る。→ 真横(90°)になる瞬間に表/裏を opacity+visibility で明示的に切り替える */
+.bn-side, .bn-side * { -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+.bn-side.bn-back { opacity:0; visibility:hidden; }
+.bn-flip.bn-do-flip .bn-side.bn-front { animation:bnFrontOut .6s linear forwards; }
+.bn-flip.bn-do-flip .bn-side.bn-back  { animation:bnBackIn  .6s linear forwards; }
+@keyframes bnFrontOut {
+  0%, 34.9% { opacity:1; visibility:visible; }
+  35%, 100% { opacity:0; visibility:hidden; }
+}
+@keyframes bnBackIn {
+  0%, 34.9% { opacity:0; visibility:hidden; }
+  35%, 100% { opacity:1; visibility:visible; }
+}
 
 /* 白い角丸の菱形 */
 .bn-shape {

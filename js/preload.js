@@ -25,6 +25,9 @@
     if (typeof o === 'object') for (const k in o) walk(o[k], depth + 1);
   }
   function safe(fn) { try { return fn(); } catch (e) { return undefined; } }
+  // iPhone / iPad(Safari)：メモリに余裕がなく、全画像のデコード保持と全BGMの一括読み込みでホームがカクつくため、先読みを軽くする
+  //   （Android・PCは今まで通り。iPhoneでも必要なときに読み込まれるので、見た目・演出は変わらない）
+  const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   function collect() {
     // モンスター：一覧用 m{id}.png と、詳細用 mp{id}.png（m1→mp1 / sm1→smp1）
@@ -60,20 +63,23 @@
   }
 
   // 失敗してもすぐ諦めず、少し待って最大3回やり直す（一瞬の通信エラーで画像が欠けるのを防ぐ）
-  function loadImage(url, tryN) {
+  function loadImage(url, tryN, light) {
     tryN = tryN || 0;
     return new Promise(resolve => {
       const im = new Image();
-      im.onload = () => { (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(resolve); };
+      im.onload = () => {
+        if (light) { im.onload = im.onerror = null; resolve(); return; }   // iOS：デコードも保持もしない（キャッシュに載せるだけ）
+        (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(resolve);
+      };
       im.onerror = () => {
         if (tryN >= 3) { resolve(); return; }          // 無いファイルは最終的に無視
         setTimeout(() => {
-          loadImage(url, tryN + 1).then(resolve);   // 同じURLでやり直す（成功すれば本番の表示用にキャッシュされる）
+          loadImage(url, tryN + 1, light).then(resolve);   // 同じURLでやり直す（成功すれば本番の表示用にキャッシュされる）
         }, 400 * (tryN + 1));
       };
       im.decoding = 'async';
       im.src = url;
-      keep.push(im);                     // デコード済み画像を保持
+      if (!light) keep.push(im);         // デコード済み画像を保持
     });
   }
 
@@ -113,17 +119,17 @@
     const imgs = Array.from(imgSet);
     const priority = imgs.filter(u => /^(dungeon|\d|gift|j\d)/.test(u));
     const rest = imgs.filter(u => !priority.includes(u));
-    await Promise.all(priority.map(loadImage));
+    await Promise.all(priority.map(u => loadImage(u)));
     // 2) 効果音を待機状態に
     warmSE();
     // 3) 残りの画像は少しずつ（通信・描画を邪魔しない）
     const BATCH = 6;
     for (let i = 0; i < rest.length; i += BATCH) {
       await new Promise(r => idle(r));
-      await Promise.all(rest.slice(i, i + BATCH).map(loadImage));
+      await Promise.all(rest.slice(i, i + BATCH).map(u => loadImage(u, 0, IS_IOS)));
     }
-    // 4) BGMなど残りの音声
-    for (const u of audSet) { await new Promise(r => idle(r)); warmAudio(u); }
+    // 4) BGMなど残りの音声（iOSは全BGMを一括で読み込むとメモリを圧迫するので、再生するときに読み込む）
+    if (!IS_IOS) for (const u of audSet) { await new Promise(r => idle(r)); warmAudio(u); }
   }
 
   // 他の場所から追加したいとき用：preloadAsset('new.png')

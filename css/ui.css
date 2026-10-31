@@ -215,7 +215,7 @@
 .ht-tab:focus-visible { outline: 3px solid var(--water); outline-offset: 2px; }
 
 #home-main { flex: 1; min-height: 0; position: relative; overflow: hidden; }
-#home-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px); mask-image: linear-gradient(to bottom, transparent 0, #000 16px); }
+#home-scroll { position: absolute; inset: 0; -webkit-transform: translateZ(0); transform: translateZ(0); overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px); mask-image: linear-gradient(to bottom, transparent 0, #000 16px); }
 #home-scroll::-webkit-scrollbar { display: none; }
 #stage-map { position: relative; display: flex; flex-direction: column; gap: 18px; padding: 10px var(--gutter) 20px calc(var(--gutter) + 28px); }
 /* 冒険の道すじ */
