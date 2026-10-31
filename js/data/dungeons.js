@@ -9169,8 +9169,8 @@ const DUNGEON_DATA = {
             "name": "プテラ",
             "img": "mp142.png",
             "attr": "dark",
-            "hp": 50000,
-            "atk": 803,
+            "hp": 48000,
+            "atk": 690,
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
@@ -9225,12 +9225,6 @@ const DUNGEON_DATA = {
                 "condition": "battle_start",
                 "once": true,
                 "skills": [
-                  {
-                    "type": "attr_guard",
-                    "attr": "dark",
-                    "rate": 50,
-                    "turn": -1
-                  },
                   {
                     "type": "combo_absorb",
                     "turn": 99,
@@ -9541,7 +9535,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 8,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
