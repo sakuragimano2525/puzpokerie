@@ -230,6 +230,22 @@
     } catch (e) { return false; }
   }
 
+  // 敵スキルウインドウ用：AudioBufferで鳴らし、鳴り終わったら onEnd を呼ぶ。鳴らせなければ false（呼び出し側が従来の方法に戻る）
+  function playTimed(file, vol, onEnd) {
+    const buf = buffers.get(file);
+    if (!buf) return false;
+    if (ctx.state !== 'running') { try { ctx.resume().catch(() => {}); } catch (e) {} }   // iPhoneで眠っていたら起こす（起きるまで少し待つ）
+    if (ctx.state !== 'running') return false;
+    try {
+      const src = ctx.createBufferSource(), g = ctx.createGain();
+      src.buffer = buf; g.gain.value = Math.max(0, Math.min(1, vol * seMult()));
+      src.connect(g); g.connect(ctx.destination);
+      src.onended = () => { try { g.disconnect(); } catch (e) {} if (onEnd) onEnd(); };
+      src.start(0);
+      return true;
+    } catch (e) { return false; }
+  }
+
   // ---- 既存の再生関数を包む（準備できていれば速い方、まだなら今まで通り）------------------
   function wrap(name, fn) {
     const orig = window[name];
@@ -277,7 +293,7 @@
   // 1) 画面に最初に出る音を先に
   prefetchBGM('menu.mp3', true);
   KEEP_FILES.forEach(f => prefetchBGM(f, true));   // 敵スキルのウインドウ音(skillwin.mp3)・必殺技の音(cutin.mp3)
-  ['tap.mp3', 'modo.mp3', 'combo.mp3', 'drop.mp3', 'swipe.mp3'].forEach(f => enqueueSE(f, true));   // 画面を触ってすぐ使う音は最優先
+  ['skillwin.mp3', 'tap.mp3', 'modo.mp3', 'combo.mp3', 'drop.mp3', 'swipe.mp3'].forEach(f => enqueueSE(f, true));   // skillwin：iPhoneでは <audio> が自動再生制限で鳴らないので、AudioBufferで鳴らす   // 画面を触ってすぐ使う音は最優先
   // 敵のスキル・行動で鳴る効果音を、他の効果音より先に
   try { PRIO_SE.forEach(k => { if (BATTLE_SE[k] && !NO_FAST_SE[k]) enqueueSE(BATTLE_SE[k].file, true); }); } catch (e) {}
   // 2) バトル効果音（定義の順）
@@ -337,5 +353,5 @@
   // preload.js 用：BGMかどうか（BGMは上の仕組みで読み込むので、preload.js 側では二重に読み込まない）
   const bgmFileSet = new Set(['menu.mp3']);
   try { for (const k in DUNGEON_BGM) { const c = DUNGEON_BGM[k]; if (c) { if (c.field) bgmFileSet.add(c.field); if (c.boss) bgmFileSet.add(c.boss); } } } catch (e) {}
-  window.AudioFast = { ctx, buffers, blobs, prefetchBGM, prefetchAreaBGM, isBGM: f => bgmFileSet.has(f) };
+  window.AudioFast = { ctx, buffers, blobs, playTimed, prefetchBGM, prefetchAreaBGM, isBGM: f => bgmFileSet.has(f) };
 })();

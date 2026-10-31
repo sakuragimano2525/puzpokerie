@@ -2211,6 +2211,9 @@ function showEnemySkillWindow(enemy, name) {
     // 効果音の長さ分だけ待つ（読み込み失敗時は1.4秒で再開）
     try {
       // skillwin.mp3 を鳴らす。まだ mp3 を置いていない場合だけ、これまでの skillwin.wav で鳴らす
+      // ① iPhone対策：準備できていれば Web Audio で鳴らす（<audio> は最初のタッチ以外だと iOS が再生を拒否するため）
+      if (window.AudioFast && AudioFast.playTimed && AudioFast.playTimed('skillwin.mp3', 0.9, finish)) { setTimeout(finish, 4000); return; }
+      // ② 準備できていない／鳴らせない場合は、今まで通り <audio> で
       const a = new Audio('skillwin.mp3');
       a.volume = 0.9;
       a.addEventListener('ended', finish);
