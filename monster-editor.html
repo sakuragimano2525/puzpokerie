@@ -123,6 +123,7 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
     <label>名前<input id="monName" value="新モンスター"></label>
     <label>レアリティ（★の数）<input id="monRarity" type="number" min="1" max="10" value="3"></label>
     <label>属性<select id="monAttr"></select></label>
+    <label>副属性（なし＝空欄）<select id="monSub"></select></label>
     <label>タイプ<input id="monType" list="typeList" value="バランス"><datalist id="typeList"></datalist></label>
     <div class="hint" id="imgHint" style="margin:0"></div>
     <label>最大レベル（空欄＝レアリティ既定）<input id="monMaxLevel" type="number" min="1" max="99" placeholder="自動"></label>
@@ -284,7 +285,7 @@ function normalizeMonsterTypes(m){
   if(m.leaderSkill) fix(m.leaderSkill.effects);
   return m;
 }
-const KNOWN_KEYS = ['id','name','img','rarity','attr','type','maxLevel','baseExp','stats','skill','leaderSkill','evolutions'];
+const KNOWN_KEYS = ['id','name','img','rarity','attr','sub','type','maxLevel','baseExp','stats','skill','leaderSkill','evolutions'];
 const EXP_TABLE_LEN = 99; // js/data/exp.js の長さ。これより上の最大レベルは設定できない
 const DEFAULT_HEADER = `// ============================================================
 // ★ モンスターデータ ★
@@ -383,6 +384,7 @@ const leaderTemplates = {
   eraseAttrAtk:{label:'○属性を消す度に',data:{type:'atk',condition:'eraseAttr',attr:'fire',value:1.2},fields:[attrF('attr','属性（この属性のドロップを消すたびに倍率が重なる）'),numF('value','攻撃倍率（1回ごと）'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   eraseAnyAtk:{label:'ドロップを消す度に',data:{type:'atk',condition:'eraseAny',value:1.2},fields:[numF('value','攻撃倍率（1回ごと）'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   exactCountAtk:{label:'属性をちょうど○個消して',data:{type:'atk',condition:'exactCount',attr:'fire',count:4,value:2},fields:[attrF('attr','属性'),numF('count','ちょうどの個数'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')]},
+  connectEachAtk:{label:'○個つなげて消す度に',data:{type:'atk',condition:'connectEach',attr:'fire',count:4,value:1.5,exponential:true},fields:[['attr','属性','attrAny'],numF('count','個数'),['exact','ちょうどの個数のみ','bool'],['exponential','条件の塊の数だけ倍率を累乗','bool'],numF('value','攻撃倍率'),numF('recValue','回復力倍率'),numF('reduce','ダメージ軽減'),numF('comboAdd','コンボ加算')]},
   noDrop:{label:'落ちコンなし',data:{type:'noDrop',value:true},fields:[]},
   poisonImmune:{label:'毒ダメージを無効にする',data:{type:'poisonImmune',value:true},fields:[]},
   moveTimeFixed:{label:'操作時間固定',data:{type:'moveTimeFixed',value:3000},fields:[numF('value','ミリ秒（3秒=3000）')]},
@@ -453,6 +455,7 @@ let activeEffects = [], leaderEffects = [], evolutions = [];
 // ---------- 画面部品 ----------
 const attrOptions = ATTRS.filter(([v])=>v!=='ojama').map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
 $('monAttr').innerHTML = attrOptions;
+$('monSub').innerHTML = '<option value="">なし</option>' + attrOptions;   // 副属性：主属性と同じなら攻撃力の1/10・違えば1/3で攻撃
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function allTypes(){
   const set = new Set(DEFAULT_TYPES);
@@ -508,6 +511,7 @@ function buildMonster(){
   if(imgKeep) m.img = imgKeep;   // 既存の画像指定だけ保持（新規は自動で m{ID}.png）
   m.rarity = num('monRarity',1);
   m.attr = $('monAttr').value;
+  if($('monSub').value) m.sub = $('monSub').value;
   m.type = $('monType').value;
   if($('monMaxLevel').value!=='') m.maxLevel = Math.max(1,Math.min(EXP_TABLE_LEN,Math.floor(num('monMaxLevel'))));
   m.baseExp = num('monBaseExp',100);
@@ -525,6 +529,7 @@ function loadMonsterToForm(m){
   imgKeep = m.img ?? '';
   $('monRarity').value = m.rarity ?? 1;
   $('monAttr').value = m.attr ?? 'fire';
+  $('monSub').value = m.sub ?? '';
   $('monType').value = m.type ?? '';
   $('monMaxLevel').value = m.maxLevel ?? '';
   $('monBaseExp').value = m.baseExp ?? 100;
@@ -648,6 +653,7 @@ function describeLeader(effs){
           case 'exact4': out.push(`ドロップをちょうど4個消${e.exponential?'す度に':'すと'}${w}${mult}`); break;
           case 'eraseAttr': out.push(`${a}ドロップを消す度に${w}${mult}`); break;
           case 'eraseAny': out.push(`ドロップを消す度に${w}${mult}`); break;
+          case 'connectEach': out.push(`${a?a+'ドロップ':'ドロップ'}を${e.exact?'ちょうど'+e.count+'個':e.count+'個以上'}つなげて消${e.exponential?'す度に':'すと'}${w}${mult}`); break;
           case 'exactCount': out.push(`${a}をちょうど${e.count}個消すと${w}${mult}`); break;
           case 'waterDarkConnect': out.push(`水と闇を5個以上つなげて消すと${w}${mult}`); break;
           default: out.push(`${targ}${w}${mult}`);
@@ -823,7 +829,7 @@ function collectSkills(){
 const SORT_ATTR = ['fire','water','wood','light','dark','heal','poison','ojama'];
 const attrRankOf = a => { const i = SORT_ATTR.indexOf(({'回復':'heal','火':'fire','水':'water','木':'wood','光':'light','闇':'dark','毒':'poison','お邪魔':'ojama'})[a]||a); return i<0 ? 99 : i; };
 // リーダースキル：①火のソウル→火炎のソウル→水のソウル…（属性別の攻撃倍率）②タイプ・全属性の攻撃 ③HP(オーラ) ④回復力(ルーン) ⑤条件付き攻撃 ⑥その他
-const LS_COND_ORDER = ['hpAbove','hpBelow','hpFull','combo','attrCombos','orbConnect','exactCount','exact4','eraseAttr','eraseAny','colorCount','colorCountHeal','colorRamp','cross','lShapes','poison','remainingOrbs','skillUsed'];
+const LS_COND_ORDER = ['hpAbove','hpBelow','hpFull','combo','attrCombos','orbConnect','exactCount','connectEach','exact4','eraseAttr','eraseAny','colorCount','colorCountHeal','colorRamp','cross','lShapes','poison','remainingOrbs','skillUsed'];
 function leaderSortKey(ls){
   const effs = (ls.effects||[]);
   const e = effs.find(x=>x&&['atk','hp','rec'].includes(x.type)) || effs[0] || {};

@@ -667,7 +667,27 @@
 .te-attr-btn img, .iku-attr-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 0; display: block; }
 .te-attr-btn:active, .iku-attr-btn:active { transform: translateY(2px); }
 #te-attr-filters:has(.active) .te-attr-btn:not(.active), #iku-attr-filters:has(.active) .iku-attr-btn:not(.active) { opacity: 0.45; }
-#te-count { padding: 5px 12px; font: 900 0.72rem/1 var(--ff); color: var(--ink-2); white-space: nowrap; }
+/* タイプ絞込み（属性の右）。属性5個＋タイプ5個が1行に収まるよう、画面が狭いときはボタンが縮む */
+#te-filter-row { justify-content: flex-start; gap: 8px; }
+#te-attr-filters, #te-type-filters { display: flex; gap: 4px; align-items: center; min-width: 0; }
+#te-attr-filters { flex: 1 1 0; }
+#te-type-filters { flex: 1 1 0; padding-left: 8px; border-left: 2px solid var(--ink-3); }
+#te-attr-filters .te-attr-btn, #te-type-filters .te-type-btn {
+  flex: 1 1 0; min-width: 0; max-width: 44px; width: auto; height: auto; aspect-ratio: 1;
+}
+.te-type-btn {
+  position: relative; padding: 0; display: block; background: transparent; border: 0; border-radius: 50%; box-shadow: none;
+  cursor: pointer; touch-action: manipulation; transition: transform 0.06s, box-shadow 0.06s, opacity 0.12s;
+}
+.te-type-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 0; display: block; }
+.te-type-btn:active { transform: translateY(2px); }
+.te-type-btn:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+#te-type-filters:has(.active) .te-type-btn:not(.active) { opacity: 0.45; }
+.te-type-btn.active { box-shadow: 0 0 0 3px var(--sun), 0 0 0 5px var(--ink); }
+/* アイコン画像が無いときは1文字で表示 */
+.te-type-btn.as-text { background: var(--paper); border: 2px solid var(--ink); font: 900 0.8rem/1 var(--ff); color: var(--ink); }
+.te-type-btn.as-text img { display: none; }
+.te-type-btn.as-text::after { content: attr(data-short); position: absolute; inset: 0; display: grid; place-items: center; }
 #te-search-row { display: flex; align-items: center; gap: 10px; }
 #te-search-wrap { position: relative; flex: 1; min-width: 0; }
 #te-search-input { width: 100%; height: 46px; padding: 0 44px 0 42px; font: 700 0.9rem/1 var(--ff); color: var(--ink); background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 23px; box-shadow: 0 3px 0 var(--ink); outline: none; }
@@ -682,6 +702,7 @@
 #te-box-wrap, #iku-box-wrap, #evo-list-box { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px var(--gutter) 22px; }
 #te-box-wrap::-webkit-scrollbar, #iku-box-wrap::-webkit-scrollbar, #evo-list-box::-webkit-scrollbar { display: none; }
 #te-monster-grid, #iku-monster-grid, #evo-list-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px 6px; padding: 3px 3px 0; }
+#te-monster-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px 4px; }   /* ボックス（編成）は7列 */
 .te-mon-card, .iku-mon-card { aspect-ratio: 1; cursor: pointer; touch-action: pan-y; transition: transform 0.06s, box-shadow 0.06s; }
 .te-mon-card:active, .iku-mon-card:active { transform: translateY(2px); }
 .te-mon-card.swipe-src { opacity: 0.3; }

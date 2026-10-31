@@ -67,6 +67,7 @@ const AREA_DATA = {
 const EVENT_UNLOCK_AREA = 6;   // このエリアのボスをクリアするとイベントステージが開放される
 // ホームの「マルチ」ボタンで一覧に出すエリアID（EVENT_AREA_DATA のキー）。マルチ用ステージを足すときはここに足す
 const MULTI_AREA_IDS = ['multi'];
+const MULTI_BOTH_IDS = [];   // 「イベントとマルチ両方」のイベントID（下の both:true から自動で入る。ここは触らない）
 // マルチダンジョンの解放条件（「エリア-ステージ」をクリアすると、そのマルチステージが一覧に出る。未解放のうちは一覧に表示されない＝存在も分からない）
 //   書き方： マルチID: { マルチのステージ番号: 'クリアするステージ' }   例）1: '4-boss' = 4-BOSS をクリアで「マルチ1」が出現
 //   ここに書いていないステージは、最初から出ている
@@ -85,6 +86,7 @@ const EVENT_AREA_DATA = {
   halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
   kourin: { multiOnly: true, name: 'ニンフィア降臨', desc: 'クリアでニンフィアが解放！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ニンフィア降臨'} , stageLevels: { boss: '上級' }},
   BLLU: { name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ブルアカコラボ-BOSS'} , stageLevels: { boss: '上級' }},
+   jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョスタジアム'} , stageLevels: { boss: '上級' }},
 
   // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──
   //   ダンジョンのキーは「multi-番号」。中身は js/data/dungeons.js の「multi-番号」（ダンジョン設定ツールでメイン・イベントと同じように編集・保存できる）
@@ -99,8 +101,8 @@ const EVENT_AREA_DATA = {
   daily_wed: { name: '水曜ダンジョン',   desc: '水曜日のダンジョン', bg: 'dungeon9.png', hue: 210, hidden: true, weekday: 3, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '水の洞窟-1',2: '水の洞窟-2' } , stageLevels: { 1: '中級', 2: '上級' }},
   daily_thu: { name: '木曜ダンジョン',     desc: '木曜日のダンジョン', bg: 'dungeon2.png', hue: 130, hidden: true, weekday: 4, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '木の密林-1',2: '木の密林-2' } , stageLevels: { 1: '中級', 2: '上級' }},
   daily_fri: { name: '金曜ダンジョン',   desc: '金曜日のダンジョン', bg: 'dungeon6.png', hue: 45,  hidden: true, weekday: 5, entryItem: 'youbi', entryCost: 1, stageNames: { 1: '金の砂漠-1',2: '金の砂漠-2' } , stageLevels: { 1: '中級', 2: '上級' }},
-  daily_sat: { name: 'エナスポットの森',   desc: '土曜日のダンジョン', bg: 'daily_sat.png', hue: 25,  hidden: true, weekday: 6, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '初級', 2: '中級' } },
-  daily_sun: { name: 'エナスポットの森',     desc: '日曜日のダンジョン', bg: 'daily_sat.png', hue: 52,  hidden: true, weekday: 0, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '中級', 2: '上級' } },
+  daily_sat: { name: 'エナスポットの森',   desc: '土曜日のダンジョン', bg: 'daily_sun.png', hue: 25,  hidden: true, weekday: 6, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '初級', 2: '中級' } },
+  daily_sun: { name: 'エナスポットの森',     desc: '日曜日のダンジョン', bg: 'daily_sun.png', hue: 52,  hidden: true, weekday: 0, entryItem: 'youbi', entryCost: 1, stageNames: { 1: 'エナがいっぱい！', 2: 'エナがいっぱい！' }, stageLevels: { 1: '中級', 2: '上級' } },
 };
 
 // ★マルチ限定にする方法★
@@ -109,8 +111,21 @@ const EVENT_AREA_DATA = {
 //     ・ふつうのイベントに戻したいときは  multiOnly: true  を消す（または false）
 //     ・出現条件を付けたいときは、上の MULTI_UNLOCK_DATA に  イベントID: { ステージ: 'クリアするステージ' }  を足す
 //       例）MULTI_UNLOCK_DATA の中に   kourin: { boss: '13-boss' }
+// ★イベントとマルチ「両方」に出す方法（ステージ共通）★
+//   EVENT_AREA_DATA のイベントに  both: true  と書くだけ。
+//     ・ホームの「イベント」一覧 と 「マルチ」一覧 の両方に同じイベントが出る
+//     ・「イベント」から入る → ふつうのイベント（1人で挑戦）／「マルチ」から入る → 自動マッチング（協力プレイ）
+//     ・ステージの中身（dungeons.js の「イベントID-番号」）・ステージ名・クリア状況は共通
+//     ・マルチ一覧への出現条件を付けたいときは、MULTI_UNLOCK_DATA に  イベントID: { ステージ: 'クリアするステージ' }  を足す
+//       （条件はマルチ一覧にだけ効く。イベント一覧の出方は変わらない）
+//     ・戻したいときは  both: true  を消す
 Object.keys(EVENT_AREA_DATA).forEach(function (id) {
   var ev = EVENT_AREA_DATA[id];
+  if (ev && ev.both && !ev.multiOnly) {
+    if (MULTI_AREA_IDS.indexOf(id) < 0) MULTI_AREA_IDS.push(id);   // マルチ一覧にも出す（イベント一覧からは消さない）
+    if (MULTI_BOTH_IDS.indexOf(id) < 0) MULTI_BOTH_IDS.push(id);
+    return;
+  }
   if (!ev || !ev.multiOnly) return;
   ev.hidden = true;                                   // イベント一覧には出さない
   if (MULTI_AREA_IDS.indexOf(id) < 0) MULTI_AREA_IDS.push(id);   // マルチ一覧に出す

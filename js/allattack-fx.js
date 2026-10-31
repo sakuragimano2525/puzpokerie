@@ -728,7 +728,7 @@
   // ------------------------------------------------------------
   // ダメージ処理（1体ぶん）。計算は従来の単体攻撃と同じ。
   // ------------------------------------------------------------
-  function hitEnemy(idx, damage, attr, withSE, q, slotIndex) {
+  function hitEnemy(idx, damage, attr, withSE, q, slotIndex, sub) {
     const enemy = enemyList[idx];
     const unit = document.querySelectorAll('#enemy-area .enemy-unit')[idx];
     if (!enemy || enemy.hp <= 0 || !unit) return;
@@ -737,12 +737,13 @@
     const ex = r.left + r.width / 2, ey = r.top + r.height / 2;
 
     if (withSE) playAttrHitSE(attr);
-    const mult = getAttrMulti(attr, enemy.attr);
-    let dmg = Math.max(1, Math.floor(damage * mult * enemyAttrGuardMult(enemy, attr)) - getEnemyDef(enemy));   // 属性軽減   // 最低ダメージ1（単体攻撃と同じ）
+    const hit = calcHitDamage(enemy, damage, attr, sub);   // 主属性＋副属性（単体攻撃と同じ計算：属性軽減・最低ダメージ1）
+    const mult = hit.attrMult;
+    let dmg = hit.main + hit.sub, dealtSub = 0;
     const absorbed = !!(enemy._comboAbsorb && enemy._comboAbsorb.turns > 0 &&
       attackPhaseCombo > 0 && attackPhaseCombo <= enemy._comboAbsorb.max);
     if (absorbed) enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg);   // コンボ吸収：ダメージの代わりにHP回復
-    else { dmg = enemyTakeDamage(enemy, dmg); if (window.DamageTotal) DamageTotal.add(idx, dmg); }   // 超根性対応（実際に与えたダメージ）／HPバー上の合計ダメージ
+    else { const dealt = dealHitDamage(enemy, hit); dmg = dealt.main; dealtSub = dealt.sub; if (window.DamageTotal) DamageTotal.add(idx, dmg + dealtSub); }   // 超根性対応（実際に与えたダメージ）／HPバー上の合計ダメージ
 
     // 被弾：のけぞり＋属性色のフラッシュ
     if (unit.animate) unit.animate([
@@ -763,7 +764,7 @@
       ab.textContent = `吸収! +${dmg.toLocaleString()}`;
       document.body.appendChild(ab);
       setTimeout(() => ab.remove(), NUM_MS + 100);
-    } else showDamageNumber(ex + jx, ey - 10, dmg, attr, mult > 1, slotIndex);
+    } else showDamageNumber(ex + jx, ey - 10, dmg, attr, mult > 1, slotIndex, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
 
     spawnEnergyBurst(ex, ey, attr, (mult > 1 ? 1.45 : 1) * (q < .7 ? .6 : 1));
     if (enemy.hp <= 0) tryDrop(enemy);
@@ -772,7 +773,7 @@
   // ------------------------------------------------------------
   // 公開：全体攻撃 1回ぶん。NEXT_MS 後に resolve（演出の終わりは待たない）
   // ------------------------------------------------------------
-  window.allAttackAnimation = function allAttackAnimation(slotIndex, damage, attr) {
+  window.allAttackAnimation = function allAttackAnimation(slotIndex, damage, attr, sub) {
     return new Promise((resolve) => {
       const targets = collectTargets();
       if (!targets.length) { resolve(); return; }
@@ -817,7 +818,7 @@
         setTimeout(() => {
           let first = true;
           for (let i = 0; i < enemyList.length; i++) {
-            if (enemyList[i] && enemyList[i].hp > 0) { hitEnemy(i, damage, attr, first, q, slotIndex); first = false; }
+            if (enemyList[i] && enemyList[i].hp > 0) { hitEnemy(i, damage, attr, first, q, slotIndex, sub); first = false; }
           }
           updateEnemyUI();
           const now = performance.now();

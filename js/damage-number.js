@@ -9,7 +9,10 @@
 //   ◆ 合計ダメージ（敵のHPバーの上に出る白い数字）
 //       ・こちらもヒットを待たずに、滑らかに数字が増え続けます。
 //
-//   公開：window.DamageNumber.show(x, y, value, attr, weak, slotIndex)  … slotIndex = 攻撃したパーティの番号   … 呼び出し側は今までと同じ
+//   ◆ 副属性（第2属性）：show の最後の引数 sub = { value, attr, weak } を渡すと、主属性の数字の下に、副属性の色で小さい数字が出る
+//       （主属性の数字は、そのぶん ほんの少し上にずれる）。主属性が0（副属性の色だけ消した）ときは、小さい数字だけが出る。
+//       SUB_RATIO … 副属性の数字の大きさ（主属性の数字の高さ × この値） / SUB_MIN … 下限(px) / SUB_GAP … 主属性との間隔（高さ × 値）
+//   公開：window.DamageNumber.show(x, y, value, attr, weak, slotIndex, sub)  … slotIndex = 攻撃したパーティの番号   … 呼び出し側は今までと同じ
 //         window.DamageTotal.add(敵の番号, ダメージ) / reset() / clear()
 //
 //   ★ 見た目の調整はこのファイルの先頭の定数だけでOK
@@ -47,6 +50,9 @@
   const WEAK_TAU = 140;        // 弱点の数字が増える速さ（ms）。少しゆっくり増えるので、大きくなる動きが見える
   const WEAK_MAX_SCALE = 1.7;  // 弱点の数字の最大倍率
   const WEAK_RISE      = 0.9;  // 弱点の数字が下から上にせり上がる量（高さ × 値）
+  const SUB_RATIO = 0.68;      // 副属性の数字の大きさ（主属性の数字の高さ × 値）
+  const SUB_MIN   = 8;         // 副属性の数字の高さの下限（px）
+  const SUB_GAP   = 0.08;      // 主属性の数字との間隔（主属性の高さ × 値）
   const WEAK_LANE_GAP  = 1.6;  // 弱点の数字が複数あるとき、上へ積む間隔（高さ × 値）
 
   // ---- 合計ダメージ（白）----
@@ -134,35 +140,55 @@
   }
   function dropAttState(st) { clearTimeout(st.settle); clearTimeout(st.weakT); st.list.forEach(removeAttr); }
   function removeAttr(e) {
-    counters.delete(e.c);
+    counters.delete(e.c); counters.delete(e.cs);
     if (e.el && e.el.parentNode) e.el.remove();
-    e.el = null; e.inner = null;
+    e.el = null; e.inner = null; e.box = null; e.subInner = null;
   }
   function hideAttr(e, ms) {            // 見た目だけ消す
     const el = e.el; if (!el) return;
-    const inner = e.inner;
-    e.el = null; e.inner = null; counters.delete(e.c);
+    const inner = e.box || e.inner;
+    e.el = null; e.inner = null; e.box = null; e.subInner = null; counters.delete(e.c); counters.delete(e.cs);
     const d = ms == null ? FADE_MS : ms;
     if (inner && inner.animate) inner.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${(-e.h * .9).toFixed(1)}px)` }], { duration: d, easing: 'ease-out', fill: 'forwards' });
     fadeEl(el, d, () => el.remove());
   }
-  function applyAttr(e, v) {
-    if (!e.inner) return;
-    e.inner.textContent = String(Math.round(v));
+  function applyScale(e, progress) {
     // 弱点：増えるにつれて大きく・上へ（0 → 最終ダメージ に合わせて 1倍 → WEAK_MAX_SCALE倍）
     let g = 0;
-    if (e.weak) { g = Math.max(0, Math.min(1, e.sum > 0 ? v / e.sum : 1)); g = g * g * (3 - 2 * g); }
+    if (e.weak) { g = Math.max(0, Math.min(1, progress)); g = g * g * (3 - 2 * g); }
     const sc = 1 + (WEAK_MAX_SCALE - 1) * g;
     e.el.style.transform = `translate(-50%,-50%) translateY(${((1 - g) * e.h * WEAK_RISE).toFixed(1)}px) scale(${sc.toFixed(3)})`;
   }
-  function addAttr(idx, unit, attr, value, weak, slotIndex) {
+  function applyAttr(e, v) {
+    if (!e.inner) return;
+    e.inner.textContent = String(Math.round(v));
+    e.inner.style.display = e.sum > 0 ? '' : 'none';           // 主属性のダメージが無い（副属性だけ）ときは出さない
+    if (e.sum > 0) applyScale(e, v / e.sum);
+  }
+  function applySub(e, v) {                                      // 副属性の小さい数字
+    if (!e.subInner) return;
+    e.subInner.textContent = String(Math.round(v));
+    if (e.sum <= 0 && e.subSum > 0) applyScale(e, v / e.subSum);   // 副属性だけの時は、こちらの増え方で弱点の拡大を動かす
+  }
+  function ensureSub(e) {                                        // 副属性の数字を、主属性の下に用意する
+    if (!(e.subSum > 0) || !e.box || e.subInner) return;
+    const sh = Math.max(SUB_MIN, e.h * SUB_RATIO);
+    const d = document.createElement('div');
+    d.style.cssText = textStyle(e.subAttr, sh) + `margin-top:${(e.h * SUB_GAP).toFixed(1)}px;text-align:center;`;
+    e.box.appendChild(d);
+    e.subInner = d;
+  }
+  function addAttr(idx, unit, attr, value, weak, slotIndex, sub) {
     const st = attrState(idx, unit);
+    const subVal = sub && sub.value > 0 ? Math.floor(sub.value) : 0;
+    if (value <= 0 && sub && sub.weak) weak = true;                 // 副属性だけのときは、副属性の弱点で判定
     const key = (slotIndex == null) ? 'u' + (++uniq) : 's' + slotIndex;   // 攻撃したモンスターごとに1つ
     let e = st.list.find(o => o.key === key);
-    if (!e) { e = { key, attr, sum: 0, weak: false, el: null, inner: null, c: null, slot: st.list.length, h: 0 }; st.list.push(e); }
+    if (!e) { e = { key, attr, sum: 0, weak: false, el: null, inner: null, c: null, slot: st.list.length, h: 0, subSum: 0, subAttr: null, subInner: null, box: null, cs: null }; st.list.push(e); }
     if (weak) e.weak = true;
-    const before = e.sum;
+    const before = e.sum, beforeSub = e.subSum;
     e.sum += value;
+    if (subVal > 0) { e.subSum += subVal; e.subAttr = sub.attr; }
     if (!e.el) {                                           // まだ出ていない／消えていた → 出す
       const dw = gameW(), r = unit.getBoundingClientRect();
       const h = Math.max(BASE_MIN, Math.min(BASE_MAX, dw * BASE_RATIO));
@@ -183,19 +209,27 @@
       el.className = 'dmg-number dmg-attr' + (e.weak ? ' weak' : '');
       el.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:${e.weak ? 296 : 290 - e.slot};pointer-events:none;will-change:transform,opacity;transform-origin:50% 60%;transform:translate(-50%,-50%);`;
       const drift = document.createElement('div');           // ゆっくり斜め上へ上がる動き（大きさ・せり上がりは el 側）
+      const box = document.createElement('div');             // 主属性の数字＋その下の副属性の数字（まとめて上がる・消える）
+      box.style.cssText = 'text-align:center;';
       const inner = document.createElement('div');
       inner.style.cssText = textStyle(attr, h) + (e.weak ? 'filter:brightness(1.1);' : '');
-      drift.appendChild(inner); el.appendChild(drift); document.body.appendChild(el);
+      box.appendChild(inner); drift.appendChild(box); el.appendChild(drift); document.body.appendChild(el);
       if (drift.animate) drift.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${(DRIFT_X * h).toFixed(1)}px,${(DRIFT_Y * h).toFixed(1)}px)` }],
         { duration: DRIFT_MS, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'forwards' });
-      e.el = el; e.inner = inner;
+      e.el = el; e.inner = inner; e.box = box;
       e.c = { target: e.sum, shown: before, tau: e.weak ? WEAK_TAU : ATTR_TAU, apply: v => applyAttr(e, v) };
       applyAttr(e, before);
-      if (inner.animate) inner.animate([{ opacity: 0, transform: 'scale(.85)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' });
+      ensureSub(e);
+      if (e.subInner) { e.cs = { target: e.subSum, shown: beforeSub, tau: e.weak ? WEAK_TAU : ATTR_TAU, apply: v => applySub(e, v) }; applySub(e, beforeSub); }
+      if (box.animate) box.animate([{ opacity: 0, transform: 'scale(.85)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 140, easing: 'ease-out' });
     }
     if (e.weak && e.el) e.el.style.zIndex = 296;
     e.c.tau = e.weak ? WEAK_TAU : ATTR_TAU;
     e.c.target = e.sum; run(e.c);                          // 0 → ダメージまで、リアルタイムに増える
+    if (e.el && subVal > 0) {                              // 副属性の小さい数字も、同じように増える
+      if (!e.subInner) { ensureSub(e); e.cs = { target: e.subSum, shown: beforeSub, tau: e.weak ? WEAK_TAU : ATTR_TAU, apply: v => applySub(e, v) }; applySub(e, beforeSub); }
+      e.cs.tau = e.weak ? WEAK_TAU : ATTR_TAU; e.cs.target = e.subSum; run(e.cs);
+    }
 
     // 最後の攻撃から少しして、弱点じゃない数字だけ消える（弱点の数字は残る）
     clearTimeout(st.settle);
@@ -208,14 +242,15 @@
     }
   }
 
-  function show(x, y, value, attr, weak, slotIndex) {
+  function show(x, y, value, attr, weak, slotIndex, sub) {
     value = Math.max(0, Math.floor(value));
-    if (ATTR_SUM && value > 0) {
+    const hasSub = !!(sub && sub.value > 0);
+    if (ATTR_SUM && (value > 0 || hasSub)) {
       const idx = enemyIndexAt(x, y);
       const unit = idx >= 0 ? document.querySelectorAll('#enemy-area .enemy-unit')[idx] : null;
-      if (unit) { addAttr(idx, unit, attr || 'none', value, !!weak, slotIndex); return null; }
+      if (unit) { addAttr(idx, unit, attr || 'none', value, !!weak, slotIndex, hasSub ? sub : null); return null; }
     }
-    return showOne(x, y, value, attr, weak);
+    return showOne(x, y, value, attr, weak, hasSub ? sub : null);
   }
 
   // ---------- 従来のヒットごとの数字（ATTR_SUM=false のとき／敵が見つからないとき） ----------
@@ -228,7 +263,7 @@
     recent.push({ x, y, w, h, t: now });
     return Math.min(n, 2) * h * 1.05;
   }
-  function showOne(x, y, value, attr, weak) {
+  function showOne(x, y, value, attr, weak, sub) {
     const str = String(Math.max(0, Math.floor(value)));
     const dg = document.getElementById('dungeon'), dr = dg ? dg.getBoundingClientRect() : null;
     const dw = gameW();
@@ -244,7 +279,11 @@
     const el = document.createElement('div');
     el.className = 'dmg-number' + (weak ? ' weak' : '');
     el.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:${weak ? 296 : 290};pointer-events:none;will-change:transform,opacity;${weak ? 'filter:brightness(1.12);' : ''}` + textStyle(attr, h);
-    el.textContent = str;
+    if (sub && sub.value > 0) {                      // 副属性：主属性の下に、副属性の色で小さく
+      const sh = Math.max(SUB_MIN, h * SUB_RATIO);
+      el.style.textAlign = 'center';
+      el.innerHTML = (value > 0 ? `<div>${str}</div>` : '') + `<div style="${textStyle(sub.attr, sh)}margin-top:${(h * SUB_GAP).toFixed(1)}px;">${Math.floor(sub.value)}</div>`;
+    } else el.textContent = str;
     document.body.appendChild(el);
     if (el.animate) {
       el.animate([

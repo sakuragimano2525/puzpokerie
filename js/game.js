@@ -383,9 +383,9 @@ function playTapSound()  { playUiSE('tap'); }
 function playModoSound() { playUiSE('modo'); }
 
 // 戻る・閉じる系のボタン
-const UI_BACK_SELECTOR = '#de-back-btn, #ss-back-btn, #md-back-btn, #te-back, #iku-back, #evo-list-back, #pz-back-btn, #zukan-back, #zukan-info-close, #mail-close-btn, #md2-back-btn, #res-close-btn, #sp-no, #gacha-back, #gacha-lineup-close, #menu-btn, #quit-no, #menu-drops-back, #cs-close, #cj-no, #menu-retire-no, .te-back-btn, #gameover-home-btn';
+const UI_BACK_SELECTOR = '#de-back-btn, #ss-back-btn, #md-back-btn, #te-back, #iku-back, #evo-list-back, #pz-back-btn, #zukan-back, #settings-close-btn, #zukan-info-close, #mail-close-btn, #md2-back-btn, #res-close-btn, #sp-no, #gacha-back, #gacha-lineup-close, #menu-btn, #quit-no, #menu-drops-back, #cs-close, #cj-no, #menu-retire-no, .te-back-btn, #gameover-home-btn';
 // 「進む」操作（画面遷移・決定・挑戦など）だけ tap.mp3
-const UI_FORWARD_SELECTOR = '#start, #btn-team, #btn-grow, #btn-evo, #btn-gacha, #gacha-spin-btn, #gacha-lineup-btn, #gacha-res-ok, .ht-tab, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
+const UI_FORWARD_SELECTOR = '#start, #btn-team, #btn-grow, #btn-evo, #btn-gacha, #gacha-spin-btn, #gacha-lineup-btn, #gacha-res-ok, .ht-tab, #settings-open-btn, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
 document.addEventListener('click', (e) => {
   const t = e.target;
   if (!(t instanceof Element)) return;
@@ -464,6 +464,17 @@ function leaderHasEffect(type) {
     return !!(m && m.leaderSkill && m.leaderSkill.effects && m.leaderSkill.effects.some(x => x.type === type));
   });
 }
+// 「○ドロップを□個つなげて消す度」：条件に合う塊の数（exact＝ちょうど、なし＝以上）
+function connectEachCount(eff, context) {
+  const sizes = context.connectSizes || {};
+  const need = eff.count || 0;
+  let n = 0;
+  for (const a of Object.keys(sizes)) {
+    if (eff.attr && eff.attr !== a) continue;
+    for (const s of sizes[a]) if (eff.exact ? s === need : s >= need) n++;
+  }
+  return n;
+}
 function applyLeaderEffects(effects, context) {
   let result = { hpMultiplier: 1.0, atkMultiplier: 1.0, recMultiplier: 1.0, dmgReduction: null, moveTimeFixed: null, comboAdd: 0, hpRecovery: 0, noDrop: false };
   if (!effects || !effects.length) return result;
@@ -541,6 +552,8 @@ function applyLeaderEffects(effects, context) {
         } else if (cond === 'eraseAttr') {
           // ○属性を消す度：その属性の塊を消した数だけ倍率が重なる（例: 火を消す度に攻撃1.2倍）
           if (((context.attrCombos || {})[eff.attr] || 0) > 0) apply = true;
+        } else if (cond === 'connectEach') {
+          if (connectEachCount(eff, context) > 0) apply = true;
         } else if (cond === 'eraseAny') {
           // ドロップを消す度：消した塊（コンボ）の数だけ倍率が重なる
           if ((context.comboCount || 0) > 0) apply = true;
@@ -574,6 +587,7 @@ function applyLeaderEffects(effects, context) {
             else if (cond === 'exact4') expCount = context.exact4Count || 1;
             else if (cond === 'eraseAttr') expCount = (context.attrCombos || {})[eff.attr] || 1;
             else if (cond === 'eraseAny') expCount = context.comboCount || 1;
+            else if (cond === 'connectEach') expCount = connectEachCount(eff, context) || 1;
             result.atkMultiplier *= Math.pow(av, expCount);
             if (eff.recValue > 0) result.recMultiplier *= Math.pow(eff.recValue, expCount);   // 回復力倍率も同じ回数だけ重なる
           } else {
@@ -722,6 +736,9 @@ function buildEnemyActionFn(skills, enemyRef) {
     const _hp0 = playerCurrentHP;
     const _cap = actionRatioCap(skills, _hp0);
     _actionLossCap = (_cap === null) ? null : { hp0: _hp0, cap: _cap };
+    // このアクション内の「ドロップ生成(spawn)」で作る色。生成先の候補から、これらの色のマスを除く
+    //   （例：木・闇を3個ずつ生成する時、木を作ったマスが闇になったり、既存の木が闇に変わる事故を防ぐ）
+    const _spawnTos = new Set(skills.filter(k => k && k.type === 'board_change' && k.pattern === 'spawn' && k.to).map(k => k.to));
     try {
     for (const sk of skills) {
       if (sk._fxApplied) { sk._fxApplied = false; continue; }   // 演出側で個別に適用済み（コンボ吸収・状態異常無効・攻撃アップ・回復）
@@ -846,7 +863,7 @@ function buildEnemyActionFn(skills, enemyRef) {
             } else if (sk.pattern === 'spawn') {
               // 盤面に〇ドロップを〇個生成（すでに to の場所以外からランダムに選ぶ）
               const cells = [];
-              for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (grid[r][c] !== to && !isOrbLocked(r, c)) cells.push([r, c]);
+              for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (grid[r][c] !== to && !_spawnTos.has(grid[r][c]) && !isOrbLocked(r, c)) cells.push([r, c]);   // 生成する色（to・同時に生成する他の色）のマスは対象外
               cells.sort(() => Math.random() - 0.5);
               const n = Math.max(0, Math.min(cells.length, Math.floor(sk.count || 0)));
               for (let i = 0; i < n; i++) paint(cells[i][0], cells[i][1], to);
@@ -1191,6 +1208,47 @@ function getAttrMulti(attackAttr, defAttr) {
   if (ATTR_STRONG[attackAttr] === defAttr) return 1.5;
   if (ATTR_STRONG[defAttr] === attackAttr) return 0.5;
   return 1.0;
+}
+
+// ============================================================
+// ★ 副属性（第2属性） ★
+//   monsters.js で  sub: 'fire'  のように書くと、そのモンスターは副属性を持つ。
+//   副属性の色のドロップを消すと、副属性の攻撃が出る。ダメージは、その色で計算した最終攻撃を割ったもの：
+//     副属性が主属性と同じ … 1/10    違う … 1/3
+//   例）ボルケニオン（水／火）で、火の最終攻撃が18000 → 副属性ダメージは 6000
+//   ※ 小数のかけ算だと 5999.99… になることがあるので、割り算（切り捨て）で計算する
+// ============================================================
+const SUB_DIV_SAME = 10, SUB_DIV_DIFF = 3;
+function subAttrOf(mon) { return mon && mon.sub ? mon.sub : null; }
+function subDivisor(mon) { const s = subAttrOf(mon); return !s ? 0 : (s === mon.attr ? SUB_DIV_SAME : SUB_DIV_DIFF); }
+// 副属性ダメージの数字（モンスターの上に小さく出す）の色
+const SUB_DMG_COLORS = { fire: '#ff6b6b', water: '#6bb8ff', wood: '#6fdc70', light: '#ffe066', dark: '#c58bff' };
+// パーティのモンスターの上のダメージ表示：主属性の数字、その下に小さく副属性の数字（副属性の色）
+function setMonsterDamageText(el, main, sub, subAttr) {
+  if (!el) return;
+  if (!(sub > 0)) { el.textContent = main > 0 ? main.toLocaleString() : ''; return; }
+  const c = SUB_DMG_COLORS[subAttr] || '#fff';
+  el.innerHTML = (main > 0 ? `<div>${main.toLocaleString()}</div>` : '') + `<div class="monster-damage-sub" style="color:${c}">${sub.toLocaleString()}</div>`;
+}
+// 1回の攻撃で敵に与えるダメージ（主属性＋副属性）。単体攻撃・全体攻撃で共通
+//   damage = 主属性の最終ダメージ（0なら副属性だけ） / sub = { dmg, attr } または null
+function calcHitDamage(enemy, damage, attr, sub) {
+  const def = getEnemyDef(enemy);
+  const attrMult = getAttrMulti(attr, enemy.attr);
+  let main = 0;
+  if (damage > 0) main = Math.max(1, Math.floor(damage * attrMult * enemyAttrGuardMult(enemy, attr)) - def);   // 属性軽減／最低ダメージ1
+  let subDmg = 0, subMult = 1;
+  if (sub && sub.dmg > 0) {
+    subMult = getAttrMulti(sub.attr, enemy.attr);   // 副属性も、敵の属性との相性（弱点・半減）を受ける
+    subDmg = Math.max(1, Math.floor(sub.dmg * subMult * enemyAttrGuardMult(enemy, sub.attr)) - def);
+  }
+  return { main, sub: subDmg, attrMult, subMult };
+}
+// 主属性 → 副属性の順に当てる（超根性・HPが尽きたときも、実際に当たった分だけ返る）
+function dealHitDamage(enemy, hit) {
+  const dMain = hit.main > 0 ? enemyTakeDamage(enemy, hit.main) : 0;
+  const dSub = hit.sub > 0 && enemy.hp > 0 ? enemyTakeDamage(enemy, hit.sub) : 0;
+  return { main: dMain, sub: dSub };
 }
 
 const ATTR_HP_GRAD = {
@@ -2100,9 +2158,9 @@ const DMG_NUM_MS = 1500;
 const ATK_FLY_MS = 300;   // 攻撃が相手に飛んでいく時間（従来560ms）
 const ATK_GAP_MS = 120;   // 当たってから次のモンスターが攻撃するまでの間（従来450ms）
 const _recentDmgNums = [];
-function showDamageNumber(x, y, value, attr, critical = false, slotIndex = null) {
+function showDamageNumber(x, y, value, attr, critical = false, slotIndex = null, sub = null) {
   // 通常はこちら（js/damage-number.js：太い数字・属性色・弱点は特大）。critical = 弱点属性で当たったとき
-  if (window.DamageNumber) { window.DamageNumber.show(x, y, value, attr, critical, slotIndex); return; }
+  if (window.DamageNumber) { window.DamageNumber.show(x, y, value, attr, critical, slotIndex, sub); return; }
   // ↓ damage-number.js が読み込めなかったときの予備（従来の表示）
   const nowT = performance.now();
   while (_recentDmgNums.length && nowT - _recentDmgNums[0].t > 750) _recentDmgNums.shift();
@@ -4267,6 +4325,7 @@ document.getElementById('res-close-btn').addEventListener('click', () => {
 // ============================================================
 const TEAM_BADGES = ['①','②','③','④','⑤','⑥'];
 let activeAttrFilters = new Set();
+let activeTypeFilters = new Set();   // ボックス（編成）のタイプ絞込み
 let searchQuery = '';
 // 並び替え（js/box-sort.js）。入手順 / レベル / 属性 / 名前 / HP / こうげき / かいふく / タイプ / レア度 / スキル / リダスキ
 //   編成画面では、編成済みでも先頭には移動しない（並び替え設定の順のまま）。合計経験値順は合成画面だけ
@@ -4678,6 +4737,7 @@ function renderTeMonsterGrid() {
     const mon = MONSTER_DATA[entry.monsterId];
     if (!mon) return false;
     if (activeAttrFilters.size > 0 && !activeAttrFilters.has(mon.attr)) return false;
+    if (activeTypeFilters.size > 0 && !activeTypeFilters.has(mon.type)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       if (!mon.name.toLowerCase().includes(q) && !(mon.skill && mon.skill.name.toLowerCase().includes(q))) return false;
@@ -4689,8 +4749,6 @@ function renderTeMonsterGrid() {
   for (let i = 0; i < 6; i++) if (currentTeam[i] !== null) teamMap[currentTeam[i]] = i;
   const sorted = BoxSort.sort(filtered, teSort, { monsters: MONSTER_DATA, stats: calcMonsterStats });   // 編成済みでも先頭には移動しない
   detailListOrder['team-edit'] = sorted.map(e => e.uid);   // ステータス画面の左右ボタンは、この並び順で巡回する
-  const countEl = document.getElementById('te-count');
-  if (countEl) countEl.textContent = filtered.length === box.length ? `所持 ${box.length}体` : `${filtered.length} / ${box.length}体`;
   let anyVal = false;
   sorted.forEach(entry => {
     const mon = MONSTER_DATA[entry.monsterId];
@@ -4728,9 +4786,11 @@ function openTeamEdit() {
   teSetSwapMode(false);
   teamEditReturnTo = 'home';
   activeAttrFilters.clear();
+  activeTypeFilters.clear();
   searchQuery = '';
   if (teLS) teLS.reset();
   document.querySelectorAll('.te-attr-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.te-type-btn').forEach(b => b.classList.remove('active'));
   const inp = document.getElementById('te-search-input');
   if (inp) inp.value = '';
   document.getElementById('team-edit').style.display = 'flex';
@@ -4743,9 +4803,11 @@ function openTeamEditFromDungeonEntry() {
   teSetSwapMode(false);
   teamEditReturnTo = 'dungeon-entry';
   activeAttrFilters.clear();
+  activeTypeFilters.clear();
   searchQuery = '';
   if (teLS) teLS.reset();
   document.querySelectorAll('.te-attr-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.te-type-btn').forEach(b => b.classList.remove('active'));
   const inp = document.getElementById('te-search-input');
   if (inp) inp.value = '';
   document.getElementById('dungeon-entry').style.display = 'none';
@@ -5866,6 +5928,14 @@ document.querySelectorAll('.te-attr-btn').forEach(btn => {
     renderTeMonsterGrid();
   });
 });
+document.querySelectorAll('.te-type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.type;
+    if (activeTypeFilters.has(type)) { activeTypeFilters.delete(type); btn.classList.remove('active'); }
+    else { activeTypeFilters.add(type); btn.classList.add('active'); }
+    renderTeMonsterGrid();
+  });
+});
 document.getElementById('te-search-input').addEventListener('input', e => {
   searchQuery = e.target.value;
   renderTeMonsterGrid();
@@ -6031,7 +6101,7 @@ function clearLockAll() {
 let lastTurnCtx = null;
 function defenseCtx(enemy) {
   const b = lastTurnCtx || { comboCount: 0, exact4Count: 0, orbCounts: {}, crossCount: 0, crossAttrs: {}, lAttrs: {}, poisonCount: 0, fireCombos: 0, lShapes: 0,
-    darkCombos: 0, healCombos: 0, attrCombos: {}, hasWaterConnect5: false, hasDarkConnect5: false, maxConnect: {}, exactAttrCounts: {},
+    darkCombos: 0, healCombos: 0, attrCombos: {}, hasWaterConnect5: false, hasDarkConnect5: false, maxConnect: {}, exactAttrCounts: {}, connectSizes: {},
     remainingOrbs: undefined, skillUsed: false };
   return { ...b, attr: 'none', enemyAttr: enemy ? enemy.attr : 'dark', hpRatio: playerCurrentHP / Math.max(1, playerMaxHP) };
 }
@@ -6285,12 +6355,11 @@ function rouletteLoop(now) {
     for (const o of roulettes) {
       o.t += dt;
       if (o.t >= o.period) {
-        if (dragging && dragR === o.r && dragC === o.c) o.t = o.period;   // 掴んでいる間は満タンのまま待つ
-        else {
-          const steps = Math.floor(o.t / o.period);
-          o.t -= steps * o.period;
-          rouletteStep(o, steps);
-        }
+        // 全ルーレットは同じ時計で一斉に回る（間隔がずれない）。
+        // 掴んでいるドロップだけは針が1周しても色を変えず、手を離しても次の周回までそのままの色を保つ
+        const steps = Math.floor(o.t / o.period);
+        o.t -= steps * o.period;
+        if (!(dragging && dragR === o.r && dragC === o.c)) rouletteStep(o, steps);
       }
       renderRoulette(o);
     }
@@ -6497,6 +6566,9 @@ function showSkillMessage(text, ms) {
 // スキル1回の発動中、複数のorbChange系effectが同じ空きマスを取り合わないように
 // 共有する「今回すでに使ったマス」の集合。runSkillEffects開始時にリセットする。
 let _skillUsedCells = null;
+// このスキルで「ランダム生成(orbChangeRandom)」する色の集合。これらの色のマスは生成先から除く
+//   （例：木・闇を3個ずつ生成する時、木を作ったマスが闇になったり、既存の木が闇に変わる事故を防ぐ）
+let _skillSpawnAttrs = new Set();
 
 function getEmptyCellsForSkill() {
   let cells = [];
@@ -6504,6 +6576,7 @@ function getEmptyCellsForSkill() {
     for (let c = 0; c < COLS; c++) {
       if (_skillUsedCells.has(r + '_' + c)) continue;
       if (isOrbLocked(r, c)) continue;   // ロック中は選ばない
+      if (_skillSpawnAttrs.has(grid[r][c])) continue;   // 生成する色のマスは対象外
       if (grid[r][c] === null || grid[r][c] === undefined) cells.push({ r, c });
     }
   }
@@ -6511,7 +6584,7 @@ function getEmptyCellsForSkill() {
     // 空きマスが尽きたら、まだ使っていない全マスから選ぶ（既存仕様を踏襲）
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
-        if (!_skillUsedCells.has(r + '_' + c) && !isOrbLocked(r, c)) cells.push({ r, c });
+        if (!_skillUsedCells.has(r + '_' + c) && !isOrbLocked(r, c) && !_skillSpawnAttrs.has(grid[r][c])) cells.push({ r, c });
       }
     }
   }
@@ -6986,6 +7059,7 @@ async function runPendingTransforms() {
 function runSkillEffects(effects, entry, mon) {
   _dropcPlayed = false;
   _skillUsedCells = new Set();
+  _skillSpawnAttrs = new Set((effects || []).filter(e => e && e.type === 'orbChangeRandom' && e.attr).map(e => e.attr));
   _orbFxQueue = new Map();   // このスキルで変わるドロップ（演出は confirmSkill が flushOrbSpawnFx で再生）
   const context = { entry, mon };
   for (const eff of effects) runSkillEffect(eff, context);
@@ -7394,7 +7468,7 @@ function isLShape(cells) {
 //     ・ちょうど4個消し(exact4) ・L字消し(lShapes) ・十字消し(cross)
 //     ・〇個以上つなげて消し(orbConnect／2属性同時つなげ) ・ちょうど〇個消し(exactCount)
 // ============================================================
-const LS_SHAPE_CONDS = ['exact4', 'lShapes', 'cross', 'orbConnect', 'exactCount', 'combo', 'attrCombos', 'fireCombos', 'darkCombos', 'healCombos'];   // 〇コンボ以上系もここ
+const LS_SHAPE_CONDS = ['exact4', 'lShapes', 'cross', 'orbConnect', 'exactCount', 'connectEach', 'combo', 'attrCombos', 'fireCombos', 'darkCombos', 'healCombos'];   // 〇コンボ以上系もここ
 function lsShapeEffects() {
   return lsAllEffects().filter(e => e && LS_SHAPE_CONDS.includes(e.condition) && (e.type === 'atk' || e.type === 'dmgReduction'));
 }
@@ -7419,6 +7493,8 @@ function lsShapeMatch(effects, info) {
       }
       case 'exactCount':
         if (e.attr === color && n === e.count) return ATTR_FX_COLOR[color] || '#fff'; break;
+      case 'connectEach':
+        if ((!e.attr || e.attr === color) && (e.exact ? n === e.count : n >= (e.count || 0))) return ATTR_FX_COLOR[color] || '#fff'; break;
       case 'orbConnect': {
         const need = e.count || 0;
         if (e.attr2) {
@@ -7685,7 +7761,7 @@ function spawnAttrImpact(attr, x, y, big) {
 // ============================================================
 // ★ 攻撃アニメーション（複数敵対応） ★
 // ============================================================
-function attackAnimation(slotIndex, damage, attr, enemyIndex) {
+function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
   return new Promise((resolve) => {
     const slots = document.querySelectorAll('#party-grid .party-slot');
     if (slotIndex >= slots.length) { resolve(); return; }
@@ -7718,18 +7794,18 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex) {
       const enemy = enemyList[enemyIndex];
       if (enemy && enemy.hp > 0) {
         playAttrHitSE(attr);   // 攻撃が敵に当たった瞬間の効果音
-        const attrMult = getAttrMulti(attr, enemy.attr);
-        const def = getEnemyDef(enemy);
-        let finalDmg = Math.floor(damage * attrMult * enemyAttrGuardMult(enemy, attr));   // 属性軽減
-        finalDmg = Math.max(1, finalDmg - def);   // 最低ダメージ1
+        const hit = calcHitDamage(enemy, damage, attr, sub);   // 主属性＋副属性（属性軽減・最低ダメージ1も含む）
+        const attrMult = hit.attrMult;
+        let finalDmg = hit.main + hit.sub, dealtSub = 0;
         const absorbed = !!(enemy._comboAbsorb && enemy._comboAbsorb.turns > 0 &&
           attackPhaseCombo > 0 && attackPhaseCombo <= enemy._comboAbsorb.max);
         if (absorbed) {
           // コンボ吸収：ダメージの代わりに、その分だけ敵のHPが回復する
           enemy.hp = Math.min(enemy.maxHp, enemy.hp + finalDmg);
         } else {
-          finalDmg = enemyTakeDamage(enemy, finalDmg);   // 超根性対応（実際に与えたダメージ）
-          if (window.DamageTotal) DamageTotal.add(enemyIndex, finalDmg);   // HPバー上の合計ダメージ
+          const dealt = dealHitDamage(enemy, hit);   // 超根性対応（実際に与えたダメージ。主属性→副属性の順）
+          finalDmg = dealt.main; dealtSub = dealt.sub;
+          if (window.DamageTotal) DamageTotal.add(enemyIndex, finalDmg + dealtSub);   // HPバー上の合計ダメージ（副属性ぶんも足す）
         }
         // 着弾の瞬間に敵本体へノックバックと属性の爆発を重ねる。
         if (enemyUnit && enemyUnit.animate) enemyUnit.animate([
@@ -7743,7 +7819,7 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex) {
           ab.textContent = `吸収! +${finalDmg.toLocaleString()}`;
           document.body.appendChild(ab);
           setTimeout(() => ab.remove(), DMG_NUM_MS + 100);
-        } else showDamageNumber(endX, endY - 10, finalDmg, attr, attrMult > 1, slotIndex);
+        } else showDamageNumber(endX, endY - 10, finalDmg, attr, attrMult > 1, slotIndex, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
       }
       spawnAttrImpact(attr, endX, endY, false);
       updateEnemyUI();
@@ -7899,6 +7975,8 @@ function buildDungeonBattles(d) {
 //   ・乱入モンスターは「ボス以外で、同じサイズ（S/M/L/XL）の敵」とランダムに入れ替わる。
 //     2匹以上のときは、入れ替え先がバラバラのバトルになることも、同じバトルになることもある。
 //   ・同じサイズの入れ替え先が無い乱入モンスターは出ない。
+//   ・乱入モンスターに replaceBoss:true を付けると「ボス乱入」：ボス（isBoss の敵）と入れ替わる（ボス以外とは入れ替わらない）。
+//     例）DIO：{ ..., isBoss:true, replaceBoss:true } を rate:10 で登録 → 10%でボスがDIOに置き換わる。
 //   ・ステータス・行動・ドロップは通常の敵と同じ（敵データをそのまま使う）。
 // ============================================================
 function applyIntrusion(d, battles) {
@@ -7913,10 +7991,19 @@ function applyIntrusion(d, battles) {
     if (!src) continue;
     const size = src.size || 'S';
     const slots = [];
-    out.forEach((b, bi) => (b.enemies || []).forEach((e, ei) => {
-      if (e && !e.isBoss && (e.size || 'S') === size && !used.has(bi + '-' + ei)) slots.push([bi, ei]);
-    }));
-    if (!slots.length) continue;                               // 同じサイズの入れ替え先なし
+    if (src.replaceBoss) {
+      // ボス乱入：ボス（isBoss）と入れ替わる。サイズは問わない（同じサイズのボスがいればそちらを優先）
+      const bosses = [], same = [];
+      out.forEach((b, bi) => (b.enemies || []).forEach((e, ei) => {
+        if (e && e.isBoss && !used.has(bi + '-' + ei)) { bosses.push([bi, ei]); if ((e.size || 'S') === size) same.push([bi, ei]); }
+      }));
+      slots.push(...(same.length ? same : bosses));
+    } else {
+      out.forEach((b, bi) => (b.enemies || []).forEach((e, ei) => {
+        if (e && !e.isBoss && (e.size || 'S') === size && !used.has(bi + '-' + ei)) slots.push([bi, ei]);
+      }));
+    }
+    if (!slots.length) continue;                               // 入れ替え先なし
     const [bi, ei] = slots[Math.floor(Math.random() * slots.length)];
     used.add(bi + '-' + ei);
     out[bi].enemies[ei] = JSON.parse(JSON.stringify(src));
@@ -7948,7 +8035,16 @@ for (const k in AREA_INFO) {
 const EVENT_INFO = (typeof EVENT_AREA_DATA !== 'undefined' && EVENT_AREA_DATA) || {};
 const EVENT_UNLOCK = (typeof EVENT_UNLOCK_AREA !== 'undefined' && EVENT_UNLOCK_AREA) || 6;
 function isEventArea(a) { return typeof a === 'string' && Object.prototype.hasOwnProperty.call(EVENT_INFO, a); }
-function isMultiArea(a) { return typeof MULTI_AREA_IDS !== 'undefined' && MULTI_AREA_IDS.indexOf(a) >= 0; }
+// ★「イベントとマルチ両方」のイベント（areas.js で both:true）は、遊ぶ入口で決まる：
+//   ホームの「マルチ」タブから入った時だけマルチ（協力プレイ）、「イベント」タブから入った時はふつうのイベント（1人）。
+let homeMode = 'main';   // 'main' | 'event' | 'multi'（ホームのタブ）
+let _forceMulti = false;   // 一覧づくりなどで、一時的に「マルチとして扱う」ためのフラグ
+function asMulti(fn) { const keep = _forceMulti; _forceMulti = true; try { return fn(); } finally { _forceMulti = keep; } }
+function isMultiArea(a) {
+  if (typeof MULTI_AREA_IDS === 'undefined' || MULTI_AREA_IDS.indexOf(a) < 0) return false;
+  if (typeof MULTI_BOTH_IDS !== 'undefined' && MULTI_BOTH_IDS.indexOf(a) >= 0) return _forceMulti || homeMode === 'multi';
+  return true;
+}
 // マルチステージの解放判定（areas.js の MULTI_UNLOCK_DATA）。条件を満たすまで一覧に出さない
 function isMultiStageUnlocked(area, stageKey) {
   const cond = typeof MULTI_UNLOCK_DATA !== 'undefined' && MULTI_UNLOCK_DATA[area] && MULTI_UNLOCK_DATA[area][stageKey];
@@ -7959,7 +8055,7 @@ function isMultiStageUnlocked(area, stageKey) {
   return isStageCleared(a, k);
 }
 function hasUnlockedMultiStage() {
-  return typeof MULTI_AREA_IDS !== 'undefined' && MULTI_AREA_IDS.some(id => isEventArea(id) && getStageList(id).length > 0);
+  return typeof MULTI_AREA_IDS !== 'undefined' && asMulti(() => MULTI_AREA_IDS.some(id => isEventArea(id) && getStageList(id).length > 0));
 }
 function isEventUnlocked() { return isAreaBossCleared(EVENT_UNLOCK); }
 function areaNameOf(a) { return isEventArea(a) ? (EVENT_INFO[a].name || String(a)) : (AREA_NAMES[a] || `エリア${a}`); }
@@ -8151,7 +8247,6 @@ function applyAreaBackground(elId, n) {
   el.style.setProperty('--h', areaHue(n));
 }
 // ホームの表示モード：'main'（メインのエリア一覧）／'event'（イベントステージ一覧）。右上のボタンで切り替え
-let homeMode = 'main';   // 'main' | 'event' | 'multi'
 function buildStageMap() {
   if (homeMode === 'event' && !isEventUnlocked()) homeMode = 'main';
   if (homeMode === 'multi' && !hasUnlockedMultiStage()) homeMode = 'main';
@@ -8402,7 +8497,7 @@ function checkMultiUnlockNotice() {
   const fresh = [];
   MULTI_AREA_IDS.forEach(id => {
     if (!isEventArea(id)) return;
-    getStageList(id).forEach(st => {
+    asMulti(() => getStageList(id)).forEach(st => {
       const k = `${id}-${st.key}`;
       if (seen.indexOf(k) < 0) fresh.push({ k, name: (EVENT_INFO[id].stageNames && EVENT_INFO[id].stageNames[st.key]) || st.label });
     });
@@ -9667,6 +9762,8 @@ async function _evaluateInner() {
   enemyJudgeBoard = null;
   let totalCombo = 0; let turnDmg = 0;
   let pendingDamages = new Array(6).fill(0);
+  const pendingSubFull = new Array(6).fill(0);   // 副属性の色で消した分の攻撃（満額。最後に 1/10 か 1/3 にする）
+  const subMeta = [];                             // モンスター番号 → 副属性の色（パーティの上の数字の色用）
   clearComboChips();
   resetLsGuard();
   let lastGroupCells = null;
@@ -9685,6 +9782,7 @@ async function _evaluateInner() {
   let hasWaterConnect5 = false;
   let hasDarkConnect5 = false;
   let exactAttrCounts = {};
+  const connectSizes = {};   // 属性ごとの、消した塊の個数の一覧（○個つなげて消す度、用）
   let maxConnect = {}; // 属性ごとの「最大つながり数」（orbConnect の2属性同時判定用）
   let comboIndex = 0;
 
@@ -9735,6 +9833,7 @@ async function _evaluateInner() {
       if (color === 'water' && cells.length >= 5) hasWaterConnect5 = true;
       if (color === 'dark' && cells.length >= 5) hasDarkConnect5 = true;
       if (color) maxConnect[color] = Math.max(maxConnect[color] || 0, cells.length);
+      if (color) (connectSizes[color] = connectSizes[color] || []).push(cells.length);
       if (color) {
         // その属性で消した塊の個数を全て記録（例: 木4個の塊 → exactAttrCounts.wood[4] = true）
         if (!exactAttrCounts[color]) exactAttrCounts[color] = {};
@@ -9770,7 +9869,7 @@ async function _evaluateInner() {
       // 今消す塊も数えた個数で判定する（そうしないと「4色以上」は、4色目を消した瞬間には成立せず、5個目の塊まで倍率が出ない）
       const ctxCounts = { ...attrCounts };
       if (ctxCounts[color] !== undefined) ctxCounts[color] += cells.length;
-      const ctx = { attr: color, comboCount: totalCombo, exact4Count, orbCounts: ctxCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: ctxCounts.poison, fireCombos, lShapes, hpRatio: playerCurrentHP / playerMaxHP, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts };
+      const ctx = { attr: color, comboCount: totalCombo, exact4Count, orbCounts: ctxCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: ctxCounts.poison, fireCombos, lShapes, hpRatio: playerCurrentHP / playerMaxHP, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes };
       const result = applyLeaderEffects(lsEffects, ctx);
       lastGroupCells = cells;
       checkLsGuard(lsEffects, ctx, cells);   // ダメージ軽減が発動（増えた）ならそのドロップの場所で演出
@@ -9819,6 +9918,7 @@ async function _evaluateInner() {
 
       // ★ グループ単位の基礎ダメージ（orbBonus のみ。comboBonus は後で一括適用） ★
       const temp = [];
+      const tempSub = new Array(partyUids.length).fill(0);   // 副属性の色で消した分（満額）
       for (let i = 0; i < partyUids.length; i++) {
         const uid = partyUids[i];
         if (uid === null) { temp.push(0); continue; }
@@ -9828,23 +9928,28 @@ async function _evaluateInner() {
         if (!mon) { temp.push(0); continue; }
         // 本家仕様：今消した「この1グループ」と同じ属性のモンスターだけが、そのグループの個数ぶんで攻撃する
         //（他の色を消した時に、以前消した色の攻撃が重複加算されないようにする）
-        if (mon.attr !== color) { temp.push(0); continue; }
+        // 副属性の色のドロップを消した時も攻撃になる（ダメージは最後に 1/10 か 1/3 にする）
+        const isMainColor = mon.attr === color, isSubColor = subAttrOf(mon) === color;
+        if (!isMainColor && !isSubColor) { temp.push(0); continue; }
         const count = cells.length;
         if (count < 3) { temp.push(0); continue; }
         if (bindTimers[uid] && bindTimers[uid] > 0) { temp.push(0); continue; }
 
         const orbBonus = 1 + 0.25 * (count - 3);
         const entryAtk = calcMonsterStats(entry).atk;
-        let dmg = Math.floor(entryAtk * orbBonus * enemyAtkDownMult(mon.attr));   // 敵の攻撃力ダウンを反映
+        let dmg = Math.floor(entryAtk * orbBonus * enemyAtkDownMult(color));   // 敵の攻撃力ダウンを反映（その色の攻撃力ダウン）
         if (dmg > 2147483647) dmg = 2147483647;
-        temp.push(dmg);
+        temp.push(isMainColor ? dmg : 0);
+        if (isSubColor) { tempSub[i] = dmg; subMeta[i] = { attr: color }; }
       }
       for (let i = 0; i < temp.length; i++) {
-        if (temp[i] > 0) {
+        if (tempSub[i] > 0) pendingSubFull[i] += tempSub[i];
+        if (temp[i] > 0 || tempSub[i] > 0) {
           pendingDamages[i] = (pendingDamages[i] || 0) + temp[i];
           const el = damageElements[i];
           if (el) {
-            el.textContent = pendingDamages[i].toLocaleString();
+            const _m = MONSTER_DATA[(box.find(b => b.uid === partyUids[i]) || {}).monsterId], _dv = subDivisor(_m);
+            setMonsterDamageText(el, pendingDamages[i], _dv && pendingSubFull[i] > 0 ? Math.floor(pendingSubFull[i] / _dv) : 0, subMeta[i] && subMeta[i].attr);
             el.classList.add('show');
             el.classList.remove('pop');
             void el.offsetWidth;
@@ -9863,7 +9968,7 @@ async function _evaluateInner() {
           if (e) { const m = MONSTER_DATA[e.monsterId]; if (m && m.leaderSkill && m.leaderSkill.effects) lsEffectsCA.push(...m.leaderSkill.effects); }
         }
       });
-      const caCtx = { attr:'none', comboCount:totalCombo, exact4Count, orbCounts:attrCounts, enemyAttr:enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount:attrCounts.poison, fireCombos, lShapes, hpRatio:playerCurrentHP/playerMaxHP, skillUsed:skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts };
+      const caCtx = { attr:'none', comboCount:totalCombo, exact4Count, orbCounts:attrCounts, enemyAttr:enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount:attrCounts.poison, fireCombos, lShapes, hpRatio:playerCurrentHP/playerMaxHP, skillUsed:skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes };
       const caResult = applyLeaderEffects(lsEffectsCA, caCtx);
       if (caResult.comboAdd > 0) {
         comboAddTriggered = true;
@@ -9906,7 +10011,7 @@ async function _evaluateInner() {
   for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (grid[r][c] !== null) remainingOrbs++;
   lastTurnCtx = { comboCount: totalCombo, exact4Count, orbCounts: { ...attrCounts }, crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes,
     darkCombos, healCombos, attrCombos: { ...attrCombos }, hasWaterConnect5, hasDarkConnect5, maxConnect: { ...maxConnect },
-    exactAttrCounts: { ...exactAttrCounts }, remainingOrbs, skillUsed: skillUsedThisTurn };
+    exactAttrCounts: { ...exactAttrCounts }, connectSizes: { ...connectSizes }, remainingOrbs, skillUsed: skillUsedThisTurn };
   // 盤面に残ったドロップ数で決まる軽減など、最後にわかる軽減もここで発動させる
   if (totalCombo > 0) checkLsGuard(lsAllEffects(), defenseCtx(enemyList[0]), lastGroupCells);
 
@@ -9925,7 +10030,7 @@ async function _evaluateInner() {
         const rr = applyLeaderEffects(lsAll, { attr: mn.attr, monsterType: mn.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts,
           enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes,
           hpRatio: playerCurrentHP / playerMaxHP, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos,
-          hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, remainingOrbs });
+          hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
         if (rr.atkMultiplier > best) best = rr.atkMultiplier;
       }
       if (best > 1) showRemainingOrbsMult(best);
@@ -9939,12 +10044,13 @@ async function _evaluateInner() {
     // ★ 最終コンボ補正を一括適用し、LS/エンハンス倍率を乗算 ★
     const finalComboBonus = 1 + 0.25 * (totalCombo - 1);
     let finalDamages = [];
+    let finalSubs = new Array(6).fill(0);   // 副属性の最終ダメージ（1/10 か 1/3 にしたあと）
     let anyAtkUp = false;   // 攻撃力アップ(LS/バフ倍率 or コンボ補正)がかかったか
     // 毒・回復の「前」のHP割合（この後 回復が入っても「HP〇%以下」を判定できるよう覚えておく）
     const _hpStartRatio = playerCurrentHP / Math.max(1, playerMaxHP);
     // ダメージ計算。回復後にもう一度呼んで、回復でHP満タン／HP〇%以上になった分も反映する
     const calcFinalDamages = () => {
-    finalDamages = []; anyAtkUp = false;
+    finalDamages = []; finalSubs = new Array(partyUids.length).fill(0); anyAtkUp = false;
     for (let i = 0; i < partyUids.length; i++) {
       const uid = partyUids[i];
       if (uid === null) { finalDamages.push(0); continue; }
@@ -9955,10 +10061,12 @@ async function _evaluateInner() {
       if (bindTimers[uid] && bindTimers[uid] > 0) { finalDamages.push(0); continue; }
 
       let baseDmg = pendingDamages[i] || 0;
-      if (baseDmg === 0) { finalDamages.push(0); continue; }
+      let baseSub = pendingSubFull[i] || 0;
+      if (baseDmg === 0 && baseSub === 0) { finalDamages.push(0); continue; }
 
       // コンボ補正をここで一括適用
       baseDmg = Math.floor(baseDmg * finalComboBonus);
+      baseSub = Math.floor(baseSub * finalComboBonus);
 
       let atkMult = 1.0;
       const lse = [];
@@ -9973,7 +10081,7 @@ async function _evaluateInner() {
       const _hpNowRatio = playerCurrentHP / Math.max(1, playerMaxHP);
       const hpRatioFinal = Math.max(_hpStartRatio, _hpNowRatio);
       const hpRatioLowFinal = Math.min(_hpStartRatio, _hpNowRatio);
-      const context = { attr: mon.attr, monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: hpRatioFinal, hpRatioLow: hpRatioLowFinal, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, remainingOrbs };
+      const context = { attr: mon.attr, monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: hpRatioFinal, hpRatioLow: hpRatioLowFinal, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs };
       const res = applyLeaderEffects(lse, context);
       atkMult = res.atkMultiplier;
       for (const b of atkBuffs) {
@@ -9982,8 +10090,15 @@ async function _evaluateInner() {
 
       let finalDmg = Math.floor(baseDmg * atkMult);
       if (finalDmg > 2147483647) finalDmg = 2147483647;
+      // 副属性：その色の最終攻撃（主属性と同じ倍率）を 1/10（主属性と同じ属性）か 1/3（違う属性）にする
+      const subDv = subDivisor(mon);
+      if (baseSub > 0 && subDv) {
+        let fullSub = Math.floor(baseSub * atkMult);
+        if (fullSub > 2147483647) fullSub = 2147483647;
+        finalSubs[i] = Math.floor(fullSub / subDv);
+      }
       // リーダースキル等の倍率、またはコンボ補正(2コンボ以上)でダメージが増える時に攻撃上昇SEを鳴らす
-      if ((atkMult > 1.0 || finalComboBonus > 1) && finalDmg > 0) anyAtkUp = true;
+      if ((atkMult > 1.0 || finalComboBonus > 1) && (finalDmg > 0 || finalSubs[i] > 0)) anyAtkUp = true;
       finalDamages.push(finalDmg);
     }
     };
@@ -10041,7 +10156,7 @@ async function _evaluateInner() {
             // 条件つきリーダースキルの「回復力倍率」（例: 火ドロップを消す度に攻撃1.2倍、回復力1.3倍）
             if (recCondEffects.length) {
               const _hpN = playerCurrentHP / Math.max(1, playerMaxHP);
-              const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: Math.max(_hpStartRatio, _hpN), hpRatioLow: Math.min(_hpStartRatio, _hpN), skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, remainingOrbs });
+              const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: Math.max(_hpStartRatio, _hpN), hpRatioLow: Math.min(_hpStartRatio, _hpN), skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
               rec *= rc.recMultiplier;
             }
             totalRec += rec;
@@ -10073,15 +10188,15 @@ async function _evaluateInner() {
 
     const slots = document.querySelectorAll('#party-grid .party-slot');
     await sleep(250);
-    slots.forEach((slot, i) => { if (finalDamages[i] > 0) slot.classList.add('charging'); });
+    slots.forEach((slot, i) => { if (finalDamages[i] > 0 || finalSubs[i] > 0) slot.classList.add('charging'); });
     await sleep(300);
 
     if (anyAtkUp) playSE('attackup');
     for (let i = 0; i < finalDamages.length; i++) {
-      if (finalDamages[i] > 0) {
+      if (finalDamages[i] > 0 || finalSubs[i] > 0) {
         const el = damageElements[i];
         if (el) {
-          el.textContent = finalDamages[i].toLocaleString();
+          setMonsterDamageText(el, finalDamages[i], finalSubs[i], subMeta[i] && subMeta[i].attr);
           el.classList.add('show');
           el.classList.remove('pop', 'boosting');
           void el.offsetWidth;
@@ -10101,7 +10216,7 @@ async function _evaluateInner() {
 
     const attackTargets = [];
     for (let i = 0; i < finalDamages.length; i++) {
-      if (finalDamages[i] <= 0) continue;
+      if (finalDamages[i] <= 0 && !(finalSubs[i] > 0)) continue;
       const uid = partyUids[i];
       if (uid === null) continue;
       const entry = box.find(b => b.uid === uid);
@@ -10110,11 +10225,15 @@ async function _evaluateInner() {
       if (!mon) continue;
       if (bindTimers[uid] && bindTimers[uid] > 0) continue;
 
-      const isAllAttack = bigOrbs[mon.attr] || buffAllAttack;
+      // 副属性の攻撃は、主属性の攻撃と同時に（同じ弾・同じ数字の中で）当たる。主属性のダメージが無いとき（副属性の色だけ消した）は副属性で攻撃する
+      const subAttr = subAttrOf(mon);
+      const subHit = finalSubs[i] > 0 && subAttr ? { dmg: finalSubs[i], attr: subAttr } : null;
+      const leadAttr = finalDamages[i] > 0 ? mon.attr : subAttr;
+      const isAllAttack = bigOrbs[leadAttr] || buffAllAttack;
       if (isAllAttack) {
-        attackTargets.push([i, finalDamages[i], mon.attr, -2]);   // -2 = 全体攻撃（足元から属性エフェクト・全員に同時ダメージ・待たない）
+        attackTargets.push([i, finalDamages[i], leadAttr, -2, subHit]);   // -2 = 全体攻撃（足元から属性エフェクト・全員に同時ダメージ・待たない）
       } else {
-        attackTargets.push([i, finalDamages[i], mon.attr, -1]);   // -1 = 攻撃する瞬間にターゲット決定
+        attackTargets.push([i, finalDamages[i], leadAttr, -1, subHit]);   // -1 = 攻撃する瞬間にターゲット決定
       }
     }
 
@@ -10122,12 +10241,12 @@ async function _evaluateInner() {
     markCombo8Bonus(totalCombo);   // 8コンボ以上したら、ホームに戻ったときにようびのおふだをもう1枚
     if (window.DamageTotal) DamageTotal.reset();   // 合計ダメージは、この攻撃の分を 0 から数える
     try {
-      for (const [slotIdx, dmg, attr, plannedIdx] of attackTargets) {
+      for (const [slotIdx, dmg, attr, plannedIdx, subHit] of attackTargets) {
         if (plannedIdx === -2) {
           if (!enemyList.some(e => e.hp > 0)) continue;
           // 全体攻撃：単体攻撃と同じく弾を飛ばし、当たったら ATK_GAP_MS 後に次へ（演出は裏で流れ続ける）
           if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: -2 });
-          await allAttackAnimation(slotIdx, dmg, attr);
+          await allAttackAnimation(slotIdx, dmg, attr, subHit);
           if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp) });
           continue;
         }
@@ -10135,7 +10254,7 @@ async function _evaluateInner() {
         if (eIdx === -1) eIdx = getTargetIdx();   // 1匹倒しても、次の敵（ロック中ならその敵）へ自動で狙いを移す
         if (eIdx < 0 || !enemyList[eIdx] || enemyList[eIdx].hp <= 0) continue;
         if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: eIdx });
-        await attackAnimation(slotIdx, dmg, attr, eIdx);
+        await attackAnimation(slotIdx, dmg, attr, eIdx, subHit);
         if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp) });
         await sleep(ATK_GAP_MS);   // 当たったあと、次の攻撃までの間（全体攻撃と共通）
       }

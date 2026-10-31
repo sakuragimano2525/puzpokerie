@@ -17,12 +17,14 @@
 <link rel="stylesheet" href="css/cutin.css">
 <link rel="stylesheet" href="css/orb-spawn-fx.css">
 <link rel="stylesheet" href="css/zukan.css">
+<link rel="stylesheet" href="css/settings.css">
 <link rel="stylesheet" href="css/ls-search.css">
 <link rel="stylesheet" href="css/multi-turn.css">
 <link rel="stylesheet" href="css/multi-online.css">
 <link rel="stylesheet" href="css/gacha.css">
 <!-- 画像の自動再読み込み（ページ前半の画像も拾うため、必ず head の中で読み込む） -->
 <script src="js/img-retry.js"></script>
+<script src="js/settings.js"></script>
 </head>
 <body>
 
@@ -56,6 +58,7 @@
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4M6 5h11l-2.5 3.8L17 12.5H6"/></symbol>
     <symbol id="i-event" viewBox="0 0 24 24"><path d="m12 3.2 2.7 5.5 6 .9-4.4 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6-4.4-4.2 6-.9Z"/></symbol>
     <symbol id="i-map" viewBox="0 0 24 24"><path d="M3.5 6.5 9 4l6 2.5 5.5-2.5v13L15 20l-6-2.5-5.5 2.5Z"/><path d="M9 4v13.5M15 6.5V20"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M6.5 3.5H19v13H6.5a2 2 0 0 0-2 2v-13a2 2 0 0 1 2-2Z"/><path d="M4.5 18.5a2 2 0 0 0 2 2H19v-4"/><path d="M9 8h6M9 11.5h4"/></symbol>
     <symbol id="i-multi" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19.5c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.6-.2 4.5 1.7 4.5 4.6"/></symbol>
     <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.5c.7 4.6 2.4 6.3 7 7-4.6.7-6.3 2.4-7 7-.7-4.6-2.4-6.3-7-7 4.6-.7 6.3-2.4 7-7Z"/><path d="M19 3v3.4M17.3 4.7h3.4"/></symbol>
@@ -72,6 +75,7 @@
   <div id="home-header">
     <div id="hh-coin" aria-label="所持エナ"><img id="hh-coin-icon" src="hcoin.png" alt="エナ"><span id="hh-coin-num">0</span></div>
     <div class="hh-icons">
+      <button id="settings-open-btn" class="hh-icon-btn settings" type="button" aria-label="設定"><svg class="ic"><use href="#i-settings"/></svg></button>
       <button id="zukan-open-btn" class="hh-icon-btn zukan" type="button" aria-label="モンスター図鑑"><svg class="ic"><use href="#i-book"/></svg></button>
       <button id="mail-open-btn" class="hh-icon-btn mail" type="button" aria-label="メール"><svg class="ic"><use href="#i-mail"/></svg><span class="hh-badge"></span></button>
       <button id="bag-open-btn" class="hh-icon-btn bag" type="button" aria-label="カバン"><svg class="ic"><use href="#i-bag"/></svg></button>
@@ -662,7 +666,13 @@
         <button class="te-attr-btn" data-attr="light" aria-label="光"><img src="4.png" alt="光"></button>
         <button class="te-attr-btn" data-attr="dark" aria-label="闇"><img src="5.png" alt="闇"></button>
       </div>
-      <span id="te-count"></span>
+      <div id="te-type-filters">
+        <button class="te-type-btn" data-type="たいりょく" data-short="体" aria-label="たいりょく"><img src="typ1.png" alt="たいりょく" onerror="this.parentNode.classList.add('as-text')"></button>
+        <button class="te-type-btn" data-type="こうげき" data-short="攻" aria-label="こうげき"><img src="typ2.png" alt="こうげき" onerror="this.parentNode.classList.add('as-text')"></button>
+        <button class="te-type-btn" data-type="かいふく" data-short="回" aria-label="かいふく"><img src="typ3.png" alt="かいふく" onerror="this.parentNode.classList.add('as-text')"></button>
+        <button class="te-type-btn" data-type="バランス" data-short="バ" aria-label="バランス"><img src="typ4.png" alt="バランス" onerror="this.parentNode.classList.add('as-text')"></button>
+        <button class="te-type-btn" data-type="神秘" data-short="神" aria-label="神秘"><img src="typ5.png" alt="神秘" onerror="this.parentNode.classList.add('as-text')"></button>
+      </div>
     </div>
     <div id="te-search-row">
       <div id="te-search-wrap">

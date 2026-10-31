@@ -4165,10 +4165,38 @@ const MONSTER_DATA = {
     id: 721,
     name: 'ボルケニオン',
     rarity: 5,
+    attr: 'water',
+    sub: 'fire',
     type: 'バランス',
     maxLevel: 99,
     baseExp: 2500,
-    stats: { hp: { min: 510, max: 3420 }, atk: { min: 250, max: 1650 }, rec: { min: 74, max: 212 } }
+    stats: { hp: { min: 510, max: 3420 }, atk: { min: 250, max: 1650 }, rec: { min: 74, max: 212 } },
+    skill: {
+      name: 'スチームバースト',
+      sp: 6,
+      desc: '火と水のロックを解除し、最上段の横1列を水ドロップに変化。\n最下段の横1列を火ドロップに変化。',
+      effects: [
+        { type: 'orbUnlock', target: 'all', orb_fire: true, orb_water: true },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'fire' }
+      ]
+    },
+    leaderSkill: {
+      name: 'フレイムウォーター',
+      desc: '火と水を同時に6個以上つなげて消すと攻撃2倍。\n受けるダメージ3%軽減、1コンボ加算。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'orbConnect',
+          attr: 'fire',
+          count: 6,
+          value: 2,
+          attr2: 'water',
+          comboAdd: 1,
+          reduce: 0.03
+        }
+      ]
+    }
   },
   5000: {
     id: 5000,
@@ -4350,6 +4378,87 @@ const MONSTER_DATA = {
       effects: [
         { type: 'atk', condition: 'cross', value: 1.4, reduce: 0.1 },
         { type: 'atk', condition: 'lShapes', shapeAttr: 'water', value: 1.4, reduce: 0.1 }
+      ]
+    }
+  },
+  5008: {
+    id: 5008,
+    name: 'ジョナサン',
+    rarity: 4,
+    attr: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 1500,
+    stats: { hp: { min: 230, max: 2200 }, atk: { min: 205, max: 2100 }, rec: { min: 45, max: 110 } },
+    skill: {
+      name: '波紋を込めて！',
+      sp: 6,
+      desc: '最下段横2列を火ドロップに変化。',
+      effects: [
+        { type: 'orbChangeLine', dir: 'row', index: 3, count: 1, attr: 'fire' },
+        { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'fire' }
+      ]
+    },
+    leaderSkill: {
+      name: '太陽の波紋',
+      desc: '火と光ドロップを同時に6個以上つなげて消すと攻撃2倍。',
+      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 6, value: 2, attr2: 'light' } ]
+    }
+  },
+  5009: {
+    id: 5009,
+    name: '承太郎',
+    rarity: 4,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 1500,
+    stats: { hp: { min: 270, max: 2700 }, atk: { min: 205, max: 2050 }, rec: { min: 0, max: 0 } },
+    skill: { name: 'ザ・ワールド', sp: 4, desc: '5秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 5 } ] },
+    leaderSkill: {
+      name: '「星」のタロット',
+      desc: '10コンボ以上で攻撃2倍、受けるダメージ25%軽減。',
+      effects: [ { type: 'atk', condition: 'combo', count: 10, value: 2, reduce: 0.25 } ]
+    }
+  },
+  5010: {
+    id: 5010,
+    name: 'DIO',
+    rarity: 4,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 1500,
+    stats: { hp: { min: 290, max: 2741 }, atk: { min: 210, max: 2159 }, rec: { min: 0, max: 0 } },
+    skill: { name: '時よ止まれッ！', sp: 5, desc: '9秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 9 } ] },
+    leaderSkill: {
+      name: '「世界」のタロット',
+      desc: '【落ちコンなし】8コンボ以上で攻撃2倍、受けるダメージ20%軽減。',
+      effects: [ { type: 'atk', condition: 'combo', count: 8, value: 2, reduce: 0.2 }, { type: 'noDrop', value: true } ]
+    }
+  },
+  5011: {
+    id: 5011,
+    name: 'ポルナレフ',
+    rarity: 3,
+    attr: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 410, max: 2650 }, atk: { min: 300, max: 2000 }, rec: { min: 25, max: 50 } },
+    skill: {
+      name: 'シルバーチャリオッツ',
+      sp: 5,
+      desc: '1ターンの間、敵全体の防御力を85%ダウン。',
+      effects: [ { type: 'defenseDown', target: 'all', value: 0.85, turns: 1, message: '💥 防御力ダウン！' } ]
+    },
+    leaderSkill: {
+      name: '「戦車」のタロット',
+      desc: '【落ちコンなし】水と光を同時に5個以上繋げて消すと攻撃1.3倍。\n残りドロップ3個以下で攻撃1.5倍。',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'water', count: 5, value: 1.3, attr2: 'light' },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 1.5 },
+        { type: 'noDrop', value: true }
       ]
     }
   }

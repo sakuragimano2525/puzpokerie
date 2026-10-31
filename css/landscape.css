@@ -249,6 +249,8 @@
   #te-filter-row { gap: 6px; }
   .te-attr-btn, .iku-attr-btn { width: 34px; height: 34px; }
   #te-attr-filters { gap: 6px; }
+  #te-type-filters { gap: 6px; padding-left: 6px; }
+  #te-attr-filters .te-attr-btn, #te-type-filters .te-type-btn { max-width: 34px; }
   #te-search-input { height: 38px; border-radius: 19px; }
   .te-sort-btn { min-height: 38px; }
   #te-box-wrap { grid-area: box; padding: 6px max(14px, env(safe-area-inset-right)) 14px 0; }

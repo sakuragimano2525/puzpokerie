@@ -43,7 +43,7 @@
     return i < 0 ? 99 : i;
   };
   // リーダースキル：①火のソウル→火炎のソウル→水のソウル…（属性別の攻撃倍率）②タイプ・全属性の攻撃 ③HP(オーラ) ④回復力(ルーン) ⑤条件付き攻撃 ⑥その他
-  const LS_COND_ORDER = ['hpAbove', 'hpBelow', 'hpFull', 'combo', 'attrCombos', 'orbConnect', 'exactCount', 'exact4', 'eraseAttr', 'eraseAny', 'colorCount', 'colorCountHeal', 'colorRamp', 'cross', 'lShapes', 'poison', 'remainingOrbs', 'skillUsed'];
+  const LS_COND_ORDER = ['hpAbove', 'hpBelow', 'hpFull', 'combo', 'attrCombos', 'orbConnect', 'exactCount', 'connectEach', 'exact4', 'eraseAttr', 'eraseAny', 'colorCount', 'colorCountHeal', 'colorRamp', 'cross', 'lShapes', 'poison', 'remainingOrbs', 'skillUsed'];
   function leaderSortKey(ls) {
     ls = ls || {};
     const effs = (ls.effects || []);

@@ -45,6 +45,7 @@
 //   乱入モンスター: intrusion: { rate: 20, monsters: [ {敵データ}, {敵データ} ] }
 //     ダンジョンに入った時に1回だけ rate(%) で抽選。当たると monsters に登録した全員が乱入する。
 //     乱入モンスターは、同じサイズ(S/M/L/XL)の「ボス以外」の敵とランダムに入れ替わる（バラバラ／同じバトルはランダム）。
+//     乱入モンスターに replaceBoss: true を付けると「ボス乱入」：ボス(isBoss)の敵と入れ替わる（例：DIOがrate10%でボスと入れ替わる）。
 // ============================================================
 // ============================================================
 // ★ ダンジョンBGM（道中 / ボス）★
@@ -149,8 +150,8 @@ const DUNGEON_BGM = {
   "multi-7": {"field":"b7.mp3","boss":"boss4.mp3"},
   "multi-8": {"field":"b3.mp3","boss":"boss4.mp3"},
   "kourin-boss": {"field":"b7.mp3","boss":"boss5.mp3"},
-  "BULL-boss": {"field":"b7.mp3","boss":"boss5.mp3"},
-  "BLLU-boss": {"field":"b7.mp3","boss":"boss5.mp3"}
+  "BLLU-boss": {"field":"b10.mp3","boss":"boss5.mp3"},
+  "jojo-boss": {"field":"b10.mp3","boss":"boss7.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -36488,9 +36489,9 @@ const DUNGEON_DATA = {
       ]
     }
   },
-  "BULL-boss": {
-    "bgImg": "daily_sun.png",
-    "bgm": "b7.mp3",
+  "BLLU-boss": {
+    "bgImg": "stadium.png",
+    "bgm": "b10.mp3",
     "battles": [
       {
         "enemies": [
@@ -36770,9 +36771,9 @@ const DUNGEON_DATA = {
       "floors": 4,
       "monsters": {
         "m1": {
-          "name": "ヒノヤコマ",
-          "img": "mp662.png",
-          "attr": "fire",
+          "name": "ニダンギル",
+          "img": "mp680.png",
+          "attr": "dark",
           "hp": 8000,
           "atk": 1100,
           "def": 3400,
@@ -36783,11 +36784,11 @@ const DUNGEON_DATA = {
           "monsterDrop": {
             "enabled": true,
             "rate": 0.05,
-            "monsterId": 661
+            "monsterId": 679
           },
           "drops": [
             {
-              "item": "spuzzle_12",
+              "item": "puzzle52",
               "rate": 0.05,
               "count": 1
             }
@@ -36796,11 +36797,24 @@ const DUNGEON_DATA = {
             {
               "name": "通常攻撃",
               "condition": "normal",
-              "weight": 100,
+              "weight": 50,
               "skills": [
                 {
                   "type": "damage_mult",
                   "value": 1
+                }
+              ]
+            },
+            {
+              "name": "つばめがえし",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage",
+                  "value": 1100,
+                  "repeat": 2
                 }
               ]
             }
@@ -36857,8 +36871,8 @@ const DUNGEON_DATA = {
           }
         },
         "m3": {
-          "name": "クレッフィ",
-          "img": "mp707.png",
+          "name": "ホルビー",
+          "img": "mp659.png",
           "attr": "light",
           "hp": 6000,
           "atk": 820,
@@ -36873,7 +36887,7 @@ const DUNGEON_DATA = {
           },
           "drops": [
             {
-              "item": "puzzle42",
+              "item": "puzzle4",
               "rate": 0.05,
               "count": 1
             }
@@ -36887,23 +36901,6 @@ const DUNGEON_DATA = {
                 {
                   "type": "damage_mult",
                   "value": 1
-                }
-              ]
-            },
-            {
-              "name": "フェアリーロック",
-              "condition": "battle_start",
-              "once": true,
-              "skills": [
-                {
-                  "type": "damage_mult",
-                  "value": 1
-                },
-                {
-                  "type": "orb_lock",
-                  "pattern": "random",
-                  "orb": "any",
-                  "count": 5
                 }
               ]
             }
@@ -37003,7 +37000,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 5,
       "monsters": [
         {
           "name": "ラッキー",
@@ -37037,40 +37034,134 @@ const DUNGEON_DATA = {
       ]
     }
   },
-  "BLLU-boss": {
-    "bgImg": "daily_sun.png",
-    "bgm": "b7.mp3",
+  "jojo-boss": {
+    "bgImg": "stadium.png",
+    "bgm": "b10.mp3",
     "battles": [
       {
         "enemies": [
           {
-            "name": "ミカ",
-            "img": "mp5001.png",
-            "attr": "dark",
-            "hp": 225000,
-            "atk": 2000,
-            "def": 1000,
+            "name": "ジョナサン",
+            "img": "mp5008.png",
+            "attr": "fire",
+            "hp": 100000,
+            "atk": 3900,
+            "def": 2000,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 5000,
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "先制攻撃",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ポルナレフ",
+            "img": "mp5011.png",
+            "attr": "water",
+            "hp": 150000,
+            "atk": 2961,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "承太郎",
+            "img": "mp5009.png",
+            "attr": "dark",
+            "hp": 80000,
+            "atk": 2460,
+            "def": 5000,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 7500,
             "coin": 25,
             "monsterDrop": {
               "enabled": false,
-              "rate": 0.05,
-              "monsterId": 133
+              "rate": 0.05
             },
-            "drops": [
-              {
-                "item": "fcoin",
-                "rate": 1,
-                "count": 1
-              }
-            ],
+            "drops": [],
             "actions": [
               {
-                "name": "これはどうかな？",
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 34,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "time_reduce",
+                    "seconds": 1,
+                    "turn": 1
+                  }
+                ]
+              },
+              {
+                "name": "ランダムチェンジ・闇",
                 "condition": "normal",
                 "weight": 33,
+                "once": false,
                 "skills": [
                   {
                     "type": "damage_mult",
@@ -37078,63 +37169,8 @@ const DUNGEON_DATA = {
                   },
                   {
                     "type": "board_change",
-                    "pattern": "spawn",
-                    "to": "ojama",
-                    "count": 9,
-                    "orb_fire": "",
-                    "orb_water": "",
-                    "orb_wood": "",
-                    "orb_light": "",
-                    "orb_dark": "",
-                    "orb_heal": "",
-                    "orb_poison": ""
-                  },
-                  {
-                    "type": "atk_down",
-                    "target": "attr",
-                    "attr": "dark",
-                    "rate": 50,
-                    "turn": 3
-                  },
-                  {
-                    "type": "atk_down",
-                    "target": "attr",
-                    "attr": "light",
-                    "rate": 50,
-                    "turn": 3
-                  }
-                ],
-                "hpAbove": 51
-              },
-              {
-                "name": "聖園ミカ、ついに登場～☆って感じかな？",
-                "condition": "battle_start",
-                "once": true,
-                "skills": [
-                  {
-                    "type": "super_gut",
-                    "rate": 50
-                  },
-                  {
-                    "type": "status_shield",
-                    "turn": 1
-                  }
-                ]
-              },
-              {
-                "name": "それじゃ、始めよっか。",
-                "condition": "battle_start",
-                "once": true,
-                "skills": [
-                  {
-                    "type": "attack_buff",
-                    "rate": 2,
-                    "turn": 99
-                  },
-                  {
-                    "type": "board_change",
-                    "pattern": "convert",
-                    "to": "water",
+                    "pattern": "random_to",
+                    "to": "dark",
                     "orb_fire": "",
                     "orb_water": "",
                     "orb_wood": "",
@@ -37142,170 +37178,22 @@ const DUNGEON_DATA = {
                     "orb_dark": "",
                     "orb_heal": "",
                     "orb_poison": "",
-                    "orb_ojama": "",
-                    "from": "dark"
-                  },
-                  {
-                    "type": "rec_down",
-                    "value": 0.5,
-                    "turn": 3
+                    "orb_ojama": ""
                   }
                 ]
               },
               {
-                "name": "超れんぞくこうげき",
+                "name": "ブラインド",
                 "condition": "normal",
                 "weight": 33,
                 "once": false,
                 "skills": [
                   {
-                    "type": "damage",
-                    "value": 406,
-                    "repeat": 12
-                  },
-                  {
-                    "type": "board_change",
-                    "pattern": "row",
-                    "to": "fire",
-                    "orb_fire": "",
-                    "orb_water": "",
-                    "orb_wood": "",
-                    "orb_light": "",
-                    "orb_dark": "",
-                    "orb_heal": "",
-                    "orb_poison": "",
-                    "pos": "random",
-                    "lines": 1
-                  },
-                  {
-                    "type": "combo_absorb",
-                    "turn": 1,
-                    "combo": 4
-                  }
-                ],
-                "hpAbove": 51
-              },
-              {
-                "name": "ちょっと気合い入れようかな！",
-                "condition": "normal",
-                "weight": 34,
-                "once": false,
-                "skills": [
-                  {
                     "type": "damage_mult",
-                    "value": 1.3
+                    "value": 1.1
                   },
                   {
-                    "type": "attr_guard",
-                    "attr": "random",
-                    "rate": 50,
-                    "turn": 1
-                  }
-                ],
-                "hpAbove": 51
-              },
-              {
-                "name": "⚠️Kyrie Eleison",
-                "condition": "hp<=50%",
-                "once": true,
-                "skills": [
-                  {
-                    "type": "damage_ratio",
-                    "basis": "current",
-                    "rate": 99
-                  },
-                  {
-                    "type": "board_change",
-                    "pattern": "multi",
-                    "to": "light",
-                    "orb_fire": "",
-                    "orb_water": true,
-                    "orb_wood": "",
-                    "orb_light": "",
-                    "orb_dark": "",
-                    "orb_heal": true,
-                    "orb_poison": true,
-                    "orb_ojama": true
-                  },
-                  {
-                    "type": "time_reduce",
-                    "seconds": 3,
-                    "turn": 3
-                  }
-                ]
-              },
-              {
-                "name": "星の呼び声",
-                "condition": "normal",
-                "weight": 50,
-                "once": false,
-                "skills": [
-                  {
-                    "type": "damage_mult",
-                    "value": 1.2
-                  },
-                  {
-                    "type": "roulette",
-                    "count": 10,
-                    "turn": 1,
-                    "sec": 1
-                  }
-                ],
-                "hpBelow": 50
-              },
-              {
-                "name": "Gloria Patri",
-                "condition": "normal",
-                "weight": 50,
-                "once": false,
-                "skills": [
-                  {
-                    "type": "damage_mult",
-                    "value": 1.2
-                  },
-                  {
-                    "type": "board_change",
-                    "pattern": "5color_heal",
-                    "orb_fire": "",
-                    "orb_water": "",
-                    "orb_wood": "",
-                    "orb_light": "",
-                    "orb_dark": "",
-                    "orb_heal": "",
-                    "orb_poison": "",
-                    "orb_ojama": ""
-                  },
-                  {
-                    "type": "board_change",
-                    "pattern": "spawn",
-                    "to": "ojama",
-                    "count": 5,
-                    "orb_fire": "",
-                    "orb_water": "",
-                    "orb_wood": "",
-                    "orb_light": "",
-                    "orb_dark": "",
-                    "orb_heal": "",
-                    "orb_poison": "",
-                    "orb_ojama": ""
-                  },
-                  {
-                    "type": "orb_lock",
-                    "pattern": "random",
-                    "orb": "ojama",
-                    "count": 30
-                  }
-                ],
-                "hpBelow": 50
-              },
-              {
-                "name": "かいりき",
-                "condition": "hp<=3%",
-                "once": true,
-                "skills": [
-                  {
-                    "type": "damage_mult",
-                    "value": 100
+                    "type": "blind"
                   }
                 ]
               }
@@ -37315,273 +37203,154 @@ const DUNGEON_DATA = {
         ]
       }
     ],
-    "random": {
-      "floors": 4,
-      "monsters": {
-        "m1": {
-          "name": "ヒノヤコマ",
-          "img": "mp662.png",
-          "attr": "fire",
-          "hp": 8000,
-          "atk": 1100,
-          "def": 3400,
-          "turnInterval": 1,
-          "size": "M",
-          "exp": 300,
-          "coin": 10,
-          "monsterDrop": {
-            "enabled": true,
-            "rate": 0.05,
-            "monsterId": 661
-          },
-          "drops": [
-            {
-              "item": "spuzzle_12",
-              "rate": 0.05,
-              "count": 1
-            }
-          ],
-          "actions": [
-            {
-              "name": "通常攻撃",
-              "condition": "normal",
-              "weight": 100,
-              "skills": [
-                {
-                  "type": "damage_mult",
-                  "value": 1
-                }
-              ]
-            }
-          ],
-          "ofudaDrop": {
-            "enabled": true,
-            "item": "ohuda1",
-            "rate": 0.01,
-            "count": 1
-          }
-        },
-        "m2": {
-          "name": "フラエッテ",
-          "img": "mp670.png",
+    "intrusion": {
+      "rate": 10,
+      "monsters": [
+        {
+          "name": "DIO",
+          "replaceBoss": true,
+          "img": "mp5010.png",
           "attr": "dark",
-          "hp": 16000,
-          "atk": 1300,
+          "hp": 250000,
+          "atk": 2400,
           "def": 0,
           "turnInterval": 1,
-          "size": "M",
-          "exp": 500,
+          "size": "XL",
+          "exp": 10000,
           "coin": 25,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.05,
-            "monsterId": 669
-          },
-          "drops": [
-            {
-              "item": "puzzle52",
-              "rate": 0.05,
-              "count": 1
-            }
-          ],
-          "actions": [
-            {
-              "name": "通常攻撃",
-              "condition": "normal",
-              "weight": 100,
-              "skills": [
-                {
-                  "type": "damage_mult",
-                  "value": 1
-                }
-              ]
-            }
-          ],
-          "isBoss": false,
-          "ofudaDrop": {
-            "enabled": true,
-            "item": "ohuda1",
-            "rate": 0.01,
-            "count": 1
-          }
-        },
-        "m3": {
-          "name": "クレッフィ",
-          "img": "mp707.png",
-          "attr": "light",
-          "hp": 6000,
-          "atk": 820,
-          "def": 2000,
-          "turnInterval": 1,
-          "size": "S",
-          "exp": 250,
-          "coin": 15,
-          "monsterDrop": {
-            "enabled": true,
-            "rate": 0.05
-          },
-          "drops": [
-            {
-              "item": "puzzle42",
-              "rate": 0.05,
-              "count": 1
-            }
-          ],
-          "actions": [
-            {
-              "name": "通常攻撃",
-              "condition": "normal",
-              "weight": 100,
-              "skills": [
-                {
-                  "type": "damage_mult",
-                  "value": 1
-                }
-              ]
-            },
-            {
-              "name": "フェアリーロック",
-              "condition": "battle_start",
-              "once": true,
-              "skills": [
-                {
-                  "type": "damage_mult",
-                  "value": 1
-                },
-                {
-                  "type": "orb_lock",
-                  "pattern": "random",
-                  "orb": "any",
-                  "count": 5
-                }
-              ]
-            }
-          ]
-        },
-        "m4": {
-          "name": "ゴーゴート",
-          "img": "mp673.png",
-          "attr": "wood",
-          "hp": 10000,
-          "atk": 2280,
-          "def": 250,
-          "turnInterval": 2,
-          "size": "M",
-          "exp": 450,
-          "coin": 30,
-          "monsterDrop": {
-            "enabled": true,
-            "rate": 0.05,
-            "monsterId": 672
-          },
-          "drops": [
-            {
-              "item": "spuzzle_32",
-              "rate": 0.05,
-              "count": 1
-            }
-          ],
-          "actions": [
-            {
-              "name": "通常攻撃",
-              "condition": "normal",
-              "weight": 100,
-              "skills": [
-                {
-                  "type": "damage_mult",
-                  "value": 1
-                }
-              ]
-            }
-          ]
-        }
-      },
-      "patterns": [
-        {
-          "weight": 10,
-          "enemies": [
-            "m1",
-            "m1"
-          ]
-        },
-        {
-          "weight": 10,
-          "enemies": [
-            "m1",
-            "m2"
-          ]
-        },
-        {
-          "weight": 10,
-          "enemies": [
-            "m3",
-            "m4",
-            "m3"
-          ]
-        },
-        {
-          "weight": 10,
-          "enemies": [
-            "m2",
-            "m2"
-          ]
-        },
-        {
-          "weight": 20,
-          "enemies": [
-            "m3",
-            "m1",
-            "m2"
-          ]
-        },
-        {
-          "weight": 20,
-          "enemies": [
-            "m1",
-            "m2",
-            "m2"
-          ]
-        },
-        {
-          "weight": 20,
-          "enemies": [
-            "m3",
-            "m4"
-          ]
-        }
-      ]
-    },
-    "intrusion": {
-      "rate": 3,
-      "monsters": [
-        {
-          "name": "ラッキー",
-          "img": "mp113.png",
-          "attr": "light",
-          "hp": 10,
-          "atk": 1,
-          "def": 7000,
-          "turnInterval": 2,
-          "size": "S",
-          "exp": 10000,
-          "coin": 100,
-          "monsterDrop": {
-            "enabled": true,
-            "rate": 0.2
+            "rate": 0.5,
+            "monsterId": 5010
           },
           "drops": [],
           "actions": [
             {
-              "name": "にげる",
+              "name": "WRYYAAAAA！",
               "condition": "normal",
-              "weight": 100,
+              "weight": 50,
               "skills": [
                 {
-                  "type": "flee"
+                  "type": "damage",
+                  "value": 1420,
+                  "repeat": 3
+                }
+              ],
+              "hpAbove": 51
+            },
+            {
+              "name": "「世界」",
+              "condition": "battle_start",
+              "once": true,
+              "skills": [
+                {
+                  "type": "super_gut",
+                  "rate": 50
+                },
+                {
+                  "type": "no_fall",
+                  "turn": 3
+                }
+              ]
+            },
+            {
+              "name": "時よ止まれッ！",
+              "condition": "battle_start",
+              "once": true,
+              "skills": [
+                {
+                  "type": "bind",
+                  "target": "random",
+                  "countMin": 2,
+                  "countMax": 2,
+                  "turnMin": 2,
+                  "turnMax": 2
+                }
+              ]
+            },
+            {
+              "name": "ウリイイヤアアッー",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1.1
+                },
+                {
+                  "type": "heal_self",
+                  "rate": 0.05
+                }
+              ],
+              "hpAbove": 51
+            },
+            {
+              "name": "『世界！』",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1.2
+                },
+                {
+                  "type": "bind",
+                  "target": "random",
+                  "countMin": 1,
+                  "countMax": 1,
+                  "turnMin": 2,
+                  "turnMax": 2
+                }
+              ],
+              "hpBelow": 50
+            },
+            {
+              "name": "WRYYYYYYーーッ",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1.2
+                },
+                {
+                  "type": "board_change",
+                  "pattern": "spawn",
+                  "to": "ojama",
+                  "count": 5,
+                  "orb_fire": "",
+                  "orb_water": "",
+                  "orb_wood": "",
+                  "orb_light": "",
+                  "orb_dark": "",
+                  "orb_heal": "",
+                  "orb_poison": "",
+                  "orb_ojama": ""
+                }
+              ],
+              "hpBelow": 50
+            },
+            {
+              "name": "無駄無駄無駄無駄無駄無駄無駄",
+              "condition": "hp<=3%",
+              "once": true,
+              "skills": [
+                {
+                  "type": "damage",
+                  "value": 9999,
+                  "repeat": 1
+                },
+                {
+                  "type": "heal_self",
+                  "rate": 1
                 }
               ]
             }
-          ]
+          ],
+          "isBoss": true
         }
       ]
     }

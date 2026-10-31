@@ -77,6 +77,7 @@
         case 'orbConnect': add('cnd:connect'); add('num:connect:' + n); orb(e.attr); if (e.attr2) { orb(e.attr2); add('cnd:dual'); } break;
         case 'waterDarkConnect': add('cnd:connect'); add('num:connect:5'); orb('water'); orb('dark'); add('cnd:dual'); break;
         case 'exactCount': add('cnd:exactCount'); add('num:exact:' + n); orb(e.attr); break;
+        case 'connectEach': add(e.exact ? 'cnd:exactCount' : 'cnd:connect'); add((e.exact ? 'num:exact:' : 'num:connect:') + n); orb(e.attr); break;
         case 'exact4': add('cnd:exact4'); break;
         case 'eraseAttr': add('cnd:erase'); orb(e.attr); break;
         case 'eraseAny': add('cnd:erase'); break;
