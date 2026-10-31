@@ -12,6 +12,12 @@
 //       CUTIN_MAX_MS … cutin.mp3 が長くても、ここで頭打ち
 //       ※ cutin.mp3 の長さが分かるときは、その長さにぴったり合わせて出します。
 //
+//   ■ iPhone（Safari）で重くて落ちないための軽量化（見た目は同じ）
+//       ・ギザギザ枠は clip-path で「動いているものごと」切り抜かず、止まった枠（SVG）を上に重ねる
+//       ・集中線は、巨大なマスクつきの回転レイヤーをやめて、小さな絵（canvas）にあらかじめ描いておく
+//       ・敵の明るさフィルターは、効いている間だけ（そのあとは外す）
+//       ・出番の終わった光・火の粉は、その場で消してレイヤーを減らす
+//
 //   ※ game.js の後に読み込む。公開しているのは window.EnemyCutIn だけ：
 //       EnemyCutIn.isCutin(技名, 行動)  … ⚠️付き（または 行動.cutin === true）なら true
 //       EnemyCutIn.show(敵, 技名)       … カットインを出して、終わったら resolve する Promise
@@ -68,29 +74,72 @@
     }
     return { top, bot };
   }
-  // oyTop / oyBot：上辺・下辺をどれだけ内側（＋）／外側（−）にずらすか。y0＝レイヤー内での帯の上端
-  function polygon(edge, w, y0, hStage, oyTop, oyBot) {
+  // 枠の輪郭（SVGのパス）。oyTop / oyBot：上辺・下辺をどれだけ内側（＋）／外側（−）にずらすか。y0＝レイヤー内での帯の上端
+  // minY / maxY を渡すと、その範囲より外へはみ出さないように切りそろえる（中身の四角に合わせる用）
+  function ringPath(edge, y0, hStage, oyTop, oyBot, minY, maxY) {
+    const cl = y => (minY == null ? y : Math.max(minY, Math.min(maxY, y)));
     const pts = [];
-    edge.top.forEach(p => pts.push(`${p[0].toFixed(1)}px ${(y0 + p[1] + oyTop).toFixed(1)}px`));
+    edge.top.forEach(p => pts.push(p[0].toFixed(1) + ' ' + cl(y0 + p[1] + oyTop).toFixed(1)));
     for (let i = edge.bot.length - 1; i >= 0; i--) {
       const p = edge.bot[i];
-      pts.push(`${p[0].toFixed(1)}px ${(y0 + hStage - p[1] + oyBot).toFixed(1)}px`);
+      pts.push(p[0].toFixed(1) + ' ' + cl(y0 + hStage - p[1] + oyBot).toFixed(1));
     }
-    return `polygon(${pts.join(',')})`;
+    return 'M' + pts.join('L') + 'Z';
   }
 
-  // 集中線：不規則な太さの放射状の線
-  function raysGradient() {
-    const stops = [];
+  // cubic-bezier のイージング（敵の画像の明るさフィルターを、本来の動きのまま短い時間に写し取るのに使う）
+  function bezierEase(x1, y1, x2, y2) {
+    return function (x) {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      let lo = 0, hi = 1, t = x;
+      for (let i = 0; i < 30; i++) {
+        const cx = 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
+        if (Math.abs(cx - x) < 1e-5) break;
+        if (cx < x) lo = t; else hi = t;
+        t = (lo + hi) / 2;
+      }
+      return 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
+    };
+  }
+  const MON_EASE = bezierEase(.1, .7, .3, 1);   // 敵の寄りの動きのイージング（下の A(mon …) と同じもの）
+
+  // 集中線：不規則な太さの放射状の線。
+  //   以前は conic-gradient ＋ 巨大な radial-gradient のマスクを回していた（iPhoneで一番重い）。
+  //   今は、同じ線（太さ・濃さ・中心から外へ薄くなる具合）を小さな canvas に1回だけ描き、それを回すだけ。
+  function makeRays(RS, R0, scale) {
+    const sc = Math.max(0.3, scale);
+    const S = Math.max(64, Math.round(RS * sc));
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const ctx = cv.getContext && cv.getContext('2d');
+    if (!ctx) return cv;
+    const k = S / RS, c = S / 2, big = S;                 // k＝実寸→canvasの倍率 / big＝画面の外まで届く長さ
+    const rad = d => (d - 90) * Math.PI / 180;             // conic-gradient は真上が0度・時計まわり
     let a = 0;
     while (a < 345) {
-      const gap = rnd(3, 11), wid = rnd(1.5, 6);
-      stops.push(`transparent ${a.toFixed(1)}deg ${(a + gap).toFixed(1)}deg`);
-      stops.push(`rgba(255,255,255,${rnd(.12, .3).toFixed(2)}) ${(a + gap).toFixed(1)}deg ${(a + gap + wid).toFixed(1)}deg`);
+      const gap = rnd(3, 11), wid = rnd(1.5, 6), al = rnd(.12, .3);   // 乱数を引く順番は以前と同じ
+      const a1 = a + gap, a2 = Math.min(360, a + gap + wid);
+      if (a1 < 360) {
+        ctx.fillStyle = 'rgba(255,255,255,' + al.toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.moveTo(c, c);
+        ctx.lineTo(c + Math.cos(rad(a1)) * big, c + Math.sin(rad(a1)) * big);
+        ctx.lineTo(c + Math.cos(rad(a2)) * big, c + Math.sin(rad(a2)) * big);
+        ctx.closePath();
+        ctx.fill();
+      }
       a += gap + wid;
     }
-    stops.push(`transparent ${a.toFixed(1)}deg 360deg`);
-    return `conic-gradient(from 0deg at 50% 50%, ${stops.join(',')})`;
+    // 中心は濃く、外へ向かって消える（以前の mask-image と同じ形）
+    const g = ctx.createRadialGradient(c, c, 0, c, c, R0 * .68 * k);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(Math.min(1, .12 / .68), 'rgba(0,0,0,1)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, S, S);
+    return cv;
   }
 
   let _active = null;   // 再生中のカットイン（二重に出さない）
@@ -151,29 +200,49 @@
       const layerW = W + 8, layerH = H + 16;
       const edge = makeEdge(layerW, H);
       const bw = Math.max(5, Math.round(H * 0.035));   // 白い縁の太さ
-      const mkLayer = (cls, oyT, oyB) => {
-        const d = document.createElement('div');
-        d.className = 'cutin-layer ' + cls;
-        d.style.clipPath = d.style.webkitClipPath = polygon(edge, layerW, 8, H, oyT, oyB);
-        return d;
+
+      // ── 枠のつくり（軽量化）──
+      //   中身は「ただの四角（overflow:hidden）」の中に入れる。ギザギザの形は、止まった SVG の枠（黒縁＋白）を中身の上に重ねて作る。
+      //   四角は、いちばん深いギザギザの谷より内側にとってあるので、枠の外側に中身がはみ出すことはない。
+      let maxTop = 0, maxBot = 0;
+      edge.top.forEach(p => { if (p[1] > maxTop) maxTop = p[1]; });
+      edge.bot.forEach(p => { if (p[1] > maxBot) maxBot = p[1]; });
+      const Rtop = Math.ceil(8 - 3.5 + maxTop);              // 中身の四角の上端（レイヤー内の y）
+      const Rbot = Math.floor(8 + H + 3.5 - maxBot);         // 中身の四角の下端
+
+      const clip = document.createElement('div'); clip.className = 'cutin-clip';
+      clip.style.cssText = `left:-4px;top:${Rtop - 8}px;width:${layerW}px;height:${Rbot - Rtop}px;`;
+
+      const NS = 'http://www.w3.org/2000/svg';
+      const frame = document.createElementNS(NS, 'svg');
+      frame.setAttribute('class', 'cutin-frame');
+      frame.setAttribute('width', layerW); frame.setAttribute('height', layerH);
+      frame.setAttribute('viewBox', `0 0 ${layerW} ${layerH}`);
+      frame.setAttribute('aria-hidden', 'true');
+      const mkPath = (d, fill) => {
+        const el = document.createElementNS(NS, 'path');
+        el.setAttribute('d', d); el.setAttribute('fill', fill); el.setAttribute('fill-rule', 'evenodd');
+        return el;
       };
-      const outline = mkLayer('cutin-outline', -3.5, 3.5);
-      const paper   = mkLayer('cutin-paper', 0, 0);
-      const panel   = mkLayer('cutin-panel', bw, -bw);
-      stage.append(outline, paper, panel);
+      // 黒い縁（外側のギザギザ〜白の少し内側まで。白の縁の下に潜らせて、すきまが出ないようにする）
+      frame.appendChild(mkPath(ringPath(edge, 8, H, -3.5, 3.5) + ringPath(edge, 8, H, 1.2, -1.2), '#000'));
+      // 白い縁（紙）：外側のギザギザ〜中身の四角まで
+      frame.appendChild(mkPath(ringPath(edge, 8, H, 0, 0) + ringPath(edge, 8, H, bw, -bw, Rtop, Rbot), '#fff'));
+      stage.append(clip, frame);
 
       const content = document.createElement('div'); content.className = 'cutin-content';
-      panel.appendChild(content);
+      content.style.cssText = `left:4px;top:${8 - Rtop}px;width:${W}px;height:${H}px;`;
+      clip.appendChild(content);
 
       const bg = document.createElement('div'); bg.className = 'cutin-bg';
       content.appendChild(bg);
 
-      // 集中線
+      // 集中線（小さな canvas に描いてあるだけ。回すのは位置・大きさの指定のみ）
       const RS = Math.round(Math.max(W, H) * 1.5);
       const R0 = Math.max(W, H) * 2.2 * Math.SQRT1_2;   // 元の大きさ(2.2倍)のときのマスクの半径
-      const rayMask = `radial-gradient(circle ${R0.toFixed(0)}px at 50% 50%, #000 ${(R0 * .12).toFixed(0)}px, transparent ${(R0 * .68).toFixed(0)}px)`;
-      const rays = document.createElement('div'); rays.className = 'cutin-rays';
-      rays.style.cssText = `width:${RS}px;height:${RS}px;left:${Math.round(W * 0.6 - RS / 2)}px;top:${Math.round(H * 0.38 - RS / 2)}px;background:${raysGradient()};-webkit-mask-image:${rayMask};mask-image:${rayMask};`;
+      const rays = makeRays(RS, R0, IOS ? 0.7 : 1);
+      rays.className = 'cutin-rays';
+      rays.style.cssText = `width:${RS}px;height:${RS}px;left:${Math.round(W * 0.6 - RS / 2)}px;top:${Math.round(H * 0.38 - RS / 2)}px;`;
       content.appendChild(rays);
 
       const burst = document.createElement('div'); burst.className = 'cutin-burst';
@@ -247,7 +316,8 @@
       A(dim,   [{ opacity: 0 }, { opacity: 1, offset: fIn * .7 }, { opacity: 1, offset: fOut }, { opacity: 0 }], { duration: T });
       A(stars, [{ opacity: 0 }, { opacity: 1, offset: fIn }, { opacity: 1, offset: fOut }, { opacity: 0 }], { duration: T });
       A(halo,  [{ opacity: 0 }, { opacity: .75, offset: fIn }, { opacity: .5, offset: fOut }, { opacity: 0 }], { duration: T });
-      A(flash, [{ opacity: .85 }, { opacity: 0 }], { duration: 260 });
+      const flashAn = A(flash, [{ opacity: .85 }, { opacity: 0 }], { duration: 260 });
+      if (flashAn) flashAn.onfinish = () => flash.remove();   // 終わったら外す（全画面のレイヤーを残さない）
 
       // 帯：左から滑り込む（少し行き過ぎて戻る）→ 止まる → 右へ抜ける
       A(stage, [
@@ -260,10 +330,28 @@
 
       // 敵：ぐっと寄ってから、ゆっくり引く（光ってから元の明るさへ）
       A(mon, [
-        { transform: 'translateX(7%) scale(1.3)', filter: 'brightness(2.6) saturate(.4)' },
-        { transform: 'translateX(3%) scale(1.14)', filter: 'brightness(1.1) saturate(1)', offset: .22 },
-        { transform: 'translateX(-1%) scale(1.04)', filter: 'brightness(1) saturate(1)' }
+        { transform: 'translateX(7%) scale(1.3)' },
+        { transform: 'translateX(3%) scale(1.14)', offset: .22 },
+        { transform: 'translateX(-1%) scale(1.04)' }
       ], { duration: T, easing: 'cubic-bezier(.1,.7,.3,1)' });
+      // 明るさ・色のフィルター：以前と同じ変化を、ほぼ元の明るさに戻るところまで（約半分の時間）だけ再現し、そのあと外す。
+      //   （フィルターを最後まで掛けっぱなしにすると、iPhoneは大きな画像を毎フレーム別に描き直して重くなるため）
+      if (mon.animate) {
+        const prog = x => {                       // 本来のキーフレーム（0 → .22 → 1）での進み具合
+          const p = MON_EASE(x);
+          return p < .22 ? [2.6 + (1.1 - 2.6) * p / .22, .4 + (1 - .4) * p / .22]
+                         : [1.1 - .1 * (p - .22) / .78, 1];
+        };
+        let endX = .5;
+        for (let x = .05; x <= .8; x += .01) { if (MON_EASE(x) >= .92) { endX = x; break; } }
+        const FT = Math.round(T * endX), N = 18, fkf = [];
+        for (let i = 0; i <= N; i++) {
+          const o = (i / N) * (i / N), x = endX * o;   // 最初の「ぱっと光る」ところを細かく取る（時間 o ↔ 本来の時間 x）
+          const v = i === N ? [1, 1] : prog(x);
+          fkf.push({ offset: o, filter: `brightness(${v[0].toFixed(3)}) saturate(${v[1].toFixed(3)})` });
+        }
+        A(mon, fkf, { duration: FT, easing: 'linear', fill: 'none' });
+      }
 
       // 集中線はゆっくり回り続ける／左の光は脈打つ
       A(rays,  [{ transform: 'rotate(0deg)' }, { transform: 'rotate(30deg)' }], { duration: T });
@@ -271,23 +359,26 @@
                 { opacity: .55, transform: 'scale(1.06)', offset: .5 }, { opacity: .9, transform: 'scale(1)', offset: .75 },
                 { opacity: .55, transform: 'scale(1.04)' }], { duration: T });
 
-      // 斬撃のような光が左→右に走る（2本）
+      // 斬撃のような光が左→右に走る（2本）。2本とも走り終わったら外す
+      let slashLeft = 0;
       [0, 90].forEach((d, i) => {
-        A(slash, [
+        const an = A(slash, [
           { opacity: 0, transform: `translateX(${-W * .3}px) skewX(-24deg)` },
           { opacity: 1, offset: .15 },
           { opacity: 0, transform: `translateX(${W * 1.15}px) skewX(-24deg)` }
         ], { duration: 420, delay: IN_MS * .7 + d });
+        if (an) { slashLeft++; an.onfinish = () => { if (--slashLeft <= 0) slash.remove(); }; }
       });
 
       // 火の粉
       embers.forEach(e => {
         const dx = rnd(-30, 60), dy = -rnd(H * .4, H * .9), dur = rnd(700, 1400);
-        A(e, [
+        const an = A(e, [
           { opacity: 0, transform: 'translate(0,0) scale(.6)' },
           { opacity: 1, offset: .2 },
           { opacity: 0, transform: `translate(${dx}px,${dy}px) scale(1.1)` }
         ], { duration: dur, delay: rnd(IN_MS * .5, T * .55), iterations: 2 });
+        if (an) an.onfinish = () => e.remove();   // 消えたあとは外す
       });
 
       // 技名：1文字ずつ「ドン！」と叩きつけるように入る

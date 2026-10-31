@@ -33,21 +33,20 @@
 /* 帯全体（左から滑り込む） */
 .cutin-stage { position:absolute; left:0; width:100%; will-change:transform; }
 
-/* ギザギザ枠：黒い縁 → 白い紙 → 中身、の3枚重ね（形は clip-path をJSで入れる） */
-.cutin-layer { position:absolute; left:-4px; right:-4px; top:-8px; bottom:-8px; }
-.cutin-outline { background:#000; }
-.cutin-paper   { background:#fff; }
-.cutin-panel   { overflow:hidden; background:var(--c-dark); }
-.cutin-content { position:absolute; left:4px; right:4px; top:8px; bottom:8px; }
+/* ギザギザ枠（軽量化）：中身は「ただの四角」に入れ、ギザギザの黒縁＋白縁は止まったSVG（.cutin-frame）を上に重ねて作る。
+   以前は clip-path で3枚を切り抜いていて、動いている中身ごと毎フレーム切り抜くので iPhone で重かった。 */
+.cutin-clip { position:absolute; overflow:hidden; background:var(--c-dark); }
+.cutin-content { position:absolute; }
+.cutin-frame { position:absolute; left:-4px; top:-8px; overflow:visible; pointer-events:none; }
 
 .cutin-bg {
   position:absolute; inset:-2px;
   background:
     radial-gradient(ellipse 60% 85% at 62% 38%, var(--c-light) 0%, var(--c-glow) 20%, var(--c-main) 46%, var(--c-deep) 78%, var(--c-dark) 100%);
 }
-/* 放射状の集中線（ゆっくり回る） */
+/* 放射状の集中線（ゆっくり回る）。小さな canvas にあらかじめ描いてあり、ここでは大きさだけ指定する */
 .cutin-rays {
-  position:absolute; border-radius:50%;
+  position:absolute; display:block;
 }
 /* 左側の大きな爆ぜる光 */
 .cutin-burst {

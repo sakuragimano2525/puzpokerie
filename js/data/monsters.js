@@ -195,7 +195,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'wood',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 4000,
     stats: { hp: { min: 299, max: 599 }, atk: { min: 75, max: 100 }, rec: { min: 35, max: 5 } },
     skill: {
       name: 'かたくなる',
@@ -734,7 +734,7 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 500,
-    stats: { hp: { min: 410, max: 2800 }, atk: { min: 170, max: 1150 }, rec: { min: 175, max: 500 } },
+    stats: { hp: { min: 310, max: 2800 }, atk: { min: 20, max: 800 }, rec: { min: 0, max: 500 } },
     skill: {
       name: 'ダブルチェンジハート・火',
       sp: 5,
@@ -786,7 +786,7 @@ const MONSTER_DATA = {
       desc: '6コンボ以上で攻撃1.5倍。',
       effects: [ { type: 'atk', condition: 'combo', count: 6, value: 1.5 } ]
     },
-    evolutions: [ { to: 42, materials: [ { item: 'puzzle52', count: 2 }, { item: 'puzzle5', count: 3 } ] } ]
+    evolutions: [ { to: 42, materials: [ { item: 'puzzle52', count: 2 }, { item: 'puzzle53', count: 1 } ] } ]
   },
   42: {
     id: 42,
@@ -1761,7 +1761,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     baseExp: 150,
-    stats: { hp: { min: 171, max: 471 }, atk: { min: 252, max: 572 }, rec: { min: 0, max: -100 } },
+    stats: { hp: { min: 171, max: 471 }, atk: { min: 252, max: 572 }, rec: { min: 0, max: -300 } },
     skill: {
       name: 'ドロップチェンジ・闇',
       sp: 3,
@@ -1781,8 +1781,8 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'dark',
     type: 'こうげき',
-    baseExp: 500,
-    stats: { hp: { min: 565, max: 1275 }, atk: { min: 455, max: 755 }, rec: { min: 0, max: -100 } },
+    baseExp: 50,
+    stats: { hp: { min: 75, max: 1275 }, atk: { min: 125, max: 655 }, rec: { min: -500, max: -500 } },
     skill: {
       name: 'ドロップチェンジ・闇',
       sp: 3,
@@ -1804,7 +1804,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 1000,
-    stats: { hp: { min: 330, max: 2800 }, atk: { min: 390, max: 2600 }, rec: { min: 0, max: -100 } },
+    stats: { hp: { min: 330, max: 2800 }, atk: { min: 390, max: 2600 }, rec: { min: -50, max: -500 } },
     skill: {
       name: 'ドロップチェンジ・闇',
       sp: 3,
@@ -2185,7 +2185,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 5000,
+    baseExp: 2500,
     stats: { hp: { min: 600, max: 6000 }, atk: { min: 1, max: 100 }, rec: { min: 5, max: 50 } },
     skill: { name: 'タマゴうみ', sp: 5, desc: 'HPを最大HPの70%回復。', effects: [ { type: 'heal', value: 0.7 } ] },
     leaderSkill: {
@@ -3326,19 +3326,35 @@ const MONSTER_DATA = {
     id: 664,
     name: 'コフキムシ',
     rarity: 1,
+    attr: 'wood',
     type: 'かいふく',
     maxLevel: 25,
     baseExp: 100,
-    stats: { hp: { min: 160, max: 350 }, atk: { min: 60, max: 130 }, rec: { min: 27, max: 49 } }
+    stats: { hp: { min: 160, max: 350 }, atk: { min: 60, max: 130 }, rec: { min: 27, max: 49 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'かいふくのソウル・小',
+      desc: 'かいふくタイプの攻撃1.2倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.2 } ]
+    },
+    evolutions: [ { to: 665, materials: [ { item: 'puzzle3', count: 5 } ] } ]
   },
   665: {
     id: 665,
     name: 'コフーライ',
     rarity: 2,
+    attr: 'wood',
     type: 'かいふく',
     maxLevel: 50,
     baseExp: 300,
-    stats: { hp: { min: 300, max: 1060 }, atk: { min: 95, max: 350 }, rec: { min: 65, max: 144 } }
+    stats: { hp: { min: 300, max: 2450 }, atk: { min: 95, max: 250 }, rec: { min: 65, max: 300 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'かいふくのオーラ・中',
+      desc: 'かいふくタイプのHP1.7倍。',
+      effects: [ { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.7 } ]
+    },
+    evolutions: [ { to: 666, materials: [ { item: 'puzzle32', count: 2 }, { item: 'spuzzle_42', count: 2 } ] } ]
   },
   666: {
     id: 666,
@@ -3544,7 +3560,7 @@ const MONSTER_DATA = {
     id: 679,
     name: 'ヒトツキ',
     rarity: 1,
-    attr: 'fire',
+    attr: 'dark',
     type: 'たいりょく',
     maxLevel: 25,
     baseExp: 100,
@@ -4371,8 +4387,8 @@ const MONSTER_DATA = {
     skill: {
       name: '詔令：格物致知',
       sp: 4,
-      desc: '1ターンの間、水属性の攻撃が1.5倍。',
-      effects: [ { type: 'atkBuff', attr: 'water', value: 1.5, turns: 1 } ]
+      desc: '1ターンの間、水属性の攻撃が1.5倍。\n左上に水を逆L字型に生成。',
+      effects: [ { type: 'atkBuff', attr: 'water', value: 1.5, turns: 1 }, { type: 'orbChangeReverseL', attr: 'water' } ]
     },
     leaderSkill: {
       name: '勅令：修身斉家',

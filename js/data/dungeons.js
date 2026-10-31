@@ -36810,11 +36810,11 @@ const DUNGEON_DATA = {
           }
         },
         "m2": {
-          "name": "フラエッテ",
-          "img": "mp670.png",
-          "attr": "dark",
+          "name": "ビビヨン",
+          "img": "mp666.png",
+          "attr": "wood",
           "hp": 16000,
-          "atk": 1300,
+          "atk": 1600,
           "def": 0,
           "turnInterval": 1,
           "size": "M",
@@ -36822,12 +36822,12 @@ const DUNGEON_DATA = {
           "coin": 25,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.05,
-            "monsterId": 669
+            "rate": 0.1,
+            "monsterId": 664
           },
           "drops": [
             {
-              "item": "puzzle52",
+              "item": "puzzle32",
               "rate": 0.1,
               "count": 1
             }
@@ -36849,7 +36849,7 @@ const DUNGEON_DATA = {
           "ofudaDrop": {
             "enabled": true,
             "item": "ohuda1",
-            "rate": 0.01,
+            "rate": 0.02,
             "count": 1
           }
         },
