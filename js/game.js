@@ -8070,6 +8070,8 @@ function hasUnlockedMultiStage() {
   return typeof MULTI_AREA_IDS !== 'undefined' && asMulti(() => MULTI_AREA_IDS.some(id => isEventArea(id) && getStageList(id).length > 0));
 }
 function isEventUnlocked() { return isAreaBossCleared(EVENT_UNLOCK); }
+// マルチはイベントと同じタイミング（エリア EVENT_UNLOCK のボスクリア）で解放。そのあとは、ステージごとの解放条件（MULTI_UNLOCK_DATA）に従う
+function isMultiUnlocked() { return isEventUnlocked() && hasUnlockedMultiStage(); }
 function areaNameOf(a) { return isEventArea(a) ? (EVENT_INFO[a].name || String(a)) : (AREA_NAMES[a] || `エリア${a}`); }
 function areaHue(a) {
   if (isEventArea(a)) return EVENT_INFO[a].hue != null ? EVENT_INFO[a].hue : 200;
@@ -8261,7 +8263,7 @@ function applyAreaBackground(elId, n) {
 // ホームの表示モード：'main'（メインのエリア一覧）／'event'（イベントステージ一覧）。右上のボタンで切り替え
 function buildStageMap() {
   if (homeMode === 'event' && !isEventUnlocked()) homeMode = 'main';
-  if (homeMode === 'multi' && !hasUnlockedMultiStage()) homeMode = 'main';
+  if (homeMode === 'multi' && !isMultiUnlocked()) homeMode = 'main';
   if (homeMode === 'event') buildEventMap(); else if (homeMode === 'multi') buildMultiMap(); else buildMainMap();
   renderHomeTabs();
 }
@@ -8271,15 +8273,14 @@ const HOME_MODES = [
   { key: 'multi', label: 'マルチ',   icon: '#i-multi' },
 ];
 // ホーム上部のタブ（メイン／イベント／マルチ）。1タップで切り替え。
-//  ・マルチは1つも解放されていないうちはタブ自体を出さない
+//  ・マルチもイベントと同じくエリア6クリアまで鍵つき（押すと理由が出る）
 //  ・イベントはエリア6（EVENT_UNLOCK）クリアまで鍵つき（押すと理由が出る）
 function renderHomeTabs() {
   const bar = document.getElementById('home-tabs');
   if (!bar) return;
   bar.innerHTML = '';
   HOME_MODES.forEach(m => {
-    if (m.key === 'multi' && !hasUnlockedMultiStage()) return;
-    const locked = m.key === 'event' && !isEventUnlocked();
+    const locked = (m.key === 'event' || m.key === 'multi') && !isEventUnlocked();   // イベント・マルチは同じタイミングで解放（それまで鍵つき）
     const on = m.key === homeMode;
     const tab = document.createElement('button');
     tab.type = 'button'; tab.setAttribute('role', 'tab'); tab.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -8295,7 +8296,11 @@ function selectHomeMode(key) {
     homeToast(`エリア${EVENT_UNLOCK}をクリアするとイベントステージが開放されます`, 2200);
     return;
   }
-  if (key === 'multi' && !hasUnlockedMultiStage()) return;
+  if (key === 'multi' && !isEventUnlocked()) {
+    homeToast(`エリア${EVENT_UNLOCK}をクリアするとマルチステージが開放されます`, 2200);
+    return;
+  }
+  if (key === 'multi' && !isMultiUnlocked()) return;
   if (key === homeMode) return;
   homeMode = key;
   buildStageMap();
@@ -8503,7 +8508,7 @@ document.getElementById('btn-gacha').addEventListener('click', openGacha);
 const MULTI_UNLOCK_SEEN_KEY = 'puzzdra_multiUnlockSeen';
 let _multiNoticeBusy = false;
 function checkMultiUnlockNotice() {
-  if (_multiNoticeBusy || typeof MULTI_AREA_IDS === 'undefined') return;
+  if (_multiNoticeBusy || typeof MULTI_AREA_IDS === 'undefined' || !isEventUnlocked()) return;   // イベント解放前は知らせない
   let seen = [];
   try { seen = JSON.parse(localStorage.getItem(MULTI_UNLOCK_SEEN_KEY) || '[]'); } catch (e) {}
   const fresh = [];

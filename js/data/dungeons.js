@@ -45,7 +45,6 @@
 //   乱入モンスター: intrusion: { rate: 20, monsters: [ {敵データ}, {敵データ} ] }
 //     ダンジョンに入った時に1回だけ rate(%) で抽選。当たると monsters に登録した全員が乱入する。
 //     乱入モンスターは、同じサイズ(S/M/L/XL)の「ボス以外」の敵とランダムに入れ替わる（バラバラ／同じバトルはランダム）。
-//     乱入モンスターに replaceBoss: true を付けると「ボス乱入」：ボス(isBoss)の敵と入れ替わる（例：DIOがrate10%でボスと入れ替わる）。
 // ============================================================
 // ============================================================
 // ★ ダンジョンBGM（道中 / ボス）★
@@ -9174,7 +9173,7 @@ const DUNGEON_DATA = {
             "def": 100,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 2000,
+            "exp": 3000,
             "coin": 0,
             "monsterDrop": {
               "enabled": true,
@@ -9541,7 +9540,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 5,
+      "rate": 8,
       "monsters": [
         {
           "name": "ラッキー",
@@ -9552,7 +9551,7 @@ const DUNGEON_DATA = {
           "def": 5000,
           "turnInterval": 2,
           "size": "S",
-          "exp": 2000,
+          "exp": 3000,
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
@@ -36499,8 +36498,8 @@ const DUNGEON_DATA = {
             "name": "ミカ",
             "img": "mp5001.png",
             "attr": "dark",
-            "hp": 225000,
-            "atk": 2000,
+            "hp": 220000,
+            "atk": 1800,
             "def": 1000,
             "turnInterval": 1,
             "size": "XL",
