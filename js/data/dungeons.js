@@ -6845,7 +6845,8 @@ const DUNGEON_DATA = {
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
-              "rate": 0.05
+              "rate": 0.05,
+              "monsterId": 92
             },
             "drops": [
               {
@@ -7686,10 +7687,10 @@ const DUNGEON_DATA = {
             "attr": "light",
             "hp": 5000,
             "atk": 1062,
-            "def": 600,
+            "def": 500,
             "turnInterval": 3,
             "size": "L",
-            "exp": 300,
+            "exp": 1500,
             "coin": 20,
             "monsterDrop": {
               "enabled": true,
@@ -7946,7 +7947,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 3,
+      "rate": 15,
       "monsters": [
         {
           "name": "ラッキー",
@@ -7957,11 +7958,11 @@ const DUNGEON_DATA = {
           "def": 5000,
           "turnInterval": 2,
           "size": "S",
-          "exp": 1500,
+          "exp": 2500,
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
-            "rate": 0.2
+            "rate": 0.3
           },
           "drops": [],
           "actions": [
@@ -9168,9 +9169,9 @@ const DUNGEON_DATA = {
             "name": "プテラ",
             "img": "mp142.png",
             "attr": "dark",
-            "hp": 60000,
+            "hp": 50000,
             "atk": 803,
-            "def": 100,
+            "def": 0,
             "turnInterval": 1,
             "size": "XL",
             "exp": 3000,
