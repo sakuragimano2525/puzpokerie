@@ -13433,7 +13433,7 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 2,
             "size": "L",
-            "exp": 300,
+            "exp": 3000,
             "coin": 5,
             "monsterDrop": {
               "enabled": true,
@@ -13478,25 +13478,6 @@ const DUNGEON_DATA = {
                     "type": "time_reduce",
                     "seconds": 1,
                     "turn": 1
-                  }
-                ]
-              },
-              {
-                "name": "したなめ〜ん",
-                "condition": "battle_start",
-                "once": true,
-                "skills": [
-                  {
-                    "type": "damage_mult",
-                    "value": 1
-                  },
-                  {
-                    "type": "bind",
-                    "target": "random",
-                    "countMin": 2,
-                    "countMax": 4,
-                    "turnMin": 1,
-                    "turnMax": 2
                   }
                 ]
               }
@@ -13791,7 +13772,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 15,
+      "rate": 25,
       "monsters": [
         {
           "name": "ラッキー",
@@ -13802,7 +13783,7 @@ const DUNGEON_DATA = {
           "def": 5000,
           "turnInterval": 2,
           "size": "S",
-          "exp": 1500,
+          "exp": 5000,
           "coin": 50,
           "monsterDrop": {
             "enabled": true,
