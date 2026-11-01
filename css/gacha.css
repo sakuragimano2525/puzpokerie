@@ -118,6 +118,62 @@
   #gacha-toast { bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 
+/* ── ページ切りかえ（1ページ目＝赤／2ページ目＝青） ──────────────
+   左右の矢印・下のドット・左右スワイプ・キーボードの ←→ で切りかえ（js/gacha.js の setPage）
+   2ページ目は、マシン本体・左上のマークと PAGE 札を青にして、ひと目で分かるようにしています */
+.gs-machine .gm-body { transition: fill 0.25s; }
+#gacha-screen[data-page="2"] .gs-machine .gm-body { fill: #3d8bff; }
+#gacha-screen[data-page="2"] .gs-emblem { background: #2f7bff; }
+
+.gs-pager { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 0 0; }
+.gs-pg-label {
+  min-width: 52px; text-align: center; padding: 3px 10px 2px; font: 400 0.9rem/1.2 var(--ff-num); letter-spacing: 0.08em; color: var(--ink);
+  background: var(--paper); border: 2.5px solid var(--ink); border-radius: 999px; box-shadow: 0 2px 0 var(--ink);
+}
+#gacha-screen[data-page="2"] .gs-pg-label { color: #fff; background: #2f7bff; }
+.gs-dot {
+  position: relative; width: 14px; height: 14px; padding: 0; box-sizing: border-box; border-radius: 50%; cursor: pointer;
+  background: rgba(255, 255, 255, 0.85); border: 2.5px solid var(--ink); -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, background 0.15s;
+}
+.gs-dot::before { content: ''; position: absolute; inset: -12px; }   /* 指で押しやすいように、見た目より広くする */
+.gs-dot[data-page="1"].on { background: var(--coral); transform: scale(1.25); }
+.gs-dot[data-page="2"].on { background: #2f7bff; transform: scale(1.25); }
+
+/* マシンの左右の矢印 */
+.gs-machine-wrap { position: relative; }
+.gs-arrow {
+  position: absolute; z-index: 2; top: 50%; width: 40px; height: 52px; margin-top: -26px; padding: 0; display: grid; place-items: center;
+  color: var(--ink); background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 14px; box-shadow: 0 4px 0 var(--ink); cursor: pointer;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform 0.1s, box-shadow 0.1s;
+}
+.gs-arrow[hidden] { display: none; }
+.gs-arrow .ic { width: 1.5rem; height: 1.5rem; stroke-width: 3; }
+.gs-arrow.next { right: -8px; animation: gsNudgeR 1.4s ease-in-out infinite; }
+.gs-arrow.prev { left: -8px; animation: gsNudgeL 1.4s ease-in-out infinite; }
+.gs-arrow.prev .ic { transform: scaleX(-1); }
+.gs-arrow:active { animation: none; transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+@keyframes gsNudgeR { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@keyframes gsNudgeL { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-4px); } }
+/* 2ページ目の「戻る」矢印は青、1ページ目の「進む」矢印は赤っぽくして、行き先の色を知らせる */
+.gs-arrow.next { background: #dbe9ff; }
+.gs-arrow.prev { background: #ffe1db; }
+
+/* 切りかえのときの、横からスッと出る動き */
+#gacha-machine-wrap.slide-from-right { animation: gsSlideR 0.3s cubic-bezier(0.2, 0.9, 0.3, 1); }
+#gacha-machine-wrap.slide-from-left { animation: gsSlideL 0.3s cubic-bezier(0.2, 0.9, 0.3, 1); }
+@keyframes gsSlideR { from { opacity: 0; transform: translateX(64px); } to { opacity: 1; transform: none; } }
+@keyframes gsSlideL { from { opacity: 0; transform: translateX(-64px); } to { opacity: 1; transform: none; } }
+#gacha-main { touch-action: pan-y; }   /* 縦スクロールは残して、横のスワイプだけ自前で受ける */
+@media (prefers-reduced-motion: reduce) {
+  .gs-arrow.next, .gs-arrow.prev, #gacha-machine-wrap.slide-from-right, #gacha-machine-wrap.slide-from-left { animation: none; }
+  .gs-machine .gm-body { transition: none; }
+}
+@media (orientation: landscape) {
+  .gs-pager { padding-top: 2px; }
+  .gs-arrow { width: 36px; height: 46px; margin-top: -23px; }
+}
+
 /* ── ガチャコインの所持数（右上） ───────────── */
 .gs-coin {
   flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px 0 8px; box-sizing: border-box;
@@ -151,6 +207,9 @@
 /* ── ラインナップ ──────────────────────────── */
 .gs-lu-grid { align-self: stretch; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 8px; margin: 4px 0 6px; }
 .gs-lu-item { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.gs-lu-item { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }   /* 長押しで文字選択・保存メニューが出ないように */
+.gs-lu-item .gs-mon { transition: transform .12s ease; }
+.gs-lu-item.pressing .gs-mon { transform: scale(.93); }   /* 押している間だけ、ぎゅっと縮む */
 .gs-mon { position: relative; width: 100%; aspect-ratio: 1; }   /* 下地・枠・影なし：画像だけ */
 .gs-mon img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .gs-lu-stars { font: 900 0.56rem/1 var(--ff); letter-spacing: 0; color: #e69a00; white-space: nowrap; }

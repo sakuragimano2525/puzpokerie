@@ -73,7 +73,10 @@ const ITEM_DATA = {
   // ── ガチャコイン（ガチャを1回まわすときに消費する。画像はゲームのフォルダ直下の fcoin.png） ──
   //   ※ ガチャの設定（使うコイン・枚数・ラインナップ）は js/data/gacha.js
   //   ※ 手に入れ方（ドロップ・ボーナスなど）は、おふだと同じ仕組みで増やせます
-  fcoin:  { id: 'fcoin',  name: 'ガチャコイン',       img: 'fcoin.png',  kind: 'coin',  desc: 'ガチャを1回まわすときに1枚つかう' }
+  fcoin:  { id: 'fcoin',  name: 'ガチャコイン',       img: 'fcoin.png',  kind: 'coin',  desc: 'ガチャを1回まわすときに1枚つかう' },
+
+  // ── アルカナエキス（第2ガチャ＝ガチャ画面の2ページ目で1回まわすのに1つつかう。画像は arukana.png） ──
+  arukana: { id: 'arukana', name: 'アルカナエキス',   img: 'arukana.png', kind: 'coin',  desc: '第2ガチャを1回まわすときに1つつかう' }
 };
 
 // ゲーム開始時の所持数（いまは何も持たずに開始。持たせたいときは { puzzle1: 5 } のように書く）

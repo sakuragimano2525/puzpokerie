@@ -67,6 +67,25 @@ const BOSS_INTRO_STAGES = {
   '13-boss': 'fire',      // ファイヤー
 };
 
+// ============================================================
+// ★ 属性別のボス登場演出（ふつうのボス戦）★
+//   サンダー／フリーザー／ファイヤー／ミュウ／ミュウツーのように専用の演出があるダンジョン「以外」のボス戦で、
+//   ボス（いちばん大きい敵）の属性にあわせた演出で登場します。BOSS バナーのあと、背景は変えずに演出 → 姿があらわれます。
+//     火属性 … 炎（火柱が集まって、ひとつの大きな火柱になって爆ぜる）
+//     水属性 … 水（水に沈む → 水柱がはじけて水しぶき）
+//     木属性 … 風（つむじ風と木の葉 → 風がはじけて葉が舞い散る）
+//     光属性 … 光（天から光の筋 → 聖なる輪 → まばゆい閃光）
+//     闇属性 … 闇（闇が忍びより、影の触手がのびて → 闇がはじける）
+//   ボスBGMは姿があらわれる瞬間に流れはじめます（それまでは無音）。
+//
+//   ◆ enabled … false にすると、この演出ぜんぶオフ（これまでどおり半透明からふわっと登場）
+//   ◆ skip    … 演出を出したくないダンジョンのキーを足す。例）skip: ['1-boss', '9-boss']
+//   ◆ lite    … true にすると、粒子を半分にして軽くする（動作が重いときの保険。ふだんは false でOK）
+//     ※ 端末が重いときは、演出のとちゅうで自動的に粒子を減らすので、iPhone などでも落ちにくくしてあります。
+//   ◆ 長さ・BGMのタイミングは、下の INTROS（attrFire … attrDark）の ms / bgmAt（ミリ秒）
+// ============================================================
+const BOSS_ATTR_INTRO = { enabled: true, skip: [], lite: false };
+
 const BossCloud = (() => {
   const has    = key => Object.prototype.hasOwnProperty.call(BOSS_CLOUD_STAGES, key);
   const stageOf = key => BOSS_CLOUD_STAGES[key];
@@ -414,14 +433,14 @@ const BossCloud = (() => {
   const easeOutBack = k => { const c1 = 1.70158, c3 = c1 + 1, x = k - 1; return 1 + c3 * x * x * x + c1 * x * x; };
 
   // 演出の舞台：ダンジョン上部〜パーティ下端に重ねる透明な幕（canvas 1枚）。ボスの位置・大きさも測っておく
-  function introStage(img) {
+  function introStage(img, maxDpr) {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;z-index:55;overflow:hidden;pointer-events:none;';
     if (!placeOverlay(ov)) return null;
     document.body.appendChild(ov);
     const or = ov.getBoundingClientRect(), r = img.getBoundingClientRect();
     const W = or.width || 360, H = or.height || 640;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, maxDpr || 2);
     const cv = document.createElement('canvas');
     cv.width = Math.round(W * dpr);
     cv.height = Math.round(H * dpr);
@@ -1175,6 +1194,688 @@ const BossCloud = (() => {
     setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
   }
 
+  // ============================================================
+  // ★ 属性別のボス登場演出：共通の部品 ★
+  //   iPhone などで落ちないための工夫（見た目はほぼ同じ）
+  //     ・canvas の解像度をおさえる（dpr 1.5 まで。ふんわりした演出なので違いはほとんど出ない）
+  //     ・粒子の数に上限をつける
+  //     ・端末が重いと感じたら、演出のとちゅうで自動的に粒子を減らす（qMeter）
+  //     ・blur / shadowBlur は使わず、あらかじめ作った光の玉の絵を重ねるだけ
+  // ============================================================
+  const ATTR_LOW_END = (() => {
+    try {
+      const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      return !!(ios || (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4));
+    } catch (e) { return false; }
+  })();
+  const ATTR_DPR = ATTR_LOW_END ? 1.25 : 1.5;
+
+  // 画面の重さを見て、粒子の量（q: 0.45〜1）を決める。一度下がったら戻さない
+  function qMeter() {
+    let ema = .016, q = BOSS_ATTR_INTRO.lite ? .5 : (ATTR_LOW_END ? .75 : 1);
+    return {
+      q: () => q,
+      n: k => Math.max(1, Math.round(k * q)),
+      tick(dt) {
+        if (dt <= 0) return;
+        ema = ema * .85 + dt * .15;
+        const target = ema < .026 ? 1 : ema < .036 ? .7 : .45;
+        if (target < q && !BOSS_ATTR_INTRO.lite) q = target;
+      }
+    };
+  }
+
+  // 回転・つぶれ・アンカー指定つきで絵を1枚置く（風の筋・葉っぱ・光の筋・泡など）。ay: 0＝上端が基準 / .5＝中心
+  function xf(ctx, dpr, spr, x, y, w, h, ang, alpha, sy, ay) {
+    if (alpha <= .004 || w <= .5) return;
+    const c = Math.cos(ang), s = Math.sin(ang), k = sy == null ? 1 : sy;
+    ctx.globalAlpha = alpha > 1 ? 1 : alpha;
+    ctx.setTransform(c * dpr, s * dpr, -s * k * dpr, c * k * dpr, x * dpr, y * dpr);
+    ctx.drawImage(spr, -w / 2, -h * (ay == null ? .5 : ay), w, h);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  // 縁がやわらかい細長い光の筋（上が明るく、下へすっと消える）
+  const _sprX = {};
+  function raySprite(r, g, b) {
+    const key = 'ray' + r + ',' + g + ',' + b;
+    if (_sprX[key]) return _sprX[key];
+    const c = document.createElement('canvas');
+    c.width = 32; c.height = 256;
+    const x = c.getContext('2d');
+    const gr = x.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, `rgba(${r},${g},${b},.95)`);
+    gr.addColorStop(.35, `rgba(${r},${g},${b},.38)`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr;
+    x.fillRect(0, 0, 32, 256);
+    x.globalCompositeOperation = 'destination-in';
+    const gh = x.createLinearGradient(0, 0, 32, 0);
+    gh.addColorStop(0, 'rgba(0,0,0,0)'); gh.addColorStop(.5, 'rgba(0,0,0,1)'); gh.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = gh;
+    x.fillRect(0, 0, 32, 256);
+    return (_sprX[key] = c);
+  }
+  // 木の葉（先がとがった形＋葉脈）
+  function leafSprite(r, g, b) {
+    const key = 'leaf' + r + ',' + g + ',' + b;
+    if (_sprX[key]) return _sprX[key];
+    const c = document.createElement('canvas');
+    c.width = 40; c.height = 24;
+    const x = c.getContext('2d');
+    x.beginPath();
+    x.moveTo(2, 12); x.quadraticCurveTo(14, -3, 38, 12); x.quadraticCurveTo(14, 27, 2, 12);
+    x.closePath();
+    const gr = x.createLinearGradient(0, 0, 0, 24);
+    gr.addColorStop(0, `rgb(${Math.min(255, r + 55)},${Math.min(255, g + 45)},${Math.min(255, b + 30)})`);
+    gr.addColorStop(1, `rgb(${r},${g},${b})`);
+    x.fillStyle = gr;
+    x.fill();
+    x.strokeStyle = 'rgba(235,255,215,.6)';
+    x.lineWidth = 1;
+    x.beginPath(); x.moveTo(3, 12); x.lineTo(33, 12); x.stroke();
+    return (_sprX[key] = c);
+  }
+  // 泡（うすい玉＋ふちの輪＋ハイライト）
+  function bubbleSprite() {
+    if (_sprX.bubble) return _sprX.bubble;
+    const c = document.createElement('canvas');
+    c.width = c.height = 32;
+    const x = c.getContext('2d');
+    const gr = x.createRadialGradient(16, 16, 2, 16, 16, 15);
+    gr.addColorStop(0, 'rgba(200,235,255,.04)'); gr.addColorStop(.8, 'rgba(200,235,255,.16)'); gr.addColorStop(1, 'rgba(220,245,255,.5)');
+    x.fillStyle = gr;
+    x.beginPath(); x.arc(16, 16, 15, 0, TAU); x.fill();
+    x.strokeStyle = 'rgba(235,248,255,.85)'; x.lineWidth = 1.4;
+    x.beginPath(); x.arc(16, 16, 14.2, 0, TAU); x.stroke();
+    x.fillStyle = 'rgba(255,255,255,.9)';
+    x.beginPath(); x.ellipse(10.5, 9.5, 3.6, 2.2, -.7, 0, TAU); x.fill();
+    return (_sprX.bubble = c);
+  }
+
+  // 敵エリアに重ねる暗がり（中心がうすく、まわりが濃い）
+  function attrVignette(ctx, W, H, cx, cy, inRGB, inA, outRGB, outA) {
+    const gd = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * .9);
+    gd.addColorStop(0, `rgba(${inRGB},${inA})`);
+    gd.addColorStop(1, `rgba(${outRGB},${outA})`);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = gd;
+    ctx.fillRect(0, 0, W, H);
+  }
+  // 姿があらわれる瞬間の閃光（画面全体のうす塗り＋ボスの中心の強い光）
+  function attrFlash(ctx, W, H, cx, cy, base, spr, rgb, t, RV, k) {
+    const fu = t - RV + 40;
+    if (fu <= 0) return;
+    const fa = k * Math.exp(-fu / 80);
+    if (fa <= .01) return;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = `rgba(${rgb},${fa * .4})`;
+    ctx.fillRect(0, 0, W, H);
+    blob(ctx, spr, cx, cy, base * 2.1, fa);
+  }
+  // 広がる衝撃の輪
+  function attrRing(ctx, cx, cy, base, W, t, RV, dur, rgbOut, rgbIn, k) {
+    const ur = t - RV;
+    if (ur <= 0 || ur >= dur) return;
+    const u = ur / dur, a = Math.pow(1 - u, 1.8) * (k || .4), ring = circlePts(cx, cy, lerp(base * .3, W * .72, 1 - (1 - u) * (1 - u)), 48);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 1;
+    strokePts(ctx, [ring], 10, `rgba(${rgbOut},${a * .25})`);
+    strokePts(ctx, [ring], 2.6, `rgba(${rgbIn},${a * .7})`);
+  }
+  // きらり（十字の光）
+  function glint(ctx, x, y, L, a, rgb) {
+    if (a <= .02) return;
+    ctx.globalAlpha = 1;
+    strokePts(ctx, [[[x - L, y], [x + L, y]], [[x, y - L], [x, y + L]]], 1.3, `rgba(${rgb},${Math.min(1, a)})`);
+  }
+
+  // ── 火属性：炎 ───────────────────────────────────────────
+  //   足もとから火柱が7本立ち、ボスのほうへ寄りあつまって、ひとつの大きな火柱になり、爆ぜる
+  function attrFireFx(img) {
+    const st = introStage(img, ATTR_DPR); if (!st) return;
+    const IN = INTROS.attrFire, T = IN.ms, RV = IN.bgmAt, M = qMeter();
+    const { ctx, W, H, cx, cy, base } = st;
+    const bw = Math.max(st.rect.w, base * .8);
+    const gy = Math.min(H + 8, st.rect.bottom + 10);
+    const ps = [], MAXP = 420;
+    const add = (p, force) => { if (force || ps.length < MAXP * M.q()) ps.push(p); };
+    const NP = 7, pil = [];
+    for (let i = 0; i < NP; i++) { const k = i - (NP - 1) / 2; pil.push({ x0: cx + k * bw * .36, t0: 100 + Math.abs(k) * 130 + rand(0, 60), acc: 0 }); }
+    const acc = { em: 0, sm: 0 };
+    let burst = false;
+    const smokeS = softSprite(38, 28, 24, .35), emberS = softSprite(255, 205, 110, .15), heatS = softSprite(255, 120, 30, .35), orbS = softSprite(255, 190, 80, .3), coreS = softSprite(255, 250, 220, .2);
+
+    introSE('fire', 450);
+    introSE('fire', RV);
+    introSE('skillk', RV);
+    introShake(RV, 10, 700);
+
+    introRun(st, T, (t, dt) => {
+      M.tick(dt);
+      const q = M.q(), fade = 1 - sstep(t, T - 650, T - 130);
+      // ── 発生 ──
+      pil.forEach(p => {
+        const pw = sstep(t, p.t0, p.t0 + 280) * (1 - sstep(t, RV - 90, RV + 30));
+        p.pw = pw;
+        p.x = lerp(p.x0, cx, sstep(t, 650, RV - 60));        // 火柱がボスへ寄ってくる
+        if (pw < .02) return;
+        p.acc += 46 * pw * q * dt;
+        while (p.acc >= 1) {
+          p.acc--;
+          add({ k: 'f', x: p.x + rand(-14, 14), y: gy + rand(0, 10), vx: rand(-30, 30), vy: -rand(520, 880) * (.65 + .35 * pw), age: 0, life: rand(.55, .95), s0: rand(30, 54) * (.8 + .4 * sstep(t, 650, RV)), asp: 1.7, drag: .7, turb: 240, seed: rand(0, 99), al: .42 });
+        }
+      });
+      acc.em += 24 * q * dt * sstep(t, 100, 700); acc.sm += 8 * q * dt;
+      while (acc.em >= 1) { acc.em--; add({ k: 'e', x: rand(0, W), y: H, vx: rand(-20, 20), vy: -rand(90, 260), age: 0, life: rand(1.4, 2.8), s0: rand(2.5, 4.5), seed: rand(0, 99) }); }
+      while (acc.sm >= 1) { acc.sm--; add({ k: 's', x: rand(0, W), y: H * (1 - rand(.3, .55)), vx: rand(-12, 12), vy: -rand(40, 90), age: 0, life: rand(1.6, 2.4), s0: rand(70, 110), seed: rand(0, 99) }); }
+      // 爆発：大きな火柱が立ちのぼり、火の玉が四方へ
+      if (!burst && t >= RV) {
+        burst = true;
+        for (let i = 0; i < 28; i++) add({ k: 'f', x: cx + rand(-.2, .2) * bw, y: gy + rand(0, 14), vx: rand(-60, 60), vy: -rand(800, 1250), age: 0, life: rand(.6, 1.0), s0: rand(58, 100), asp: 1.9, drag: .8, turb: 160, seed: rand(0, 99), al: .42 }, true);
+        const nb = M.n(80);
+        for (let i = 0; i < nb; i++) {
+          const a = Math.random() < .6 ? rand(-Math.PI * .95, -Math.PI * .05) : rand(0, TAU), sp = Math.pow(Math.random(), .6) * 540 + 80;
+          add({ k: 'f', x: cx + rand(-14, 14), y: cy + rand(-14, 14), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, age: 0, life: rand(.5, .9), s0: rand(46, 92), asp: 1, asp1: .2, drag: 1.8, buoy: 150, turb: 140, seed: rand(0, 99), al: .36, c1: .95 }, true);
+        }
+        for (let i = 0; i < M.n(14); i++) { const a = rand(0, TAU), sp = rand(80, 240); add({ k: 's', x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, age: 0, life: rand(1.4, 2.2), s0: rand(80, 130), seed: rand(0, 99) }, true); }
+        for (let i = 0; i < M.n(32); i++) { const a = rand(0, TAU), sp = rand(200, 650); add({ k: 'e', x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, age: 0, life: rand(1.1, 2.2), s0: rand(3, 5), seed: rand(0, 99), fast: 1 }, true); }
+      }
+      // ── 更新 ──
+      for (let i = ps.length - 1; i >= 0; i--) {
+        const p = ps[i];
+        p.age += dt;
+        if (p.age >= p.life) { ps.splice(i, 1); continue; }
+        if (p.k === 'f') { const f = Math.exp(-(p.drag || .3) * dt); p.vx *= f; p.vy *= f; p.vx += wob(p.y * .011 + p.seed + t * .0028) * p.turb * dt; if (p.buoy) p.vy -= p.buoy * dt; }
+        else if (p.k === 's') { p.vx += wob(p.y * .01 + p.seed + t * .002) * 60 * dt; p.vx *= Math.exp(-.5 * dt); p.vy *= Math.exp(-.5 * dt); }
+        else { p.vx += wob(p.y * .02 + p.seed + t * .004) * 180 * dt; if (p.fast) { p.vx *= Math.exp(-1.2 * dt); p.vy *= Math.exp(-1.2 * dt); } p.vy -= 30 * dt; }
+        p.x += p.vx * dt; p.y += p.vy * dt;
+      }
+      // ── 描画 ──
+      const dd = sstep(t, 0, 420) * (1 - sstep(t, T - 900, T - 150));
+      attrVignette(ctx, W, H, cx, H * .6, '90,16,2', .32 * dd, '14,1,0', .84 * dd);
+      for (const p of ps) {
+        if (p.k !== 's') continue;
+        const a = p.age / p.life;
+        blob(ctx, smokeS, p.x, p.y, p.s0 * (1 + 1.2 * a), .22 * Math.pow(Math.sin(Math.PI * a), .8) * fade);
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      const flick = .9 + .1 * Math.sin(t * .05) + .05 * Math.sin(t * .13);
+      pil.forEach(p => { if (p.pw > .02) blob(ctx, heatS, p.x, gy, 190 * p.pw, .55 * p.pw * flick * fade); });   // 火柱の根もとの熱
+      blob(ctx, heatS, W / 2, H, W * 2, .3 * sstep(t, 100, 900) * (1 - sstep(t, T - 1300, T - 600)) * fade);
+      for (const p of ps) {
+        const a = p.age / p.life;
+        if (p.k === 'f') {
+          const w = p.s0 * (1 + .1 * a - .85 * a * a);
+          blobXY(ctx, fireSprite(a * (p.c1 || 1) * 19), p.x, p.y, w, w * ((p.asp || 1.6) + (p.asp1 || 0) * a), p.al * (1 - a) * fade);
+        } else if (p.k === 'e') {
+          const tw = .65 + .35 * Math.sin(t * .018 + p.seed * 10);
+          blobXY(ctx, emberS, p.x, p.y, p.s0 * 1.2, p.s0 * (p.fast ? 4 : 3), .65 * tw * (1 - a * a * a) * fade);
+        }
+      }
+      const orb = sstep(t, 800, RV);                         // 集まった炎の玉
+      if (orb > 0 && t < RV + 160) blob(ctx, orbS, cx, cy, base * 1.15 * orb * (1 + .06 * Math.sin(t * .03)), .55 * orb * (1 - sstep(t, RV, RV + 160)));
+      attrFlash(ctx, W, H, cx, cy, base, coreS, '255,236,190', t, RV, .72);
+      attrRing(ctx, cx, cy + base * .08, base, W, t, RV, 650, '255,150,40', '255,220,150', .42);
+    });
+    setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
+  }
+
+  // ── 水属性：水 ───────────────────────────────────────────
+  //   足もとから水がせり上がり、ボスが水に沈む → 水柱がはじけて、水しぶきが四方へ飛び散る
+  function attrWaterFx(img) {
+    const st = introStage(img, ATTR_DPR); if (!st) return;
+    const IN = INTROS.attrWater, T = IN.ms, RV = IN.bgmAt, M = qMeter();
+    const { ctx, W, H, cx, cy, base, dpr } = st;
+    const bw = Math.max(st.rect.w, base * .8), bh = Math.max(st.rect.h, base);
+    const topY = Math.max(H * .14, cy - bh * .2);                 // 水面の高さ（ボスの胸あたり）
+    const groundY = Math.min(H - 10, st.rect.bottom - 4);
+    const bubS = bubbleSprite(), mistS = softSprite(205, 235, 255, .3), glowS = softSprite(110, 195, 255, .3), flashS = softSprite(225, 245, 255, .2), rayS = raySprite(150, 215, 255), dustS = softSprite(225, 242, 255, .25);
+    const bubs = [];
+    for (let i = 0; i < 24; i++) bubs.push({ x: rand(0, W), y: rand(0, H), vy: rand(60, 160), s: rand(6, 17), ph: rand(0, 6) });
+    const rays = [];
+    for (let i = 0; i < 5; i++) rays.push({ x: W * (.1 + .2 * i) + rand(-20, 20), ang: rand(-.3, -.1), w: rand(40, 90), ph: rand(0, 6) });
+    const drops = [], mists = [];
+    let burst = false;
+
+    introSE('water', 350);
+    introSE('water', RV);
+    introSE('skillk', RV);
+    introShake(RV, 8, 650);
+
+    const wavePts = (t, y0, amp, k, sp, ph) => {
+      const p = [];
+      for (let x = -14; x <= W + 14; x += 14) p.push([x, y0 + Math.sin(x * k + t * sp + ph) * amp + Math.sin(x * k * 2.1 - t * sp * .7 + ph * 2) * amp * .45]);
+      return p;
+    };
+    const fillWave = (pts, lv, c0, c1) => {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], H + 4);
+      for (let i = 0; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.lineTo(pts[pts.length - 1][0], H + 4);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(0, lv - 20, 0, H);
+      g.addColorStop(0, c0); g.addColorStop(1, c1);
+      ctx.fillStyle = g;
+      ctx.fill();
+    };
+
+    introRun(st, T, (t, dt) => {
+      M.tick(dt);
+      const q = M.q();
+      const d = sstep(t, 0, 380) * (1 - sstep(t, T - 800, T - 150)), fade = 1 - sstep(t, T - 600, T - 120);
+      const rise = sstep(t, 80, 1050), swell = sstep(t, RV - 280, RV), drop = sstep(t, RV, RV + 520);
+      const lv = t < RV ? lerp(H + 24, topY, rise) - 16 * swell : lerp(topY - 16, H + 40, drop);
+      const depth = 1 - drop;
+
+      attrVignette(ctx, W, H, cx, cy, '14,70,130', .3 * d, '2,12,40', .84 * d);
+      // 水面から差しこむ光
+      ctx.globalCompositeOperation = 'lighter';
+      rays.forEach(r => xf(ctx, dpr, rayS, r.x + Math.sin(t * .0007 + r.ph) * 14, -10, r.w, H * 1.2, r.ang + Math.sin(t * .0009 + r.ph) * .05, .17 * rise * depth * d, 1, 0));
+
+      if (lv < H + 8) {
+        const amp = 7 * (1 + 1.5 * swell);                        // 爆ぜる前は波が高まる
+        const back = wavePts(t, lv - 11, amp * .9, .017, .0019, 1.3), front = wavePts(t, lv, amp, .021, .0026, 0);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        fillWave(back, lv, `rgba(40,115,205,${.26 * d})`, `rgba(8,50,135,${.48 * d})`);
+        // 泡（水の中でゆらゆらのぼる）
+        ctx.globalCompositeOperation = 'lighter';
+        const nb = Math.round(bubs.length * q);
+        for (let i = 0; i < nb; i++) {
+          const b = bubs[i];
+          b.y -= b.vy * dt;
+          if (b.y < lv) { b.y = H + rand(4, 60); b.x = rand(0, W); }
+          blob(ctx, bubS, b.x + Math.sin(t * .003 + b.ph) * 8, b.y, b.s, .85 * d * depth);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        fillWave(front, lv, `rgba(95,180,242,${.3 * d})`, `rgba(18,80,172,${.5 * d})`);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        strokePts(ctx, [front], 7, `rgba(120,200,255,${.12 * d})`);
+        strokePts(ctx, [front], 2, `rgba(225,247,255,${.8 * d})`);
+      }
+
+      // 爆ぜる：水柱が吹きあがり、しぶきが飛び散る
+      if (!burst && t >= RV) {
+        burst = true;
+        const n = M.n(66);
+        for (let i = 0; i < n; i++) {
+          const a = rand(-Math.PI * .97, -Math.PI * .03), sp = rand(260, 840);
+          drops.push({ x: cx + rand(-.35, .35) * bw, y: cy + rand(-.1, .45) * bh, vx: Math.cos(a) * sp * .8, vy: Math.sin(a) * sp, age: 0, life: rand(.7, 1.3) });
+        }
+        for (let i = 0; i < M.n(11); i++) mists.push({ x: cx + rand(-.4, .4) * bw, y: cy + rand(0, .4) * bh, vx: rand(-170, 170), vy: -rand(80, 270), s0: rand(110, 200), age: 0, life: rand(.7, 1.1) });
+      }
+      // 水面（地面）に広がる波紋
+      for (let k = 0; k < 3; k++) {
+        const u = (t - RV - k * 110) / 720;
+        if (u <= 0 || u >= 1) continue;
+        const rx = lerp(base * .2, W * .78, 1 - (1 - u) * (1 - u)), a = Math.pow(1 - u, 1.6) * .6;
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 6; ctx.strokeStyle = `rgba(120,200,255,${a * .18})`;
+        ctx.beginPath(); ctx.ellipse(cx, groundY, rx, rx * .26, 0, 0, TAU); ctx.stroke();
+        ctx.lineWidth = 2.2; ctx.strokeStyle = `rgba(228,248,255,${a})`;
+        ctx.beginPath(); ctx.ellipse(cx, groundY, rx, rx * .26, 0, 0, TAU); ctx.stroke();
+      }
+      if (burst) {
+        for (let i = mists.length - 1; i >= 0; i--) {                          // 水けむり
+          const m = mists[i];
+          m.age += dt;
+          if (m.age >= m.life) { mists.splice(i, 1); continue; }
+          const a = m.age / m.life;
+          m.vx *= Math.exp(-1.6 * dt); m.vy *= Math.exp(-1.6 * dt);
+          m.x += m.vx * dt; m.y += m.vy * dt;
+          blob(ctx, mistS, m.x, m.y, m.s0 * (1 + a), .34 * (1 - a) * fade);
+        }
+        const segs = [];
+        for (let i = drops.length - 1; i >= 0; i--) {                          // しぶき（速さにそった細い筋）
+          const p = drops[i];
+          p.age += dt;
+          if (p.age >= p.life) { drops.splice(i, 1); continue; }
+          p.vy += 1150 * dt;
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          segs.push([[p.x - p.vx * .024, p.y - p.vy * .024], [p.x, p.y]]);
+          if (i % 4 === 0) blob(ctx, dustS, p.x, p.y, 9, .5 * (1 - p.age / p.life) * fade);
+        }
+        if (segs.length) {
+          ctx.lineCap = 'round';
+          ctx.globalAlpha = 1;
+          strokePts(ctx, segs, 5, `rgba(120,200,255,${.2 * fade})`);
+          strokePts(ctx, segs, 2.2, `rgba(225,247,255,${.9 * fade})`);
+        }
+      }
+      attrFlash(ctx, W, H, cx, cy, base, flashS, '205,238,255', t, RV, .62);
+      attrRing(ctx, cx, cy, base, W, t, RV, 700, '110,190,255', '225,246,255', .42);
+    });
+    setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
+  }
+
+  // ── 木属性：風 ───────────────────────────────────────────
+  //   風の筋が吹きぬけ、木の葉がボスのまわりをつむじ風のように回る → 風がはじけて、葉が舞い散る
+  function attrWoodFx(img) {
+    const st = introStage(img, ATTR_DPR); if (!st) return;
+    const IN = INTROS.attrWood, T = IN.ms, RV = IN.bgmAt, M = qMeter();
+    const { ctx, W, H, cx, cy, base, dpr } = st;
+    const bh = Math.max(st.rect.h, base);
+    const streakS = softSprite(205, 255, 215, .5), glowS = softSprite(140, 235, 150, .3), flashS = softSprite(235, 255, 225, .2);
+    const leafT = [leafSprite(70, 170, 60), leafSprite(112, 200, 72), leafSprite(40, 132, 72), leafSprite(172, 212, 82)];
+    const leaves = [];
+    for (let i = 0; i < 44; i++) leaves.push({ th: rand(0, TAU), R: base * rand(.36, 1.0), hy: rand(-.7, .6) * bh * .5, w: rand(2.8, 5.2), tum: rand(2, 5), ph: rand(0, 6), s: rand(20, 35), spr: leafT[i % 4], mode: 0, x: cx, y: cy, vx: 0, vy: 0, age: 0, rot: 0, ra: 0 });
+    const streaks = [];
+    const mkStreak = init => ({ x: init ? rand(-.1, 1.2) * W : W + rand(40, 320), y: rand(.04, .96) * H, v: rand(950, 1650), len: rand(110, 270), th: rand(1.8, 3.6), a: rand(.28, .6), ang: rand(-.16, .1) });
+    for (let i = 0; i < 20; i++) streaks.push(mkStreak(true));
+    const gust = [];
+    for (let i = 0; i < 18; i++) gust.push({ ang: i / 18 * TAU + rand(-.12, .12), r0: base * rand(.15, .3), len: rand(70, 150), d: rand(0, 90) });
+    let spin = 0, burst = false;
+
+    introSE('grass', 400);
+    introSE('grass', RV);
+    introSE('skillk', RV);
+    introShake(RV, 7, 600);
+
+    introRun(st, T, (t, dt) => {
+      M.tick(dt);
+      const q = M.q(), d = sstep(t, 0, 420) * (1 - sstep(t, T - 800, T - 150)), fade = 1 - sstep(t, T - 600, T - 120);
+      spin += dt * (1 + 1.3 * sstep(t, 400, RV));              // つむじ風は、だんだん速くなる
+      const rs = 1 - .28 * sstep(t, 700, RV);                   // だんだんボスへ絞られる
+
+      attrVignette(ctx, W, H, cx, cy, '14,64,36', .26 * d, '2,18,10', .78 * d);
+      ctx.globalCompositeOperation = 'lighter';
+      const orb = sstep(t, 500, RV) * (1 - sstep(t, RV, RV + 200));
+      blob(ctx, glowS, cx, cy, base * 1.45 * orb, .4 * orb);
+
+      // 風の筋（右から左へ吹きぬける）
+      const wk = sstep(t, 0, 500) * (1 - sstep(t, T - 700, T - 150)) * (.7 + .6 * sstep(t, 700, RV));
+      const ns = Math.round(streaks.length * q);
+      for (let i = 0; i < ns; i++) {
+        const s = streaks[i];
+        s.x -= s.v * dt; s.y += Math.sin(s.ang) * s.v * dt * .5;
+        if (s.x < -s.len) { if (t < T - 900) Object.assign(s, mkStreak(false)); else continue; }
+        xf(ctx, dpr, streakS, s.x, s.y, s.len, s.th * 2.2, s.ang, s.a * wk);
+      }
+      // 風の輪（ボスのまわりを回る点線の輪。爆ぜると広がって消える）
+      const ru = ramp(t, RV, RV + 700), ra = sstep(t, 350, 900) * (1 - ru);
+      if (ra > .02) {
+        ctx.setLineDash([26, 18]);
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+          const rx = base * (.5 + .07 * i) * rs * (1 + 2.4 * ru * ru);
+          ctx.lineDashOffset = -spin * 70 * (i % 2 ? -1 : 1);
+          ctx.strokeStyle = `rgba(205,255,210,${.34 * ra})`;
+          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.ellipse(cx, cy + bh * (-.3 + i * .22), rx, rx * .26, 0, 0, TAU); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
+
+      // 爆ぜる：葉が四方へ吹き飛ぶ
+      if (!burst && t >= RV) {
+        burst = true;
+        leaves.forEach(l => {
+          if (l.mode) return;
+          const dx = l.x - cx, dy = l.y - cy, n = Math.hypot(dx, dy) || 1, sp = rand(420, 860);
+          l.mode = 1; l.age = 0;
+          l.vx = dx / n * sp - Math.sin(l.th) * 160; l.vy = dy / n * sp * .85 - rand(30, 200);
+        });
+      }
+      // 葉っぱ
+      const nl = Math.round(leaves.length * q);
+      for (let i = 0; i < nl; i++) {
+        const l = leaves[i];
+        if (!l.mode) {
+          const th = l.th + l.w * spin;
+          const sn = Math.sin(th);
+          l.x = cx + Math.cos(th) * l.R * rs; l.y = cy + l.hy + sn * l.R * rs * .3;
+          l.rot = Math.atan2(Math.cos(th) * .3, -sn);
+          l.ra = sstep(t, 100 + i * 9, 600 + i * 9);
+          const sc = l.s * (.78 + .34 * sn);
+          xf(ctx, dpr, l.spr, l.x, l.y, sc, sc * .6, l.rot, l.ra * .95 * d, Math.max(.28, Math.abs(Math.cos(spin * l.tum + l.ph))));
+        } else {
+          l.age += dt;
+          const a = 1 - sstep(l.age, .55, 1.5);
+          if (a <= .01) continue;
+          l.vx *= Math.exp(-.9 * dt); l.vy = l.vy * Math.exp(-.9 * dt) + (50 + wob(t * .002 + l.ph) * 120) * dt;
+          l.x += l.vx * dt; l.y += l.vy * dt; l.rot += l.w * dt * .8;
+          xf(ctx, dpr, l.spr, l.x, l.y, l.s, l.s * .6, l.rot, a * fade, Math.max(.28, Math.abs(Math.cos(l.age * l.tum * 3 + l.ph))));
+        }
+      }
+      // 爆ぜた風：外へ走る風の筋と、風の輪
+      if (t > RV) {
+        const gu = ramp(t - RV, 0, 560), ge = 1 - (1 - gu) * (1 - gu), ga = Math.pow(1 - gu, 1.4);
+        gust.forEach(g => {
+          if (t - RV < g.d * .3) return;
+          const r = g.r0 + ge * W * .75;
+          xf(ctx, dpr, streakS, cx + Math.cos(g.ang) * r, cy + Math.sin(g.ang) * r * .85, g.len, 6, g.ang, .75 * ga);
+        });
+      }
+      attrFlash(ctx, W, H, cx, cy, base, flashS, '225,255,215', t, RV, .55);
+      attrRing(ctx, cx, cy, base, W, t, RV, 650, '130,230,140', '225,255,220', .4);
+    });
+    setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
+  }
+
+  // ── 光属性：光 ───────────────────────────────────────────
+  //   天から光の筋がさしこみ、聖なる輪がひらく → まばゆい閃光、放射状の光の筋、舞い散る光
+  function attrLightFx(img) {
+    const st = introStage(img, ATTR_DPR); if (!st) return;
+    const IN = INTROS.attrLight, T = IN.ms, RV = IN.bgmAt, M = qMeter();
+    const { ctx, W, H, cx, cy, base, dpr } = st;
+    const rayS = raySprite(255, 240, 190), rayW = raySprite(255, 255, 245), glowS = softSprite(255, 232, 150, .3), whiteS = softSprite(255, 252, 235, .2), moteS = softSprite(255, 236, 160, .25);
+    const oy = -H * .08, rays = [];
+    for (let i = 0; i < 9; i++) {
+      const u = i / 8, ang = lerp(-.62, .62, u) + rand(-.04, .04), len = (cy - oy) / Math.max(.5, Math.cos(ang)) * 1.25;
+      rays.push({ ox: cx + (u - .5) * W * .1, ang, len, w: rand(30, 78), ph: rand(0, 6), a: rand(.55, 1), t0: 100 + Math.abs(u - .5) * 520 });
+    }
+    const motes = [];
+    for (let i = 0; i < 40; i++) motes.push({ a: rand(0, TAU), r0: base * rand(.65, 1.5), w: rand(-.5, .5), hy: rand(-.6, .6) * base * .5, s: rand(12, 26), ph: rand(0, 6), t0: rand(150, 700) });
+    const beams = [];
+    for (let i = 0; i < 16; i++) beams.push({ ang: i / 16 * TAU + rand(-.05, .05), w: rand(16, 30), k: rand(.7, 1) });
+    const sparks = [];
+    let burst = false;
+
+    introSE('shiny', 350);
+    introSE('shiny', RV);
+    introSE('skillk', RV);
+    introShake(RV, 6, 560);
+
+    introRun(st, T, (t, dt) => {
+      M.tick(dt);
+      const q = M.q(), fade = 1 - sstep(t, T - 600, T - 120);
+      const d = sstep(t, 0, 380) * (1 - sstep(t, RV - 60, RV + 220));      // 爆ぜるまでは薄暗く、光がきわだつ
+      attrVignette(ctx, W, H, cx, cy, '30,26,62', .12 * d, '3,3,16', .8 * d);
+      ctx.globalCompositeOperation = 'lighter';
+
+      // 天からの光の筋
+      const rk = (1 - sstep(t, RV, RV + 260)) * fade;
+      rays.forEach(r => {
+        const a = sstep(t, r.t0, r.t0 + 560) * (.6 + .4 * Math.sin(t * .0032 + r.ph)) * r.a * rk;
+        xf(ctx, dpr, rayS, r.ox, oy, r.w * (.9 + .2 * Math.sin(t * .002 + r.ph)), r.len, r.ang + Math.sin(t * .0011 + r.ph) * .025, .48 * a, 1, 0);
+      });
+      // 聖なる輪
+      const rp = ramp(t, 350, 1000), ap = sstep(t, 350, 800) * (1 - sstep(t, RV, RV + 240));
+      if (ap > .02) {
+        const R = base * .66 * easeOutBack(rp), rot = t * .0006;
+        blob(ctx, glowS, cx, cy, R * 2.6, .32 * ap);
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        const ring = circlePts(cx, cy, R, 44), ring2 = circlePts(cx, cy, R * .8, 40);
+        strokePts(ctx, [ring], 7, `rgba(255,225,130,${.13 * ap})`);
+        strokePts(ctx, [ring], 1.8, `rgba(255,244,200,${.85 * ap})`);
+        strokePts(ctx, [ring2], 1.1, `rgba(255,240,190,${.6 * ap})`);
+        const ticks = [];
+        for (let i = 0; i < 24; i++) { const a = i / 24 * TAU + rot; ticks.push([[cx + Math.cos(a) * R, cy + Math.sin(a) * R], [cx + Math.cos(a) * R * 1.07, cy + Math.sin(a) * R * 1.07]]); }
+        strokePts(ctx, ticks, 1.5, `rgba(255,244,200,${.8 * ap})`);
+        const tri = (off, rr) => { const p = []; for (let i = 0; i <= 3; i++) { const a = off + i / 3 * TAU; p.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } return p; };   // 回る星（2つの三角形）
+        strokePts(ctx, [tri(-rot * 1.4 - Math.PI / 2, R * .8), tri(-rot * 1.4 + Math.PI / 2, R * .8)], 1.3, `rgba(255,240,180,${.7 * ap})`);
+      }
+      // きらめく光の粒（ボスへ寄ってくる）
+      const nm = Math.round(motes.length * q), cv = sstep(t, 300, RV);
+      for (let i = 0; i < nm; i++) {
+        const m = motes[i];
+        if (t < m.t0) continue;
+        const r = m.r0 * (1 - .86 * cv * cv), a = m.a + m.w * t * .001 * (1 + 2 * cv);
+        const x = cx + Math.cos(a) * r, y = cy + m.hy * (1 - cv) + Math.sin(a) * r * .55 - 30 * Math.sin(t * .002 + m.ph);
+        const tw = .5 + .5 * Math.sin(t * .012 + m.ph * 5), al = sstep(t, m.t0, m.t0 + 300) * (1 - sstep(t, RV - 40, RV + 60)) * fade;
+        blob(ctx, moteS, x, y, m.s * (.7 + .5 * tw), .85 * al);
+        if (tw > .85) glint(ctx, x, y, 9 * tw, al * tw, '255,250,225');
+      }
+
+      // 閃光：放射状の光の筋と、舞い散る光
+      if (!burst && t >= RV) {
+        burst = true;
+        for (let i = 0; i < M.n(46); i++) { const a = rand(0, TAU), sp = rand(120, 520); sparks.push({ x: cx + rand(-14, 14), y: cy + rand(-14, 14), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, age: 0, life: rand(.9, 1.7), ph: rand(0, 6), s: rand(10, 22) }); }
+      }
+      if (t >= RV) {
+        const u = ramp(t - RV, 0, 700), e = 1 - (1 - u) * (1 - u), ba = Math.pow(1 - u, 1.4) * .85 * fade;
+        beams.forEach(b => xf(ctx, dpr, rayW, cx, cy, b.w * (1.1 - .5 * u), lerp(base * .5, W * .95, e) * b.k, b.ang + (t - RV) * .0004, ba, 1, 0));
+        ctx.globalAlpha = 1;
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const p = sparks[i];
+          p.age += dt;
+          if (p.age >= p.life) { sparks.splice(i, 1); continue; }
+          p.vx *= Math.exp(-1.7 * dt); p.vy = p.vy * Math.exp(-1.7 * dt) + 55 * dt;
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          const a = 1 - p.age / p.life, tw = .5 + .5 * Math.sin(t * .02 + p.ph * 6);
+          blob(ctx, moteS, p.x, p.y, p.s * (.8 + .4 * tw), .9 * a * fade);
+          if (tw > .8) glint(ctx, p.x, p.y, 8 * tw, a * tw * fade, '255,250,225');
+        }
+      }
+      attrFlash(ctx, W, H, cx, cy, base, whiteS, '255,250,230', t, RV, .95);
+      attrRing(ctx, cx, cy, base, W, t, RV, 720, '255,220,120', '255,248,215', .5);
+      attrRing(ctx, cx, cy, base * .6, W, t - 130, RV, 620, '255,220,120', '255,248,215', .35);
+    });
+    setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
+  }
+
+  // ── 闇属性：闇 ───────────────────────────────────────────
+  //   画面のふちから闇がしのびより、影の触手がボスへのびる → 触手が引いて、紫の闇がはじけ、黒い靄が立ちのぼる
+  function attrDarkFx(img) {
+    const st = introStage(img, ATTR_DPR); if (!st) return;
+    const IN = INTROS.attrDark, T = IN.ms, RV = IN.bgmAt, M = qMeter();
+    const { ctx, W, H, cx, cy, base } = st;
+    const bw = Math.max(st.rect.w, base * .8), bh = Math.max(st.rect.h, base);
+    const darkS = softSprite(14, 4, 28, .5), violetS = softSprite(135, 50, 215, .3), brightS = softSprite(215, 160, 255, .2), moteS = softSprite(190, 110, 255, .25), inkS = softSprite(10, 2, 20, .45);
+    const mist = [];
+    for (let i = 0; i < 9; i++) { const side = i % 4, sx = side === 0 ? -.15 : side === 1 ? 1.15 : rand(.1, .9), sy = side === 2 ? 1.15 : side === 3 ? -.15 : rand(.1, .9); mist.push({ sx: sx * W, sy: sy * H, ex: cx + rand(-.3, .3) * W * .5, ey: cy + rand(-.3, .3) * bh, s: rand(.7, 1.1) * W, ph: rand(0, 6) }); }
+    const tend = [];
+    for (let i = 0; i < 8; i++) {
+      const side = i % 4;
+      const s = side === 0 ? [-20, rand(.12, .9) * H] : side === 1 ? [W + 20, rand(.12, .9) * H] : side === 2 ? [rand(.1, .9) * W, H + 20] : [rand(.1, .9) * W, -20];
+      const e = [cx + rand(-.2, .2) * bw, cy + rand(-.22, .3) * bh], dx = e[0] - s[0], dy = e[1] - s[1], n = Math.hypot(dx, dy) || 1;
+      tend.push({ s, e, nx: -dy / n, ny: dx / n, t0: 150 + i * 85, amp: rand(40, 90), ph: rand(0, 6), wv: rand(1.1, 1.9) });
+    }
+    const motes = [], inks = [];
+    let burst = false;
+
+    introSE('dark', 300);
+    introSE('dark', RV);
+    introSE('skillk', RV);
+    introShake(RV, 10, 700);
+
+    introRun(st, T, (t, dt) => {
+      M.tick(dt);
+      const q = M.q(), fade = 1 - sstep(t, T - 600, T - 120);
+      const d = sstep(t, 0, 650) * (1 - sstep(t, RV + 100, T - 250));          // 闇の濃さ（爆ぜたあと、すっと晴れる）
+      // ふちから闇がせまる（中心にうす紫、ふちほど黒）
+      const gd = ctx.createRadialGradient(cx, cy, base * .3, cx, cy, Math.max(W, H) * .75);
+      gd.addColorStop(0, `rgba(44,8,76,${.4 * d})`); gd.addColorStop(.45, `rgba(8,2,18,${.8 * d})`); gd.addColorStop(1, `rgba(0,0,0,${.98 * d})`);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gd;
+      ctx.fillRect(0, 0, W, H);
+      // 黒い靄が、ふちからボスへ流れこむ
+      const mk = sstep(t, 0, RV);
+      const nmst = Math.round(mist.length * Math.max(.6, q));
+      for (let i = 0; i < nmst; i++) { const m = mist[i]; blob(ctx, darkS, lerp(m.sx, m.ex, mk) + Math.sin(t * .0011 + m.ph) * 16, lerp(m.sy, m.ey, mk) + Math.cos(t * .0009 + m.ph) * 12, m.s, .42 * d * fade); }
+      ctx.globalCompositeOperation = 'lighter';
+      blob(ctx, violetS, cx, cy, base * 1.9, .13 * sstep(t, 200, RV) * d);
+
+      // 影の触手（ボスへのび、爆ぜる瞬間に引いていく）
+      const amp0 = 1 - .45 * sstep(t, RV - 400, RV), lines = [];
+      tend.forEach(td => {
+        const g = t < RV ? sstep(t, td.t0, td.t0 + 850) : 1 - sstep(t, RV, RV + 380);
+        if (g <= .01) return;
+        const pts = [], N = 14;
+        for (let j = 0; j <= N; j++) {
+          const u = j / N * g, o = Math.sin(u * Math.PI * td.wv * 1.3 + td.ph + t * .004) * td.amp * amp0 * Math.sin(Math.PI * u);
+          pts.push([lerp(td.s[0], td.e[0], u) + td.nx * o, lerp(td.s[1], td.e[1], u) + td.ny * o]);
+        }
+        lines.push(pts);
+      });
+      if (lines.length) {
+        const ta = d * fade;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.globalAlpha = 1;
+        // 根もと（ふち）側ほど太く、ボスに近い先ほど細い：全体 → 根もと3分の2 → 根もと3分の1、と短くした線を重ねる
+        const part = f => lines.map(l => l.slice(0, Math.max(2, Math.ceil((l.length - 1) * f) + 1)));
+        const tp = [[1, 0], [.66, 1], [.33, 2]].map(([f, k]) => [part(f), k]);
+        tp.forEach(([ls, k]) => strokePts(ctx, ls, 14 + 7 * k, `rgba(120,40,200,${.1 * ta})`));
+        ctx.globalCompositeOperation = 'source-over';
+        tp.forEach(([ls, k]) => strokePts(ctx, ls, 6 + 5 * k, `rgba(6,1,14,${.9 * ta})`));
+        ctx.globalCompositeOperation = 'lighter';
+        tp.forEach(([ls, k]) => strokePts(ctx, ls, 1.2 + .5 * k, `rgba(190,110,255,${.4 * ta})`));
+      }
+      // 力がたまる（ボスの中心が黒く沈み、紫に光る）
+      const orb = sstep(t, 700, RV) * (1 - sstep(t, RV, RV + 150));
+      if (orb > .01) {
+        blob(ctx, violetS, cx, cy, base * 1.35 * orb * (1 + .05 * Math.sin(t * .03)), .55 * orb);
+        ctx.globalCompositeOperation = 'source-over';
+        blob(ctx, inkS, cx, cy, base * .9 * orb, .5 * orb);
+        ctx.globalCompositeOperation = 'lighter';
+      }
+
+      // 爆ぜる：紫の闇が広がり、黒い靄と闇の粒が立ちのぼる
+      if (!burst && t >= RV) {
+        burst = true;
+        for (let i = 0; i < M.n(34); i++) { const a = rand(0, TAU), sp = rand(60, 360); motes.push({ x: cx + rand(-.3, .3) * bw, y: cy + rand(-.3, .4) * bh, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .7 - rand(40, 200), age: 0, life: rand(1, 1.9), s: rand(14, 30), ph: rand(0, 6) }); }
+        for (let i = 0; i < M.n(13); i++) { const a = rand(0, TAU), sp = rand(140, 300), r0 = base * rand(.42, .6); inks.push({ x: cx + Math.cos(a) * r0, y: cy + Math.sin(a) * r0 * .8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .6 - rand(20, 100), age: 0, life: rand(.9, 1.5), s0: rand(80, 140) }); }   // 靄はボスの輪郭の外へ出し、顔をおおわない
+      }
+      if (burst) {
+        ctx.globalCompositeOperation = 'source-over';
+        for (let i = inks.length - 1; i >= 0; i--) {
+          const p = inks[i];
+          p.age += dt;
+          if (p.age >= p.life) { inks.splice(i, 1); continue; }
+          const a = p.age / p.life;
+          p.vx *= Math.exp(-1.4 * dt); p.vy *= Math.exp(-1.2 * dt);
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          blob(ctx, inkS, p.x, p.y, p.s0 * (1 + .9 * a), .46 * Math.pow(1 - a, 1.2) * fade);
+        }
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = motes.length - 1; i >= 0; i--) {
+          const p = motes[i];
+          p.age += dt;
+          if (p.age >= p.life) { motes.splice(i, 1); continue; }
+          p.vx *= Math.exp(-1.5 * dt); p.vy = p.vy * Math.exp(-1.2 * dt) - 24 * dt;
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          const a = p.age / p.life, tw = .6 + .4 * Math.sin(t * .015 + p.ph * 6);
+          blob(ctx, moteS, p.x, p.y, p.s * (.7 + .6 * a), .8 * tw * (1 - a * a) * fade);
+        }
+      }
+      attrFlash(ctx, W, H, cx, cy, base, brightS, '215,170,255', t, RV, .72);
+      attrRing(ctx, cx, cy, base, W, t, RV, 720, '150,60,230', '225,185,255', .5);
+      attrRing(ctx, cx, cy, base * .5, W, t - 140, RV, 640, '150,60,230', '225,185,255', .32);
+    });
+    setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
+  }
+
+  // 敵画像のアニメ（シルエット → 閃光 → 姿）。属性ごとに、色と最初のシルエットの明るさだけ変える
+  function attrFrames(rgb, T, RV, o) {
+    const r = RV / T, f = (k, op, b, s, g, a, sc) => introFrame(rgb, k, op, b, s, g, a, sc);
+    return [
+      f(0,                   0,   o.b,       o.s, 0,  0,  .9),
+      f(r * .24,             0,   o.b,       o.s, 0,  0,  .9),
+      f(r * .42,             .55, o.b,       o.s, 10, .8, .94),
+      f(r * .8,              .9,  o.b + .05, o.s, 22, 1,  .98),
+      f(r,                   1,   5,         .15, 52, 1,  1.1),
+      f(r + (1 - r) * .16,   1,   2.3,       .5,  38, 1,  1.04),
+      f(r + (1 - r) * .5,    1,   1.3,       .9,  24, .8, 1.01),
+      f(1,                   1,   1,         1,   0,  0,  1)
+    ];
+  }
+
   // 3匹の設定（ms … 演出の長さ ／ bgmAt … ボスBGMを流す（＝姿があらわれる）瞬間 ／ frames … 敵画像のアニメ）
   const INTROS = {
     thunder: {
@@ -1225,10 +1926,26 @@ const BossCloud = (() => {
   };
   const introOf = key => (Object.prototype.hasOwnProperty.call(BOSS_INTRO_STAGES, key) && INTROS[BOSS_INTRO_STAGES[key]]) || null;
 
+  // ── 属性別のボス登場演出の設定（ms … 演出の長さ ／ bgmAt … ボスBGMを流す（＝姿があらわれる）瞬間、どちらもミリ秒）──
+  Object.assign(INTROS, {
+    attrFire:  { ms: 2800, bgmAt: 1600, easing: 'linear', fx: attrFireFx,  frames: attrFrames('255,120,20',  2800, 1600, { b: .22, s: 1 }) },    // 炎：暗いシルエット → 爆発で白く光る
+    attrWater: { ms: 2900, bgmAt: 1650, easing: 'linear', fx: attrWaterFx, frames: attrFrames('80,175,255',  2900, 1650, { b: .45, s: .7 }) },    // 水：青く沈んだ姿 → しぶきとともにあらわれる
+    attrWood:  { ms: 2700, bgmAt: 1500, easing: 'linear', fx: attrWoodFx,  frames: attrFrames('130,235,120', 2700, 1500, { b: .6,  s: .9 }) },    // 風：葉の渦ごしに見える姿
+    attrLight: { ms: 2700, bgmAt: 1500, easing: 'linear', fx: attrLightFx, frames: attrFrames('255,236,150', 2700, 1500, { b: 2.0, s: .3 }) },    // 光：白く輝くシルエット → 閃光
+    attrDark:  { ms: 2900, bgmAt: 1650, easing: 'linear', fx: attrDarkFx,  frames: attrFrames('175,80,255',  2900, 1650, { b: .12, s: 0 }) }     // 闇：真っ黒な影 → 紫の闇がはじける
+  });
+  const ATTR_INTRO_KEY = { fire: 'attrFire', water: 'attrWater', wood: 'attrWood', light: 'attrLight', dark: 'attrDark' };
+  // 属性別のボス登場演出。専用の演出があるダンジョン（BOSS_CLOUD_STAGES／BOSS_INTRO_STAGES）と、skip したダンジョンでは null
+  const attrIntroOf = (key, attr) => {
+    if (!BOSS_ATTR_INTRO.enabled || !attr || !Object.prototype.hasOwnProperty.call(ATTR_INTRO_KEY, attr)) return null;
+    if (has(key) || introOf(key) || (BOSS_ATTR_INTRO.skip || []).indexOf(key) >= 0) return null;
+    return INTROS[ATTR_INTRO_KEY[attr]] || null;
+  };
+
   // 登場演出：ラスボス用（BOSS_CLOUD_STAGES の entrance）→ なければ 伝説の鳥用（BOSS_INTRO_STAGES）
   const entranceOf = key => { const s = stageOf(key); return (s && typeof s === 'object' && ENTRANCES[s.entrance]) || introOf(key); };
 
-  return { has, bgOf, bannerOf, entranceOf, introOf, preload, play };
+  return { has, bgOf, bannerOf, entranceOf, introOf, attrIntroOf, preload, play };
 })();
 // ★ 重要：トップレベルの const は window のプロパティにならないため、game.js の window.BossCloud 判定が常に false になっていた
 window.BossCloud = BossCloud;

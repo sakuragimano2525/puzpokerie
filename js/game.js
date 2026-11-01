@@ -385,7 +385,7 @@ function playModoSound() { playUiSE('modo'); }
 // 戻る・閉じる系のボタン
 const UI_BACK_SELECTOR = '#de-back-btn, #ss-back-btn, #md-back-btn, #te-back, #iku-back, #evo-list-back, #pz-back-btn, #zukan-back, #settings-close-btn, #zukan-info-close, #mail-close-btn, #md2-back-btn, #res-close-btn, #sp-no, #gacha-back, #gacha-lineup-close, #menu-btn, #quit-no, #menu-drops-back, #cs-close, #cj-no, #menu-retire-no, .te-back-btn, #gameover-home-btn';
 // 「進む」操作（画面遷移・決定・挑戦など）だけ tap.mp3
-const UI_FORWARD_SELECTOR = '#start, #btn-team, #btn-grow, #btn-evo, #btn-gacha, #gacha-spin-btn, #gacha-lineup-btn, #gacha-res-ok, .ht-tab, #settings-open-btn, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
+const UI_FORWARD_SELECTOR = '#start, #btn-team, #btn-grow, #btn-evo, #btn-gacha, #gacha-spin-btn, #gacha-lineup-btn, .gs-arrow, .gs-dot, #gacha-res-ok, .ht-tab, #settings-open-btn, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
 document.addEventListener('click', (e) => {
   const t = e.target;
   if (!(t instanceof Element)) return;
@@ -1339,7 +1339,21 @@ function isBossBattleIndex(idx) {
 // このダンジョンのボスに「登場演出つき」（サンダー／フリーザー／ファイヤー。js/boss-cloud.js の BOSS_INTRO_STAGES）か
 //   → ボスBGMは登場演出の中（姿があらわれる瞬間）で流す。それまでは無音
 function hasBossIntro() {
-  return !!(window.BossCloud && BossCloud.introOf && BossCloud.introOf(currentDungeonKey));
+  if (!window.BossCloud) return false;
+  if (BossCloud.introOf && BossCloud.introOf(currentDungeonKey)) return true;
+  // 専用演出のないふつうのボス戦：ボスの属性にあわせた登場演出（js/boss-cloud.js の BOSS_ATTR_INTRO）。この場合もボスBGMは演出の中で流す
+  return !!(BossCloud.attrIntroOf && isBossBattleIndex(currentBattleIndex) && BossCloud.attrIntroOf(currentDungeonKey, battleBossAttr(currentBattleIndex)));
+}
+// ボス戦の「主役」の敵：isBoss の敵のうち、いちばん大きい敵（同じ大きさなら先に書いた敵）。敵データ（バトル）に対して、先に決められる
+//   → 属性別の登場演出の判定に使う（敵が出る前にBGMの流し方を決めるため、画面上の大きさではなくサイズ指定で決める）
+const BOSS_SIZE_RANK = { S: 1, M: 2, L: 3, XL: 4 };
+function bossRank(e) { return (e && e.isBoss ? 10 : 0) + (BOSS_SIZE_RANK[(e && e.size) || 'S'] || 1); }
+function battleBossAttr(idx) {
+  const b = currentDungeonBattles && currentDungeonBattles[idx];
+  if (!b || !b.enemies || !b.enemies.length) return null;
+  let best = null;
+  b.enemies.forEach(e => { if (e && (!best || bossRank(e) > bossRank(best))) best = e; });
+  return best ? (getMonsterAttrFromImg(best.img) || best.attr || null) : null;
 }
 function playBattleBgm(idx, asField) {
   const key = currentDungeonKey;
@@ -1635,27 +1649,50 @@ function playEnemyAppear() {
     if (hasBossIntro() && isBossBattleIndex(currentBattleIndex)) playBattleBgm(currentBattleIndex);   // 演出できない時も、ボスBGMは流す
     return Promise.resolve();
   }
-  // ラスボス専用の登場演出（js/boss-cloud.js の entrance）。一番大きい敵＝ボスにだけ使う
-  const special = (window.BossCloud && BossCloud.entranceOf && isBossBattleIndex(currentBattleIndex)) ? BossCloud.entranceOf(currentDungeonKey) : null;
-  let bossImg = null;
+  // 専用の登場演出（js/boss-cloud.js）。一番大きい敵＝ボスにだけ使う
+  //   ① ラスボス・伝説の鳥（entrance / BOSS_INTRO_STAGES）  ② ふつうのボス戦は、ボスの属性にあわせた演出（BOSS_ATTR_INTRO）
+  let special = (window.BossCloud && BossCloud.entranceOf && isBossBattleIndex(currentBattleIndex)) ? BossCloud.entranceOf(currentDungeonKey) : null;
+  let bossImg = null, fxTarget = null;
+  const spSet = new Set();                      // 専用の演出で登場する敵の画像（ふつうは1枚。ボスが何体かいるときは、同じ属性のボス全員）
   if (special) {
     let best = -1;
     imgs.forEach(im => { const r = im.getBoundingClientRect(), ar = r.width * r.height; if (ar > best) { best = ar; bossImg = im; } });
-    try { special.fx(bossImg); } catch (e) {}
+    spSet.add(bossImg); fxTarget = bossImg;
+  } else if (window.BossCloud && BossCloud.attrIntroOf && isBossBattleIndex(currentBattleIndex)) {
+    const idxOf = im => { const u = im.closest('.enemy-unit'); return u ? +u.dataset.enemyIndex : -1; };
+    let main = null;
+    imgs.forEach(im => { const e = enemyList[idxOf(im)]; if (e && (!main || bossRank(e) > bossRank(main.e))) main = { im, e }; });
+    special = main ? BossCloud.attrIntroOf(currentDungeonKey, main.e.attr) : null;
+    if (special) {
+      bossImg = main.im;
+      imgs.forEach(im => { const e = enemyList[idxOf(im)]; if (e && (im === bossImg || (e.isBoss && e.attr === main.e.attr))) spSet.add(im); });
+      if (spSet.size > 1) {
+        // 何体かいるときは、全員をひとまとめにした範囲の中心で演出する（画像の位置を測るだけの代役を渡す）
+        let L = 1e9, Tp = 1e9, R = -1e9, B = -1e9;
+        spSet.forEach(im => { const r = im.getBoundingClientRect(); L = Math.min(L, r.left); Tp = Math.min(Tp, r.top); R = Math.max(R, r.right); B = Math.max(B, r.bottom); });
+        fxTarget = { getBoundingClientRect: () => ({ left: L, top: Tp, right: R, bottom: B, width: R - L, height: B - Tp }) };
+      } else fxTarget = bossImg;
+    }
+  }
+  if (special) {
+    try { special.fx(fxTarget); } catch (e) {}
     // 登場演出つきのボス（bgmAt あり）：姿があらわれる瞬間にボスBGMを流す。演出の途中で抜けたら鳴らさない
     if (special.bgmAt != null) {
       const gen = _bgmGen;
       setTimeout(() => { if (gen === _bgmGen) playBattleBgm(currentBattleIndex); }, special.bgmAt);
     }
+  } else if (hasBossIntro() && isBossBattleIndex(currentBattleIndex)) {
+    playBattleBgm(currentBattleIndex);   // 演出が決まらなかった時も、ボスBGMは流す（無音のままにしない）
   }
   const STAGGER = 130;
-  const isSp = img => !!special && img === bossImg;
+  const isSp = img => spSet.has(img);
   const msOf = img => isSp(img) ? special.ms : ENEMY_APPEAR_MS;
-  const total = Math.max(...imgs.map((img, i) => i * STAGGER + msOf(img)));
+  const delayOf = (img, i) => isSp(img) ? 0 : i * STAGGER;     // 専用の演出の敵は、演出と同時にスタート
+  const total = Math.max(...imgs.map((img, i) => delayOf(img, i) + msOf(img)));
   imgs.forEach((img, i) => {
-    const ms = msOf(img);
+    const ms = msOf(img), dl = delayOf(img, i);
     const lag = ms - ENEMY_APPEAR_MS;   // 専用演出のときは、HPバーなども姿が現れる頃に出す
-    if (isSp(img) && special.se) setTimeout(() => playSE(special.se), i * STAGGER + ms);   // 完全に出てきたら効果音
+    if (isSp(img) && special.se) setTimeout(() => playSE(special.se), dl + ms);   // 完全に出てきたら効果音
     // HPバー・属性アイコン・「あと〇」・状態アイコンも、敵画像と同じタイミングで半透明から登場させる
     const unit = img.closest('.enemy-unit');
     const extras = unit ? [...unit.querySelectorAll('.enemy-hp-row, .enemy-top-left')] : [];
@@ -1666,22 +1703,22 @@ function playEnemyAppear() {
         { opacity: 0 },
         { opacity: .45, offset: .45 },
         { opacity: 1 }
-      ], { duration: ENEMY_APPEAR_MS, delay: i * STAGGER + lag, easing: 'ease-out', fill: 'both' });
+      ], { duration: ENEMY_APPEAR_MS, delay: dl + lag, easing: 'ease-out', fill: 'both' });
       const f = () => { clearExtras(); try { a.cancel(); } catch (e) {} };
       a.onfinish = f;
-      setTimeout(f, i * STAGGER + ms + 200);
+      setTimeout(f, dl + ms + 200);
     });
     const clear = () => { img.style.opacity = ''; clearExtras(); };
-    if (!img.animate) { setTimeout(clear, i * STAGGER); return; }
+    if (!img.animate) { setTimeout(clear, dl); return; }
     const frames = isSp(img) ? special.frames : [
       { opacity: 0,   filter: 'brightness(2.4) saturate(.3)', transform: 'scale(1.06)' },
       { opacity: .45, filter: 'brightness(1.8) saturate(.6)', transform: 'scale(1.03)', offset: .45 },
       { opacity: 1,   filter: 'brightness(1) saturate(1)',    transform: 'scale(1)' }
     ];
-    const anim = img.animate(frames, { duration: ms, delay: i * STAGGER, easing: isSp(img) ? (special.easing || 'linear') : 'ease-out', fill: 'both' });
+    const anim = img.animate(frames, { duration: ms, delay: dl, easing: isSp(img) ? (special.easing || 'linear') : 'ease-out', fill: 'both' });
     const fin = () => { clear(); try { anim.cancel(); } catch (e) {} };
     anim.onfinish = fin;
-    setTimeout(fin, i * STAGGER + ms + 200);
+    setTimeout(fin, dl + ms + 200);
   });
   return new Promise(r => setTimeout(r, total + 80));
 }
@@ -5317,7 +5354,20 @@ let detailFromScreen = 'team-edit';
 let detailFromList = false;        // ボックス一覧のカードから開いた（→ 左右ボタンは一覧の並び順で巡回）
 const detailListOrder = {};        // 画面ごとの「いま一覧に出ている並び順」(uidの配列)
 
+// ガチャのラインナップなど「持っていないモンスター」を、ボックスと同じ詳細画面で Lv1 のステータスつきで見るための仮表示。
+//   detailPreview = { ids:[モンスターID…], pos:いま見ている位置 } のときだけ有効（ふだんは null）。ボックスのデータには一切さわらない
+let detailPreview = null;
+function previewMonsterDetail(ids, id) {
+  const list = (ids || []).filter(i => MONSTER_DATA[i]);
+  if (!list.length || !MONSTER_DATA[id]) return;
+  detailPreview = { ids: list, pos: Math.max(0, list.indexOf(id)) };
+  detailFromScreen = 'gacha-preview';
+  detailFromList = false;
+  renderMonsterDetail();
+  document.getElementById('monster-detail').style.display = 'flex';
+}
 function openMonsterDetail(boxIdx, fromScreen, fromList) {
+  detailPreview = null;
   detailBoxIndex = boxIdx;
   detailFromScreen = fromScreen || 'team-edit';
   detailFromList = (fromList !== undefined) ? !!fromList : (detailFromScreen === 'iku-screen');
@@ -5326,13 +5376,19 @@ function openMonsterDetail(boxIdx, fromScreen, fromList) {
 }
 function closeMonsterDetail() {
   document.getElementById('monster-detail').style.display = 'none';
+  if (detailPreview) {   // 仮表示：閉じるだけ（下の画面はそのまま。ボタンの表示も元に戻す）
+    detailPreview = null;
+    const t = document.getElementById('md-title'); if (t) t.textContent = 'モンスター詳細';
+    const lu = document.getElementById('md-levelup-btn'); if (lu) lu.style.display = '';
+    return;
+  }
   if (detailFromScreen === 'iku-screen') renderIkuScreen();
   if (detailFromScreen === 'team-edit') renderTeamEdit();
   if (detailFromScreen === 'dungeon-entry') { try { renderDungeonEntry(); } catch (e) {} }
 }
 
 function renderMonsterDetail() {
-  const entry = box[detailBoxIndex];
+  const entry = detailPreview ? { uid: 'preview', monsterId: detailPreview.ids[detailPreview.pos], level: 1, exp: 0 } : box[detailBoxIndex];
   if (!entry) return;
   const mon = MONSTER_DATA[entry.monsterId];
   if (!mon) return;
@@ -5418,7 +5474,10 @@ function renderMonsterDetail() {
   if (lsDescEl) setSkillText(lsDescEl, mon.leaderSkill ? mon.leaderSkill.desc : '---');
   // 進化ボタン（進化先があり、バトル中でないときだけ表示）
   const evoBtn = document.getElementById('md-evolve-btn');
-  if (evoBtn) evoBtn.style.display = (detailFromScreen !== 'game' && getEvolutions(entry.monsterId).length) ? '' : 'none';
+  if (evoBtn) evoBtn.style.display = (!detailPreview && detailFromScreen !== 'game' && getEvolutions(entry.monsterId).length) ? '' : 'none';
+  // 仮表示（ガチャのラインナップ）では、持っていないのでレベルアップ・進化はできない
+  const luBtn = document.getElementById('md-levelup-btn'); if (luBtn) luBtn.style.display = detailPreview ? 'none' : '';
+  const ttl = document.getElementById('md-title'); if (ttl) ttl.textContent = detailPreview ? 'モンスター詳細（Lv1）' : 'モンスター詳細';
 }
 
 // 左右ボタンの巡回先：パーティー編成中のモンスターを開いているときはパーティー内（空き枠は飛ばす）、
@@ -5446,6 +5505,12 @@ function getDetailNavList() {
   return box.map((_, i) => i);
 }
 function stepMonsterDetail(dir) {
+  if (detailPreview) {   // 仮表示：ラインナップの中をぐるっと巡回
+    const n = detailPreview.ids.length;
+    detailPreview.pos = (detailPreview.pos + dir + n) % n;
+    renderMonsterDetail();
+    return;
+  }
   const list = getDetailNavList();
   if (!list.length) return;
   const pos = list.indexOf(detailBoxIndex);
@@ -5502,12 +5567,14 @@ function hasEvoLevel(entry) {
 function hasEvoMaterials(evo) {
   return evo.materials.every(m => getItemCount(m.item) >= m.count);
 }
-// 進化に使うエナ：進化させたいモンスター（進化前）のレア度で決まる  ★1=100 / ★2=200 / ★3=300 / ★4以上=500
+// 進化に使うエナ：進化させたいモンスター（進化前）のレア度で決まる  ★1〜2=500 / ★3=1000 / ★4=2000 / ★5以上=3000
 function evoCoinCost(monsterId) {
   const mon = MONSTER_DATA[monsterId];
   const r = Math.max(1, Number(mon && mon.rarity) || 1);
-  if (r >= 4) return 500;
-  return r * 100;
+  if (r >= 5) return 3000;
+  if (r === 4) return 2000;
+  if (r === 3) return 1000;
+  return 500;
 }
 function hasEvoCoin(entry) {
   return !!entry && playerCoin >= evoCoinCost(entry.monsterId);
@@ -5643,6 +5710,18 @@ function renderEvoScreen() {
     `<span>HP <b>${st.hp.toLocaleString()}</b></span>` +
     `<span>攻撃 <b>${st.atk.toLocaleString()}</b></span>` +
     `<span>回復 <b>${st.rec.toLocaleString()}</b></span>`;
+
+  // 進化後のスキル／リーダースキル
+  const toSkill = toMon.skill || { name: 'なし', desc: '---' };
+  const skLabel = document.getElementById('evo-skill-label');
+  if (skLabel) skLabel.textContent = `スキル：${toSkill.name}`;
+  const skSp = document.getElementById('evo-skill-sp');
+  if (skSp) skSp.textContent = `必要SP ${getRequiredSp(null, toMon)}`;
+  setSkillText(document.getElementById('evo-skill-desc'), toSkill.desc || '---');
+  const toLs = toMon.leaderSkill;
+  const lsNameEl = document.getElementById('evo-ls-name');
+  if (lsNameEl) lsNameEl.textContent = toLs ? toLs.name : '';
+  setSkillText(document.getElementById('evo-ls-desc'), toLs ? toLs.desc : '---', true);
 
   const btn = document.getElementById('evo-exec-btn');
   const lvOk = hasEvoLevel(entry);
@@ -5838,7 +5917,7 @@ function executeEvolution() {
 
   // 素材とエナを消費 → 本体を進化後に差し替え（+値・uid は引き継ぐ。Lvは1に戻る）
   evo.materials.forEach(m => { itemInventory[m.item] -= m.count; });
-  addPlayerCoin(-evoCoinCost(entry.monsterId));   // 進化前のレア度に応じたエナ（★1=100 ★2=200 ★3=300 ★4以上=500）
+  addPlayerCoin(-evoCoinCost(entry.monsterId));   // 進化前のレア度に応じたエナ（★1〜2=500 ★3=1000 ★4=2000 ★5以上=3000）
   entry.monsterId = evo.to;
   entry.level = 1;
   entry.exp = 0;

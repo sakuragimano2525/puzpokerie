@@ -8,6 +8,8 @@
 //                   → 外にころがり出て画面中央へ → タップで開く → 結果を表示
 //     ・「ラインナップ」… 出るモンスターの一覧を表示
 //     ・コインが足りないときは何も消費せず「ガチャコインが足りません」
+//     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（赤）⇔ 2ページ目（青・第2ガチャ）。
+//                2ページ目は GACHA_DATA.page2 の設定（アルカナエキス1つで1回、lineup・隠し条件 requires もページごと）
 //
 //   外から使うもの
 //     GachaScreen.open() / close() / isOpen()
@@ -21,30 +23,34 @@
   var $ = function (id) { return document.getElementById(id); };
 
   var cfg = (typeof GACHA_DATA !== 'undefined' && GACHA_DATA) || { title: 'ガチャ', coin: 'fcoin', cost: 1, lineup: [] };
-  var COIN = cfg.coin || 'fcoin';
-  var COST = Math.max(1, Math.floor(Number(cfg.cost)) || 1);
+  // ページごとの設定：1ページ目＝cfg 本体／2ページ目＝cfg.page2（coin・cost・lineup・requires。capsules は共通）
+  function pc() { return page === 2 ? (cfg.page2 || {}) : cfg; }
+  function COIN() { return pc().coin || 'fcoin'; }
+  function COST() { return Math.max(1, Math.floor(Number(pc().cost)) || 1); }
   var SPIN_MS = 900;          // 「まわす」の動きの長さ（css/gacha.css の 0.9s と合わせる）
   var busy = false;
   var toastTimer = null;
   var seq = null, runId = 0;   // カプセル演出の進行状況（runId が変わったら古い演出は止まる）
+  var PAGES = 2, page = 1;      // いま見ているページ（1＝コラボガチャ／2＝第2ガチャ）
+  var customTitle = null;       // setTitle() で変えたタイトル（1ページ目用）
 
   // ── 設定の読み取り ───────────────────────────
   function lineup() {   // monsters.js に無いIDは除く
-    return (cfg.lineup || []).filter(function (id) { return typeof MONSTER_DATA !== 'undefined' && MONSTER_DATA[id]; });
+    return (pc().lineup || []).filter(function (id) { return typeof MONSTER_DATA !== 'undefined' && MONSTER_DATA[id]; });
   }
   // 実際に抽選に入るモンスター：cfg.requires の条件（図鑑に登録済み）を満たしているものだけ（隠し条件）
   function drawable() {
     try { if (window.Zukan && Zukan.syncOwned) Zukan.syncOwned(); } catch (e) {}
-    var req = cfg.requires || {};
+    var req = pc().requires || {};
     return lineup().filter(function (id) {
       var need = req[id];
       if (!need || !need.length) return true;
       return need.every(function (n) { return !!(window.Zukan && Zukan.isOwned(n)); });
     });
   }
-  function coinCount() { return typeof getItemCount === 'function' ? getItemCount(COIN) : 0; }
-  function coinName() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN] && ITEM_DATA[COIN].name) || 'ガチャコイン'; }
-  function coinImg() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN] && ITEM_DATA[COIN].img) || 'fcoin.png'; }
+  function coinCount() { return typeof getItemCount === 'function' ? getItemCount(COIN()) : 0; }
+  function coinName() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].name) || 'ガチャコイン'; }
+  function coinImg() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].img) || 'fcoin.png'; }
   function stars(n) { var s = ''; for (var i = 0; i < n; i++) s += '★'; return s; }
 
   // ── 表示の更新 ────────────────────────────────
@@ -52,9 +58,9 @@
     var n = coinCount();
     var numEl = $('gacha-coin-num'), chip = $('gacha-coin'), cost = $('gacha-spin-cost');
     if (numEl) numEl.textContent = '×' + n.toLocaleString();
-    if (chip) chip.classList.toggle('empty', n < COST);
-    if (cost) cost.classList.toggle('short', n < COST);
-    var ct = $('gacha-cost-txt'); if (ct) ct.textContent = coinName() + ' ×' + COST;
+    if (chip) chip.classList.toggle('empty', n < COST());
+    if (cost) cost.classList.toggle('short', n < COST());
+    var ct = $('gacha-cost-txt'); if (ct) ct.textContent = coinName() + ' ×' + COST();
     ['gacha-coin-img', 'gacha-cost-img'].forEach(function (id) { var im = $(id); if (im) { var src = coinImg(); if (im.getAttribute('src') !== src) im.setAttribute('src', src); } });
   }
 
@@ -77,6 +83,27 @@
   }
 
   // ── ラインナップ ─────────────────────────────
+  // モンスターを長押し → ボックスと同じ詳細画面で、Lv1 のステータス・スキル・リーダースキルを見られる（js/game.js の previewMonsterDetail）
+  var LP_MS = 350;        // 長押しと判定する時間（ボックスと同じ）
+  var LP_MOVE = 10;       // これ以上指が動いたらスクロールとみなして長押しをやめる
+  function bindLongPress(cell, id, ids) {
+    var timer = null, sx = 0, sy = 0;
+    function cancel() { if (timer) { clearTimeout(timer); timer = null; } cell.classList.remove('pressing'); }
+    cell.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      cancel(); sx = e.clientX; sy = e.clientY;
+      cell.classList.add('pressing');
+      timer = setTimeout(function () {
+        timer = null; cell.classList.remove('pressing');
+        try { if (navigator.vibrate) navigator.vibrate(18); } catch (err) {}
+        if (typeof previewMonsterDetail === 'function') previewMonsterDetail(ids, id);
+      }, LP_MS);
+    });
+    cell.addEventListener('pointermove', function (e) { if (timer && (Math.abs(e.clientX - sx) > LP_MOVE || Math.abs(e.clientY - sy) > LP_MOVE)) cancel(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (t) { cell.addEventListener(t, cancel); });
+    cell.addEventListener('contextmenu', function (e) { e.preventDefault(); });   // 長押しで出る「画像を保存」などのメニューを出さない
+    cell.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  }
   function openLineup() {
     var grid = $('gacha-lineup-grid'); if (!grid) return;
     grid.innerHTML = '';
@@ -88,10 +115,11 @@
       var st = document.createElement('span'); st.className = 'gs-lu-stars'; st.textContent = stars(mon.rarity || 1);
       var nm = document.createElement('span'); nm.className = 'gs-lu-name'; nm.textContent = mon.name;
       cell.appendChild(tile); cell.appendChild(st); cell.appendChild(nm);
+      bindLongPress(cell, id, ids);
       grid.appendChild(cell);
     });
     var sub = $('gacha-lineup-sub');
-    if (sub) sub.textContent = ids.length ? ('この ' + ids.length + ' 体のどれか1匹が出ます（' + coinName() + ' ×' + COST + '）') : 'ラインナップは準備中です';
+    if (sub) sub.textContent = ids.length ? ('この ' + ids.length + ' 体のどれか1匹が出ます（' + coinName() + ' ×' + COST() + '）／長押しでLv1のステータス') : 'ラインナップは準備中です';
     $('gacha-lineup').hidden = false;
   }
   function closeLineup() { var m = $('gacha-lineup'); if (m) m.hidden = true; }
@@ -112,6 +140,39 @@
   }
   function closeResult() { var m = $('gacha-result'); if (m) m.hidden = true; }
 
+  // ── ページ切りかえ ───────────────────────────
+  function pageTitle(n) {
+    if (n === 2) return (cfg.page2 && cfg.page2.title) || '第2ガチャ';
+    return customTitle || cfg.title || 'ガチャ';
+  }
+  // dir：1＝右へ進む（右からスッと出る）／-1＝左へ戻る／0＝動きなし
+  function setPage(n, dir) {
+    n = Math.max(1, Math.min(PAGES, n));
+    page = n;
+    screen.dataset.page = String(n);
+    var ttl = $('gacha-title'); if (ttl) ttl.textContent = pageTitle(n);
+    var lb = $('gacha-pg-label'); if (lb) lb.textContent = n + ' / ' + PAGES;
+    var prev = $('gacha-prev'), next = $('gacha-next');
+    if (prev) prev.hidden = n <= 1;
+    if (next) next.hidden = n >= PAGES;
+    screen.querySelectorAll('.gs-dot').forEach(function (d) {
+      var on = Number(d.dataset.page) === n;
+      d.classList.toggle('on', on); d.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    refresh();   // ページごとにコイン（ガチャコイン／アルカナエキス）が変わる
+    var wrap = $('gacha-machine-wrap');
+    if (wrap) {
+      wrap.classList.remove('slide-from-right', 'slide-from-left'); void wrap.offsetWidth;
+      if (dir) wrap.classList.add(dir > 0 ? 'slide-from-right' : 'slide-from-left');
+    }
+  }
+  function goPage(n) {
+    if (busy || n === page || n < 1 || n > PAGES) return;
+    var dir = n > page ? 1 : -1;
+    closeLineup(); closeResult();
+    setPage(n, dir);
+  }
+
   // ── 画面の開閉 ───────────────────────────────
   function isOpen() { return screen.style.display === 'flex'; }
   function open() {
@@ -119,7 +180,7 @@
     resetFx();
     closeLineup(); closeResult();
     var t = $('gacha-toast'); if (t) t.classList.remove('show');
-    var ttl = $('gacha-title'); if (ttl && cfg.title) ttl.textContent = cfg.title;
+    setPage(1, 0);   // 開くときはいつも1ページ目から
     refresh();
     screen.style.display = 'flex';
   }
@@ -355,14 +416,14 @@
     if (busy) return;
     var pool = drawable();
     if (!pool.length) { toast('ラインナップが空です'); return; }
-    if (coinCount() < COST) {
+    if (coinCount() < COST()) {
       toast(coinName() + 'が足りません');
       var chip = $('gacha-coin'); if (chip) { chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
       return;
     }
     // 抽選・コイン消費・BOXへの追加は、演出の前に確定して保存（途中で閉じても結果は残る）
     var id = pool[Math.floor(Math.random() * pool.length)];
-    if (typeof consumeItem !== 'function' || !consumeItem(COIN, COST)) { toast(coinName() + 'が足りません'); refresh(); return; }
+    if (typeof consumeItem !== 'function' || !consumeItem(COIN(), COST())) { toast(coinName() + 'が足りません'); refresh(); return; }
     var got = (typeof grantMonsterToBox === 'function') ? grantMonsterToBox(id) : null;
     if (!got) { toast('エラー：モンスターを追加できませんでした'); refresh(); return; }
     busy = true;
@@ -383,13 +444,37 @@
   if ((b = $('gacha-lineup-btn'))) b.addEventListener('click', function () { if (!busy) openLineup(); });
   if ((b = $('gacha-back'))) b.addEventListener('click', function () { if (!busy) close(); });
   if ((b = $('gacha-lineup-close'))) b.addEventListener('click', closeLineup);
+  if ((b = $('gacha-prev'))) b.addEventListener('click', function () { goPage(page - 1); });
+  if ((b = $('gacha-next'))) b.addEventListener('click', function () { goPage(page + 1); });
+  screen.querySelectorAll('.gs-dot').forEach(function (d) { d.addEventListener('click', function () { goPage(Number(d.dataset.page)); }); });
+  // 左右スワイプ（横に 50px 以上、かつ縦より横に大きく動いたとき）
+  (function () {
+    var main = $('gacha-main'); if (!main) return;
+    var sx = 0, sy = 0, tracking = false;
+    main.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) { tracking = false; return; }
+      tracking = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    }, { passive: true });
+    main.addEventListener('touchend', function (e) {
+      if (!tracking) return; tracking = false;
+      var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+      goPage(page + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+    main.addEventListener('touchcancel', function () { tracking = false; }, { passive: true });
+  })();
   if ((b = $('gacha-res-ok'))) b.addEventListener('click', closeResult);
   // 暗い背景をタップしても閉じる（カードの中をタップしたときは閉じない）
   [['gacha-lineup', closeLineup], ['gacha-result', closeResult]].forEach(function (p) {
     var m = $(p[0]); if (m) m.addEventListener('click', function (e) { if (e.target === m) p[1](); });
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape' || !isOpen()) return;
+    if (!isOpen()) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      if ($('gacha-result').hidden && $('gacha-lineup').hidden) goPage(page + (e.key === 'ArrowRight' ? 1 : -1));
+      return;
+    }
+    if (e.key !== 'Escape') return;
     if (!$('gacha-result').hidden) closeResult();
     else if (!$('gacha-lineup').hidden) closeLineup();
     else if (!busy) close();
@@ -397,6 +482,7 @@
 
   window.GachaScreen = {
     open: open, close: close, isOpen: isOpen, refresh: refresh,
-    setTitle: function (t) { var el = $('gacha-title'); if (el) el.textContent = t; }
+    setTitle: function (t) { customTitle = t; if (page === 1) { var el = $('gacha-title'); if (el) el.textContent = t; } },
+    page: function () { return page; }, setPage: function (n) { goPage(n); }
   };
 })();

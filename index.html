@@ -145,9 +145,18 @@
     <div class="gs-coin" id="gacha-coin" aria-label="所持ガチャコイン"><img id="gacha-coin-img" src="fcoin.png" alt="ガチャコイン" onerror="this.style.visibility='hidden'"><b id="gacha-coin-num">×0</b></div>
   </div>
 
+  <!-- ページ表示：ガチャは左右に切りかえられる（1ページ目＝赤／2ページ目＝青） -->
+  <div class="gs-pager" id="gacha-pager" role="tablist" aria-label="ガチャのページ">
+    <button class="gs-dot on" type="button" role="tab" aria-selected="true" aria-label="1ページ目" data-page="1"></button>
+    <span class="gs-pg-label" id="gacha-pg-label">1 / 2</span>
+    <button class="gs-dot" type="button" role="tab" aria-selected="false" aria-label="2ページ目" data-page="2"></button>
+  </div>
+
   <div id="gacha-main">
     <!-- ガチャマシン -->
-    <div class="gs-machine-wrap">
+    <div class="gs-machine-wrap" id="gacha-machine-wrap">
+      <button id="gacha-prev" class="gs-arrow prev" type="button" aria-label="前のガチャ" hidden><svg class="ic"><use href="#i-chev"/></svg></button>
+      <button id="gacha-next" class="gs-arrow next" type="button" aria-label="次のガチャ"><svg class="ic"><use href="#i-chev"/></svg></button>
       <svg class="gs-machine" viewBox="0 0 240 316" role="img" aria-label="ガチャマシン">
         <defs>
           <linearGradient id="gm-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfe4ff"/></linearGradient>
@@ -169,7 +178,7 @@
         <rect x="48" y="282" width="42" height="20" rx="8" fill="#1c1f4f"/>
         <rect x="150" y="282" width="42" height="20" rx="8" fill="#1c1f4f"/>
         <!-- 本体 -->
-        <rect x="34" y="158" width="172" height="130" rx="24" fill="#ff5f4a" stroke="#1c1f4f" stroke-width="4"/>
+        <rect class="gm-body" x="34" y="158" width="172" height="130" rx="24" fill="#ff5f4a" stroke="#1c1f4f" stroke-width="4"/>
         <path d="M49 184v62" stroke="#fff" stroke-opacity=".38" stroke-width="8" stroke-linecap="round"/>
         <path d="M44 272h152" stroke="#1c1f4f" stroke-opacity=".18" stroke-width="10" stroke-linecap="round"/>
         <!-- 上のドーム（ガラス）＋カプセル -->
@@ -580,6 +589,20 @@
     <div id="evo-cost"></div>
     <div class="evo-label">進化後のステータス</div>
     <div id="evo-stats"></div>
+    <div id="evo-skill-section" class="evo-skill-box">
+      <div class="evo-skill-head">
+        <span class="evo-skill-label" id="evo-skill-label">スキル</span>
+        <span class="evo-skill-sp" id="evo-skill-sp"></span>
+      </div>
+      <p class="evo-skill-desc" id="evo-skill-desc">---</p>
+    </div>
+    <div id="evo-ls-section" class="evo-skill-box ls">
+      <div class="evo-skill-head">
+        <span class="evo-skill-label">リーダースキル</span>
+        <span class="evo-ls-name" id="evo-ls-name"></span>
+      </div>
+      <p class="evo-skill-desc" id="evo-ls-desc">---</p>
+    </div>
     <p id="evo-note">進化するとレベルは1に戻ります</p>
   </div>
   <div id="evo-footer" class="dock">

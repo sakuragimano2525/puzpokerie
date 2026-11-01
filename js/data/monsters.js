@@ -3240,7 +3240,8 @@ const MONSTER_DATA = {
       name: 'バランスのオーラ',
       desc: 'バランスタイプのHP1.2倍。',
       effects: [ { type: 'hp', condition: 'type', attr: 'バランス', value: 1.2 } ]
-    }
+    },
+    evolutions: [ { to: 660, materials: [ { item: 'puzzle4', count: 6 } ] } ]
   },
   660: {
     id: 660,
@@ -4515,7 +4516,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 2500,
-    stats: { hp: { min: 400, max: 2400 }, atk: { min: 700, max: 2700 }, rec: { min: 20, max: 40 } },
+    stats: { hp: { min: 400, max: 2400 }, atk: { min: 700, max: 2500 }, rec: { min: 20, max: 40 } },
     skill: {
       name: 'アークブラスト',
       sp: 4,
@@ -4535,6 +4536,28 @@ const MONSTER_DATA = {
       ]
     }
   },
+  5014: {
+    id: 5014,
+    name: 'チトセ',
+    rarity: 4,
+    attr: 'water',
+    type: 'こうげき',
+    maxLevel: 75,
+    baseExp: 500,
+    stats: { hp: { min: 270, max: 2700 }, atk: { min: 220, max: 2200 }, rec: { min: 50, max: 150 } },
+    skill: {
+      name: '連段滝',
+      sp: 3,
+      desc: '最上段の横1列を水ドロップに変化。',
+      effects: [ { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'water' } ]
+    },
+    leaderSkill: {
+      name: '引波の型',
+      desc: '水と闇ドロップを同時に6個以上つなげて消すと攻撃2倍、1コンボ加算。',
+      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'water', count: 6, value: 2, attr2: 'dark', comboAdd: 1 } ]
+    },
+    evolutions: [ { to: 5815, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_52', count: 2 } ] } ]
+  },
   5015: {
     id: 5015,
     name: 'チトセ(覚醒）',
@@ -4544,7 +4567,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 2500,
-    stats: { hp: { min: 340, max: 2800 }, atk: { min: 260, max: 2400 }, rec: { min: 40, max: 180 } },
+    stats: { hp: { min: 340, max: 2800 }, atk: { min: 260, max: 2300 }, rec: { min: 40, max: 180 } },
     skill: {
       name: '漣',
       sp: 5,
@@ -4578,9 +4601,31 @@ const MONSTER_DATA = {
       ]
     }
   },
+  5016: {
+    id: 5016,
+    name: 'ナズナ',
+    rarity: 4,
+    attr: 'wood',
+    type: 'かいふく',
+    maxLevel: 75,
+    baseExp: 500,
+    stats: { hp: { min: 251, max: 752 }, atk: { min: 122, max: 280 }, rec: { min: 39, max: 88 } },
+    skill: {
+      name: 'みんな頼んだ！',
+      sp: 1,
+      desc: '敵単体に攻撃力×3倍の木属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', target: 'single', value: 3, attr: 'wood' } ]
+    },
+    leaderSkill: {
+      name: 'バランスのソウル',
+      desc: 'バランスタイプの攻撃1.5倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'バランス', value: 1.5 } ]
+    },
+    evolutions: [ { to: 5017, materials: [ { item: 'puzzle33', count: 1 }, { item: 'puzzle43', count: 1 } ] } ]
+  },
   5017: {
     id: 5017,
-    name: 'ナズナ',
+    name: 'ナズナ(覚醒)',
     rarity: 5,
     attr: 'wood',
     sub: 'light',
@@ -4599,6 +4644,34 @@ const MONSTER_DATA = {
     },
     leaderSkill: { name: 'なにがでるかな？', desc: 'ダンジョン潜入時にリーダー/フレンドの時、タマゴドロップ率が少し上昇。', effects: [] }
   },
+  5018: {
+    id: 5018,
+    name: 'セイナ',
+    rarity: 4,
+    attr: 'light',
+    type: 'バランス',
+    maxLevel: 75,
+    baseExp: 1500,
+    stats: { hp: { min: 285, max: 2850 }, atk: { min: 180, max: 1850 }, rec: { min: 150, max: 200 } },
+    skill: {
+      name: '廻風剣舞',
+      sp: 6,
+      desc: '1ターンの間、光属性の攻撃が1.5倍。\n1ターンの間、操作時間が2秒延長。',
+      effects: [
+        { type: 'atkBuff', attr: 'light', value: 1.5, turns: 1 },
+        { type: 'moveTimeBuff', turns: 1, seconds: 2, mult: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '裂風撃',
+      desc: '木ドロップの2コンボ以上で攻撃1.4倍、受けるダメージ5%軽減。\n5色同時に消すと攻撃1.4倍。',
+      effects: [
+        { type: 'atk', condition: 'attrCombos', attr: 'wood', count: 2, value: 1.4, reduce: 0.05 },
+        { type: 'atk', condition: 'colorCount', count: 5, value: 1.4 }
+      ]
+    },
+    evolutions: [ { to: 5019, materials: [ { item: 'puzzle43', count: 1 }, { item: 'spuzzle_22', count: 3 } ] } ]
+  },
   5019: {
     id: 5019,
     name: 'セイナ(覚醒)',
@@ -4608,10 +4681,10 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 1500,
-    stats: { hp: { min: 350, max: 3350 }, atk: { min: 270, max: 1700 }, rec: { min: 140, max: 240 } },
+    stats: { hp: { min: 350, max: 3350 }, atk: { min: 270, max: 1600 }, rec: { min: 140, max: 240 } },
     skill: {
       name: '旋・二重奏！',
-      sp: 3,
+      sp: 4,
       desc: 'ドロップを5属性＋回復ドロップに変化。\n1ターンの間、敵全体に攻撃。',
       effects: [ { type: 'orbChange5ColorHeal' }, { type: 'allAttackBuff', turns: 1 } ]
     },
@@ -4645,20 +4718,11 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'フローラルストーム',
-      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍。\n木と闇を同時に5個以上つなげて消すと受けるダメージ8%軽減、1コンボ加算。',
+      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍。\nかいふくタイプの回復力1.2倍。',
       effects: [
-        { type: 'atk', condition: 'connectEach', attr: 'wood', count: 5, value: 1.4, exponential: true, exact: true },
+        { type: 'atk', condition: 'connectEach', attr: 'wood', count: 5, value: 1.5, exponential: true, exact: true },
         { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.5, exponential: true, exact: true },
-        {
-          type: 'atk',
-          condition: 'orbConnect',
-          attr: 'wood',
-          count: 5,
-          value: 1,
-          attr2: 'dark',
-          comboAdd: 2,
-          reduce: 0.08
-        }
+        { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.2 }
       ]
     },
     evolutions: [ { to: 5021, materials: [ { item: 'puzzle32', count: 2 }, { item: 'puzzle33', count: 1 } ] } ]
@@ -4684,7 +4748,7 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'エレガントチェイン',
-      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍、受けるダメージ10%軽減。',
+      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍、受けるダメージ10%軽減。\n木と闇ドロップを同時に5個以上つなげて消すと1コンボ加算。',
       effects: [
         {
           type: 'atk',
@@ -4693,8 +4757,8 @@ const MONSTER_DATA = {
           count: 5,
           value: 1.5,
           exponential: true,
-          exact: true,
-          reduce: 0.1
+          reduce: 0.1,
+          exact: true
         },
         {
           type: 'atk',
@@ -4705,9 +4769,21 @@ const MONSTER_DATA = {
           exponential: true,
           exact: true,
           reduce: 0.1
-        }
+        },
+        { type: 'atk', condition: 'orbConnect', attr: 'wood', count: 5, value: 1, attr2: 'dark', comboAdd: 1 }
       ]
     }
+  },
+  5022: {
+    id: 5022,
+    name: '新モンスター',
+    rarity: 3,
+    attr: 'fire',
+    type: 'バランス',
+    baseExp: 100,
+    stats: { hp: { min: 500, max: 1500 }, atk: { min: 200, max: 600 }, rec: { min: 50, max: 150 } },
+    skill: { name: 'スキル名', sp: 1, desc: '', effects: [] },
+    leaderSkill: { name: 'リーダースキル名', desc: '', effects: [ { type: 'atk', attr: 'fire', value: 1.2 } ] }
   }
 };
 
