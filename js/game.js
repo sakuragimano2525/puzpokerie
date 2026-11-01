@@ -1738,8 +1738,10 @@ function fitEnemyImages() {
   if (!dg || !area) return;
   const units = [...area.querySelectorAll('.enemy-unit')];
   if (!units.length || !dg.clientHeight) return;   // まだ表示されていない時は、表示された時(ResizeObserver)にやり直す
+  // 余白カット済みのボス(XL)がいる時は、敵エリア上の余白を詰めて画像を大きくする（「あと〇」は画像の中の左上へ。CSSの .af-compact）
+  area.classList.toggle('af-compact', units.some(u => u.classList.contains('autofit') && u.classList.contains('size-XL')));
   const imgOf = u => u.querySelector('.enemy-img-wrap img');
-  units.forEach(u => { const im = imgOf(u); if (im) im.style.maxHeight = ''; });   // いったん制限なしに戻して測り直す
+  units.forEach(u => { const im = imgOf(u); if (im) { im.style.maxHeight = ''; im.style.width = ''; } });   // いったん制限なしに戻して測り直す
   const cs = getComputedStyle(dg), acs = getComputedStyle(area);
   const avail = dg.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - (parseFloat(acs.marginTop) || 0) - 2;
   // 折り返して複数段になる時（XL＋小さい敵など）は、各段の元の高さに比例して高さを分け合う
@@ -1757,7 +1759,16 @@ function fitEnemyImages() {
       const im = imgOf(u), wrap = u.querySelector('.enemy-img-wrap');
       if (!im || !wrap) continue;
       const extra = u.offsetHeight - wrap.offsetHeight;   // 画像以外（HPバーなど）の高さ
-      im.style.maxHeight = Math.max(48, Math.floor(rowAvail - extra)) + 'px';   // 幅は枠のまま、画像だけ縦に収まる大きさで中央に表示（object-fit:contain）
+      const maxH = Math.max(48, Math.floor(rowAvail - extra));
+      if (u.classList.contains('autofit') && im.naturalWidth > 0 && im.naturalHeight > 0) {
+        // 余白カット済みの画像：「枠の幅」と「使える高さ」の両方に収まる最大サイズにぴったり合わせる（縦横比はそのまま）
+        const wcs = getComputedStyle(wrap);
+        const innerW = wrap.clientWidth - (parseFloat(wcs.paddingLeft) || 0) - (parseFloat(wcs.paddingRight) || 0);
+        const ar = im.naturalWidth / im.naturalHeight;
+        im.style.width = Math.max(24, Math.floor(Math.min(innerW, maxH * ar))) + 'px';
+      } else {
+        im.style.maxHeight = maxH + 'px';   // 幅は枠のまま、画像だけ縦に収まる大きさで中央に表示（object-fit:contain）
+      }
     }
   });
 }
@@ -1823,7 +1834,7 @@ function renderEnemyUI(hideForAppear = false) {
     const imgWrap = document.createElement('div');
     imgWrap.className = 'enemy-img-wrap';
     const img = document.createElement('img');
-    img.src = enemy.img || '';
+    img.src = (window.EnemyAutoFit ? EnemyAutoFit.srcFor(enemy.img) : enemy.img) || '';   // 余白カット済みならそれを使う
     img.alt = enemy.name || '敵';
     img.onerror = function(){ this.style.display='none'; };
     img.decoding = 'async';   // 画像のデコードを裏で行う（読み込み中も画面操作が固まらない）
@@ -1838,6 +1849,7 @@ function renderEnemyUI(hideForAppear = false) {
     imgWrap.appendChild(topLeft);
     unit.appendChild(imgWrap);
     unit.appendChild(hpRow);   // パズドラ風：HPバーとカウントはモンスターの下
+    if (window.EnemyAutoFit) EnemyAutoFit.attach(img, unit, enemy.img);   // 画像の透明な余白を自動で切って、敵エリアにぴったり合わせる
 
     area.appendChild(unit);
   }

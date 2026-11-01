@@ -1612,3 +1612,18 @@ body {
 }
 /* スキル説明文の中の lock.png アイコン */
 .sk-ic.sk-lock { height: 1.2em; vertical-align: -0.25em; margin: 0 .1em 0 0; }
+
+/* ═══════════════════════════════════════════════
+   敵画像の自動フィット（enemy-autofit.js）
+   余白を切り落とした画像は、枠の幅×使える高さに「ぴったり」収まる大きさで表示（サイズは fitEnemyImages が計算）
+   XLは枠いっぱいまで使う（HPバーと同じ幅）。「あと〇」は敵エリアの左上に置く
+═══════════════════════════════════════════════ */
+.enemy-unit.autofit .enemy-img-wrap img { width:auto; max-width:100%; height:auto; }
+.enemy-unit.size-XL.autofit .enemy-img-wrap { width:100%; }
+.enemy-unit.size-XL.autofit .enemy-top-left { left:1.5%; }
+
+/* 余白カット済みのボス(XL)：敵エリア上の余白を詰めて、画像をできるだけ大きく。
+   「あと〇」・状態アイコンは画像の外（上）ではなく、画像の中の左上に重ねる */
+#dungeon:has(#enemy-area.af-compact) { padding-top:6px; }
+#enemy-area.af-compact { margin-top:6px; }
+#enemy-area.af-compact .enemy-unit.size-XL.autofit .enemy-top-left { top:4px; }

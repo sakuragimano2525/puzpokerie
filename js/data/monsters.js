@@ -1743,10 +1743,10 @@ const MONSTER_DATA = {
     baseExp: 500,
     stats: { hp: { min: 680, max: 2680 }, atk: { min: 300, max: 2000 }, rec: { min: 12, max: 35 } },
     skill: {
-      name: 'つららおとし',
+      name: 'ドロップチェンジ・水',
       sp: 3,
-      desc: '最左の縦1列を水ドロップに変化。',
-      effects: [ { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'water' } ]
+      desc: '火ドロップを水ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'fire', to: 'water' } ]
     },
     leaderSkill: {
       name: 'スーパーハーフアップ',
@@ -3543,19 +3543,30 @@ const MONSTER_DATA = {
     id: 677,
     name: 'ニャスパー',
     rarity: 1,
-    type: 'バランス',
+    attr: 'dark',
+    type: 'かいふく',
     maxLevel: 25,
-    baseExp: 100,
-    stats: { hp: { min: 210, max: 460 }, atk: { min: 95, max: 210 }, rec: { min: 15, max: 28 } }
+    baseExp: 1000,
+    stats: { hp: { min: 210, max: 460 }, atk: { min: 95, max: 210 }, rec: { min: 15, max: 80 } },
+    skill: { name: 'ハートエンハンス', sp: 3, desc: '1ターンの間、回復力が1.5倍。', effects: [ { type: 'recMult', turns: 1, value: 1.5 } ] },
+    leaderSkill: { name: '闇のルーン・中', desc: '闇属性の回復力1.7倍。', effects: [ { type: 'rec', attr: 'dark', value: 1.7 } ] },
+    evolutions: [ { to: 678, materials: [ { item: 'puzzle52', count: 4 } ] } ]
   },
   678: {
     id: 678,
     name: 'ニャオニクス',
     rarity: 3,
-    type: 'バランス',
+    attr: 'dark',
+    type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
-    stats: { hp: { min: 490, max: 3250 }, atk: { min: 230, max: 1520 }, rec: { min: 69, max: 198 } }
+    baseExp: 1500,
+    stats: { hp: { min: 580, max: 3000 }, atk: { min: 250, max: 1580 }, rec: { min: 200, max: 380 } },
+    skill: { name: 'ハイハートエンハンス', sp: 4, desc: '1ターンの間、回復力が2倍。', effects: [ { type: 'recMult', turns: 1, value: 2 } ] },
+    leaderSkill: {
+      name: 'ハートフルコンボ',
+      desc: '回復ドロップの2コンボ以上で攻撃2.2倍。',
+      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'heal', count: 2, value: 2.2 } ]
+    }
   },
   679: {
     id: 679,
@@ -3716,19 +3727,44 @@ const MONSTER_DATA = {
     id: 692,
     name: 'ウデッポウ',
     rarity: 1,
+    attr: 'water',
     type: 'こうげき',
     maxLevel: 25,
-    baseExp: 100,
-    stats: { hp: { min: 170, max: 380 }, atk: { min: 120, max: 260 }, rec: { min: 5, max: 9 } }
+    baseExp: 500,
+    stats: { hp: { min: 170, max: 380 }, atk: { min: 120, max: 480 }, rec: { min: 15, max: 50 } },
+    skill: {
+      name: 'ドロップチェンジ・水',
+      sp: 3,
+      desc: '火ドロップを水ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'fire', to: 'water' } ]
+    },
+    leaderSkill: {
+      name: 'ウォーターコンボ',
+      desc: '水ドロップの2コンボ以上で攻撃1.7倍。',
+      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1.7 } ]
+    },
+    evolutions: [ { to: 693, materials: [ { item: 'puzzle22', count: 1 }, { item: 'spuzzle_52', count: 3 } ] } ]
   },
   693: {
     id: 693,
     name: 'ブロスター',
     rarity: 3,
+    attr: 'water',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
-    stats: { hp: { min: 420, max: 2800 }, atk: { min: 310, max: 2080 }, rec: { min: 25, max: 71 } }
+    baseExp: 1500,
+    stats: { hp: { min: 760, max: 2780 }, atk: { min: 410, max: 2100 }, rec: { min: 30, max: 120 } },
+    skill: {
+      name: 'ドロップチェンジ・水',
+      sp: 3,
+      desc: '火ドロップを水ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'fire', to: 'water' } ]
+    },
+    leaderSkill: {
+      name: 'ウォーターコンボ・大',
+      desc: '水ドロップの2コンボ以上で攻撃2倍。',
+      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 2 } ]
+    }
   },
   694: {
     id: 694,
