@@ -152,6 +152,7 @@ const BATTLE_SE = {
   kei:         { file: 'kei.mp3',         pool: 3, vol: 0.9 },  // リーダースキルのダメージ軽減が発動
   bshield:     { file: 'bshield.mp3',     pool: 3, vol: 0.9 },  // 軽減・吸収：敵のダメージ軽減／属性軽減／コンボ吸収、プレイヤーのダメージ軽減スキル
   bind:        { file: 'bind.mp3',        pool: 2, vol: 0.9 },  // バインドされた時（スキル使用不可もこの音）
+  drop_up:     { file: 'drop_up.mp3',     pool: 2, vol: 0.9 },  // ドロップ目覚め（味方・敵スキル共通）
   dna:         { file: 'dna.mp3',         pool: 2, vol: 0.9 },  // 敵の「落ちコンなし」妨害を受けた時
   lock:        { file: 'drop.mp3',        pool: 2, vol: 0.8 },  // ロックオン
   orblock:     { file: 'lock.mp3',        pool: 2, vol: 0.9 },  // ドロップがロックされた時（敵スキル）
@@ -831,6 +832,15 @@ function buildEnemyActionFn(skills, enemyRef) {
           renderBuffIcons();
           break;
         }
+        case 'orb_boost': {
+          // 目覚め：〇ターンの間、指定した色（2色まで）のドロップが落ちてきやすくなる（毒・お邪魔はその間だけ落ちてくる）。rate は%（15 → +15%）
+          const t = Math.max(1, Math.floor(Number(sk.turn) || 3));
+          addOrbBoost(sk.attr, (Number(sk.rate) || 15) / 100, t, 0.15, true);
+          if (sk.attr2 && sk.attr2 !== 'none') addOrbBoost(sk.attr2, (Number(sk.rate2) || Number(sk.rate) || 15) / 100, t, 0.15, true);
+          playSE('drop_up');
+          renderBuffIcons();
+          break;
+        }
         case 'board_change': {
           playSE('pahu');   // 敵からドロップ生成・変換された時の効果音（tedrop.mp3）
           if (sk.pattern === '5color_heal' || sk.pattern === 'multi') {
@@ -1362,6 +1372,13 @@ function playBattleBgm(idx, asField) {
   let file;
   if (cfg) file = (boss && cfg.boss) ? cfg.boss : (cfg.field || cfg.boss);
   else { const d = DUNGEON_DATA[key]; file = (d && d.bgm) || 'dungeon1.mp3'; }
+  // 乱入モンスター（bgm 指定あり）がいるバトルは、そのモンスター専用のBGMにする。次のバトルでは元のBGMに戻る
+  //   ※ 登場演出つきボスが最初のバトルの時(asField)は、まず道中BGMのまま（演出のあとの playBattleBgm で乱入BGMになる）
+  if (!asField) {
+    const bt = currentDungeonBattles && currentDungeonBattles[idx];
+    const ib = bt && bt.enemies && bt.enemies.find(e => e && e.bgm);
+    if (ib) file = ib.bgm;
+  }
   if (dungeonBGMAudio && dungeonBGMFile === file && !dungeonBGMAudio.paused) return;
   startDungeonBGM(file);
 }
@@ -3503,13 +3520,27 @@ let buffMoveTimeTurns = 0;
 // 全体攻撃: ○ターンの間、全員の通常攻撃が敵全体に当たる
 let buffAllAttack = false;
 let buffAllAttackTurns = 0;
+// ドロップ目覚め: ○ターンの間、指定した色のドロップが落ちてくる確率が +rate（本家の「少し落ちやすい」は +15% = 0.15）
+//   { attr:'fire'|'water'|'wood'|'light'|'dark'|'heal', rate:0.15, turns:5 }。同じ色は強い方・長い方に更新
+let orbBoosts = [];
 
+// ドロップ目覚めを1色ぶん登録する。同じ色は強い方・長い方に更新
+function addOrbBoost(attrIn, rateIn, turnsIn, defRate, enemy) {
+  const attr = (TYPES.includes(attrIn) || attrIn === 'poison' || attrIn === 'ojama') ? attrIn : 'fire';
+  let rate = Number(rateIn); if (!(rate > 0)) rate = defRate; if (rate > 1) rate /= 100;   // 15 と書いても 15% とみなす
+  rate = Math.min(rate, 0.8);
+  const turns = Math.max(1, Math.floor(Number(turnsIn) || 5));
+  const ex = orbBoosts.find(b => b.attr === attr && !!b.enemy === !!enemy);
+  if (ex) { ex.rate = Math.max(ex.rate, rate); ex.turns = Math.max(ex.turns, turns); }
+  else orbBoosts.push(enemy ? { attr, rate, turns, enemy: true } : { attr, rate, turns });
+}
 function resetPlayerBuffs() {
   buffDamageReduction = false; buffDamageReductionValue = 0; buffDamageReductionTurns = 0;
   buffRecMult = false; buffRecMultValue = 1; buffRecMultTurns = 0;
   buffMoveTime = false; buffMoveTimeMult = 1; buffMoveTimeSec = 0; buffMoveTimeTurns = 0;
   buffAllAttack = false; buffAllAttackTurns = 0;
   atkBuffs = [];
+  orbBoosts = [];
   buffMoveTimeShort = false; buffMoveTimeShortTurns = 0;
   enemyAtkDowns = [];
   enemyRecDown = null; enemyMoveDown = null; enemySkillSeal = null; enemyNoFall = null;
@@ -3523,6 +3554,8 @@ function tickPlayerBuffs() {
   if (buffAllAttack && --buffAllAttackTurns <= 0) { buffAllAttack = false; buffAllAttackTurns = 0; }
   atkBuffs.forEach(b => b.turns--);
   atkBuffs = atkBuffs.filter(b => b.turns > 0);
+  orbBoosts.forEach(b => { if (!b.enemy) b.turns--; });   // 敵がかけた目覚めは、味方の攻撃が終わったあと（tickEnemyDebuffsAfterAttack）で減らす
+  orbBoosts = orbBoosts.filter(b => b.turns > 0);
   buffMoveTimeShort = false; buffMoveTimeShortTurns = 0;   // 敵の操作時間ダウンは従来どおり1ターンで解除
   // 敵の防御ダウン：ターン終了ごとに残りターンを減らし、切れたら元の防御力に戻す
   for (const e of enemyList) if (e.defDown && --e.defDown.turns <= 0) delete e.defDown;
@@ -5360,7 +5393,7 @@ function syncIkuSelectMode() {
 // ============================================================
 // モンスター詳細画面
 // ============================================================
-const ATTR_TO_IMG = { fire:'1', water:'2', wood:'3', light:'4', dark:'5', heal:'6' };
+const ATTR_TO_IMG = { fire:'1', water:'2', wood:'3', light:'4', dark:'5', heal:'6', poison:'8', ojama:'ojama' };
 let detailBoxIndex = 0;
 let detailFromScreen = 'team-edit';
 let detailFromList = false;        // ボックス一覧のカードから開いた（→ 左右ボタンは一覧の並び順で巡回）
@@ -6982,6 +7015,24 @@ function runSkillEffect(eff, context) {
       break;
     }
 
+    // ○ターンの間、〇ドロップが落ちやすくなる（ドロップ目覚め）
+    case 'orbSpawnBoost': {
+      addOrbBoost(eff.attr, eff.rate, eff.turns, 0.15);
+      playSE('drop_up');
+      renderBuffIcons();
+      if (eff.message) showSkillMessage(eff.message, 1000);
+      break;
+    }
+    // ○ターンの間、2色のドロップが落ちやすくなる（2色目覚め。上昇率は色ごとに別々に決められる。初期値は両方10%）
+    case 'orbSpawnBoost2': {
+      addOrbBoost(eff.attr, eff.rate, eff.turns, 0.10);
+      addOrbBoost(eff.attr2, eff.rate2, eff.turns, 0.10);
+      playSE('drop_up');
+      renderBuffIcons();
+      if (eff.message) showSkillMessage(eff.message, 1000);
+      break;
+    }
+
     // ── ドロップ変化系 ──
     case 'orbChangeRow': { // 指定行を単色に変換
       playDropcOnce();
@@ -7266,6 +7317,11 @@ function tickEnemyDebuffsAfterAttack() {
   if (enemyMoveDown && --enemyMoveDown.turns <= 0) { enemyMoveDown = null; _dbgChanged = true; }
   if (enemySkillSeal && --enemySkillSeal.turns <= 0) { enemySkillSeal = null; _dbgChanged = true; }   // スキル使用不可（このあと renderParty で枠が戻る）
   if (enemyNoFall && --enemyNoFall.turns <= 0) { enemyNoFall = null; _dbgChanged = true; }
+  if (orbBoosts.some(b => b.enemy)) {
+    orbBoosts.forEach(b => { if (b.enemy) b.turns--; });
+    orbBoosts = orbBoosts.filter(b => b.turns > 0);
+    _dbgChanged = true;
+  }
   if (_dbgChanged) { renderBuffIcons(); try { renderParty(); } catch (e) {} }
   if (window.MultiShare) MultiShare.fxStatus();   // マルチ：弱体が切れたことも相手の画面へ
 }
@@ -7376,13 +7432,34 @@ function activateTimeStop(seconds) {
 // 効果ポップアップ（敵の状態異常アイコン／自分のバフアイコンをタップ → 画面中央に数秒表示）
 // ============================================================
 let _effectPopupTimer = null;
+// 「ドロップ画像＋落ちてくる⬇」の合成アイコン（ドロップ目覚めの状態アイコン用）。画像が読み込めない時は、その色の丸で代用
+function makeFallIcon(imgSrc, attr, size) {
+  const box = document.createElement('span');
+  box.style.cssText = `position:relative; display:inline-block; flex:none; width:${size}px; height:${size}px;`;
+  const orbSz = Math.round(size * 0.86);
+  const im = document.createElement('img');
+  im.src = imgSrc; im.alt = ''; im.draggable = false;
+  im.style.cssText = `position:absolute; left:${Math.round((size - orbSz) / 2)}px; bottom:0; width:${orbSz}px; height:${orbSz}px; object-fit:contain; display:block;`;
+  im.onerror = () => { im.style.display = 'none'; box.style.background = `radial-gradient(circle at 50% 70%, ${ATTR_FX_COLOR[attr] || '#fff'} 0 ${Math.round(orbSz / 2)}px, transparent ${Math.round(orbSz / 2) + 1}px)`; };
+  box.appendChild(im);
+  const aw = Math.round(size * 0.5), ah = Math.round(size * 0.56);
+  const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  arrow.setAttribute('viewBox', '0 0 10 12');
+  arrow.setAttribute('width', aw); arrow.setAttribute('height', ah);
+  arrow.style.cssText = `position:absolute; left:${Math.round((size - aw) / 2)}px; top:-1px; overflow:visible; filter:drop-shadow(0 0 1px rgba(0,0,0,.9));`;
+  arrow.innerHTML = '<path d="M3.2 0.6h3.6v5h2.4L5 11.2 0.8 5.6h2.4z" fill="#fff" stroke="#222" stroke-width="1" stroke-linejoin="round"/>';
+  box.appendChild(arrow);
+  return box;
+}
 function showEffectPopup(o) {
   let el = document.getElementById('effect-popup');
   if (!el) { el = document.createElement('div'); el.id = 'effect-popup'; document.body.appendChild(el); }
   el.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'ep-head';
-  if (o.svg) {
+  if (o.fall && o.icon) {
+    const w = document.createElement('span'); w.className = 'ep-icon'; w.appendChild(makeFallIcon(o.icon, o.attr, 34)); head.appendChild(w);
+  } else if (o.svg) {
     const w = document.createElement('span'); w.className = 'ep-icon'; w.innerHTML = o.svg; head.appendChild(w);
   } else if (o.icon) {
     const im = document.createElement('img'); im.className = 'ep-icon'; im.src = o.icon; im.alt = '';
@@ -7425,6 +7502,12 @@ function buildBuffItems() {
     items.push({ icon: up ? 'j3.png' : 'j4.png', turns: buffMoveTimeTurns, name: up ? '操作時間アップ' : '操作時間ダウン', text: `ドロップ操作時間が${parts.join('・')}になる` });
   }
   if (buffAllAttack)       items.push({ icon:'zen.png', turns: buffAllAttackTurns, name:'全体攻撃', text:'敵全体に攻撃する' });
+  // ドロップ目覚め：ドロップの画像に「落ちてくる⬇」を重ねたアイコン（右に残りターン）
+  for (const b of orbBoosts) {
+    if (b.turns <= 0) continue;
+    const nm = b.attr === 'heal' ? '回復' : b.attr === 'poison' ? '毒' : b.attr === 'ojama' ? 'お邪魔' : (ATTR_NAME_JP[b.attr] || b.attr);
+    items.push({ icon: `${ATTR_TO_IMG[b.attr] || '1'}.png`, fall: true, attr: b.attr, turns: b.turns, name: `${nm}の目覚め`, text: (b.enemy ? '敵の効果で、' : '') + ((b.attr === 'poison' || b.attr === 'ojama') ? `${nm}ドロップが${Math.round(b.rate * 100)}%の確率で落ちてくるようになる` : `${nm}ドロップが${Math.round(b.rate * 100)}%落ちやすくなる`) });
+  }
   // 自分のスキルの攻撃倍率：1より大きい→j1（アップ）／1より小さい→j8（ダウン）
   // 同じ倍率・同じ残りターンの「ダウン」は、属性ごとにバラけず1つのアイコンにまとめる
   const atkDownGroups = [];
@@ -7506,12 +7589,16 @@ function renderBuffIcons() {
     colItems.slice().reverse().forEach(item => {
       const wrap = document.createElement('div');
       wrap.style.cssText = `display:flex; flex-direction:row; align-items:center; gap:2px; background:rgba(0,0,0,0.72); border:1px solid rgba(255,255,255,0.18); border-radius:5px; padding:1px 3px 1px 2px; pointer-events:auto; cursor:pointer;`;
-      wrap.addEventListener('click', (ev) => { ev.stopPropagation(); showEffectPopup({ icon:item.icon, name:item.name, text:item.text, turns:item.turns }); });
+      wrap.addEventListener('click', (ev) => { ev.stopPropagation(); showEffectPopup({ icon:item.icon, name:item.name, text:item.text, turns:item.turns, fall:item.fall, attr:item.attr }); });
+      if (item.fall) {
+        wrap.appendChild(makeFallIcon(item.icon, item.attr, ICON_SIZE));
+      } else {
       const img = document.createElement('img');
       img.src = item.icon;
       img.style.cssText = `width:${ICON_SIZE}px; height:${ICON_SIZE}px; object-fit:contain; display:block;${item.filter ? 'filter:' + item.filter + ';' : ''}`;
       img.onerror = () => { img.style.display='none'; };
       wrap.appendChild(img);
+      }
       if (item.turns > 0) {
         const t = document.createElement('span');
         t.textContent = item.turns;
@@ -7739,7 +7826,7 @@ function createHitEffect(x, y, attr) {
 // ★ 属性別の攻撃エフェクト（パズドラ風：炎・水・風・雷・闇） ★
 //   fire=炎の玉 / water=水の塊 / wood=風(旋風と葉) / light=雷光 / dark=闇の渦
 // ============================================================
-const ATTR_FX_COLOR = { fire:'#ff5a00', water:'#2fa4ff', wood:'#5ee35e', light:'#ffe14a', dark:'#9a4be0', heal:'#ff88aa' };
+const ATTR_FX_COLOR = { fire:'#ff5a00', water:'#2fa4ff', wood:'#5ee35e', light:'#ffe14a', dark:'#9a4be0', heal:'#ff88aa', poison:'#b050e0', ojama:'#8a8a8a' };
 
 function fxAdd(css, life) {
   const el = document.createElement('div');
@@ -8106,6 +8193,9 @@ function buildDungeonBattles(d) {
 //   ・乱入モンスターに replaceBoss:true を付けると「ボス乱入」：ボス（isBoss の敵）と入れ替わる（ボス以外とは入れ替わらない）。
 //     例）DIO：{ ..., isBoss:true, replaceBoss:true } を rate:10 で登録 → 10%でボスがDIOに置き換わる。
 //   ・ステータス・行動・ドロップは通常の敵と同じ（敵データをそのまま使う）。
+//   ・★乱入BGM：乱入モンスターに bgm:'ファイル名.mp3' を書くと、そのモンスターがいるバトルの間だけ、そのBGMに変わる（次のバトルで元のBGMに戻る）。
+//       例）{ name:'DIO', ..., isBoss:true, replaceBoss:true, bgm:'dio.mp3' }
+//     乱入モンスター全員に同じBGMなら、intrusion の中に1つ書けばOK：intrusion:{ rate:10, bgm:'ranny.mp3', monsters:[…] }（各モンスターの bgm が優先）
 // ============================================================
 function applyIntrusion(d, battles) {
   const it = d && d.intrusion;
@@ -8135,6 +8225,9 @@ function applyIntrusion(d, battles) {
     const [bi, ei] = slots[Math.floor(Math.random() * slots.length)];
     used.add(bi + '-' + ei);
     out[bi].enemies[ei] = JSON.parse(JSON.stringify(src));
+    if (!out[bi].enemies[ei].bgm && it.bgm) out[bi].enemies[ei].bgm = it.bgm;   // 乱入全体の共通BGM（intrusion.bgm）
+    const ibgm = out[bi].enemies[ei].bgm;
+    if (ibgm) { try { if (window.AudioFast && AudioFast.prefetchBGM) AudioFast.prefetchBGM(ibgm, true); } catch (e) {} }   // 乱入BGMを先に読み込んでおく
     placed.push(`${bi + 1}戦目・${ei + 1}体目 ← ${src.name || '?'}`);
   }
   if (placed.length) console.info('[乱入]', placed.join(' / '));
@@ -9422,7 +9515,42 @@ document.getElementById('sp-yes').addEventListener('click', confirmSkill);
 document.getElementById('sp-no').addEventListener('click', closeSkillConfirm);
 document.getElementById('skill-confirm').addEventListener('click', function(e) { if (e.target === this) closeSkillConfirm(); });
 
-const rand = () => TYPES[Math.floor(Math.random() * TYPES.length)];
+// 新しく落ちてくるドロップの抽選。ドロップ目覚め中は、その色の確率が（通常の 1/6 に）+rate される。残りの色は均等に薄まる
+// 毒・お邪魔は普段は落ちてこない。目覚め中だけ「6色＋その色」の7種類になり、その色が rate（15%など）の確率で落ちてくる
+const SPAWN_EXTRA = ['poison', 'ojama'];
+function spawnBoostMap() {
+  const boost = {};
+  for (const b of orbBoosts) if (b.turns > 0 && (TYPES.includes(b.attr) || SPAWN_EXTRA.includes(b.attr))) boost[b.attr] = Math.max(boost[b.attr] || 0, b.rate);
+  return boost;
+}
+function spawnPool() {
+  const boost = spawnBoostMap();
+  return TYPES.concat(SPAWN_EXTRA.filter(t => t in boost));
+}
+function spawnProbs() {
+  const n = TYPES.length, boost = spawnBoostMap(), p = {};
+  const ks = Object.keys(boost);
+  if (!ks.length) { for (const t of TYPES) p[t] = 1 / n; return p; }
+  const want = {};
+  for (const k of ks) want[k] = (TYPES.includes(k) ? 1 / n : 0) + boost[k];
+  const raw = ks.reduce((a, k) => a + want[k], 0);
+  const sum = Math.min(raw, 0.95);   // 全部上げても他の色が0にならないように
+  for (const k of ks) p[k] = want[k] * (sum / raw);
+  const others = TYPES.filter(t => !(t in boost));
+  for (const t of others) p[t] = (1 - sum) / others.length;
+  return p;
+}
+function pickSpawn(list) {
+  list = list || spawnPool();
+  if (!orbBoosts.length) return list[Math.floor(Math.random() * list.length)];
+  const p = spawnProbs();
+  const total = list.reduce((a, t) => a + (p[t] || 0), 0);
+  if (!(total > 0)) return list[Math.floor(Math.random() * list.length)];
+  let r = Math.random() * total;
+  for (const t of list) { r -= (p[t] || 0); if (r <= 0) return t; }
+  return list[list.length - 1];
+}
+const rand = () => pickSpawn();
 
 function init() {
   _gameOverActive = false;
@@ -10536,8 +10664,8 @@ async function drop(fill = true, noMatch = false) {
       if (!fill) { newCol.push(null); continue; }
       if (!noMatch) { newCol.push(rand()); continue; }
       // 補充ドロップが縦横3つ以上つながらない属性を選ぶ（盤面は消した直後なので空きマスは各列の上側だけ）
-      const opts = TYPES.filter(t => !wouldMatchAt(i, c, t));
-      const pick = opts.length ? opts[Math.floor(Math.random() * opts.length)] : rand();
+      const opts = spawnPool().filter(t => !wouldMatchAt(i, c, t));
+      const pick = opts.length ? pickSpawn(opts) : rand();
       grid[i][c] = pick;
       newCol.push(pick);
     }

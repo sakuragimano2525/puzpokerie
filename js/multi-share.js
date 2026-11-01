@@ -102,6 +102,7 @@
       mt: [buffMoveTime, buffMoveTimeMult, buffMoveTimeSec, buffMoveTimeTurns],
       aa: [buffAllAttack, buffAllAttackTurns],
       ab: clone(atkBuffs),
+      ob: clone(orbBoosts),
       ms: [buffMoveTimeShort, buffMoveTimeShortTurns],
       ad: clone(enemyAtkDowns),
       rd: clone(enemyRecDown), md: clone(enemyMoveDown), ss: clone(enemySkillSeal), nf: clone(enemyNoFall),
@@ -114,6 +115,7 @@
     [buffMoveTime, buffMoveTimeMult, buffMoveTimeSec, buffMoveTimeTurns] = b.mt;
     [buffAllAttack, buffAllAttackTurns] = b.aa;
     atkBuffs = b.ab || [];
+    orbBoosts = b.ob || [];
     [buffMoveTimeShort, buffMoveTimeShortTurns] = b.ms;
     enemyAtkDowns = b.ad || [];
     enemyRecDown = b.rd || null; enemyMoveDown = b.md || null; enemySkillSeal = b.ss || null; enemyNoFall = b.nf || null;

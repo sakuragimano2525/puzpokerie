@@ -60,7 +60,7 @@
     return [cat, effs.length > 1 ? 1 : 0, attrRankOf(_sa), cnt, val, String(ls.name || '')];
   }
   // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-  const SK_TYPE_ORDER = ['damageAll', 'damageSingle', 'damageSelfAtkMult', 'selfDamage', 'orbChangeLine', 'orbChangeRow', 'orbChangeCross', 'orbChangeReverseL', 'orbChangeRandom', 'orbChangeMulti', 'orbChange5ColorHeal', 'orbConvert', 'orbUnlock', 'orbLock', 'heal', 'atkBuff', 'allAttackBuff', 'dmgReductionBuff', 'enemyDelay', 'defenseDown', 'timeStop'];
+  const SK_TYPE_ORDER = ['damageAll', 'damageSingle', 'damageSelfAtkMult', 'selfDamage', 'orbChangeLine', 'orbChangeRow', 'orbChangeCross', 'orbChangeReverseL', 'orbChangeRandom', 'orbChangeMulti', 'orbChange5ColorHeal', 'orbConvert', 'orbUnlock', 'orbLock', 'heal', 'atkBuff', 'allAttackBuff', 'orbSpawnBoost', 'orbSpawnBoost2', 'dmgReductionBuff', 'enemyDelay', 'defenseDown', 'timeStop'];
   function skillSortKey(sk) {
     sk = sk || {};
     const e = (sk.effects || [])[0] || {};

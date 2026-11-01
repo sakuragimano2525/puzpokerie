@@ -40,7 +40,7 @@
 }
 .gs-emblem .ic { width: 1.1rem; height: 1.1rem; stroke-width: 2.4; }
 #gacha-title {
-  margin: 0; min-width: 0; white-space: nowrap;
+  margin: 0; min-width: 0; white-space: nowrap; overflow: hidden;
   font: 900 clamp(0.95rem, 4.7vw, 1.3rem)/1.2 var(--ff); letter-spacing: 0.04em; color: var(--ink);
 }
 
@@ -124,6 +124,8 @@
 .gs-machine .gm-body { transition: fill 0.25s; }
 #gacha-screen[data-page="2"] .gs-machine .gm-body { fill: #3d8bff; }
 #gacha-screen[data-page="2"] .gs-emblem { background: #2f7bff; }
+#gacha-screen[data-page="3"] .gs-machine .gm-body { fill: #2fb860; }
+#gacha-screen[data-page="3"] .gs-emblem { background: #22a553; }
 
 .gs-pager { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 0 0; }
 .gs-pg-label {
@@ -131,6 +133,7 @@
   background: var(--paper); border: 2.5px solid var(--ink); border-radius: 999px; box-shadow: 0 2px 0 var(--ink);
 }
 #gacha-screen[data-page="2"] .gs-pg-label { color: #fff; background: #2f7bff; }
+#gacha-screen[data-page="3"] .gs-pg-label { color: #fff; background: #22a553; }
 .gs-dot {
   position: relative; width: 14px; height: 14px; padding: 0; box-sizing: border-box; border-radius: 50%; cursor: pointer;
   background: rgba(255, 255, 255, 0.85); border: 2.5px solid var(--ink); -webkit-tap-highlight-color: transparent;
@@ -139,6 +142,7 @@
 .gs-dot::before { content: ''; position: absolute; inset: -12px; }   /* 指で押しやすいように、見た目より広くする */
 .gs-dot[data-page="1"].on { background: var(--coral); transform: scale(1.25); }
 .gs-dot[data-page="2"].on { background: #2f7bff; transform: scale(1.25); }
+.gs-dot[data-page="3"].on { background: #22a553; transform: scale(1.25); }
 
 /* マシンの左右の矢印 */
 .gs-machine-wrap { position: relative; }
@@ -158,6 +162,10 @@
 /* 2ページ目の「戻る」矢印は青、1ページ目の「進む」矢印は赤っぽくして、行き先の色を知らせる */
 .gs-arrow.next { background: #dbe9ff; }
 .gs-arrow.prev { background: #ffe1db; }
+#gacha-screen[data-page="1"] .gs-arrow.next { background: #dbe9ff; }   /* 1→2 は青 */
+#gacha-screen[data-page="2"] .gs-arrow.next { background: #d4f4de; }   /* 2→3 は緑 */
+#gacha-screen[data-page="2"] .gs-arrow.prev { background: #ffe1db; }   /* 2→1 は赤 */
+#gacha-screen[data-page="3"] .gs-arrow.prev { background: #dbe9ff; }   /* 3→2 は青 */
 
 /* 切りかえのときの、横からスッと出る動き */
 #gacha-machine-wrap.slide-from-right { animation: gsSlideR 0.3s cubic-bezier(0.2, 0.9, 0.3, 1); }
@@ -285,3 +293,11 @@
 @media (prefers-reduced-motion: reduce) {
   .gc-obj.wait .gc-capsvg, .gc-obj.wait .gc-aura, .gc-tap.show { animation: none; }
 }
+
+/* ── ロック中（図鑑に条件のモンスターがそろっていないガチャ） ──
+   マシンを灰色にして鍵マークを重ね、「まわす」も灰色にする（ラインナップは見られる） */
+.gs-lock { display: none; position: absolute; z-index: 3; left: 50%; top: 34%; transform: translate(-50%, -50%); font-size: clamp(2.6rem, 14vw, 4.2rem); line-height: 1; pointer-events: none; filter: drop-shadow(0 3px 0 rgba(28,31,79,.5)); }
+#gacha-screen[data-locked="1"] .gs-lock { display: block; }
+#gacha-screen[data-locked="1"] .gs-machine { filter: grayscale(0.85) brightness(0.88); }
+#gacha-spin-btn.locked { filter: grayscale(1); opacity: 0.75; }
+#gacha-spin-btn.locked .gs-spin-txt { font-size: 1.5rem; }

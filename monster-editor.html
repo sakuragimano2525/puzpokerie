@@ -329,6 +329,8 @@ const activeTemplates = {
   recMult:{label:'○ターンの間、回復力が○倍',data:{type:'recMult',turns:1,value:0},fields:[numF('turns','ターン数'),numF('value','回復力の倍率（0=回復できない／2=2倍／0.5=半分）')]},
   moveTimeBuff:{label:'○ターンの間、操作時間を○秒延長＋○倍',data:{type:'moveTimeBuff',turns:1,seconds:2,mult:1},fields:[numF('turns','ターン数'),numF('mult','操作時間の倍率（1=変えない／1.5=1.5倍／0.5=半分）'),numF('seconds','延長する秒数（短縮はマイナス、0=変えない）')]},
   allAttackBuff:{label:'○ターンの間、敵全体に攻撃',data:{type:'allAttackBuff',turns:1},fields:[numF('turns','ターン数')]},
+  orbSpawnBoost:{label:'○ターンの間、○ドロップが落ちやすくなる（目覚め）',data:{type:'orbSpawnBoost',attr:'fire',rate:0.15,turns:5},fields:[['attr','落ちやすくする色','select','fire:火|water:水|wood:木|light:光|dark:闇|heal:回復|poison:毒（効果中だけ落ちてくる）|ojama:お邪魔（効果中だけ落ちてくる）'],numF('rate','上昇率（本家の「少し落ちやすい」=15%=0.15。毒・お邪魔はこの確率で落ちてくる）'),numF('turns','ターン数')]},
+  orbSpawnBoost2:{label:'○ターンの間、2色のドロップが落ちやすくなる（2色目覚め）',data:{type:'orbSpawnBoost2',attr:'fire',rate:0.1,attr2:'water',rate2:0.1,turns:5},fields:[['attr','1色目','select','fire:火|water:水|wood:木|light:光|dark:闇|heal:回復|poison:毒（効果中だけ落ちてくる）|ojama:お邪魔（効果中だけ落ちてくる）'],numF('rate','1色目の上昇率（10%=0.1）'),['attr2','2色目','select','fire:火|water:水|wood:木|light:光|dark:闇|heal:回復|poison:毒（効果中だけ落ちてくる）|ojama:お邪魔（効果中だけ落ちてくる）'],numF('rate2','2色目の上昇率（10%=0.1）'),numF('turns','ターン数')]},
   damageHalfHp:{label:'敵のHPを半分にする',data:{type:'damageHalfHp'},fields:[]},
   timeStop:{label:'○秒間、時を止める',data:{type:'timeStop',seconds:5},fields:[numF('seconds','時間停止の秒数（0.5など小数もOK。時計の針・カチカチ音・演出の長さもこの秒数に合わせて変わる）')]},
   transformRandom:{label:'ランダムで他のモンスターに変身',data:{type:'transformRandom',ids:[1,8]},fields:[['ids','変身先のモンスターID（カンマ区切り。例: 1,8 → フシギダネかカメールのどれかに変身）','idlist']]},
@@ -721,6 +723,9 @@ function describeActiveOne(e0){
       case 'recMult': out.push(Number(e.value)===0?`${e.turns||1}ターンの間、回復力が0になる`:`${e.turns||1}ターンの間、回復力が${fmt(e.value)}倍`); break;
       case 'moveTimeBuff': { const p=[]; if(e.mult!==undefined&&Number(e.mult)!==1) p.push(`${fmt(e.mult)}倍`); if(Number(e.seconds)) p.push(`${Math.abs(e.seconds)}秒${e.seconds<0?'短縮':'延長'}`); if(p.length) out.push(`${e.turns||1}ターンの間、操作時間が${p.join('、')}`); break; }
       case 'allAttackBuff': out.push(`${e.turns||1}ターンの間、敵全体に攻撃`); break;
+      case 'orbSpawnBoost2': { const nm=k=>ATTR_NAME[k]||'火'; let r=Math.max(Number(e.rate)||0.1,Number(e.rate2)||0.1); if(r>1) r/=100; const same=e.attr===e.attr2;
+        out.push(`${e.turns||5}ターンの間、${same?nm(e.attr):nm(e.attr)+'と'+nm(e.attr2)}ドロップが${r<=0.15?'少し':(r>0.3?'かなり':'')}落ちやすくなる`); break; }
+      case 'orbSpawnBoost': { let r=Number(e.rate); if(!(r>0)) r=0.15; if(r>1) r/=100; out.push((e.attr==='poison'||e.attr==='ojama') ? `${e.turns||5}ターンの間、${ATTR_NAME[e.attr]}ドロップが落ちてくるようになる` : `${e.turns||5}ターンの間、${ATTR_NAME[e.attr]||'火'}ドロップが${r<=0.15?'少し':(r>0.3?'かなり':'')}落ちやすくなる`); break; }
       case 'timeStop': out.push(`${fmt(e.seconds>0?e.seconds:5)}秒間、時を止める`); break;
       case 'transformRandom': { const ids=Array.isArray(e.ids)?e.ids:[]; if(ids.length) out.push(`ランダムで${ids.map(id=>(db[id]&&db[id].name)||('ID'+id)).join('・')}のどれかに変身（そのダンジョン中）`); break; }
       case 'bindRecover': out.push(`バインドを${e.turns||1}ターン回復`); break;
@@ -852,7 +857,7 @@ function cmpKey(a,b){
   return 0;
 }
 // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','allAttackBuff','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
 function skillSortKey(sk){
   const e = (sk.effects||[])[0] || {};
   const i = SK_TYPE_ORDER.indexOf(e.type);

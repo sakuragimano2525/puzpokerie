@@ -8,7 +8,7 @@
 //                   → 外にころがり出て画面中央へ → タップで開く → 結果を表示
 //     ・「ラインナップ」… 出るモンスターの一覧を表示
 //     ・コインが足りないときは何も消費せず「ガチャコインが足りません」
-//     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（赤）⇔ 2ページ目（青・第2ガチャ）。
+//     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（赤）⇔ 2ページ目（青）⇔ 3ページ目（緑）。
 //                2ページ目は GACHA_DATA.page2 の設定（アルカナエキス1つで1回、lineup・隠し条件 requires もページごと）
 //
 //   外から使うもの
@@ -24,14 +24,14 @@
 
   var cfg = (typeof GACHA_DATA !== 'undefined' && GACHA_DATA) || { title: 'ガチャ', coin: 'fcoin', cost: 1, lineup: [] };
   // ページごとの設定：1ページ目＝cfg 本体／2ページ目＝cfg.page2（coin・cost・lineup・requires。capsules は共通）
-  function pc() { return page === 2 ? (cfg.page2 || {}) : cfg; }
+  function pc() { return page === 1 ? cfg : (cfg['page' + page] || {}); }
   function COIN() { return pc().coin || 'fcoin'; }
   function COST() { return Math.max(1, Math.floor(Number(pc().cost)) || 1); }
   var SPIN_MS = 900;          // 「まわす」の動きの長さ（css/gacha.css の 0.9s と合わせる）
   var busy = false;
   var toastTimer = null;
   var seq = null, runId = 0;   // カプセル演出の進行状況（runId が変わったら古い演出は止まる）
-  var PAGES = 2, page = 1;      // いま見ているページ（1＝コラボガチャ／2＝第2ガチャ）
+  var PAGES = 3, page = 1;      // いま見ているページ（1＝ブルアカガチャ／2＝ステラソラガチャ／3＝ブルアカガチャ2）
   var customTitle = null;       // setTitle() で変えたタイトル（1ページ目用）
 
   // ── 設定の読み取り ───────────────────────────
@@ -48,6 +48,16 @@
       return need.every(function (n) { return !!(window.Zukan && Zukan.isOwned(n)); });
     });
   }
+  // ロック：pc().unlock のモンスターが全部 図鑑に登録されるまで、そのガチャはまわせない。足りないモンスターのID一覧を返す（空＝ひらいている）
+  function lockMissing() {
+    var need = pc().unlock || [];
+    if (!need.length) return [];
+    try { if (window.Zukan && Zukan.syncOwned) Zukan.syncOwned(); } catch (e) {}
+    return need.filter(function (n) { return !(window.Zukan && Zukan.isOwned(n)); });
+  }
+  function lockNames(ids) {
+    return ids.map(function (n) { return (typeof MONSTER_DATA !== 'undefined' && MONSTER_DATA[n] && MONSTER_DATA[n].name) || ('ID' + n); }).join('・');
+  }
   function coinCount() { return typeof getItemCount === 'function' ? getItemCount(COIN()) : 0; }
   function coinName() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].name) || 'ガチャコイン'; }
   function coinImg() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].img) || 'fcoin.png'; }
@@ -60,9 +70,25 @@
     if (numEl) numEl.textContent = '×' + n.toLocaleString();
     if (chip) chip.classList.toggle('empty', n < COST());
     if (cost) cost.classList.toggle('short', n < COST());
+    var lk = lockMissing().length > 0;
+    screen.dataset.locked = lk ? '1' : '0';
+    var sb = $('gacha-spin-btn'), stx = screen.querySelector('.gs-spin-txt');
+    if (sb) sb.classList.toggle('locked', lk);
+    if (stx) stx.textContent = lk ? 'ロック中' : 'まわす';
     var ct = $('gacha-cost-txt'); if (ct) ct.textContent = coinName() + ' ×' + COST();
     ['gacha-coin-img', 'gacha-cost-img'].forEach(function (id) { var im = $(id); if (im) { var src = coinImg(); if (im.getAttribute('src') !== src) im.setAttribute('src', src); } });
   }
+
+  // タイトルが長くてもはみ出さないよう、入りきるまで文字を小さくする
+  function fitTitle() {
+    var el = $('gacha-title'); if (!el) return;
+    el.style.fontSize = '';
+    if (!el.clientWidth) return;   // 画面が閉じているときは測れない
+    var px = parseFloat(getComputedStyle(el).fontSize) || 18, guard = 0;
+    while (el.scrollWidth > el.clientWidth + 1 && px > 9 && guard++ < 40) { px -= 0.5; el.style.fontSize = px + 'px'; }
+  }
+  window.addEventListener('resize', fitTitle);
+  window.addEventListener('orientationchange', function () { setTimeout(fitTitle, 120); });
 
   function toast(msg, ms) {
     var el = $('gacha-toast'); if (!el) return;
@@ -142,7 +168,8 @@
 
   // ── ページ切りかえ ───────────────────────────
   function pageTitle(n) {
-    if (n === 2) return (cfg.page2 && cfg.page2.title) || '第2ガチャ';
+    if (n === 2) return (cfg.page2 && cfg.page2.title) || 'ステラソラガチャ';
+    if (n === 3) return (cfg.page3 && cfg.page3.title) || 'ブルアカガチャ2';
     return customTitle || cfg.title || 'ガチャ';
   }
   // dir：1＝右へ進む（右からスッと出る）／-1＝左へ戻る／0＝動きなし
@@ -150,7 +177,7 @@
     n = Math.max(1, Math.min(PAGES, n));
     page = n;
     screen.dataset.page = String(n);
-    var ttl = $('gacha-title'); if (ttl) ttl.textContent = pageTitle(n);
+    var ttl = $('gacha-title'); if (ttl) { ttl.textContent = pageTitle(n); fitTitle(); }
     var lb = $('gacha-pg-label'); if (lb) lb.textContent = n + ' / ' + PAGES;
     var prev = $('gacha-prev'), next = $('gacha-next');
     if (prev) prev.hidden = n <= 1;
@@ -183,6 +210,7 @@
     setPage(1, 0);   // 開くときはいつも1ページ目から
     refresh();
     screen.style.display = 'flex';
+    fitTitle();
   }
   function close() {
     clearTimeout(toastTimer);
@@ -414,6 +442,8 @@
   // ── まわす ───────────────────────────────────
   function onSpin() {
     if (busy) return;
+    var miss = lockMissing();
+    if (miss.length) { toast('ロック中：図鑑に ' + lockNames(miss) + ' を登録するとひらきます', 2600); return; }
     var pool = drawable();
     if (!pool.length) { toast('ラインナップが空です'); return; }
     if (coinCount() < COST()) {
@@ -482,7 +512,7 @@
 
   window.GachaScreen = {
     open: open, close: close, isOpen: isOpen, refresh: refresh,
-    setTitle: function (t) { customTitle = t; if (page === 1) { var el = $('gacha-title'); if (el) el.textContent = t; } },
+    setTitle: function (t) { customTitle = t; if (page === 1) { var el = $('gacha-title'); if (el) { el.textContent = t; fitTitle(); } } },
     page: function () { return page; }, setPage: function (n) { goPage(n); }
   };
 })();

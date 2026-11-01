@@ -31,7 +31,7 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 75,
     baseExp: 100,
-    stats: { hp: { min: 251, max: 752 }, atk: { min: 122, max: 280 }, rec: { min: 39, max: 88 } },
+    stats: { hp: { min: 251, max: 1052 }, atk: { min: 122, max: 390 }, rec: { min: 39, max: 88 } },
     skill: {
       name: 'このは',
       sp: 3,
@@ -88,7 +88,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 75,
     baseExp: 100,
-    stats: { hp: { min: 351, max: 852 }, atk: { min: 152, max: 380 }, rec: { min: 19, max: 38 } },
+    stats: { hp: { min: 360, max: 1052 }, atk: { min: 160, max: 980 }, rec: { min: 8, max: 28 } },
     skill: {
       name: 'ひのこ',
       sp: 3,
@@ -145,7 +145,7 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 75,
     baseExp: 100,
-    stats: { hp: { min: 250, max: 750 }, atk: { min: 150, max: 300 }, rec: { min: 20, max: 40 } },
+    stats: { hp: { min: 300, max: 1350 }, atk: { min: 300, max: 600 }, rec: { min: 20, max: 80 } },
     skill: {
       name: 'みずてっぽう',
       sp: 3,
@@ -186,7 +186,7 @@ const MONSTER_DATA = {
     baseExp: 100,
     stats: { hp: { min: 46, max: 271 }, atk: { min: 105, max: 207 }, rec: { min: 25, max: 109 } },
     skill: { name: 'いやしのひかり', sp: 2, desc: 'HPを最大HPの20%回復。', effects: [ { type: 'heal', value: 0.2 } ] },
-    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.2 } ] },
+    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.15 } ] },
     evolutions: [ { to: 11, materials: [ { item: 'puzzle3', count: 1 } ] } ]
   },
   11: {
@@ -1293,7 +1293,7 @@ const MONSTER_DATA = {
       desc: '水ドロップを回復ドロップに変化。\nHPを最大HPの25%回復。',
       effects: [ { type: 'orbConvert', from: 'water', to: 'heal' }, { type: 'heal', value: 0.25 } ]
     },
-    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.2 } ] },
+    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.15 } ] },
     evolutions: [ { to: 70, materials: [ { item: 'puzzle32', count: 2 }, { item: 'spuzzle_3', count: 2 } ] } ]
   },
   70: {
@@ -3474,7 +3474,7 @@ const MONSTER_DATA = {
       desc: '水ドロップを木ドロップに変化。',
       effects: [ { type: 'orbConvert', from: 'water', to: 'wood' } ]
     },
-    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.2 } ] },
+    leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.15 } ] },
     evolutions: [ { to: 673, materials: [ { item: 'puzzle32', count: 4 } ] } ]
   },
   673: {
@@ -3755,10 +3755,10 @@ const MONSTER_DATA = {
     baseExp: 1500,
     stats: { hp: { min: 760, max: 2780 }, atk: { min: 410, max: 2100 }, rec: { min: 30, max: 120 } },
     skill: {
-      name: 'ドロップチェンジ・水',
-      sp: 3,
-      desc: '火ドロップを水ドロップに変化。',
-      effects: [ { type: 'orbConvert', from: 'fire', to: 'water' } ]
+      name: 'マリンコール',
+      sp: 2,
+      desc: '3ターンの間、水ドロップが少し落ちやすくなる。',
+      effects: [ { type: 'orbSpawnBoost', attr: 'water', rate: 0.15, turns: 3 } ]
     },
     leaderSkill: {
       name: 'ウォーターコンボ・大',
@@ -4825,14 +4825,212 @@ const MONSTER_DATA = {
   },
   5022: {
     id: 5022,
-    name: '新モンスター',
+    name: 'ニコ',
     rarity: 3,
     attr: 'fire',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 400, max: 2500 }, atk: { min: 50, max: 1000 }, rec: { min: 200, max: 600 } },
+    skill: {
+      name: 'CSAR',
+      sp: 5,
+      desc: 'HPを最大HPの50%回復。\nバインドを5ターン回復。',
+      effects: [ { type: 'heal', value: 0.5 }, { type: 'bindRecover', turns: 5 } ]
+    },
+    leaderSkill: {
+      name: 'ブロークンアロー',
+      desc: '火と光ドロップを同時に5個以上つなげて消すと攻撃1.4倍、1コンボ加算。\nかいふくタイプの回復力1.2倍、攻撃は1.5倍。',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 5, value: 1.4, attr2: 'light', comboAdd: 1 },
+        { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.25 },
+        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.5 }
+      ]
+    }
+  },
+  5023: {
+    id: 5023,
+    name: 'ノア',
+    rarity: 3,
+    attr: 'water',
     type: 'バランス',
-    baseExp: 100,
-    stats: { hp: { min: 500, max: 1500 }, atk: { min: 200, max: 600 }, rec: { min: 50, max: 150 } },
-    skill: { name: 'スキル名', sp: 1, desc: '', effects: [] },
-    leaderSkill: { name: 'リーダースキル名', desc: '', effects: [ { type: 'atk', attr: 'fire', value: 1.2 } ] }
+    maxLevel: 99,
+    baseExp: 1000,
+    stats: { hp: { min: 500, max: 2800 }, atk: { min: 430, max: 2200 }, rec: { min: 170, max: 250 } },
+    skill: {
+      name: '記録はスピードが命ですから',
+      sp: 3,
+      desc: '1ターンの間、操作時間が1.5倍。',
+      effects: [ { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 1.5 } ]
+    },
+    leaderSkill: {
+      name: '書記のこだわり',
+      desc: 'L字消しする度に攻撃1.3倍、受けるダメージ8%軽減。',
+      effects: [ { type: 'atk', condition: 'lShapes', value: 1.3, exponential: true, reduce: 0.08 } ]
+    }
+  },
+  5024: {
+    id: 5024,
+    name: 'ココロ',
+    rarity: 3,
+    attr: 'water',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 650, max: 3200 }, atk: { min: 200, max: 1600 }, rec: { min: 150, max: 300 } },
+    skill: {
+      name: '水中ブリーチング',
+      sp: 3,
+      desc: '敵単体の行動を1ターン遅らせる。\n1ターンの間、火と木属性の攻撃が激減。',
+      effects: [
+        { type: 'enemyDelay', target: 'single', turns: 1 },
+        { type: 'atkBuff', attr: 'fire', value: 0.1, turns: 1 },
+        { type: 'atkBuff', attr: 'wood', value: 0.1, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'ダイビング、開始！',
+      desc: '神秘タイプのHP1.2倍。\nスキル使用時、攻撃1.5倍。',
+      effects: [
+        { type: 'hp', condition: 'type', attr: '神秘', value: 1.2 },
+        { type: 'atk', condition: 'skillUsed', value: 1.5 }
+      ]
+    }
+  },
+  5025: {
+    id: 5025,
+    name: 'アイリ',
+    rarity: 3,
+    attr: 'wood',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 1000,
+    stats: { hp: { min: 500, max: 2700 }, atk: { min: 430, max: 2000 }, rec: { min: 170, max: 330 } },
+    skill: {
+      name: 'チョコミントな音の階段',
+      sp: 2,
+      desc: '3ターンの間、木と闇ドロップがほんの少し落ちやすくなる。',
+      effects: [ { type: 'orbSpawnBoost2', attr: 'wood', rate: 0.1, attr2: 'dark', rate2: 0.1, turns: 3 } ]
+    },
+    leaderSkill: {
+      name: '幸せのメロディ',
+      desc: '毒ダメージを無効化。\n木属性の回復力1.5倍。',
+      effects: [ { type: 'poisonImmune', value: true }, { type: 'rec', attr: 'wood', value: 1.5 } ]
+    }
+  },
+  5026: {
+    id: 5026,
+    name: 'ハレ',
+    rarity: 3,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 1000,
+    stats: { hp: { min: 550, max: 2350 }, atk: { min: 550, max: 2350 }, rec: { min: 150, max: 300 } },
+    skill: {
+      name: '広がる温もり',
+      sp: 3,
+      desc: '毒とお邪魔ドロップのロックを解除し、お邪魔ドロップを木ドロップに変化。\n毒ドロップを闇ドロップに変化。',
+      effects: [
+        { type: 'orbUnlock', target: 'attrs', orb_ojama: true, orb_poison: true },
+        { type: 'orbConvert', from: 'ojama', to: 'wood' },
+        { type: 'orbConvert', from: 'poison', to: 'dark' }
+      ]
+    },
+    leaderSkill: {
+      name: 'EMPドローン展開',
+      desc: '操作時間が少し伸びる。\nこうげきタイプの攻撃1.5倍。',
+      effects: [ { type: 'moveTimeAdd', value: 1 }, { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.5 } ]
+    }
+  },
+  5027: {
+    id: 5027,
+    name: 'コタマ',
+    rarity: 3,
+    attr: 'light',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 1500,
+    stats: { hp: { min: 500, max: 2700 }, atk: { min: 300, max: 1900 }, rec: { min: 100, max: 300 } },
+    skill: {
+      name: '傍受開始',
+      sp: 4,
+      desc: '1ターンの間、神秘タイプの攻撃が1.7倍。\n1ターンの間、火と木属性の攻撃が激減。',
+      effects: [
+        { type: 'atkBuff', value: 1.7, turns: 1, monType: '神秘' },
+        { type: 'atkBuff', attr: 'fire', value: 0.01, turns: 1 },
+        { type: 'atkBuff', attr: 'wood', value: 0.01, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '電波干渉',
+      desc: '3色以上同時に消すと攻撃1.4倍。\nHP50%以下で攻撃1.4倍、受けるダメージ20%軽減。',
+      effects: [
+        { type: 'atk', condition: 'colorCount', count: 3, value: 1.4 },
+        { type: 'atk', condition: 'hpBelow', threshold: 0.5, value: 1.4, reduce: 0.2 }
+      ]
+    }
+  },
+  5028: {
+    id: 5028,
+    name: 'ヒフミ',
+    rarity: 3,
+    attr: 'light',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 1500,
+    stats: { hp: { min: 500, max: 2600 }, atk: { min: 300, max: 2200 }, rec: { min: 100, max: 250 } },
+    skill: {
+      name: 'AP弾装填',
+      sp: 7,
+      desc: 'ドロップを水・光・闇・回復ドロップに変化。\n1ターンの間、火と木属性の攻撃が激減。',
+      effects: [
+        { type: 'orbChangeMulti', orb_heal: true, orb_light: true, orb_water: true, orb_dark: true },
+        { type: 'atkBuff', attr: 'fire', value: 0.01, turns: 1 },
+        { type: 'atkBuff', attr: 'wood', value: 0.01, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'ペロロ様の応援',
+      desc: '神秘タイプの回復力1.5倍。\n7コンボ以上で攻撃1.5倍。',
+      effects: [
+        { type: 'atk', attr: 'fire', value: 0.1 },
+        { type: 'rec', condition: 'type', attr: '神秘', value: 1.5 },
+        { type: 'atk', condition: 'combo', count: 7, value: 1.5 }
+      ]
+    }
+  },
+  5029: {
+    id: 5029,
+    name: 'アズサ',
+    rarity: 3,
+    attr: 'dark',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 500,
+    stats: { hp: { min: 800, max: 4250 }, atk: { min: 250, max: 1800 }, rec: { min: 50, max: 150 } },
+    skill: {
+      name: 'Macte Virtute',
+      sp: 1,
+      desc: '光と闇ドロップをランダムで1つずつ生成。\n1ターンの間、神秘タイプ以外の攻撃が激減。',
+      effects: [
+        { type: 'orbChangeRandom', attr: 'light', count: 1, message: '☠️ 毒ドロップ生成！' },
+        { type: 'orbChangeRandom', attr: 'dark', count: 1 },
+        { type: 'atkBuff', monType: 'バランス', value: 0.01, turns: 1 },
+        { type: 'atkBuff', monType: 'こうげき', value: 0.01, turns: 1 },
+        { type: 'atkBuff', monType: 'たいりょく', value: 0.01, turns: 1 },
+        { type: 'atkBuff', monType: 'かいふく', value: 0.01, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'Fortiter',
+      desc: '神秘タイプの攻撃1.5倍。スキル使用時さらに攻撃1.4倍。\n光と闇ドロップを同時に4個以上つなげて消すと受けるダメージ15%軽減。',
+      effects: [
+        { type: 'atk', condition: 'type', attr: '神秘', value: 1.5 },
+        { type: 'atk', condition: 'skillUsed', value: 1.4 },
+        { type: 'atk', condition: 'orbConnect', attr: 'light', count: 4, value: 1, attr2: 'dark', reduce: 0.15 }
+      ]
+    }
   }
 };
 

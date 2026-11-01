@@ -26,7 +26,7 @@
   const BGM_BUDGET    = (IS_IOS ? 40 : 120) * 1024 * 1024;   // BGMをメモリに置く合計の上限
   const NO_FAST_SE    = { cutin: 1, skillwin: 1 };           // <audio> の長さで表示時間を決めている音（cutin.js／敵スキルのウインドウ）
   const KEEP_FILES   = ['skillwin.mp3', 'cutin.mp3'];        // 上の2つ：メモリ(blob)に置いて、いつでもすぐ鳴らせる状態にしておく
-  const PRIO_SE       = ['damage','damageh','down','bind','dna','orblock','bshield','combok','kei','barrier','ikari','healk','darkness','change','pahu','roo','poison','kieru','chip'];   // 敵スキル・敵の行動で鳴る音：先に読み込む
+  const PRIO_SE       = ['damage','damageh','down','bind','dna','drop_up','orblock','bshield','combok','kei','barrier','ikari','healk','darkness','change','pahu','roo','poison','kieru','chip'];   // 敵スキル・敵の行動で鳴る音：先に読み込む
   const SE_MAX_BYTES_PRIO = 1200 * 1024;                     // 敵スキル系は少し大きくても変換する（変換できないと遅い方法で鳴るため）
 
   let ctx = null;
