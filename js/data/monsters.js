@@ -4939,7 +4939,7 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'EMPドローン展開',
-      desc: '操作時間が少し伸びる。\nこうげきタイプの攻撃1.5倍。',
+      desc: 'こうげきタイプの攻撃1.5倍。',
       effects: [ { type: 'moveTimeAdd', value: 1 }, { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.5 } ]
     }
   },
