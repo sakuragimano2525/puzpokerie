@@ -10877,6 +10877,40 @@ function grantMonsterToBox(monsterId) {
   saveGame();
   return { uid, isNew };
 }
+// ガチャの交換所用（js/gacha.js から使う）
+//   gachaExchangeMaterials(lineupIds) … BOX の中の、ラインナップのモンスター一覧（{ uid, monsterId, level, plus, grown, inTeam }）
+//   gachaExchange(targetId, matUids, need, lineupIds) … 素材 need 匹をBOXから消して、targetId を1匹BOXに入れる（失敗したら何もせず null）
+function gachaExchangeMaterials(lineupIds) {
+  const set = new Set((lineupIds || []).map(Number));
+  const inTeam = new Set();
+  teams.forEach(t => t.forEach(u => { if (u !== null && u !== undefined) inTeam.add(u); }));
+  const out = [];
+  box.forEach(b => {
+    if (!b) return;
+    const id = Number(b._tfFrom !== undefined ? b._tfFrom : b.monsterId);
+    if (!set.has(id) || !MONSTER_DATA[id]) return;
+    const plus = (b.plusHp || 0) + (b.plusAtk || 0) + (b.plusRec || 0);
+    out.push({ uid: b.uid, monsterId: id, level: b.level || 1, plus, grown: (b.level || 1) > 1 || plus > 0 || (b.memory || 0) > 0 || (b.sp || 0) > 0, inTeam: inTeam.has(b.uid) });
+  });
+  return out;
+}
+function gachaExchange(targetId, matUids, need, lineupIds) {
+  need = Math.max(1, Math.floor(Number(need)) || 1);
+  const lineup = new Set((lineupIds || []).map(Number));
+  if (!MONSTER_DATA[targetId] || !lineup.has(Number(targetId))) return null;
+  if (!(window.Zukan && Zukan.isOwned(targetId))) return null;          // 図鑑に登録ずみのモンスターだけ
+  const uids = Array.from(new Set(matUids || []));
+  if (uids.length !== need) return null;
+  const mats = gachaExchangeMaterials(lineupIds);
+  for (const u of uids) {
+    const m = mats.find(x => x.uid === u);
+    if (!m || m.inTeam) return null;                                     // BOXにいない／ラインナップ外／編成中は不可
+  }
+  uids.forEach(u => { const i = box.findIndex(b => b.uid === u); if (i !== -1) box.splice(i, 1); });
+  purgeUidsFromTeams(uids);
+  _hpCache.key = '';
+  return grantMonsterToBox(targetId);                                    // 内部で saveGame
+}
 document.getElementById('md2-code-btn').addEventListener('click', redeemGiftCode);
 document.getElementById('md2-code-input').addEventListener('keydown', e => { if (e.key === 'Enter') redeemGiftCode(); });
 function closeMailDetail() { document.getElementById('mail-detail').style.display = 'none'; }

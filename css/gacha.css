@@ -65,7 +65,7 @@
 #gacha-lineup-btn .ic { width: 1.1em; height: 1.1em; stroke-width: 2.6; }
 
 /* ── 左下：もどる ───────────────────────────── */
-#gacha-footer { flex-shrink: 0; padding: 6px var(--gutter) calc(14px + env(safe-area-inset-bottom)); }
+#gacha-footer { flex-shrink: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 6px var(--gutter) calc(14px + env(safe-area-inset-bottom)); }
 
 /* ── ひとことメッセージ（準備中など） ───────── */
 #gacha-toast {
@@ -114,7 +114,8 @@
   .gs-actions { width: min(46vw, 360px); }
   #gacha-spin-btn { min-height: 74px; }
   .gs-spin-txt { font-size: 1.6rem; }
-  #gacha-footer { position: absolute; z-index: 3; left: 0; bottom: 0; padding: 0 max(12px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)); }
+  #gacha-footer { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; pointer-events: none; padding: 0 max(12px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  #gacha-footer > * { pointer-events: auto; }
   #gacha-toast { bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 
@@ -301,3 +302,35 @@
 #gacha-screen[data-locked="1"] .gs-machine { filter: grayscale(0.85) brightness(0.88); }
 #gacha-spin-btn.locked { filter: grayscale(1); opacity: 0.75; }
 #gacha-spin-btn.locked .gs-spin-txt { font-size: 1.5rem; }
+
+/* ── 交換所（右下のボタン／ダイアログ） ──────────
+   ラインナップのモンスター N 匹をわたして、図鑑に登録ずみの1匹と確定交換（js/gacha.js の openExchange） */
+.gs-ex-btn { min-height: 46px; padding: 0 16px; gap: 6px; font-size: 0.95rem; }
+.gs-ex-btn .ic { width: 1.25em; height: 1.25em; stroke-width: 2.6; }
+#gacha-screen[data-page="2"] .gs-ex-btn { background: #dbe9ff; }
+#gacha-screen[data-page="3"] .gs-ex-btn { background: #d4f4de; }
+#gacha-screen[data-page="1"] .gs-ex-btn { background: #ffe9e4; }
+
+#gacha-exchange .gs-card { width: min(100%, 440px); }
+.gs-ex-sec { align-self: stretch; margin-top: 4px; padding: 4px 10px 3px; font: 900 0.85rem/1.3 var(--ff); letter-spacing: 0.04em; color: var(--ink); background: #fff3b8; border: 2px solid var(--ink); border-radius: 10px; }
+.gs-ex-grid { margin: 0; }
+.gs-ex-empty { grid-column: 1 / -1; margin: 6px 0; text-align: center; font: 700 0.78rem/1.5 var(--ff); color: var(--ink-2); }
+.gs-ex-item { position: relative; cursor: pointer; padding: 4px 2px 3px; border: 2.5px solid transparent; border-radius: 12px; box-sizing: border-box; }
+.gs-ex-item.sel { border-color: var(--ink); background: #fff3b8; box-shadow: 0 2px 0 var(--ink); }
+.gs-ex-item.team { opacity: 0.45; cursor: not-allowed; }
+.gs-ex-chk { display: none; position: absolute; z-index: 2; top: -4px; right: -4px; width: 20px; height: 20px; line-height: 17px; text-align: center; font: 900 0.8rem/17px var(--ff); color: #fff; background: var(--coral); border: 2px solid var(--ink); border-radius: 50%; }
+.gs-ex-item.sel .gs-ex-chk { display: block; }
+.gs-ex-lv { font: 400 0.7rem/1 var(--ff-num); letter-spacing: 0.02em; color: var(--ink-2); white-space: nowrap; }
+.gs-ex-lv.grown { color: #c8321f; }
+.gs-ex-btns {   /* ボタンはカードの下にくっつけて、モンスターが多くてスクロールしても いつでも押せるように */
+  position: sticky; bottom: -18px; z-index: 3; align-self: stretch; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin: 4px -16px -18px; padding: 10px 16px 18px; background: var(--paper); border-top: 2px solid rgba(28, 31, 79, 0.12); border-radius: 0 0 19px 19px;
+}
+.gs-ex-btns .btn:disabled { filter: grayscale(1); opacity: 0.55; cursor: not-allowed; }
+#gacha-ex-confirm { z-index: 14; }
+@media (orientation: landscape) {
+  #gacha-exchange .gs-card { width: min(100%, 640px); }
+  .gs-ex-btns { flex-direction: row; justify-content: center; bottom: -14px; margin: 4px -14px -14px; padding: 8px 14px 14px; }
+  .gs-ex-btn { min-height: 40px; }
+}

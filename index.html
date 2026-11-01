@@ -236,6 +236,8 @@
 
   <div id="gacha-footer">
     <button id="gacha-back" class="btn-back" type="button" aria-label="ホームへもどる"><svg class="ic"><use href="#i-back"/></svg></button>
+    <!-- 右下：交換所（ラインナップのモンスター3匹 → 図鑑に登録ずみの1匹と確定交換）。js/gacha.js -->
+    <button id="gacha-ex-btn" class="btn gs-ex-btn" type="button" aria-label="交換所"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13l-3.5-3.5"/><path d="M20 15H7l3.5 3.5"/></svg>交換所</button>
   </div>
   <div id="gacha-toast" role="status" aria-live="polite"></div>
 
@@ -264,6 +266,32 @@
       <p class="gs-card-sub" id="gacha-lineup-sub">この中から1匹が出ます</p>
       <div class="gs-lu-grid" id="gacha-lineup-grid"></div>
       <button id="gacha-lineup-close" class="btn" type="button">とじる</button>
+    </div>
+  </div>
+
+  <!-- 交換所（js/gacha.js が中身を作る）：ほしいモンスター1匹 ＋ ひきかえにするモンスター N匹 -->
+  <div id="gacha-exchange" class="gs-modal" hidden>
+    <div class="gs-card gs-ex" role="dialog" aria-label="交換所">
+      <div class="gs-card-title">交換所</div>
+      <p class="gs-card-sub" id="gacha-ex-sub"></p>
+      <div class="gs-ex-sec" id="gacha-ex-t-head">① ほしいモンスター</div>
+      <div class="gs-lu-grid gs-ex-grid" id="gacha-ex-targets"></div>
+      <div class="gs-ex-sec" id="gacha-ex-m-head">② ひきかえにするモンスター</div>
+      <div class="gs-lu-grid gs-ex-grid" id="gacha-ex-mats"></div>
+      <div class="gs-ex-btns">
+        <button id="gacha-ex-go" class="btn btn-primary" type="button" disabled>交換する</button>
+        <button id="gacha-ex-close" class="btn" type="button">とじる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 交換のさいごの確認 -->
+  <div id="gacha-ex-confirm" class="gs-modal" hidden>
+    <div class="gs-card" role="alertdialog" aria-label="交換の確認">
+      <div class="gs-card-title">交換のかくにん</div>
+      <p class="gs-card-sub" id="gacha-ex-confirm-txt"></p>
+      <button id="gacha-ex-yes" class="btn btn-primary" type="button">交換する</button>
+      <button id="gacha-ex-no" class="btn" type="button">やめる</button>
     </div>
   </div>
 

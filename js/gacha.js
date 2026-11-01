@@ -11,6 +11,8 @@
 //     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（赤）⇔ 2ページ目（青）⇔ 3ページ目（緑）。
 //                2ページ目は GACHA_DATA.page2 の設定（アルカナエキス1つで1回、lineup・隠し条件 requires もページごと）
 //
+//     ・「交換所」（右下）… ラインナップのモンスター3匹（GACHA_DATA.exchangeCost）をわたして、図鑑に登録ずみのラインナップの1匹と確定交換
+//
 //   外から使うもの
 //     GachaScreen.open() / close() / isOpen()
 //     GachaScreen.setTitle('名前')   左上のガチャ名を変える（ふだんは GACHA_DATA.title）
@@ -122,6 +124,7 @@
       timer = setTimeout(function () {
         timer = null; cell.classList.remove('pressing');
         try { if (navigator.vibrate) navigator.vibrate(18); } catch (err) {}
+        cell._lpAt = Date.now();
         if (typeof previewMonsterDetail === 'function') previewMonsterDetail(ids, id);
       }, LP_MS);
     });
@@ -151,8 +154,9 @@
   function closeLineup() { var m = $('gacha-lineup'); if (m) m.hidden = true; }
 
   // ── 結果 ─────────────────────────────────────
-  function showResult(monsterId, isNew) {
+  function showResult(monsterId, isNew, head) {
     var mon = MONSTER_DATA[monsterId];
+    var hd = $('gacha-res-head'); if (hd) hd.textContent = head || 'GET！';
     var tile = $('gacha-res-tile'), img = $('gacha-res-img');
     tile.dataset.attr = mon.attr || 'water';
     img.style.visibility = ''; img.alt = mon.name;
@@ -165,6 +169,119 @@
     try { if (typeof playSE === 'function') playSE('chip'); } catch (e) {}
   }
   function closeResult() { var m = $('gacha-result'); if (m) m.hidden = true; }
+
+  // ── 交換所（右下のボタン）──────────────────
+  //   そのガチャのラインナップのモンスターを BOX から cost 匹わたすと、
+  //   ラインナップのうち「図鑑に登録ずみ」の1匹を確定でもらえる。編成中のモンスターはわたせない。
+  //   cost は GACHA_DATA.exchangeCost（ページごとに page2/page3 の中でも指定できる。初期値 3）
+  var exTarget = null, exMats = [], exCells = {};
+  function exCost() {
+    var c = pc().exchangeCost; if (c == null) c = cfg.exchangeCost;
+    return Math.max(1, Math.floor(Number(c)) || 3);
+  }
+  function exOwnedIds() {   // ラインナップのうち、図鑑に登録ずみのもの
+    try { if (window.Zukan && Zukan.syncOwned) Zukan.syncOwned(); } catch (e) {}
+    return lineup().filter(function (id) { return !!(window.Zukan && Zukan.isOwned(id)); });
+  }
+  function exUpdate() {
+    var need = exCost();
+    var mh = $('gacha-ex-m-head'); if (mh) mh.textContent = '② ひきかえにするモンスター（' + exMats.length + ' / ' + need + '）';
+    Object.keys(exCells).forEach(function (k) { exCells[k].classList.toggle('sel', exMats.indexOf(Number(k)) !== -1); });
+    $('gacha-ex-targets').querySelectorAll('.gs-ex-item').forEach(function (c) { c.classList.toggle('sel', Number(c.dataset.id) === exTarget); });
+    var go = $('gacha-ex-go'); if (go) go.disabled = !(exTarget != null && exMats.length === need);
+  }
+  function exTile(id, extraCls) {
+    var mon = MONSTER_DATA[id];
+    var cell = document.createElement('div'); cell.className = 'gs-lu-item gs-ex-item' + (extraCls ? ' ' + extraCls : '');
+    cell.appendChild(monTile(mon, 'gs-mon'));
+    return cell;
+  }
+  function openExchange() {
+    if (busy) return;
+    var miss = lockMissing();
+    if (miss.length) { toast('ロック中：図鑑に ' + lockNames(miss) + ' を登録するとひらきます', 2600); return; }
+    var need = exCost(), ids = lineup(), owned = exOwnedIds();
+    exTarget = null; exMats = []; exCells = {};
+
+    var sub = $('gacha-ex-sub');
+    if (sub) sub.textContent = pageTitle(page) + 'のモンスター ' + need + ' 体をわたすと、図鑑に登録ずみの1体と確定で交換できます';
+
+    // ① ほしいモンスター（ラインナップのうち、図鑑に登録ずみのもの）
+    var tg = $('gacha-ex-targets'); tg.innerHTML = '';
+    if (!owned.length) {
+      var e1 = document.createElement('p'); e1.className = 'gs-ex-empty'; e1.textContent = '図鑑に登録ずみのモンスターがまだいません（ガチャでゲットすると交換できるようになります）';
+      tg.appendChild(e1);
+    }
+    owned.forEach(function (id) {
+      var mon = MONSTER_DATA[id], cell = exTile(id); cell.dataset.id = id;
+      var st = document.createElement('span'); st.className = 'gs-lu-stars'; st.textContent = stars(mon.rarity || 1);
+      var nm = document.createElement('span'); nm.className = 'gs-lu-name'; nm.textContent = mon.name;
+      cell.appendChild(st); cell.appendChild(nm);
+      bindLongPress(cell, id, owned);
+      cell.addEventListener('click', function () {
+        if (cell._lpAt && Date.now() - cell._lpAt < 700) return;   // 長押しでステータスを見たあとの指はなしは、えらんだことにしない
+        exTarget = (exTarget === id) ? null : id; exUpdate();
+      });
+      tg.appendChild(cell);
+    });
+
+    // ② ひきかえ：BOX にいるラインナップのモンスター（編成中はえらべない）
+    var mg = $('gacha-ex-mats'); mg.innerHTML = '';
+    var mats = (typeof gachaExchangeMaterials === 'function') ? gachaExchangeMaterials(ids) : [];
+    mats.sort(function (a, b) { return (ids.indexOf(a.monsterId) - ids.indexOf(b.monsterId)) || (a.level - b.level) || (a.plus - b.plus) || (a.uid - b.uid); });
+    if (!mats.length) {
+      var e2 = document.createElement('p'); e2.className = 'gs-ex-empty'; e2.textContent = 'ひきかえにできるモンスター（このガチャのラインナップ）を持っていません';
+      mg.appendChild(e2);
+    }
+    mats.forEach(function (m) {
+      var cell = exTile(m.monsterId, m.inTeam ? 'team' : ''); cell.dataset.uid = m.uid;
+      var chk = document.createElement('span'); chk.className = 'gs-ex-chk'; chk.textContent = '✓';
+      var lv = document.createElement('span'); lv.className = 'gs-ex-lv' + (m.grown ? ' grown' : '');
+      lv.textContent = m.inTeam ? '編成中' : ('Lv' + m.level + (m.plus ? ' ＋' + m.plus : ''));
+      var nm = document.createElement('span'); nm.className = 'gs-lu-name'; nm.textContent = MONSTER_DATA[m.monsterId].name;
+      cell.appendChild(chk); cell.appendChild(lv); cell.appendChild(nm);
+      cell._m = m;
+      if (!m.inTeam) cell.addEventListener('click', function () {
+        var i = exMats.indexOf(m.uid);
+        if (i !== -1) exMats.splice(i, 1);
+        else if (exMats.length < need) exMats.push(m.uid);
+        else { toast(need + ' 体までえらべます'); return; }
+        exUpdate();
+      });
+      exCells[m.uid] = cell;
+      mg.appendChild(cell);
+    });
+    exUpdate();
+    $('gacha-exchange').hidden = false;
+    var card = $('gacha-exchange').querySelector('.gs-card'); if (card) card.scrollTop = 0;
+  }
+  function closeExchange() { var m = $('gacha-exchange'); if (m) m.hidden = true; closeExConfirm(); }
+  function closeExConfirm() { var m = $('gacha-ex-confirm'); if (m) m.hidden = true; }
+  function askExchange() {
+    var need = exCost();
+    if (exTarget == null || exMats.length !== need) return;
+    var counts = {}, order = [], grown = false;
+    exMats.forEach(function (u) {
+      var m = exCells[u] && exCells[u]._m; if (!m) return;
+      if (!counts[m.monsterId]) { counts[m.monsterId] = 0; order.push(m.monsterId); }
+      counts[m.monsterId]++;
+      if (m.grown) grown = true;
+    });
+    var give = order.map(function (id) { return MONSTER_DATA[id].name + (counts[id] > 1 ? '×' + counts[id] : ''); }).join('・');
+    var txt = '「' + give + '」の ' + need + ' 体をわたして、\n「' + MONSTER_DATA[exTarget].name + '」と交換します。\nわたしたモンスターはもどりません。';
+    if (grown) txt += '\n※ 育成ずみ（Lvが上がっている・＋がついている）モンスターがふくまれています。';
+    var el = $('gacha-ex-confirm-txt'); if (el) { el.style.whiteSpace = 'pre-line'; el.textContent = txt; }
+    $('gacha-ex-confirm').hidden = false;
+  }
+  function doExchange() {
+    var need = exCost(), target = exTarget, uids = exMats.slice();
+    closeExConfirm();
+    var got = (typeof gachaExchange === 'function') ? gachaExchange(target, uids, need, lineup()) : null;
+    if (!got) { toast('交換できませんでした。もういちど えらびなおしてください', 2400); openExchange(); return; }
+    closeExchange();
+    refresh();
+    showResult(target, false, '交換かんりょう！');
+  }
 
   // ── ページ切りかえ ───────────────────────────
   function pageTitle(n) {
@@ -196,7 +313,7 @@
   function goPage(n) {
     if (busy || n === page || n < 1 || n > PAGES) return;
     var dir = n > page ? 1 : -1;
-    closeLineup(); closeResult();
+    closeLineup(); closeResult(); closeExchange();
     setPage(n, dir);
   }
 
@@ -205,7 +322,7 @@
   function open() {
     busy = false;
     resetFx();
-    closeLineup(); closeResult();
+    closeLineup(); closeResult(); closeExchange();
     var t = $('gacha-toast'); if (t) t.classList.remove('show');
     setPage(1, 0);   // 開くときはいつも1ページ目から
     refresh();
@@ -216,7 +333,7 @@
     clearTimeout(toastTimer);
     resetFx();
     busy = false;
-    closeLineup(); closeResult();
+    closeLineup(); closeResult(); closeExchange();
     screen.style.display = 'none';
   }
 
@@ -474,6 +591,11 @@
   if ((b = $('gacha-lineup-btn'))) b.addEventListener('click', function () { if (!busy) openLineup(); });
   if ((b = $('gacha-back'))) b.addEventListener('click', function () { if (!busy) close(); });
   if ((b = $('gacha-lineup-close'))) b.addEventListener('click', closeLineup);
+  if ((b = $('gacha-ex-btn'))) b.addEventListener('click', openExchange);
+  if ((b = $('gacha-ex-close'))) b.addEventListener('click', closeExchange);
+  if ((b = $('gacha-ex-go'))) b.addEventListener('click', askExchange);
+  if ((b = $('gacha-ex-yes'))) b.addEventListener('click', doExchange);
+  if ((b = $('gacha-ex-no'))) b.addEventListener('click', closeExConfirm);
   if ((b = $('gacha-prev'))) b.addEventListener('click', function () { goPage(page - 1); });
   if ((b = $('gacha-next'))) b.addEventListener('click', function () { goPage(page + 1); });
   screen.querySelectorAll('.gs-dot').forEach(function (d) { d.addEventListener('click', function () { goPage(Number(d.dataset.page)); }); });
@@ -495,17 +617,19 @@
   })();
   if ((b = $('gacha-res-ok'))) b.addEventListener('click', closeResult);
   // 暗い背景をタップしても閉じる（カードの中をタップしたときは閉じない）
-  [['gacha-lineup', closeLineup], ['gacha-result', closeResult]].forEach(function (p) {
+  [['gacha-lineup', closeLineup], ['gacha-result', closeResult], ['gacha-exchange', closeExchange], ['gacha-ex-confirm', closeExConfirm]].forEach(function (p) {
     var m = $(p[0]); if (m) m.addEventListener('click', function (e) { if (e.target === m) p[1](); });
   });
   document.addEventListener('keydown', function (e) {
     if (!isOpen()) return;
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-      if ($('gacha-result').hidden && $('gacha-lineup').hidden) goPage(page + (e.key === 'ArrowRight' ? 1 : -1));
+      if ($('gacha-result').hidden && $('gacha-lineup').hidden && $('gacha-exchange').hidden) goPage(page + (e.key === 'ArrowRight' ? 1 : -1));
       return;
     }
     if (e.key !== 'Escape') return;
     if (!$('gacha-result').hidden) closeResult();
+    else if (!$('gacha-ex-confirm').hidden) closeExConfirm();
+    else if (!$('gacha-exchange').hidden) closeExchange();
     else if (!$('gacha-lineup').hidden) closeLineup();
     else if (!busy) close();
   });
