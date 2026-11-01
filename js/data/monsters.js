@@ -2399,7 +2399,7 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'wood',
     type: 'こうげき',
-    maxLevel: 99,
+    maxLevel: 50,
     baseExp: 200,
     stats: { hp: { min: 354, max: 3032 }, atk: { min: 271, max: 1838 }, rec: { min: 25, max: 120 } },
     skill: {
@@ -2408,7 +2408,8 @@ const MONSTER_DATA = {
       desc: '木ドロップを十字の形に生成。',
       effects: [ { type: 'orbChangeCross', row: 3, col: 3, attr: 'wood' } ]
     },
-    leaderSkill: { name: 'クロスカット', desc: '十字消しをすると攻撃1.5倍。', effects: [ { type: 'atk', condition: 'cross', value: 1.5 } ] }
+    leaderSkill: { name: 'クロスカット', desc: '十字消しをすると攻撃1.5倍。', effects: [ { type: 'atk', condition: 'cross', value: 1.5 } ] },
+    evolutions: [ { to: 212, materials: [ { item: 'spuzzle_12', count: 2 }, { item: 'puzzle32', count: 2 } ] } ]
   },
   124: {
     id: 124,
@@ -3047,6 +3048,27 @@ const MONSTER_DATA = {
       name: 'バランスのアミュレット',
       desc: 'バランスタイプの全パラメータが1.2倍。',
       effects: [ { type: 'allStat', condition: 'type', attr: 'バランス', value: 1.2 } ]
+    }
+  },
+  212: {
+    id: 212,
+    name: 'ハッサム',
+    rarity: 4,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 450, max: 3200 }, atk: { min: 300, max: 2200 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'シザークロス+',
+      sp: 3,
+      desc: '木ドロップを右下に十字の形に生成。',
+      effects: [ { type: 'orbChangeCross', row: 3, col: 4, attr: 'wood' } ]
+    },
+    leaderSkill: {
+      name: 'クロスアセント',
+      desc: '十字消しする度に攻撃1.3倍。',
+      effects: [ { type: 'atk', condition: 'cross', value: 1.3, exponential: true } ]
     }
   },
   650: {
@@ -4830,7 +4852,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 400, max: 2500 }, atk: { min: 50, max: 1000 }, rec: { min: 200, max: 600 } },
     skill: {
       name: 'CSAR',
@@ -4855,7 +4877,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 7500,
     stats: { hp: { min: 500, max: 2800 }, atk: { min: 430, max: 2200 }, rec: { min: 170, max: 250 } },
     skill: {
       name: '記録はスピードが命ですから',
@@ -4950,7 +4972,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: '神秘',
     maxLevel: 99,
-    baseExp: 1500,
+    baseExp: 5000,
     stats: { hp: { min: 500, max: 2700 }, atk: { min: 300, max: 1900 }, rec: { min: 100, max: 300 } },
     skill: {
       name: '傍受開始',
@@ -5007,7 +5029,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: '神秘',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 800, max: 4250 }, atk: { min: 250, max: 1800 }, rec: { min: 50, max: 150 } },
     skill: {
       name: 'Macte Virtute',
