@@ -2185,7 +2185,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 2500,
+    baseExp: 10000,
     stats: { hp: { min: 600, max: 6000 }, atk: { min: 1, max: 100 }, rec: { min: 5, max: 50 } },
     skill: { name: 'タマゴうみ', sp: 5, desc: 'HPを最大HPの70%回復。', effects: [ { type: 'heal', value: 0.7 } ] },
     leaderSkill: {
