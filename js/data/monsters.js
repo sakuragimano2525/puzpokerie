@@ -3770,10 +3770,23 @@ const MONSTER_DATA = {
     id: 694,
     name: 'エリキテル',
     rarity: 1,
+    attr: 'light',
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 100,
-    stats: { hp: { min: 150, max: 340 }, atk: { min: 120, max: 260 }, rec: { min: 5, max: 9 } }
+    stats: { hp: { min: 150, max: 340 }, atk: { min: 120, max: 260 }, rec: { min: 5, max: 9 } },
+    skill: {
+      name: 'でんきショック',
+      sp: 3,
+      desc: '敵全体に1,000の固定ダメージ。\n最上段の横1列を光ドロップに変化。',
+      effects: [ { type: 'damageAll', value: 1000 }, { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'light' } ]
+    },
+    leaderSkill: {
+      name: 'シックスセンス・小',
+      desc: '6コンボ以上で攻撃1.5倍。',
+      effects: [ { type: 'atk', condition: 'combo', count: 6, value: 1.5 } ]
+    },
+    evolutions: [ { to: 695, materials: [ { item: 'spuzzle_42', count: 3 } ] } ]
   },
   695: {
     id: 695,
@@ -4592,7 +4605,7 @@ const MONSTER_DATA = {
       desc: '水と闇ドロップを同時に6個以上つなげて消すと攻撃2倍、1コンボ加算。',
       effects: [ { type: 'atk', condition: 'orbConnect', attr: 'water', count: 6, value: 2, attr2: 'dark', comboAdd: 1 } ]
     },
-    evolutions: [ { to: 5815, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_52', count: 2 } ] } ]
+    evolutions: [ { to: 5015, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_52', count: 2 } ] } ]
   },
   5015: {
     id: 5015,
