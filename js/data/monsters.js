@@ -4299,9 +4299,9 @@ const MONSTER_DATA = {
     skill: {
       name: '星の呼び声',
       sp: 5,
-      desc: '1ターンの間、超高速ルーレットを1つ生成。\n1ターンの間、操作時間が2倍。',
+      desc: '1ターンの間、高速ルーレットを1つ生成。\n1ターンの間、操作時間が2倍。',
       effects: [
-        { type: 'roulette', turns: 1, count: 1, sec: '0.2' },
+        { type: 'roulette', turns: 1, count: 1, sec: '0.5' },
         { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 2 }
       ]
     },
@@ -4751,7 +4751,7 @@ const MONSTER_DATA = {
     name: 'エレノア',
     rarity: 4,
     attr: 'wood',
-    type: 'こうげき',
+    type: 'かいふく',
     maxLevel: 50,
     baseExp: 500,
     stats: { hp: { min: 200, max: 2000 }, atk: { min: 500, max: 2500 }, rec: { min: 50, max: 250 } },
@@ -4915,7 +4915,7 @@ const MONSTER_DATA = {
     leaderSkill: {
       name: '幸せのメロディ',
       desc: '毒ダメージを無効化。\n木属性の回復力1.5倍。',
-      effects: [ { type: 'poisonImmune', value: true }, { type: 'rec', attr: 'wood', value: 1.5 } ]
+      effects: [ { type: 'poisonImmune', value: true }, { type: 'rec', attr: 'wood', value: 1.59 } ]
     }
   },
   5026: {
@@ -4982,7 +4982,7 @@ const MONSTER_DATA = {
     stats: { hp: { min: 500, max: 2600 }, atk: { min: 300, max: 2200 }, rec: { min: 100, max: 250 } },
     skill: {
       name: 'AP弾装填',
-      sp: 7,
+      sp: 6,
       desc: 'ドロップを水・光・闇・回復ドロップに変化。\n1ターンの間、火と木属性の攻撃が激減。',
       effects: [
         { type: 'orbChangeMulti', orb_heal: true, orb_light: true, orb_water: true, orb_dark: true },

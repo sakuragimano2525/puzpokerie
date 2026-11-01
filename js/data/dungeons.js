@@ -37000,7 +37000,7 @@ const DUNGEON_DATA = {
       ]
     },
     "intrusion": {
-      "rate": 10,
+      "rate": 20,
       "monsters": [
         {
           "name": "ラッキー",
