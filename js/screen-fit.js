@@ -14,8 +14,19 @@
   document.addEventListener('webkitfullscreenchange', function(){ setTimeout(setAppHeight, 100); });
 
   function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-  function goFullscreen(){
-    if (isFs()) return;
+  // ホーム画面のアプリ(PWA)として開いているときは、最初から全画面。Fullscreen APIを使うと
+  // 「全画面表示を終了するには…」の表示が出てプレイの邪魔になるので、その場合は何もしない
+  function isStandalone(){
+    try {
+      return (window.matchMedia && (matchMedia('(display-mode: standalone)').matches ||
+                                    matchMedia('(display-mode: fullscreen)').matches ||
+                                    matchMedia('(display-mode: minimal-ui)').matches)) ||
+             window.navigator.standalone === true;
+    } catch(e) { return false; }
+  }
+  // 全画面にする（game.js からも使う）。すでに全画面／アプリ表示なら何もしない
+  window.requestAppFullscreen = function(){
+    if (isFs() || isStandalone()) return;
     var el = document.documentElement;
     var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
     if (!fn) return;
@@ -23,9 +34,8 @@
       var r = fn.call(el, { navigationUI: 'hide' });
       if (r && r.catch) r.catch(function(){});
     } catch(e) {}
-  }
-  // 全画面でない間は、タップのたびに再試行する（解除された場合も再度タップで復帰）
-  ['click','touchend','pointerup'].forEach(function(ev){
-    document.addEventListener(ev, goFullscreen, true);
-  });
+  };
+  // ※以前は「全画面でない間、タップのたびに再試行」していたが、フチをなぞって全画面が解除されるたびに
+  //   次のタップで入り直して、毎回「全画面表示を終了するには…」の表示が出てしまうため廃止
+  //   （全画面にするのは、スタート／ホームの最初のタップ時だけ）
 })();

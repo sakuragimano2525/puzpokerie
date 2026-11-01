@@ -5015,10 +5015,15 @@ function calcIkuCost() {
 
 // 素材にしたときの経験値（ベースと同じ属性なら1.5倍）。baseMon が無いときは属性ボーナスなし
 //   calcIkuGain / doGassho / 一覧の「合計経験値」表示で共通
+//   Lvが上がるほど増えるが、Lv×baseExp だと高Lvで増えすぎる（フーパ Lv14 で70万など）ため、
+//   「Lv1のとき baseExp、Lvが1上がるごとに baseExp の IKU_MAT_LV_SLOPE 倍ずつ増える」緩やかな式にしている
+//   例）baseExp 1000：Lv1=1,000 / Lv30=3,900 / Lv60=6,900 / Lv99=10,800
+const IKU_MAT_LV_SLOPE = 0.1;   // 大きくするほどLvの影響が強くなる（1にすると従来の Lv×baseExp にほぼ戻る）
 function ikuMatExp(matEntry, baseMon) {
   const mm = MONSTER_DATA[matEntry.monsterId];
   if (!mm) return 0;
-  let exp = mm.baseExp * matEntry.level;
+  const lv = Math.max(1, Number(matEntry.level) || 1);
+  let exp = Math.floor(mm.baseExp * (1 + (lv - 1) * IKU_MAT_LV_SLOPE));
   if (baseMon && mm.attr === baseMon.attr) exp = Math.floor(exp * 1.5);
   return exp;
 }
@@ -8098,7 +8103,7 @@ function flyAttrProjectile(startX, startY, endX, endY, attr, duration = ATK_FLY_
 // ゲーム初期化
 // ============================================================
 document.getElementById('start').addEventListener('click', async () => {
-  try { (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen).call(document.documentElement); } catch(e) {}
+  try { window.requestAppFullscreen && window.requestAppFullscreen(); } catch(e) {}
   document.getElementById('start').style.display = 'none';
   document.getElementById('game').style.display = 'flex';
   stopMenuBGM();
@@ -8889,7 +8894,7 @@ async function startGameFromHome() {
   document.getElementById('home').style.display = 'none';
   document.getElementById('game').style.display = 'flex';
   stopMenuBGM();
-  try { (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)?.call(document.documentElement); } catch(e) {}
+  try { window.requestAppFullscreen && window.requestAppFullscreen(); } catch(e) {}
 
   totalCoin = 0;
   totalExp = 0;
@@ -9462,7 +9467,7 @@ let homeFullscreen = false;
 document.getElementById('home').addEventListener('click', () => {
   if (homeFullscreen) return;
   homeFullscreen = true;
-  try { (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)?.call(document.documentElement); } catch(e) {}
+  try { window.requestAppFullscreen && window.requestAppFullscreen(); } catch(e) {}
 }, {capture: true, once: true});
 
 // Menu → 「続ける / ドロップを見る / リタイア」
