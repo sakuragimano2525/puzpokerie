@@ -807,7 +807,8 @@ const MONSTER_DATA = {
       name: 'シックスセンス',
       desc: '6コンボ以上で攻撃1.8倍。',
       effects: [ { type: 'atk', condition: 'combo', count: 6, value: 1.8 } ]
-    }
+    },
+    evolutions: [ { to: 169, materials: [ { item: 'puzzle53', count: 2 } ] } ]
   },
   43: {
     id: 43,
@@ -3048,6 +3049,27 @@ const MONSTER_DATA = {
       name: 'バランスのアミュレット',
       desc: 'バランスタイプの全パラメータが1.2倍。',
       effects: [ { type: 'allStat', condition: 'type', attr: 'バランス', value: 1.2 } ]
+    }
+  },
+  169: {
+    id: 169,
+    name: 'クロバット',
+    rarity: 4,
+    attr: 'dark',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 15000,
+    stats: { hp: { min: 850, max: 2850 }, atk: { min: 550, max: 2550 }, rec: { min: 150, max: 250 } },
+    skill: {
+      name: 'アクロバット',
+      sp: 3,
+      desc: '1ターンの間、操作時間が1.5倍。',
+      effects: [ { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 1.5 } ]
+    },
+    leaderSkill: {
+      name: 'セブンクライシス',
+      desc: '7コンボ以上で攻撃2倍。',
+      effects: [ { type: 'atk', condition: 'combo', count: 7, value: 2 }, { type: 'moveTimeAdd', value: 1 } ]
     }
   },
   212: {
