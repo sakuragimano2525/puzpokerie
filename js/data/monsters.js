@@ -794,7 +794,7 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'dark',
     type: 'こうげき',
-    maxLevel: 75,
+    maxLevel: 58,
     baseExp: 300,
     stats: { hp: { min: 500, max: 2800 }, atk: { min: 390, max: 2550 }, rec: { min: 5, max: 0 } },
     skill: {
@@ -2265,8 +2265,8 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'water',
     type: 'たいりょく',
-    maxLevel: 75,
-    baseExp: 500,
+    maxLevel: 50,
+    baseExp: 1500,
     stats: { hp: { min: 466, max: 2666 }, atk: { min: 100, max: 1100 }, rec: { min: 24, max: 74 } },
     skill: {
       name: 'てっぽうみず',
