@@ -2066,13 +2066,15 @@ function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし�
   const dropImgs = [];   // この敵が落とした物の表示用画像（モンスター=ギフト / アイテム=チップ画像）
 
   // 1体の敵から落ちるのは「チップ1個」か「その敵のモンスター」のどちらか1つだけ。
-  // ① チップ（敵データの drops を上から順に抽選し、最初に当たった1つだけ。個数は常に1）
+  // ① チップ（敵データの drops を上から順に抽選し、最初に当たった1種類だけ。個数は drops[].count）
   const chipGuaranteed = attackPhaseCombo >= CHIP_GUARANTEE_COMBO;   // 10コンボ以上で倒した
   for (const d of (enemy.drops || [])) {
     if (!ITEM_DATA[d.item]) continue;
     const r = d.rate === undefined ? 1 : d.rate;
     if (!chipGuaranteed && Math.random() > r) continue;
-    droppedItems.push({ item: d.item, count: 1 });
+    // 個数は敵データの drops[].count（数字 または [最小, 最大]）。未指定なら1個
+    const dropCnt = Math.max(1, Math.floor(Number(rollDropCount(d.count))) || 1);
+    droppedItems.push({ item: d.item, count: dropCnt });
     dropped = true;
     dropImgs.push({ src: ITEM_DATA[d.item].img });
     break;
