@@ -42,6 +42,8 @@
   MS.on = on;
   MS.reset = function () {
     MS.kills = []; MS.remote = false; MS.applying = false; MS.spectating = false; cancelLive();
+    try { stopRemoteDrag(); } catch (e) {}
+    rlSync = null;
     MS.rp = null; MS.remoteView = false;
     const g = document.getElementById('game'); if (g) g.classList.remove('mt-spectate', 'mt-remote');
   };
@@ -223,7 +225,7 @@
       remoteDefeat(e);
     });
     try { updateEnemyUI(); } catch (e) {}
-    for (const e of enemyList) if (e.hp <= 0 && !e._fled) totalExp += (e.exp || 0);
+    for (const e of enemyList) if (e.hp <= 0 && !e._fled) totalExp += rewardExp(e.exp);
     while (_defeatPending.length) { const list = _defeatPending; _defeatPending = []; await Promise.all(list); }
   }
   // 相手の操作中に何階層も進んだとき、途中の階層ぶんの報酬は演出なしで受け取る
@@ -232,7 +234,7 @@
     if (!b || !b.enemies) return;
     b.enemies.forEach((def, i) => {
       const p = Object.assign({}, def, { _dropKey: 'drop:' + idx + ':' + i, hp: 0, _fled: !!(rec && rec.fled && rec.fled[i]), _killCombo: (rec && rec.combo && rec.combo[i]) || 0, _dropChecked: false });
-      if (!p._fled) totalExp += (def.exp || 0);
+      if (!p._fled) totalExp += rewardExp(def.exp);
       remoteDefeat(p, true);
     });
   }
@@ -263,6 +265,7 @@
     const s = typeof json === 'string' ? JSON.parse(json) : json;
     if (!s) return;
     MS.applying = true;
+    stopRemoteDrag(); rlSync = null;   // ターンの確定状態で上書きするので、見せるだけの操作中の表示はここで終わり
     try {
       try { clearComboChips(); rdmg.forEach(el => { if (el) { el.textContent = ''; el.classList.remove('show', 'pop', 'boosting'); } }); } catch (e) {}
       if (s.bi > currentBattleIndex) await advanceTo(s);
@@ -368,23 +371,101 @@
   };
 
   // ---------- 操作中の盤面のミラー（見せるだけ） ----------
-  let liveT = 0, liveTimer = null;
-  function cancelLive() { if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; } }
-  MS.live = function (flush) {
+  //   ・操作している人：掴んでいるドロップの指の位置（マス単位）・盤面・ルーレットの針の時計を、約30回/秒で送る
+  //   ・見ている人：届いた指の位置へ毎フレームなめらかに追いかけて描く（コマ送りに見えない）。
+  //                 ルーレットの針も、相手の時計に合わせて自分の画面でも回す（色の変化は届いた盤面で更新）
+  const LIVE_MS = 33;
+  let liveT = 0, liveTimer = null, livePos = null, rlBeatT = 0;
+  function cancelLive() { if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; } livePos = null; }
+  // pos … 指の位置 { r, c, x, y }（x,y は盤面の左上を0,0・1マス=1 の座標でのドロップの中心）／ null＝指を離した／省略＝そのまま
+  MS.live = function (flush, pos) {
+    if (pos !== undefined) livePos = pos;
     if (!on() || !window.MultiOnline || MultiTurn.localId === null || !MultiTurn.isMyTurn() || !grid.length) return;
     const send = () => {
       liveTimer = null; liveT = performance.now();
       if (!on() || !MultiTurn.isMyTurn()) return;
-      MultiOnline.sendLive({ cur: MultiTurn.current, round: MultiTurn.round, g: gridStr(), lk: lockStr() });
+      const o = { cur: MultiTurn.current, round: MultiTurn.round, g: gridStr(), lk: lockStr(), d: 0 };
+      if (livePos) {
+        o.d = 1; o.dr = livePos.r; o.dc = livePos.c;
+        o.px = Math.round(livePos.x * 1000) / 1000; o.py = Math.round(livePos.y * 1000) / 1000;
+      }
+      if (typeof roulettes !== 'undefined' && roulettes.length) {   // ルーレットの針の時計（全部同じ時計で回る）と、いま回っているか
+        o.rt = Math.round(roulettes[0].t);
+        o.rr = (!busy && !timeStopActive && !_rlHold) ? 1 : 0;
+      }
+      MultiOnline.sendLive(o);
     };
-    cancelLive();
-    const wait = 140 - (performance.now() - liveT);
-    if (flush || wait <= 0) send(); else liveTimer = setTimeout(send, wait);
+    if (flush) { if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; } send(); return; }
+    if (liveTimer) return;   // もう送る予定がある（そのとき最新の状態を送る）
+    const wait = LIVE_MS - (performance.now() - liveT);
+    if (wait <= 0) send(); else liveTimer = setTimeout(send, wait);
+  };
+  // 操作中のルーレット：針が回っている間は、約0.25秒ごとに時計を送って相手の画面とずれないようにする（game.js の rouletteLoop から）
+  MS.rlBeat = function (now) {
+    if (now - rlBeatT < 250) return;
+    rlBeatT = now;
+    MS.live();
+  };
+
+  // ---- 見ている側 ----
+  let rlSync = null;   // 相手のルーレットの時計 { key, base(ms), at(受け取った時刻), run }
+  const RD = { on: false, r: 0, c: 0, tx: 0, ty: 0, cx: 0, cy: 0, el: null, raf: null, last: 0, msg: 0 };   // 相手が掴んでいるドロップ
+  function paintRemoteDrag() {
+    const gEl = document.getElementById('grid');
+    const el = orbEls[RD.r] && orbEls[RD.r][RD.c];
+    if (!gEl || !el) return;
+    const b = gEl.getBoundingClientRect(), cw = b.width / COLS, ch = b.height / ROWS;
+    const ox = Math.max(-cw, Math.min(cw, (RD.cx - (RD.c + 0.5)) * cw));
+    const oy = Math.max(-ch, Math.min(ch, (RD.cy - (RD.r + 0.5)) * ch));
+    if (RD.el && RD.el !== el) { RD.el.style.transform = ''; RD.el.classList.remove('dragging'); }
+    RD.el = el;
+    el.classList.add('dragging');
+    el.style.transform = `translate(${ox}px, ${oy}px) scale(1.28)`;
+  }
+  function remoteDragFrame(now) {
+    RD.raf = null;
+    if (!RD.on || !on() || MultiTurn.isMyTurn() || now - RD.msg > 2500) { stopRemoteDrag(); return; }   // 届かなくなったら（切断など）止める
+    const dt = Math.min(100, Math.max(0, now - RD.last)); RD.last = now;
+    const a = 1 - Math.exp(-dt / 38);   // 届いた位置へ、約0.04秒で追いつくなめらかな追従
+    RD.cx += (RD.tx - RD.cx) * a; RD.cy += (RD.ty - RD.cy) * a;
+    paintRemoteDrag();
+    RD.raf = requestAnimationFrame(remoteDragFrame);
+  }
+  function stopRemoteDrag() {
+    if (RD.raf) { cancelAnimationFrame(RD.raf); RD.raf = null; }
+    if (RD.el) { RD.el.style.transform = ''; RD.el.classList.remove('dragging'); RD.el = null; }
+    if (RD.on) { RD.on = false; try { if (!dragging) setDragFx(false); } catch (e) {} }
+  }
+  // game.js の rouletteLoop から：相手の番のあいだ、ルーレットの針を相手の時計に合わせて回す。回したら true
+  MS.rlSpectate = function (list, now) {
+    if (!on() || MultiTurn.isMyTurn() || !rlSync || rlSync.key !== MultiTurn.current + ':' + MultiTurn.round) return false;
+    const el = rlSync.run ? Math.max(0, now - rlSync.at) : 0;
+    for (const o of list) { const p = o.period || 2000; o.t = (((rlSync.base + el) % p) + p) % p; }
+    return true;
   };
   MS.onLive = function (v) {
     if (!on() || !v || MultiTurn.isMyTurn() || MS.applying || MultiTurn._receiving) return;
     if (v.cur !== MultiTurn.current || v.round !== MultiTurn.round) return;   // 前のターンの古い盤面は無視
-    if (typeof v.g === 'string') setGridFromStr(v.g, v.lk);
+    if (typeof v.g === 'string' && (v.g !== gridStr() || (v.lk || '') !== lockStr())) {   // 変わった時だけ描き直す
+      setGridFromStr(v.g, v.lk);
+      if (RD.on) { RD.el = null; paintRemoteDrag(); }   // 描き直しで消えた「掴んでいる」見た目をすぐ戻す
+    }
+    if (v.d) {
+      RD.r = Math.max(0, Math.min(ROWS - 1, Number(v.dr) || 0)); RD.c = Math.max(0, Math.min(COLS - 1, Number(v.dc) || 0));
+      RD.tx = Number(v.px) || 0; RD.ty = Number(v.py) || 0;
+      RD.msg = performance.now();
+      if (!RD.on) {
+        RD.on = true; RD.cx = RD.tx; RD.cy = RD.ty; RD.last = RD.msg;
+        try { setDragFx(true); } catch (e) {}   // 掴んでいる間はドロップの transition を止める（入れ替えは一瞬で切り替わる＝本人の画面と同じ）
+        paintRemoteDrag();
+        RD.raf = requestAnimationFrame(remoteDragFrame);
+      }
+    } else if (RD.on) {
+      stopRemoteDrag();
+    }
+    rlSync = (v.rt !== undefined && v.rt !== null)
+      ? { key: v.cur + ':' + v.round, base: Number(v.rt) || 0, at: performance.now(), run: !!v.rr }
+      : null;
   };
 
 
@@ -456,6 +537,7 @@
         img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:0';
         img.onerror = function () { this.style.display = 'none'; };
         slot.appendChild(img);
+        slot._sk = { mon: mon, entry: null };   // 長押しでスキル説明（game.js の長押し処理がそのまま使う）
         const isBound = bound[i] > 0;
         if (p.sp >= (d[1] || 1) && !p.seal) {
           const ready = document.createElement('div');
@@ -549,6 +631,40 @@
     const en = enemyList.map(e => { const o = {}; for (const k of ENEMY_KEYS) if (k !== 'hp' && k !== 'maxHp' && e[k] !== undefined) o[k] = clone(e[k]); return o; });
     MS.fx('st', { en, bf: getBuffs(), bi: currentBattleIndex });
   };
+
+
+  // 相手がスキルを使ったとき：どのモンスターの何のスキルか、画面の上にしばらく表示する（約3.5秒。次のスキルが来たら置き換え）
+  let skToastTimer = null;
+  function showRemoteSkillToast(d) {
+    const dg = $id('dungeon');
+    if (!dg) return;
+    const mon = d.m != null ? MONSTER_DATA[d.m] : null;
+    let el = $id('mt-skill-toast');
+    if (!el) { el = document.createElement('div'); el.id = 'mt-skill-toast'; dg.appendChild(el); }
+    const who = (window.MultiTurn ? MultiTurn.name(MultiTurn.current) : '相手');
+    el.innerHTML = '';
+    if (mon) {
+      const img = document.createElement('img');
+      img.src = monsterImg(mon); img.alt = ''; img.draggable = false;
+      img.onerror = function () { this.style.display = 'none'; };
+      el.appendChild(img);
+    }
+    const tx = document.createElement('div'); tx.className = 'mst-text';
+    const h = document.createElement('div'); h.className = 'mst-who'; h.textContent = who + ' のスキル' + (mon ? '：' + mon.name : '');
+    const n = document.createElement('div'); n.className = 'mst-name'; n.textContent = '✨ ' + ((mon && mon.skill && mon.skill.name) || d.n || 'スキル発動！');
+    tx.append(h, n);
+    if (mon && mon.skill && mon.skill.desc) {
+      const ds = document.createElement('div'); ds.className = 'mst-desc';
+      try { setSkillText(ds, mon.skill.desc); } catch (e) { ds.textContent = mon.skill.desc; }
+      tx.appendChild(ds);
+    }
+    el.appendChild(tx);
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    clearTimeout(skToastTimer);
+    skToastTimer = setTimeout(() => el.classList.remove('on'), 3500);
+  }
+
+  MS.showRemoteSkillToast = showRemoteSkillToast;
 
   // ---- 相手の出来事を、届いた順に再生する ----
   let fxChain = Promise.resolve();
@@ -757,7 +873,7 @@
     // 相手のSP
     sp(d) { if (!MS.rp) return; MS.rp.sp = d.sp; MS.rp.mem = d.mem; paintRemoteSp(); },
     // スキル発動
-    sk(d) { try { showSkillMessage('✨ ' + (d.n || 'スキル発動！'), 1400); playSkillSound(); } catch (_) {} },
+    sk(d) { try { playSkillSound(); showRemoteSkillToast(d || {}); } catch (_) {} },
   };
 
   window.MultiShare = MS;

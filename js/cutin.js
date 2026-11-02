@@ -18,6 +18,12 @@
 //       ・敵の明るさフィルターは、効いている間だけ（そのあとは外す）
 //       ・出番の終わった光・火の粉は、その場で消してレイヤーを減らす
 //
+//   ■ 縦長（全身）キャラの「顔」を自動でアップにする（味方のスキル・変身カットイン用）
+//       show(…, { face:true }) で呼ぶと、縦長の画像は「お腹」ではなく「顔」が帯の上の空きに大きく入るようにします。
+//       顔の位置は、画像の透明な余白を除いた大きさから自動で推定します（だいたい上から21％のあたり）。
+//       ずれるキャラは、下の FACE_FOCUS に「モンスターID: { x:顔の横位置, y:顔の縦位置 }」を足してください
+//       （x・y は画像全体を 0〜1 とした位置。例：画像の上から27％・左から59％なら { x:.59, y:.27 }）。
+//
 //   ※ game.js の後に読み込む。公開しているのは window.EnemyCutIn だけ：
 //       EnemyCutIn.isCutin(技名, 行動)  … ⚠️付き（または 行動.cutin === true）なら true
 //       EnemyCutIn.show(敵, 技名)       … カットインを出して、終わったら resolve する Promise
@@ -45,6 +51,18 @@
               (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
   const STAR_N  = IOS ? 12 : 26;   // 星の数
   const EMBER_N = IOS ? 8  : 16;   // 火の粉の数
+
+  // ── 縦長キャラの顔アップ ──
+  const TALL_RATIO   = 1.3;    // 画像（透明な余白を除く）の 縦÷横 がこれ以上なら「縦長キャラ」として顔にズーム
+  const AUTO_FACE_Y  = 0.21;   // 自動推定：顔の中心は、キャラの上端から全身の何割のところか
+  const FACE_HEAD_H  = 0.327;  // 顔アップ時、頭の高さを演出の高さ(H)の何割にするか（寄りの動きが終わるとき約0.34）
+  const FACE_AT_X    = 0.58;   // 顔を置く横位置（画面幅に対する割合）
+  const FACE_AT_Y    = 0.27;   // 顔を置く縦位置（演出の高さに対する割合。帯の上の空きの真ん中あたり）
+  // 顔の位置の手動指定（自動でずれるキャラ用）。キー＝モンスターID（画像 mp{ID}.png）、x・y＝画像全体に対する 0〜1 の位置
+  const FACE_FOCUS = {
+    5029: { x: 0.59, y: 0.275 },   // 傘を持った縦長キャラ（傘で上端が高いので自動推定より少し下）
+    5031: { x: 0.54, y: 0.14 }     // 長いツインテの縦長キャラ
+  };
 
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -144,7 +162,96 @@
 
   let _active = null;   // 再生中のカットイン（二重に出さない）
 
-  function show(enemy, rawName) {
+  // ── カットイン専用の効果音（モンスターID.mp3 など）を読み込む ──
+  //   見つからない／読めない時は null（→ 通常の cutin.mp3 を鳴らす）。読み込みが遅い時は長さ不明のまま進める。
+  const _seCache = {};
+  function prepareSE(file) {
+    if (!file) return Promise.resolve(null);
+    if (_seCache[file]) return Promise.resolve(_seCache[file].bad ? null : _seCache[file]);
+    return new Promise(res => {
+      let fin = false;
+      const done = v => { if (fin) return; fin = true; res(v); };
+      try {
+        const au = new Audio();
+        au.preload = 'auto'; au.volume = 1;
+        const rec = _seCache[file] = { au, bad: false };
+        au.addEventListener('loadedmetadata', () => done(rec), { once: true });
+        au.addEventListener('error', () => { rec.bad = true; done(null); }, { once: true });
+        au.src = file;
+        setTimeout(() => done(rec.bad ? null : rec), 500);
+      } catch (e) { done(null); }
+    });
+  }
+
+  // ── 敵／味方の画像の大きさと、透明な余白を除いた範囲を調べる（顔アップの計算用）──
+  //   読めない時（file:// で開いている等）は、画像全体を使う。読み込みが遅い時は null（→ 従来の配置）。
+  const _imgCache = {};
+  function measureImg(im, url) {
+    const nw = im.naturalWidth, nh = im.naturalHeight;
+    const r = { url, nw, nh, bx0: 0, by0: 0, bw: nw, bh: nh };
+    try {
+      const k = Math.min(1, 160 / Math.max(nw, nh));
+      const cw = Math.max(1, Math.round(nw * k)), ch = Math.max(1, Math.round(nh * k));
+      const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      const cx = cv.getContext('2d');
+      cx.drawImage(im, 0, 0, cw, ch);
+      const d = cx.getImageData(0, 0, cw, ch).data;
+      let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+      for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+        if (d[(y * cw + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      }
+      if (x1 >= x0 && y1 >= y0) {
+        r.bx0 = x0 / cw * nw; r.by0 = y0 / ch * nh;
+        r.bw = (x1 + 1 - x0) / cw * nw; r.bh = (y1 + 1 - y0) / ch * nh;
+      }
+    } catch (e) {}
+    return r;
+  }
+  function loadOne(url) {
+    if (!url) return Promise.resolve(null);
+    if (_imgCache[url] !== undefined) return Promise.resolve(_imgCache[url]);
+    return new Promise(res => {
+      const im = new Image();
+      im.onload = () => { res(_imgCache[url] = (im.naturalWidth && im.naturalHeight) ? measureImg(im, url) : null); };
+      im.onerror = () => res(null);   // 失敗は覚えない（あとで読めるかもしれない）
+      im.src = url;
+    });
+  }
+  function prepareImg(enemy) {
+    const main = enemy && enemy.img, fb = enemy && enemy.imgFallback;
+    let fin = false;
+    return new Promise(res => {
+      const done = v => { if (fin) return; fin = true; res(v); };
+      setTimeout(() => done(null), 700);
+      loadOne(main).then(r => r || (fb && fb !== main ? loadOne(fb) : null)).then(done, () => done(null));
+    });
+  }
+  // 顔アップの配置を計算。縦長でなければ null（＝今までどおり）
+  function faceLayout(info, focus) {
+    if (!info || !(info.bw > 0) || !(info.bh > 0)) return null;
+    const m = /mp(\d+)\.png/.exec(info.url || '');
+    const f = focus || (m && FACE_FOCUS[m[1]]);   // 手動指定があれば、縦横比に関係なく顔アップ
+    if (!f && info.bh / info.bw < TALL_RATIO) return null;
+    const fx = f ? f.x : (info.bx0 + info.bw * 0.5) / info.nw;
+    const fy = f ? f.y : (info.by0 + info.bh * AUTO_FACE_Y) / info.nh;
+    // 頭の高さ（画像の px）：全身なら全身の約15％、半身ならもっと大きい。横幅からも見積もって、はみ出さない範囲に収める
+    const headH = clamp(0.30 * info.bw, 0.12 * info.bh, 0.30 * info.bh);
+    return { info, fx: clamp(fx, 0, 1), fy: clamp(fy, 0, 1), headH };
+  }
+
+  // show(敵, 技名, { se:'5000.mp3', face:true, focus:{x,y} })
+  //   se    … cutin.mp3 の代わりに鳴らす音（無ければ cutin.mp3）
+  //   face  … true なら、縦長キャラは顔をアップにする（味方のスキル／変身用。敵の⚠️技は今までどおり）
+  //   focus … 顔の位置を直接指定（画像全体を 0〜1 とした x・y）。省略すると FACE_FOCUS／自動推定
+  function show(enemy, rawName, opts) {
+    const file = opts && opts.se;
+    const wantFace = !!(opts && opts.face);
+    if (!file && !wantFace) return _show(enemy, rawName, null, null);
+    return Promise.all([prepareSE(file), wantFace ? prepareImg(enemy) : null])
+      .then(r => _show(enemy, rawName, r[0], r[1] ? faceLayout(r[1], opts.focus) : null));
+  }
+
+  function _show(enemy, rawName, customSE, face) {
     return new Promise(resolve => {
       if (_active) { try { _active(); } catch (e) {} }
 
@@ -159,7 +266,12 @@
       // ── 効果音（cutin.mp3）：鳴らせたら、その長さに合わせて表示時間を決める ──
       let T = CUTIN_MIN_MS;
       try {
-        if (typeof playSE === 'function') {
+        if (customSE && customSE.au) {
+          const au = customSE.au;
+          try { au.currentTime = 0; } catch (e) {}
+          au.play().catch(() => {});
+          if (isFinite(au.duration) && au.duration > 0) T = clamp(au.duration * 1000, 1200, CUTIN_MAX_MS);
+        } else if (typeof playSE === 'function') {
           playSE('cutin');
           const st = typeof _seState !== 'undefined' && _seState.cutin;
           const au = st && st.pool && st.pool[(st.idx + st.pool.length - 1) % st.pool.length];
@@ -253,9 +365,18 @@
       const monWrap = document.createElement('div'); monWrap.className = 'cutin-monwrap';
       monWrap.style.cssText = `left:${W * 0.27}px;width:${W * 0.62}px;top:${-H * 0.23}px;height:${H * 1.3}px;`;
       const mon = document.createElement('img'); mon.className = 'cutin-mon';
+      if (face) {
+        // 縦長キャラ：頭の高さが FACE_HEAD_H×H になる大きさに拡大し、顔が帯の上の空きの真ん中に来るよう置く。
+        // 寄りの動き（scale）も顔を中心にかかる。
+        const sc = (FACE_HEAD_H * H) / face.headH;
+        const fw = face.info.nw * sc, fh = face.info.nh * sc;
+        monWrap.style.cssText = `left:${W * FACE_AT_X - face.fx * fw}px;top:${H * FACE_AT_Y - face.fy * fh}px;width:${fw}px;height:${fh}px;`;
+        mon.style.transformOrigin = `${face.fx * 100}% ${face.fy * 100}%`;
+      }
       mon.alt = ''; mon.draggable = false;
-      mon.onerror = function () { this.style.display = 'none'; };
-      mon.src = (enemy && enemy.img) || '';
+      const fb = (enemy && enemy.imgFallback) || '';
+      mon.onerror = function () { if (fb && this.getAttribute('src') !== fb) { this.src = fb; } else { this.style.display = 'none'; } };
+      mon.src = (face && face.info.url) || (enemy && enemy.img) || fb;
       monWrap.appendChild(mon);
       content.appendChild(monWrap);
 
@@ -401,4 +522,5 @@
   }
 
   window.EnemyCutIn = { show, isCutin, cleanName, THEMES };
+  // 使い方（味方のスキル）：EnemyCutIn.show({ attr, img:'mp5000.png', imgFallback:'m5000.png' }, 'スキル名', { se:'5000.mp3', face:true })
 })();

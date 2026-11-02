@@ -89,10 +89,13 @@ const EVENT_AREA_DATA = {
   kourin: { multiOnly: true, name: 'ニンフィア降臨', desc: 'クリアでニンフィアが解放！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ニンフィア降臨'} , stageLevels: { boss: '上級' }},
   kourinb: { multiOnly: true, name: 'ハッサム降臨', desc: 'クリアでハッサムが解放！', bg: 'dungeon10.png', hue: 200,stageNames: { boss: 'ハッサム降臨'} , stageLevels: { boss: '中級' }},
 kourinc: {both: true, name: 'ハガネール降臨', desc: 'クリアでハガネールが解放！', bg: 'dungeon12.png', hue: 200,stageNames: { boss: 'ハガネール降臨'} , stageLevels: { boss: '上級' }},
+kourind: {both: true, name: 'クシャムシャ降臨', desc: '武者が現れる…', bg: 'kourin1.png', hue: 200,stageNames: { boss: 'クシャムシャ降臨'} , stageLevels: { boss: '中〜超級' }},
 
   BLLU: {both: true, name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'ブルアカ-スタジアム1',boss: 'ブルアカ-スタジアム2'} , stageLevels: { 1: '上級',boss: '超級' }},
    jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョ-スタジアム'} , stageLevels: { boss: '中級' }},
     stella: { both: true, name: 'ステラソラコラボ', desc: 'クリアでアルカナエキスゲット！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム'} , stageLevels: { boss: '上級' }},
+    Astral: { both: true, name: 'アストラルパーティー', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL.png', hue: 200,stageNames: { boss: 'アストラルパーティー'} , stageLevels: { boss: '超級' }},
+
 
   // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──
   //   ダンジョンのキーは「multi-番号」。中身は js/data/dungeons.js の「multi-番号」（ダンジョン設定ツールでメイン・イベントと同じように編集・保存できる）

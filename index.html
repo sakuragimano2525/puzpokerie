@@ -406,6 +406,7 @@
   <div id="de-footer" class="dock">
     <button id="de-back-btn" class="btn-back" aria-label="戻る"><svg class="ic"><use href="#i-back"/></svg></button>
     <button id="de-challenge-btn" class="btn btn-primary btn-cta"><svg class="ic"><use href="#i-play"/></svg><span id="de-cta-txt">挑戦する</span><span id="de-cost" class="de-cost" style="display:none"></span></button>
+    <button id="de-rensen-btn" class="btn-rensen" type="button" aria-label="連戦（クリア後、またこの編成画面に戻る）"><svg class="ic"><use href="#i-play"/></svg><span>連戦</span></button>
   </div>
 </div>
 
@@ -702,7 +703,7 @@
   <div id="te-party-area">
     <div class="team-nav" id="te-team-nav"><button class="tn-btn" data-dir="-1" aria-label="前のパーティー"><svg class="ic"><use href="#i-back"/></svg></button><span class="tn-label">パーティー <b class="tn-no">1</b><small>/ 10</small></span><button class="tn-btn" data-dir="1" aria-label="次のパーティー"><svg class="ic"><use href="#i-chev"/></svg></button></div>
     <div id="te-party-scroll"></div>
-    <div id="te-party-labels"><span>リーダー</span><i></i><i></i><i></i><i></i><span>フレンド</span></div>
+    <div id="te-party-labels"><span>リーダー</span><div id="te-rarity"></div><span>フレンド</span></div>
     <div id="te-stats">
       <div class="te-stat hp"><img class="stat-ic" src="sta1.png" alt="" draggable="false"><small>HP</small><b id="te-stat-hp">0</b></div>
       <div class="te-stat atk"><img class="stat-ic" src="sta2.png" alt="" draggable="false"><small>攻撃</small><b id="te-stat-atk">0</b></div>
@@ -964,7 +965,7 @@
     </div>
   </div>
   <div id="status-bar">
-    <div id="coin-display"><img class="coin-icon" src="hcoin.png" alt="エナ"><span id="coin-count">0</span></div>
+    <div id="coin-display"><img class="coin-icon" src="hcoin.png" alt="エナ"><span id="coin-count">0</span><button id="mt-chat-btn" type="button" aria-label="定型文を送る">💬</button></div>
     <span id="combo-label"></span>
     <div id="status-right"><div id="drop-display"><img class="drop-icon" src="itembox.png" alt="ドロップ"><span id="drop-count">0</span></div><button id="menu-btn">Menu</button></div>
   </div>
@@ -972,6 +973,7 @@
     <div id="dungeon-anim-overlay"></div>
     <div id="time-stop-negative"></div>
     <div id="enemy-area"></div>
+    <div id="rule-banner"></div>
   </div>
   <div id="party-area">
     <div id="party-grid"></div>
@@ -1014,6 +1016,7 @@
 <script src="js/audio-fast.js"></script>
 <!-- マルチ：2人で盤面・敵・バフ/デバフを共有（game.js の変数を使うので game.js のあと） -->
 <script src="js/multi-share.js"></script>
+<script src="js/multi-chat.js"></script>
 <script src="js/stat-fit.js"></script>
 <script src="js/evo-puzzle.js"></script>
 <script src="js/evo-scene.js"></script>
@@ -1023,7 +1026,7 @@
 <script src="js/enemy-attack-fx.js"></script>
 <script src="js/orb-spawn-fx.js"></script>
 <script src="js/ls-fx.js?v=1"></script>
-<script src="js/cutin.js?v=light1"></script>
+<script src="js/cutin.js?v=face1"></script>
 <script src="js/landscape.js"></script>
 <script src="js/preload.js"></script>
 </body>

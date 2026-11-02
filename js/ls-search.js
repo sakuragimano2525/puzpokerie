@@ -91,6 +91,8 @@
         case 'remainingOrbs': add('cnd:remain'); add('num:remain:' + th); break;
         case 'skillUsed': add('cnd:skill'); break;
         case 'poison': add('cnd:poison'); orb('poison'); break;
+        case 'rarity_allDiff': case 'rarity_allSame': case 'rarity_totalBelow': case 'rarity_totalAbove': case 'rarity_countAtLeast':
+          add('cnd:rarity'); if (e.attr) add('tgt:' + normAttr(e.attr)); if (e.monType) add('tgt:t:' + e.monType); break;
         default: add('cnd:other'); break;
       }
       return true;
@@ -122,6 +124,16 @@
         case 'noDrop': add('ext:noDrop'); break;
         case 'moveTimeFixed': case 'moveTimeAdd': add('ext:time'); break;
         case 'poisonImmune': add('ext:poisonImm'); break;
+        case 'rarity': {
+          cond({ condition: 'rarity_' + e.condition, attr: e.attr, monType: e.monType });
+          const sts = ['hp', 'atk', 'rec'].filter(k => e[k]);
+          if (!sts.length || sts.length === 3) { add('eff:all'); add('eff:atk'); add('eff:hp'); add('eff:rec'); } else sts.forEach(k => add('eff:' + k));
+          if (!e.attr && !e.monType) add('tgt:all');
+          if (v > 1) maxMult = Math.max(maxMult, v);
+          break;
+        }
+        case 'expMult': case 'coinMult': add('ext:reward'); break;
+        case 'eggDropUp': case 'chipDropUp': add('ext:dropUp'); break;
         default: add('eff:other'); break;
       }
     }
@@ -132,6 +144,7 @@
     if (/ドロップをちょうど4個消|ちょうど4個消しで/.test(desc)) add('cnd:exact4');
     if (/消す度に/.test(desc) && !/ちょうど4個消す度に/.test(desc)) add('cnd:erase');
     if (/スキル使用時/.test(desc)) add('cnd:skill');
+    if (/チームのレア度|チームの総レア度|チームにレア度/.test(desc)) add('cnd:rarity');
     if (/HP満タン/.test(desc)) add('cnd:hpFull');
     let m, re;
     re = /HP(\d+)%以下/g;  while ((m = re.exec(desc))) { add('cnd:hpBelow'); add('num:hpb:' + m[1]); }
@@ -146,6 +159,8 @@
     if (/落ちコンなし/.test(desc)) add('ext:noDrop');
     if (/操作時間/.test(desc)) add('ext:time');
     if (/毒ダメージを無効/.test(desc)) add('ext:poisonImm');
+    if (/貰える(?:経験値|エナ)が/.test(desc)) add('ext:reward');
+    if (/(?:タマゴ|チップ)ドロップ率が/.test(desc)) add('ext:dropUp');
     if (/コンボ加算/.test(desc)) add('ext:comboAdd');
     if (/(?:消す|消し)度に/.test(desc)) add('ext:exp');
     if (/軽減/.test(desc)) {
@@ -224,6 +239,7 @@
     const addBasic = (id, label, full) => { if (has(id)) basic.push(chip(id, label, { full: full || label })); };
     addBasic('cnd:none', '常時発動', '常時発動（条件なし）');
     addBasic('cnd:skill', 'スキル使用時');
+    addBasic('cnd:rarity', 'チームのレア度', 'チームのレア度が条件');
     addBasic('cnd:poison', '毒を消すと', '毒を消すと');
     addBasic('cnd:cross', '十字消し');
     addBasic('cnd:lShapes', 'L字消し');
@@ -292,7 +308,7 @@
 
     // ── 特徴 ──
     const ext = [];
-    [['ext:exp', '〜する度に(累乗)'], ['ext:comboAdd', 'コンボ加算'], ['ext:noDrop', '落ちコンなし'], ['ext:time', '操作時間'], ['ext:poisonImm', '毒ダメージ無効']]
+    [['ext:exp', '〜する度に(累乗)'], ['ext:comboAdd', 'コンボ加算'], ['ext:noDrop', '落ちコンなし'], ['ext:poisonImm', '毒ダメージ無効']]   // 「操作時間」「経験値・エナUP」「ドロップ率UP」は検索ボタンに出さない（タグの判定自体は analyze() に残してある）
       .forEach(([id, l]) => { if (has(id)) ext.push(chip(id, l, { full: l })); });
     sections.push({ id: 'ext', title: 'おまけの特徴', chips: ext });
 

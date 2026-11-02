@@ -152,6 +152,8 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
     <label class="wide">スキル名<input id="skName" value="スキル名"></label>
     <label class="wide">必要スキルポイント（SP）<input id="skSp" type="number" min="1" max="10" step="1" value="1"></label>
     <label class="wide">説明（ゲーム内表示用）<textarea id="skDesc"></textarea></label>
+    <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skCutin" type="checkbox" style="width:auto"> スキル発動時にカットインを出す</label>
+    <p class="small wide" id="skCutinHint" style="margin:0"></p>
   </div>
   <div id="activeEffects"></div>
   <p class="small" id="skDup" style="color:#b45309"></p>
@@ -344,6 +346,14 @@ const effVal=numF('value','効果値（攻撃倍率、または軽減率 35%=0.3
 const isAtkOrRed=e=>e.type==='atk'||e.type==='dmgReduction';
 // 攻撃倍率・ダメージ軽減・コンボ加算：0や空欄は保存しない（攻撃倍率が空で軽減／加算だけある時は1倍）
 const cleanEff = d=>{
+  if(d.type==='rarity'){
+    d=structuredClone(d);
+    if(!d.attr) delete d.attr;
+    if(!d.monType) delete d.monType;
+    ['hp','atk','rec'].forEach(k=>{ if(!d[k]) delete d[k]; });
+    if(d.hp&&d.atk&&d.rec){ delete d.hp; delete d.atk; delete d.rec; }   // 3つ全部＝全パラメータ（ゲーム側は何も指定が無ければ全パラメータ）
+    return d;
+  }
   if(d.type!=='atk') return d;
   d=structuredClone(d);
   if(!(d.reduce>0)) delete d.reduce;
@@ -392,6 +402,15 @@ const leaderTemplates = {
   moveTimeFixed:{label:'操作時間固定',data:{type:'moveTimeFixed',value:3000},fields:[numF('value','ミリ秒（3秒=3000）')]},
   moveTimeAdd:{label:'操作時間を○秒延長／短縮',data:{type:'moveTimeAdd',value:1},fields:[numF('value','秒数（延長＝1、短縮＝-1。0.5などもOK。「操作時間固定」があればそちらが優先）')]},
   hpRecovery:{label:'消した時にHP回復',data:{type:'hpRecovery',value:0.2},fields:[numF('value','最大HP割合')]},
+  rarityAllDiff:{label:'チームのレア度が全員違う場合、○が○倍',data:{type:'rarity',condition:'allDiff', hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('value','倍率')]},
+  rarityAllSame:{label:'チームのレア度が全員同じ場合、○が○倍',data:{type:'rarity',condition:'allSame', hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('value','倍率')]},
+  rarityTotalBelow:{label:'チームの総レア度が○以下の場合、○が○倍',data:{type:'rarity',condition:'totalBelow',threshold:20, hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('threshold','総レア度'),numF('value','倍率')]},
+  rarityTotalAbove:{label:'チームの総レア度が○以上の場合、○が○倍',data:{type:'rarity',condition:'totalAbove',threshold:30, hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('threshold','総レア度'),numF('value','倍率')]},
+  rarityCount:{label:'チームにレア度○のモンスターが○体以上いる場合、○が○倍',data:{type:'rarity',condition:'countAtLeast',rarity:5,count:3, hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('rarity','レア度'),numF('count','体数'),numF('value','倍率')]},
+  expMult:{label:'リーダー/フレンドの時、貰える経験値が○倍',data:{type:'expMult',value:2},fields:[numF('value','経験値の倍率')]},
+  coinMult:{label:'リーダー/フレンドの時、貰えるエナが○倍',data:{type:'coinMult',value:2},fields:[numF('value','エナの倍率')]},
+  eggDropUp:{label:'リーダー/フレンドの時、タマゴドロップ率が○%UP',data:{type:'eggDropUp',value:10},fields:[numF('value','UPする%')]},
+  chipDropUp:{label:'リーダー/フレンドの時、チップドロップ率が○%UP',data:{type:'chipDropUp',value:10},fields:[numF('value','UPする%')]},
   custom:{label:'カスタムJSON',data:{type:'note'},fields:[['$json','効果JSON','json']]}
 };
 
@@ -518,7 +537,7 @@ function buildMonster(){
   if($('monMaxLevel').value!=='') m.maxLevel = Math.max(1,Math.min(EXP_TABLE_LEN,Math.floor(num('monMaxLevel'))));
   m.baseExp = num('monBaseExp',100);
   m.stats = { hp:{min:num('hpMin'),max:num('hpMax')}, atk:{min:num('atkMin'),max:num('atkMax')}, rec:{min:num('recMin'),max:num('recMax')} };
-  m.skill = { name:$('skName').value, sp:Math.max(1,Math.floor(num('skSp',1))), desc:$('skDesc').value, effects:activeEffects.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))))) };
+  m.skill = { name:$('skName').value, sp:Math.max(1,Math.floor(num('skSp',1))), desc:$('skDesc').value, ...($('skCutin').checked?{cutin:true}:{}), effects:activeEffects.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))))) };
   m.leaderSkill = { name:$('lsName').value, desc:$('lsDesc').value, effects:leaderEffects.map(e=>cleanEff(e.data)) };
   const evos = evolutions.filter(e=>e.to!==''&&e.to!=null).map(e=>({to:Number(e.to),materials:e.materials.filter(x=>x.item).map(x=>({item:x.item,count:Number(x.count)||1}))}));
   if(evos.length) m.evolutions = evos;
@@ -544,6 +563,7 @@ function loadMonsterToForm(m){
   $('skName').value = sk.name ?? '';
   $('skSp').value = sk.sp ?? 1;
   $('skDesc').value = sk.desc ?? '';
+  $('skCutin').checked = sk.cutin === true;
   const ls = m.leaderSkill||{};
   $('lsName').value = ls.name ?? ''; $('lsDesc').value = ls.desc ?? '';
   const toEff=(templates,e)=>{ e=templates===leaderTemplates?normLeaderEff(e):structuredClone(e); if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; } if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; } return {key:matchTemplate(templates,e),data:e}; };
@@ -623,6 +643,24 @@ function describeLeader(effs){
       case 'moveTimeFixed': pre.push(`【操作時間${fmt(e.value/1000)}秒固定】`); break;
       case 'moveTimeAdd': { const v=Number(e.value)||0; if(v) pre.push(`【操作時間${fmt(Math.abs(v))}秒${v>0?'延長':'短縮'}】`); break; }
       case 'hpRecovery': out.push(`ドロップを消すと最大HPの${pct(e.value)}回復`); break;
+      case 'rarity': {
+        const st=['hp','atk','rec'].filter(k=>e[k]);
+        const nm={hp:'HP',atk:'攻撃力',rec:'回復力'};
+        const what = (!st.length||st.length===3) ? '全パラメータ' : st.map(k=>nm[k]).join('と');
+        const who = (e.monType?`${e.monType}タイプの`:'')+(e.attr?`${a}属性の`:'');
+        const c = {
+          allDiff:'チームのレア度が全員違う場合、',
+          allSame:'チームのレア度が全員同じ場合、',
+          totalBelow:`チームの総レア度が${fmt(e.threshold)}以下の場合、`,
+          totalAbove:`チームの総レア度が${fmt(e.threshold)}以上の場合、`,
+          countAtLeast:`チームにレア度${fmt(e.rarity)}のモンスターが${fmt(e.count)}体以上いる場合、`
+        }[e.condition]||'';
+        out.push(`${c}${who}${what}が${mult}`); break;
+      }
+      case 'expMult': out.push(`リーダー/フレンドの時、貰える経験値が${mult}`); break;
+      case 'coinMult': out.push(`リーダー/フレンドの時、貰えるエナが${mult}`); break;
+      case 'eggDropUp': out.push(`リーダー/フレンドの時、タマゴドロップ率が${fmt(e.value)}%UP`); break;
+      case 'chipDropUp': out.push(`リーダー/フレンドの時、チップドロップ率が${fmt(e.value)}%UP`); break;
       case 'allStat': {
         const targ = e.condition==='type' ? `${e.attr}タイプの` : (e.attr ? `${a}属性の` : '');
         out.push(`${targ}全パラメータが${mult}`); break;
@@ -877,6 +915,7 @@ function applySkill(sk){
   $('skName').value=sk.name??'';
   $('skSp').value=sk.sp ?? 1;
   $('skDesc').value=sk.desc??'';
+  $('skCutin').checked = sk.cutin === true;
   activeEffects=normActiveEffs(sk.effects).map(e=>({key:matchTemplate(activeTemplates,e),data:structuredClone(e)}));
   renderEffects('active'); dirty=true; update();
 }
@@ -966,10 +1005,18 @@ function refreshIdNames(){
     span.textContent = ids.map(id=>`${id}: ${(db[id]&&db[id].name)||(hasDb?'（未登録のID）':'')}`).join(' ／ ');
   });
 }
+function updateCutinHint(){
+  const h=$('skCutinHint'); if(!h) return;
+  const id=$('monId').value||'?';
+  h.textContent = $('skCutin').checked
+    ? `カットイン画像：mp${id}.png ／ 効果音：${id}.mp3（スキル発動音 skillgo.mp3 のあとに鳴ります。${id}.mp3 が無ければ cutin.mp3）`
+    : '';
+}
 function update(){
   refreshTypeList();
   refreshIdNames();
   updateImgHint();
+  updateCutinHint();
   updateStatPreview();
   renderSkillLib();
   renderLeaderLib();

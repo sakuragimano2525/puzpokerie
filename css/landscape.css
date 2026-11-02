@@ -391,3 +391,9 @@
   /* 進化パズルの盤面：縦画面の計算式（高さ−330px）だと横画面で潰れるので、ヘッダー/フッター分だけ引く */
   #pz-board { width: min(calc(var(--app-h, 100dvh) - 96px), 62vw, 520px); }
 }
+
+/* 横画面：イベント／降臨 切り替えは左端に縦ならび */
+@media (orientation: landscape) and (max-height: 600px) {
+  .ev-subtabs { flex: 0 0 auto; flex-direction: column; align-self: flex-start; width: 84px; margin: 0; }
+  .ev-subtab { height: 36px; }
+}

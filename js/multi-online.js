@@ -143,7 +143,8 @@
     const ptRef = rRef.child('pt/' + (1 - seat));
     const myPtRef = rRef.child('pt/' + seat);
     const fxRef = rRef.child('fx');
-    const ctx = { rRef, mine, oppRef, turnRef, evRef, liveRef, ptRef, myPtRef, fxRef, started: false, lastTurn: 0, lastEv: 0, handlers: handlers || {}, opp: null };
+    const chatRef = rRef.child('chat');
+    const ctx = { rRef, mine, oppRef, turnRef, evRef, liveRef, ptRef, myPtRef, fxRef, chatRef, lastChat: 0, started: false, lastTurn: 0, lastEv: 0, handlers: handlers || {}, opp: null };
     MO._room = ctx;
 
     mine.update({ id: myId(), present: true, ready: false, team: '', dead: false });
@@ -182,6 +183,13 @@
       const v = s.val();
       if (!v) return;
       if (ctx.handlers.onParty) ctx.handlers.onParty(v);
+    });
+    // 定型文チャット：相手が送ったものだけ受け取る
+    chatRef.on('value', s => {
+      const v = s.val();
+      if (!v || v.by === MO.seat || !(v.n > ctx.lastChat)) return;
+      ctx.lastChat = v.n;
+      if (ctx.handlers.onChat) ctx.handlers.onChat(v);
     });
     // 出来事の流れ：1つずつ順番どおりに届く（child_added）。自分が流したものは無視
     fxRef.on('child_added', s => {
@@ -235,7 +243,7 @@
   MO.sendLive = function (obj) {
     const c = MO._room;
     if (!c || !obj) return;
-    c.liveRef.set({ by: MO.seat, cur: obj.cur, round: obj.round, g: obj.g });
+    c.liveRef.set(Object.assign({ by: MO.seat }, obj));   // 盤面・ロック・掴んでいるドロップの位置・ルーレットの時計
   };
 
   // ---------- 4d. パーティー情報（相手の画面に「相手のパーティー」を出す） ----------
@@ -257,12 +265,22 @@
     c.fxRef.remove().catch(() => {});
   };
 
+  // ---------- 4f. 定型文チャット（idx = 定型文の番号） ----------
+  let chatN = 0;
+  MO.sendChat = function (idx) {
+    const c = MO._room;
+    if (!c) return;
+    chatN = Math.max(chatN, c.lastChat) + 1;
+    c.lastChat = chatN;
+    c.chatRef.set({ n: chatN, by: MO.seat, i: idx, ts: Date.now() });
+  };
+
   // ---------- 5. 退出 ----------
   MO.leave = function (silent) {
     const c = MO._room;
     if (!c) { MO.room = null; MO.seat = null; MO.ready = false; return; }
     MO._room = null;
-    try { c.oppRef.off(); c.turnRef.off(); c.evRef.off(); c.liveRef.off(); c.ptRef.off(); c.fxRef.off(); } catch (e) {}
+    try { c.oppRef.off(); c.turnRef.off(); c.evRef.off(); c.liveRef.off(); c.ptRef.off(); c.fxRef.off(); c.chatRef.off(); } catch (e) {}
     try { c.mine.child('present').onDisconnect().cancel(); c.mine.child('ready').onDisconnect().cancel(); } catch (e) {}
     c.mine.update({ present: false, ready: false }).catch(() => {});
     // 2人とも抜けたら部屋ごと消す

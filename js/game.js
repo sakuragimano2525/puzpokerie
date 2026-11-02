@@ -27,6 +27,73 @@
 })();
 
 // ============================================================
+// リーダースキル「レア度」系（type:'rarity'）を HP/攻撃/回復 の効果に展開（起動時に1回）
+//   { type:'rarity', condition:'allDiff',    hp:true, atk:true, value:1.5 }  → チームのレア度が全員違う時
+//   { type:'rarity', condition:'allSame',    ... }                           → チームのレア度が全員同じ時
+//   { type:'rarity', condition:'totalBelow', threshold:20, ... }             → チームの総レア度が20以下の時
+//   { type:'rarity', condition:'totalAbove', threshold:30, ... }             → チームの総レア度が30以上の時
+//   { type:'rarity', condition:'countAtLeast', rarity:5, count:3, ... }      → ★5が3体以上いる時
+//   attr（属性）/ monType（タイプ）を書くと、そのモンスターだけ強化。hp/atk/rec のどれにも true が無ければ全パラメータ
+// ============================================================
+const RARITY_CONDS = ['allDiff', 'allSame', 'totalBelow', 'totalAbove', 'countAtLeast'];
+(function expandRarityLeader() {
+  try {
+    if (typeof MONSTER_DATA === 'undefined') return;
+    for (const m of Object.values(MONSTER_DATA)) {
+      const effs = m && m.leaderSkill && m.leaderSkill.effects;
+      if (!Array.isArray(effs) || !effs.some(e => e && e.type === 'rarity')) continue;
+      const out = [];
+      for (const e of effs) {
+        if (e && e.type === 'rarity') {
+          let stats = ['hp', 'atk', 'rec'].filter(t => e[t]);
+          if (!stats.length) stats = ['hp', 'atk', 'rec'];
+          for (const t of stats) {
+            const x = { type: t, value: e.value, condition: 'rarity_' + e.condition };
+            for (const k of ['threshold', 'rarity', 'count', 'attr', 'monType']) if (e[k] !== undefined && e[k] !== '') x[k] = e[k];
+            out.push(x);
+          }
+        } else out.push(e);
+      }
+      m.leaderSkill.effects = out;
+    }
+  } catch (err) { console.error('rarity expand error', err); }
+})();
+function isRarityCond(c) { return typeof c === 'string' && c.indexOf('rarity_') === 0; }
+// いまのチーム（リーダー・フレンド含む全員）のレア度で、条件を満たしているか
+function teamRarities(uids) {
+  const rs = [];
+  for (const uid of (uids || partyUids)) {
+    if (uid === null || uid === undefined) continue;
+    const en = box.find(b => b.uid === uid);
+    const mon = en && MONSTER_DATA[en.monsterId];
+    if (mon) rs.push(Number(mon.rarity) || 0);
+  }
+  return rs;
+}
+function teamRarityOk(eff, uids) {
+  const rs = [];
+  for (const uid of (uids || partyUids)) {
+    if (uid === null || uid === undefined) continue;
+    const en = box.find(b => b.uid === uid);
+    const mon = en && MONSTER_DATA[en.monsterId];
+    if (mon) rs.push(Number(mon.rarity) || 0);
+  }
+  if (!rs.length) return false;
+  switch (String(eff.condition).slice(7)) {
+    case 'allDiff': return new Set(rs).size === rs.length;
+    case 'allSame': return new Set(rs).size === 1;
+    case 'totalBelow': return rs.reduce((a, b) => a + b, 0) <= Number(eff.threshold);
+    case 'totalAbove': return rs.reduce((a, b) => a + b, 0) >= Number(eff.threshold);
+    case 'countAtLeast': return rs.filter(r => r === Number(eff.rarity)).length >= Number(eff.count);
+  }
+  return false;
+}
+// レア度系の効果が、このモンスター（属性・タイプ）に効くか
+function rarityEffApplies(eff, attr, type) {
+  return teamRarityOk(eff) && (!eff.attr || eff.attr === attr) && (!eff.monType || eff.monType === type);
+}
+
+// ============================================================
 // BGM管理 (menu.mp3)
 // ============================================================
 let menuAudio = null;
@@ -132,6 +199,7 @@ function playSkillSound() {
 // バトル効果音（同時に重なっても途切れないようプール再生）
 // ============================================================
 const BATTLE_SE = {
+  chat:        { file: 'chat.mp3',        pool: 2, vol: 0.8 },  // マルチ：定型文を送った／受け取った
   skills:      { file: 'skills.mp3',      pool: 2, vol: 0.8 },  // スキルが使えるようになった
   skillgo:     { file: 'skillgo.mp3',     pool: 2, vol: 0.8 },  // スキル発動
   fire:        { file: 'fire.mp3',        pool: 4, vol: 0.7 },  // 属性攻撃ヒット
@@ -465,6 +533,26 @@ function leaderHasEffect(type) {
     return !!(m && m.leaderSkill && m.leaderSkill.effects && m.leaderSkill.effects.some(x => x.type === type));
   });
 }
+// ── リーダー／フレンドの「報酬・ドロップ」系スキル ──
+//   expMult  … 貰える経験値が○倍     coinMult … 貰えるエナが○倍（リーダーとフレンドは掛け算）
+//   eggDropUp … タマゴドロップ率が○%UP  chipDropUp … チップドロップ率が○%UP（リーダーとフレンドは足し算）
+function lsEffectValues(type) {
+  const out = [];
+  [0, 5].forEach(idx => {
+    if (partyUids.length <= idx || partyUids[idx] === null) return;
+    const e = box.find(b => b.uid === partyUids[idx]);
+    const m = e && MONSTER_DATA[e.monsterId];
+    const effs = m && m.leaderSkill && m.leaderSkill.effects;
+    if (!Array.isArray(effs)) return;
+    for (const x of effs) if (x && x.type === type) { const v = Number(x.value); if (isFinite(v)) out.push(v); }
+  });
+  return out;
+}
+function lsRewardMult(type) { return lsEffectValues(type).reduce((a, v) => a * (v > 0 ? v : 1), 1); }
+function lsDropUp(type) { return lsEffectValues(type).reduce((a, v) => a + (v > 0 ? v / 100 : 0), 0); }   // 10 → 0.10（+10%）
+function rewardExp(n) { return Math.round((Number(n) || 0) * lsRewardMult('expMult')); }
+function rewardCoin(n) { return Math.round((Number(n) || 0) * lsRewardMult('coinMult')); }
+
 // 「○ドロップを□個つなげて消す度」：条件に合う塊の数（exact＝ちょうど、なし＝以上）
 function connectEachCount(eff, context) {
   const sizes = context.connectSizes || {};
@@ -484,7 +572,9 @@ function applyLeaderEffects(effects, context) {
     switch (eff.type) {
       case 'hp': {
         let applyHp = false;
-        if (eff.condition === 'type') {
+        if (isRarityCond(eff.condition)) {
+          if (rarityEffApplies(eff, context.attr, context.monsterType)) applyHp = true;
+        } else if (eff.condition === 'type') {
           if (context.monsterType === eff.attr) applyHp = true;
         } else if (!eff.attr || eff.attr === context.attr) {
           applyHp = true;
@@ -514,7 +604,9 @@ function applyLeaderEffects(effects, context) {
         let apply = false;
         let rampMult = null;   // colorRamp のときの、色数に応じた倍率
         const cond = eff.condition;
-        if (cond === 'type') {
+        if (isRarityCond(cond)) {
+          if (rarityEffApplies(eff, context.attr, context.monsterType)) apply = true;
+        } else if (cond === 'type') {
           // 特定タイプ限定の攻撃倍率（例: かいふくタイプの攻撃力2倍）
           if (context.monsterType === eff.attr) apply = true;
         } else if (cond === 'orbConnect') {
@@ -667,9 +759,12 @@ function pickBindTargets(sk) {
 }
 // 割合ダメージの量（現在HP基準 or 最大HP基準）
 //   hpNow … 「現在HP基準」のときの基準HP（省略=今のHP）。行動の最初のHPを渡すと、同じ行動内の他のダメージに左右されない
-function calcRatioDamage(sk, hpNow) {
+//   ダメージ軽減は「割合の%から軽減率の%を引く」形で効く（例：50%割合 − 軽減16% ＝ 34%割合）
+//   enemy … 軽減の条件（敵の属性など）の判定に使う攻撃元の敵
+function calcRatioDamage(sk, hpNow, enemy) {
   if (hpNow === undefined) hpNow = playerCurrentHP;
-  const rate = Math.max(0, Math.min(100, Number(sk.rate) || 0)) / 100;
+  const _red = Math.max(0, Math.min(1, 1 - playerDamageKeep(enemy)));   // いまの合計ダメージ軽減率（0〜1）
+  const rate = Math.max(0, Math.min(100, Number(sk.rate) || 0) - _red * 100) / 100;
   const base = (sk.basis === 'max') ? playerMaxHP : hpNow;
   let amt = Math.floor(base * rate);
   if (sk.survive) amt = Math.min(amt, Math.max(0, hpNow - 1));   // HP1で耐える
@@ -678,14 +773,14 @@ function calcRatioDamage(sk, hpNow) {
 // 割合ダメージを含む行動は、その行動で減るHPの合計が「割合ダメージの量」を超えないようにする
 //   （例：攻撃力ダメージ ＋ 最大HP50% を同じ行動に入れても、合計は最大HP50%まで）
 let _actionLossCap = null;   // { hp0: 行動開始時のHP, cap: 減らせる上限 }
-function actionRatioCap(skills, hp0) {
+function actionRatioCap(skills, hp0, enemy) {
   const rs = (skills || []).filter(sk => sk.type === 'damage_ratio');
   if (!rs.length) return null;
-  return rs.reduce((sum, sk) => sum + calcRatioDamage(sk, hp0), 0);
+  return rs.reduce((sum, sk) => sum + calcRatioDamage(sk, hp0, enemy), 0);
 }
-// 割合ダメージは本家のグラビティと同じく、ダメージ軽減を無視して直接HPを減らす
-function applyPlayerRatioDamage(sk) {
-  let amt = calcRatioDamage(sk, _actionLossCap ? _actionLossCap.hp0 : undefined);
+// 割合ダメージ：ダメージ軽減（スキル＋リーダースキル）の率ぶん、割合の%を引いたうえで直接HPを減らす
+function applyPlayerRatioDamage(sk, enemy) {
+  let amt = calcRatioDamage(sk, _actionLossCap ? _actionLossCap.hp0 : undefined, enemy);
   if (_actionLossCap) {
     const taken = _actionLossCap.hp0 - playerCurrentHP;            // この行動でもう減った分
     amt = Math.min(amt, Math.max(0, _actionLossCap.cap - taken));
@@ -735,7 +830,7 @@ function guardAttrOf(sk) {
 function buildEnemyActionFn(skills, enemyRef) {
   return function(e) {
     const _hp0 = playerCurrentHP;
-    const _cap = actionRatioCap(skills, _hp0);
+    const _cap = actionRatioCap(skills, _hp0, e);
     _actionLossCap = (_cap === null) ? null : { hp0: _hp0, cap: _cap };
     // このアクション内の「ドロップ生成(spawn)」で作る色。生成先の候補から、これらの色のマスを除く
     //   （例：木・闇を3個ずつ生成する時、木を作ったマスが闇になったり、既存の木が闇に変わる事故を防ぐ）
@@ -762,7 +857,7 @@ function buildEnemyActionFn(skills, enemyRef) {
           break;
         }
         case 'damage_ratio': {
-          applyPlayerRatioDamage(sk);
+          applyPlayerRatioDamage(sk, e);
           break;
         }
         case 'flee': {
@@ -792,6 +887,36 @@ function buildEnemyActionFn(skills, enemyRef) {
           addEnemyAtkDown(sk.target === 'all' ? 'all' : (sk.attr || 'fire'), rate, turns);
           playSE('down');   // 攻撃力ダウンを受けた時の効果音（down.mp3）
           renderBuffIcons();
+          break;
+        }
+        case 'orb_unlock': {
+          // 全ドロップのロック解除（演出つき）
+          const ts = [];
+          for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (isOrbLocked(r, c)) ts.push([r, c]);
+          if (ts.length) unlockFx(ts);
+          break;
+        }
+        case 'move_fix': {
+          // 操作時間を〇秒に固定（〇ターン）。他のどの操作時間の効果よりも優先
+          const ms = Math.max(1000, Math.round((Number(sk.seconds) || 10) * 1000));
+          const t = Math.max(1, Math.floor(Number(sk.turn) || 1));
+          enemyMoveFix = { ms, turns: t };
+          currentMoveMs = calcCurrentMoveMs();
+          playSE('down');
+          renderBuffIcons();
+          break;
+        }
+        case 'combo_rule': {
+          // 【〇コンボしろ】次のプレイヤーのターンが「ちょうど〇コンボ」(mode:'min' なら〇コンボ以上)でなければ、9999999の固定ダメージ
+          e._comboRule = { combo: Math.max(0, Math.floor(Number(sk.combo) || 0)), mode: sk.mode === 'min' ? 'min' : 'exact', damage: Number(sk.damage) || 9999999 };
+          renderBuffIcons();
+          break;
+        }
+        case 'fixed_damage': {
+          // 軽減・防御を無視する固定ダメージ
+          const d = Math.max(0, Math.floor(Number(sk.value) || 0));
+          playerCurrentHP = Math.max(0, playerCurrentHP - d);
+          updatePlayerHP(-d);
           break;
         }
         case 'time_reduce': {
@@ -867,7 +992,15 @@ function buildEnemyActionFn(skills, enemyRef) {
               if (orbEls[r] && orbEls[r][c]) orbEls[r][c].className = 'orb ' + t;
             };
             const to = ORB_KINDS.includes(sk.to) ? sk.to : 'dark';
-            if (sk.pattern === 'convert') {
+            if (sk.pattern === 'exact') {
+              // 盤面が指定した個数ぴったりになるように、全マスを作り直す（counts: { fire:9, water:9, ... }）
+              const cells = [];
+              for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (!isOrbLocked(r, c)) cells.push([r, c]);
+              cells.sort(() => Math.random() - 0.5);
+              const list = [];
+              for (const k of ORB_KINDS) for (let n = 0; n < Math.floor((sk.counts && sk.counts[k]) || 0); n++) list.push(k);
+              for (let i = 0; i < Math.min(list.length, cells.length); i++) paint(cells[i][0], cells[i][1], list[i]);
+            } else if (sk.pattern === 'convert') {
               // 〇ドロップを〇ドロップに変化（from → to を盤面全体で）
               for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (grid[r][c] === sk.from) paint(r, c, to);
             } else if (sk.pattern === 'spawn') {
@@ -1044,11 +1177,11 @@ function getRawPerHitDmg(enemy, action) {
       total += Math.floor((enemy.atk || 0) * (sk.value || 1));
       hits += 1;
     } else if (sk.type === 'damage_ratio') {
-      total += calcRatioDamage(sk);
+      total += calcRatioDamage(sk, undefined, enemy);
       hits += 1;
     }
   }
-  const _cap = actionRatioCap(action.skills, playerCurrentHP);
+  const _cap = actionRatioCap(action.skills, playerCurrentHP, enemy);
   // 割合ダメージを含む行動は「覇気の一撃」1回にまとめて見せる（hitCount は 1）。
   // 合計は割合分ぴったり（例：5000HPの50% = 2500を1回で表示。攻撃力ダメージ入りでも 1250×2 に割らない）
   if (_cap !== null) return _cap;
@@ -1058,6 +1191,19 @@ function getRawPerHitDmg(enemy, action) {
 // ============================================================
 // ★ プレイヤーへのダメージ適用（軽減計算を一元化） ★
 // ============================================================
+// いまプレイヤーが受けるダメージの倍率（スキルのダメージ軽減 × リーダースキルの軽減。1.0 = 軽減なし）
+//   割合ダメージが「割合の%から軽減率の%を引く」計算に使う
+function playerDamageKeep(enemy) {
+  let keep = 1.0;
+  if (buffDamageReduction && buffDamageReductionValue > 0) keep *= (1.0 - buffDamageReductionValue);
+  const lsEffects = lsAllEffects();
+  if (lsEffects.length > 0) {
+    const res = applyLeaderEffects(lsEffects, defenseCtx(enemy));
+    if (res.dmgReduction && res.dmgReduction.length > 0) for (const r of res.dmgReduction) keep *= (1.0 - r);
+  }
+  return keep;
+}
+
 function applyPlayerDamage(rawDmg, enemy) {
   if (rawDmg <= 0) return 0;
 
@@ -1279,6 +1425,7 @@ let enemyTurnProgress     = 0;
 let enemyList            = [];
 let bindTimers           = {};
 let enemyRecDown          = null;  // 敵の回復力ダウン：{ value:倍率, turns }
+let enemyMoveFix          = null;  // 敵の操作時間固定：{ ms, turns }（何よりも優先）
 let enemyMoveDown         = null;  // 敵の操作時間ダウン：{ seconds, turns }
 let enemySkillSeal        = null;  // 敵の「スキル使用不可」：{ turns }（チーム全員のスキルが使えない）
 let enemyNoFall           = null;  // 敵の「落ちコンなし」：{ turns }（消しても新しいドロップが降ってこない。リーダースキルの落ちコンなしと同じ動き）
@@ -2060,7 +2207,7 @@ function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし�
   if (enemy._dropChecked) return;
   enemy._dropChecked = true;
   // コインは倒した時点で確定ドロップ → 左上の表示に即反映
-  addCoin(enemy.coin || 0);
+  addCoin(rewardCoin(enemy.coin));
   const vanish = silent ? Promise.resolve() : startEnemyVanish(enemy);
   let dropped = false;
   const dropImgs = [];   // この敵が落とした物の表示用画像（モンスター=ギフト / アイテム=チップ画像）
@@ -2070,7 +2217,8 @@ function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし�
   const chipGuaranteed = attackPhaseCombo >= CHIP_GUARANTEE_COMBO;   // 10コンボ以上で倒した
   for (const d of (enemy.drops || [])) {
     if (!ITEM_DATA[d.item]) continue;
-    const r = d.rate === undefined ? 1 : d.rate;
+    let r = d.rate === undefined ? 1 : d.rate;
+    if (r > 0) r = Math.min(1, r + lsDropUp('chipDropUp'));   // リーダー／フレンドの「チップドロップ率UP」
     if (!chipGuaranteed && Math.random() > r) continue;
     // 個数は敵データの drops[].count（数字 または [最小, 最大]）。未指定なら1個
     const dropCnt = Math.max(1, Math.floor(Number(rollDropCount(d.count))) || 1);
@@ -2087,6 +2235,7 @@ function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし�
     if (rate === undefined) {
       rate = enemy.name === 'mp11' ? 0.30 : 0.10; // 既存ダンジョンとの互換用の初期値
     }
+    if (rate > 0) rate = Math.min(1, rate + lsDropUp('eggDropUp'));   // リーダー／フレンドの「タマゴドロップ率UP」
     if (monsterDrop.enabled !== false && Math.random() <= rate) {
       // monsterDrop.monsterId があればそのモンスター、なければ敵画像（mpXX.png）と同じIDのモンスター
       let monId = parseInt(monsterDrop.monsterId);
@@ -2926,14 +3075,16 @@ function showEnemyHitEffect(x, y, enemy, hitIdx, totalHits, selectedAction, isPr
       for (const r of lsRes.dmgReduction) reduction *= (1.0 - r);
     }
   }
-  // 割合ダメージを含む行動は軽減を受けない（合計が割合分ぴったりになるので、表示もそのまま）
+  // 割合ダメージを含む行動：軽減は「割合の%から軽減率の%を引く」形で rawPerHit（calcRatioDamage）に反映済み。
+  // 合計が割合分ぴったりになるので、表示には軽減をもう一度かけない（効果音だけ軽減中の音にする）
   const _sks = (selectedAction && selectedAction.skills) || [];
+  const _reducedNow = reduction < 1;
   if (_sks.some(sk => sk.type === 'damage_ratio')) reduction = 1.0;
   const finalHitDmg = Math.floor(rawPerHit * reduction);
   // 実際にダメージを与える行動のときだけ鳴らす（軽減中は sdamage）
   const dealsDamage = !selectedAction || !selectedAction.skills ||
     selectedAction.skills.some(sk => sk.type === 'damage' || sk.type === 'damage_mult' || sk.type === 'damage_ratio');
-  if (dealsDamage) playSE(reduction < 1 ? 'sdamage' : 'damage');
+  if (dealsDamage) playSE(_reducedNow ? 'sdamage' : 'damage');
 
   const pop = document.createElement('div');
   const offsetY = -40 - (hitIdx % 6) * 28;   // 多段でも数字が画面外へ積み上がらないように
@@ -3223,6 +3374,23 @@ async function processEnemyTurns() {
 
 // 1体分の行動。プレイヤーのHPが尽きたら true を返す
 async function runOneEnemyTurn(enemy) {
+  // 【〇コンボしろ】の判定：前の行動で出された指定を、直前のプレイヤーのターンで守れたか
+  if (enemy._comboRule) {
+    const rule = enemy._comboRule; delete enemy._comboRule;
+    const got = (lastTurnCtx && lastTurnCtx.comboCount) || 0;
+    const ok = rule.mode === 'min' ? got >= rule.combo : got === rule.combo;
+    renderBuffIcons();
+    if (!ok) {
+      enemy._acting = true; updateEnemyTurnBadge();
+      const act = { name: `${rule.combo}コンボしろ… 違反！`, skills: [{ type: 'damage', value: rule.damage }] };
+      await showEnemyAttackEffect(enemy, act.name, act, false, true);
+      const d = rule.damage;
+      playerCurrentHP = Math.max(0, playerCurrentHP - d);   // 固定ダメージ（軽減なし）
+      updatePlayerHP(-d);
+      updateEnemyUI();
+      if (playerCurrentHP <= 0) { triggerGameOver(); return true; }
+    }
+  }
   if (enemy._superGut && enemy._superGut.keepHp != null) {   // 発動済みの超根性は、割り込みのカットインより前に必ず消す
     if (!enemy._superGut._fxDone) { try { superGutBurst(enemy); } catch (e) {} }   // 演出が出ていなかったら、ここで出す
     delete enemy._superGut;
@@ -3538,6 +3706,7 @@ function addOrbBoost(attrIn, rateIn, turnsIn, defRate, enemy) {
 }
 function resetPlayerBuffs() {
   buffDamageReduction = false; buffDamageReductionValue = 0; buffDamageReductionTurns = 0;
+  _guardCarry = false;
   buffRecMult = false; buffRecMultValue = 1; buffRecMultTurns = 0;
   buffMoveTime = false; buffMoveTimeMult = 1; buffMoveTimeSec = 0; buffMoveTimeTurns = 0;
   buffAllAttack = false; buffAllAttackTurns = 0;
@@ -3545,12 +3714,29 @@ function resetPlayerBuffs() {
   orbBoosts = [];
   buffMoveTimeShort = false; buffMoveTimeShortTurns = 0;
   enemyAtkDowns = [];
-  enemyRecDown = null; enemyMoveDown = null; enemySkillSeal = null; enemyNoFall = null;
+  enemyRecDown = null; enemyMoveDown = null; enemyMoveFix = null; enemySkillSeal = null; enemyNoFall = null;
   clearRoulettes();
+}
+// 敵を倒して次のフロアへ進むとき、ダメージ軽減（LS＋スキル）を消すのを次のフロアの先制のあとまで持ち越している間 true
+let _guardCarry = false;
+// 持ち越していた軽減をここで消す（LSの軽減は消去、スキルの軽減は持ち越していた1ターン分を消費）。持ち越していなければ何もしない
+function flushCarriedGuard() {
+  if (!_guardCarry) return;
+  _guardCarry = false;
+  lastTurnCtx = null;
+  resetLsGuard();
+  if (buffDamageReduction && --buffDamageReductionTurns <= 0) { buffDamageReduction = false; buffDamageReductionTurns = 0; buffDamageReductionValue = 0; }
+  if (typeof renderBuffIcons === 'function') renderBuffIcons();
+  if (window.MultiShare) MultiShare.fx('lg', { r: 0 });   // マルチ：HPバー右端の軽減マークも消す
+}
+// 次のバトルに先制・バトル開始時の行動があるか
+function battleHasStartAction(battleData) {
+  return !!(battleData && (battleData.enemies || []).some(e => e && (e.preemptive || (e.actions || []).some(a => a && a.condition === 'battle_start'))));
 }
 // プレイヤーの1ターン（敵の攻撃まで）が終わるごとに残りターンを減らす
 function tickPlayerBuffs() {
-  if (buffDamageReduction && --buffDamageReductionTurns <= 0) { buffDamageReduction = false; buffDamageReductionTurns = 0; buffDamageReductionValue = 0; }
+  // 敵を全滅させて次のフロアへ進む途中は、スキルのダメージ軽減のターン消費を次のフロアの先制のあと（flushCarriedGuard）まで持ち越す
+  if (buffDamageReduction && !_guardCarry && --buffDamageReductionTurns <= 0) { buffDamageReduction = false; buffDamageReductionTurns = 0; buffDamageReductionValue = 0; }
   if (buffRecMult && --buffRecMultTurns <= 0) { buffRecMult = false; buffRecMultTurns = 0; buffRecMultValue = 1; }
   if (buffMoveTime && --buffMoveTimeTurns <= 0) { buffMoveTime = false; buffMoveTimeTurns = 0; buffMoveTimeMult = 1; buffMoveTimeSec = 0; }
   if (buffAllAttack && --buffAllAttackTurns <= 0) { buffAllAttack = false; buffAllAttackTurns = 0; }
@@ -3567,6 +3753,7 @@ function tickPlayerBuffs() {
 // 現在の操作時間(ms)。固定→バフ(倍率→秒数)→敵の短縮 の順に反映。最短1秒
 function calcCurrentMoveMs() {
   // リーダースキルの「操作時間固定」は最優先。敵の短縮・味方のバフどちらも受けない
+  if (enemyMoveFix) return enemyMoveFix.ms;   // 敵の「操作時間固定」は全てに優先
   if (moveTimeFixed) return moveTimeFixed;
   const bm = leaderBaseMoveMs();
   let ms = bm;
@@ -3774,7 +3961,8 @@ function calcTotalHP(ignoreBind) {
         let base = calcMonsterStats(entry).hp;
         for (const eff of hpEffects) {
           let apply = false;
-          if (eff.condition === 'type') { if (mon.type === eff.attr) apply = true; }
+          if (isRarityCond(eff.condition)) { if (rarityEffApplies(eff, mon.attr, mon.type)) apply = true; }
+          else if (eff.condition === 'type') { if (mon.type === eff.attr) apply = true; }
           else if (!eff.attr || eff.attr === mon.attr) { apply = true; }
           if (apply) base *= eff.value;
         }
@@ -3871,14 +4059,15 @@ async function handleBattleEnd() {
     const isLast = currentBattleIndex >= currentDungeonBattles.length - 1;
     for (const enemy of enemyList) {
       if (enemy.hp <= 0 && !enemy._fled) {   // にげた敵は経験値・エナなし
-        totalExp += (enemy.exp || 0);
+        totalExp += rewardExp(enemy.exp);
         // コインは tryDrop で加算済み。通らなかった敵だけ、ここで補填（二重加算しない）
-        if (!enemy._dropChecked) { enemy._dropChecked = true; addCoin(enemy.coin || 0); }
+        if (!enemy._dropChecked) { enemy._dropChecked = true; addCoin(rewardCoin(enemy.coin)); }
       }
     }
 
     if (window.MultiShare) MultiShare.recordKill();   // マルチ：この階層で倒した敵の記録（相手の端末が、自分の分の経験値・ドロップを受け取るのに使う）
     if (isLast) {
+      flushCarriedGuard();   // 先制の「にげる」で最後のフロアまで進んだ場合などに、持ち越していた軽減を消す
       if (window.MultiShare) MultiShare.sendClear();   // マルチ：相手の画面もクリアにする
       await finishDungeonClear();
       return;
@@ -3901,7 +4090,11 @@ async function handleBattleEnd() {
     if (!(nextIsBoss && hasBossIntro())) playBattleBgm(currentBattleIndex);   // サンダー等は登場演出の中でボスBGM
     // 先制攻撃の演出が終わるまで待つ（待たないと呼び出し元の busy=false の後に
     // loadBattle が busy=true を書き戻し、操作不能になる）
+    // ダメージ軽減は次のフロアの先制攻撃にも効かせる：先制があるなら先制が終わったあとに、なければ到着してすぐに消す
+    if (!battleHasStartAction(currentDungeonBattles[currentBattleIndex])) flushCarriedGuard();
     await loadBattle(currentDungeonBattles[currentBattleIndex]);
+    // 先制の「にげる」で敵が全員いなくなった場合は、その次のフロアの先制にも軽減を効かせたいので、まだ消さない
+    if (!(enemyList.length && enemyList.every(e => e.hp <= 0))) flushCarriedGuard();
     if (window.MultiShare) MultiShare.fx('ss', MultiShare.snapshot());   // マルチ：次の階層の敵の状態（先制攻撃の結果など）を相手の画面へ
     // 次のバトルの先制「にげる」で敵が全員いなくなった場合も、そのまま先へ進める
     if (enemyList.length && enemyList.every(e => e.hp <= 0)) {
@@ -4389,13 +4582,15 @@ function _clearGoHome(unlockedArea, rewards) {
   setHomeFocusFromCurrent();
   stopClearSE();                      // ★ホームへ戻る時にクリア音を必ず止める
   resetClearState();
+  const rensen = _rensenRun && !(window.MultiTurn && MultiTurn.online); _rensenRun = false;
   document.getElementById('game').style.display = 'none';
-  document.getElementById('home').style.display = 'flex';
+  if (rensen) openDungeonEntry(currentAreaNum, currentStageType);   // 連戦：ホームではなく、同じダンジョンの編成画面へ（リザルトの後ろに用意）
+  else document.getElementById('home').style.display = 'flex';
   stopDungeonBGM();
   stopClearSE();
   if (window.MultiTurn) MultiTurn.end();
   busy = false;
-  setTimeout(() => { try { scrollHomeToFrontier(); } catch (e) {} }, 50);
+  if (!rensen) setTimeout(() => { try { scrollHomeToFrontier(); } catch (e) {} }, 50);
 
   // ホームに戻ったら、前と同じリザルト画面（エナ・経験値・ドロップ・レベル）を出す。
   // 内容はクリア時に作成・加算・保存済み。「閉じる」を押してからホームのBGMを流す。
@@ -4405,6 +4600,7 @@ function _clearGoHome(unlockedArea, rewards) {
   playResultExpAnim(rewards && rewards.members);   // レベル表記・バーが上がってレベルアップ演出
   waitResultClose().then(() => {
     startMenuBGM();   // 念のため（既に再生中なら何もしない）
+    if (rensen) { try { renderDungeonEntry(); } catch (e) {} }   // 経験値・レベルが変わったので編成画面を描き直す
     if (unlockedArea) homeToast(`エリア${unlockedArea}「${AREA_NAMES[unlockedArea] || ''}」が開放されました！`, 3200);
   });
 
@@ -4642,6 +4838,41 @@ function updateTeStats() {
   const sums = calcTeamSums();
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v.toLocaleString(); };
   set('te-stat-hp', sums.hp); set('te-stat-atk', sums.atk); set('te-stat-rec', sums.rec);
+  updateTeRarity();
+}
+
+// 編成画面：リーダー／フレンドが「レア度系」リーダースキルの時だけ、攻撃の上に 合計レア度＋条件の判定 を出す（発動中は光る）
+function updateTeRarity() {
+  const host = document.getElementById('te-rarity');
+  if (!host) return;
+  const effs = [], seen = new Set();
+  [0, 5].forEach(idx => {
+    const uid = currentTeam[idx];
+    if (uid === null || uid === undefined) return;
+    const en = box.find(b => b.uid === uid);
+    const m = en && MONSTER_DATA[en.monsterId];
+    for (const e of ((m && m.leaderSkill && m.leaderSkill.effects) || [])) {
+      if (!e || !isRarityCond(e.condition)) continue;
+      const key = [e.condition, e.threshold, e.rarity, e.count].join('|');   // HP/攻撃/回復に展開された同じ条件は1つにまとめる
+      if (seen.has(key)) continue;
+      seen.add(key); effs.push(e);
+    }
+  });
+  if (!effs.length) { host.innerHTML = ''; return; }
+  const rs = teamRarities(currentTeam);
+  const total = rs.reduce((a, b) => a + b, 0);
+  const label = e => {
+    switch (String(e.condition).slice(7)) {
+      case 'allDiff': return '全員違う';
+      case 'allSame': return '全員同じ';
+      case 'totalBelow': return `${e.threshold}以下`;
+      case 'totalAbove': return `${e.threshold}以上`;
+      case 'countAtLeast': return `★${e.rarity}が${rs.filter(r => r === Number(e.rarity)).length}/${e.count}体`;
+    }
+    return '';
+  };
+  host.innerHTML = `<em class="ter-total">合計★<b>${total}</b></em>` +
+    effs.map(e => { const on = teamRarityOk(e, currentTeam); return `<em class="ter-chip${on ? ' on' : ''}">${label(e)}${on ? ' ✓' : ''}</em>`; }).join('');
 }
 
 // ── 入れ替えモード ──
@@ -6512,13 +6743,17 @@ function rouletteStep(o, steps) {
   const el = orbEls[o.r] && orbEls[o.r][o.c];
   if (el) el.className = 'orb ' + nxt + (el.classList.contains('dragging') ? ' dragging' : '');
   if (grabSnapshot !== null && !grabMoved) grabSnapshot = gridSnapshot();   // 掴んだだけの時、ルーレットの変化で「動かした」扱いにならないように
+  if (window.MultiShare) MultiShare.live();   // マルチ：ルーレットで色が変わったことを、すぐ相手の画面へ
 }
 function rouletteLoop(now) {
   _rlRaf = null;
   if (!roulettes.length) return;
   const dt = Math.min(250, now - _rlLast);
   _rlLast = now;
-  if (!busy && !timeStopActive && !_rlHold) {
+  if (window.MultiShare && MultiShare.rlSpectate && MultiShare.rlSpectate(roulettes, now)) {
+    // マルチ：相手の番。針だけ相手の時計に合わせてなめらかに回す（色の変化は相手から届く盤面で更新される）
+    for (const o of roulettes) renderRoulette(o);
+  } else if (!busy && !timeStopActive && !_rlHold) {
     for (const o of roulettes) {
       o.t += dt;
       if (o.t >= o.period) {
@@ -6530,6 +6765,7 @@ function rouletteLoop(now) {
       }
       renderRoulette(o);
     }
+    if (window.MultiShare && MultiShare.rlBeat) MultiShare.rlBeat(now);   // マルチ：針が回っている間は、時計を定期的に相手へ送る
   }
   _rlRaf = requestAnimationFrame(rouletteLoop);
 }
@@ -7237,7 +7473,8 @@ async function runPendingTransforms() {
     try { updateLeaderSkill2(); } catch (err) {}
     renderBuffIcons();
     // 敵の⚠️技と同じカットイン（変身後の姿を大きく出す）
-    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, img: monsterImg(newMon) }, newMon.name + 'に へんしん！'); } catch (err) {}
+    // 画像は mp{id}.png（無ければ通常の画像）
+    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, img: `mp${newMon.id}.png`, imgFallback: monsterImg(newMon) }, newMon.name + 'に へんしん！', { face: true }); } catch (err) {}
   }
 }
 
@@ -7266,7 +7503,11 @@ async function confirmSkill() {
   skillUsedThisTurn = true;
   playSkillSound();
 
-  if (window.MultiShare) MultiShare.fx('sk', { n: mon.skill.name });   // マルチ：スキル発動を相手の画面へ
+  if (window.MultiShare) MultiShare.fx('sk', { n: mon.skill.name, m: entry.monsterId });   // マルチ：スキル発動を相手の画面へ
+  // カットイン（モンスターエディターで ON にしたスキル）：画像は mp{ID}.png、効果音は {ID}.mp3（cutin.mp3 の代わり。無ければ cutin.mp3）
+  if (mon.skill.cutin === true && window.EnemyCutIn) {
+    try { await window.EnemyCutIn.show({ attr: mon.attr, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (err) {}
+  }
   if (mon.skill.effects && mon.skill.effects.length) {
     runSkillEffects(mon.skill.effects, entry, mon);
   }
@@ -7322,6 +7563,7 @@ function tickEnemyDebuffsAfterAttack() {
   }
   if (enemyRecDown && --enemyRecDown.turns <= 0) { enemyRecDown = null; _dbgChanged = true; }
   if (enemyMoveDown && --enemyMoveDown.turns <= 0) { enemyMoveDown = null; _dbgChanged = true; }
+  if (enemyMoveFix && --enemyMoveFix.turns <= 0) { enemyMoveFix = null; _dbgChanged = true; }
   if (enemySkillSeal && --enemySkillSeal.turns <= 0) { enemySkillSeal = null; _dbgChanged = true; }   // スキル使用不可（このあと renderParty で枠が戻る）
   if (enemyNoFall && --enemyNoFall.turns <= 0) { enemyNoFall = null; _dbgChanged = true; }
   if (orbBoosts.some(b => b.enemy)) {
@@ -7497,9 +7739,14 @@ function hideEffectPopup() { const el = document.getElementById('effect-popup');
 // ============================================================
 // バフアイコン表示
 // ============================================================
+// リーダースキルのダメージ軽減（HPバー横の盾アイコン）と同じ画像。取れない時は j2.png
+function lsGuardIconSrc() {
+  try { const im = document.querySelector('#ls-guard img'); if (im && im.getAttribute('src')) return im.getAttribute('src'); } catch (e) {}
+  return 'j2.png';
+}
 function buildBuffItems() {
   const items = [];
-  if (buffDamageReduction) items.push({ icon:'j2.png', turns: buffDamageReductionTurns, name:'ダメージ軽減', text:`敵から受けるダメージを${Math.round(buffDamageReductionValue*100)}%軽減する` });
+  if (buffDamageReduction) items.push({ icon: lsGuardIconSrc(), turns: buffDamageReductionTurns, name:'ダメージ軽減', text:`敵から受けるダメージを${Math.round(buffDamageReductionValue*100)}%軽減する` });
   if (buffRecMult) items.push({ icon:'j6.png', turns: buffRecMultTurns, name: buffRecMultValue === 0 ? '回復力0' : `回復力${buffRecMultValue}倍`, text: buffRecMultValue === 0 ? '回復ドロップで回復できない' : `回復力が${buffRecMultValue}倍になる` });
   if (buffMoveTime) {
     const parts = [];
@@ -7530,6 +7777,8 @@ function buildBuffItems() {
   for (const g of atkDownGroups) {
     items.push({ icon:'j8.png', turns: g.turns, name:'攻撃力ダウン', text: g.list.map(b => atkBuffLabel(b).replace(/^\d+ターン\s*/, '')).join('、') });
   }
+  if (enemyMoveFix) items.push({ icon:'j4.png', turns: enemyMoveFix.turns, name:'操作時間固定', text:`敵の効果でドロップ操作時間が${enemyMoveFix.ms / 1000}秒に固定される` });
+  { const _cr = enemyList.find(e => e && e.hp > 0 && e._comboRule); if (_cr) items.push({ icon:'j8.png', turns: 1, name:`${_cr._comboRule.combo}コンボしろ`, text:`次のターン、ちょうど${_cr._comboRule.combo}コンボにしないと${(9999999).toLocaleString()}ダメージ（固定）を受ける` }); }
   if (enemyMoveDown && !moveTimeFixed) items.push({ icon:'j4.png', turns: enemyMoveDown.turns, name:'操作時間ダウン', text:`敵の効果でドロップ操作時間が${enemyMoveDown.seconds}秒短くなる` });
   if (enemyRecDown) items.push({ icon:'j6.png', turns: enemyRecDown.turns, name: enemyRecDown.value === 0 ? '回復力ダウン（0）' : `回復力ダウン（${enemyRecDown.value}倍）`, text: enemyRecDown.value === 0 ? '敵の効果で回復ドロップで回復できない' : `敵の効果で回復力が${enemyRecDown.value}倍になる` });
   if (enemySkillSeal) items.push({ icon: ICON_SKILL_SEAL, turns: enemySkillSeal.turns, name:'スキル使用不可', text:'敵の効果で、チーム全員のスキルが使えない' });
@@ -8335,6 +8584,23 @@ function isEventArea(a) { return typeof a === 'string' && Object.prototype.hasOw
 // ★「イベントとマルチ両方」のイベント（areas.js で both:true）は、遊ぶ入口で決まる：
 //   ホームの「マルチ」タブから入った時だけマルチ（協力プレイ）、「イベント」タブから入った時はふつうのイベント（1人）。
 let homeMode = 'main';   // 'main' | 'event' | 'multi'（ホームのタブ）
+// ★ イベント／マルチ一覧の中の切り替え：'event'（通常）／'kourin'（降臨 = IDが kourin で始まるもの）
+let eventSub = 'event', multiSub = 'event';
+function isKourinId(id) { return /^kourin/i.test(String(id)); }
+function buildSubTabs(cur, onSelect) {
+  const bar = document.createElement('div');
+  bar.className = 'ev-subtabs'; bar.setAttribute('role', 'tablist');
+  [['event', 'イベント'], ['kourin', '降臨']].forEach(([k, label]) => {
+    const t = document.createElement('button');
+    t.type = 'button'; t.setAttribute('role', 'tab'); t.dataset.sub = k;
+    t.className = 'ev-subtab' + (k === cur ? ' on' : '');
+    t.setAttribute('aria-selected', k === cur ? 'true' : 'false');
+    t.textContent = label;
+    t.addEventListener('click', () => { if (k === cur) return; onSelect(k); buildStageMap(true); });
+    bar.appendChild(t);
+  });
+  return bar;
+}
 let _forceMulti = false;   // 一覧づくりなどで、一時的に「マルチとして扱う」ためのフラグ
 function asMulti(fn) { const keep = _forceMulti; _forceMulti = true; try { return fn(); } finally { _forceMulti = keep; } }
 function isMultiArea(a) {
@@ -8552,7 +8818,7 @@ let _mapSig = '';
 function mapSignature() {
   const d = new Date();
   return [
-    homeMode,
+    homeMode, eventSub, multiSub,
     (window.isLandscapeHome && window.isLandscapeHome()) ? 1 : 0,
     Array.from(clearedBosses).join(','),
     clearedDungeons.size,
@@ -8618,11 +8884,13 @@ function buildEventMap() {
   const head = document.createElement('div');
   head.className = 'ev-head'; head.textContent = 'イベントステージ';
   map.appendChild(head);
-  const ids = Object.keys(EVENT_INFO).filter(id => !EVENT_INFO[id].hidden);
-  const dailyId = dailyTodayId();
-  if (dailyId) map.appendChild(buildDailyCard(dailyId));   // 日替わりダンジョン（今日の曜日のぶん）は一番上
+  map.appendChild(buildSubTabs(eventSub, k => { eventSub = k; }));
+  const isK = eventSub === 'kourin';
+  const ids = Object.keys(EVENT_INFO).filter(id => !EVENT_INFO[id].hidden && isKourinId(id) === isK);
+  const dailyId = isK ? null : dailyTodayId();
+  if (dailyId) map.appendChild(buildDailyCard(dailyId));   // 日替わりダンジョン（今日の曜日のぶん）は「イベント」の一番上
   if (!ids.length && !dailyId) {
-    const em = document.createElement('div'); em.className = 'ev-empty'; em.textContent = 'いまはイベントがありません';
+    const em = document.createElement('div'); em.className = 'ev-empty'; em.textContent = isK ? 'いまは降臨がありません' : 'いまはイベントがありません';
     map.appendChild(em);
   }
   ids.forEach(id => map.appendChild(buildEventBand(id)));
@@ -8663,9 +8931,11 @@ function buildMultiMap() {
   const head = document.createElement('div');
   head.className = 'ev-head'; head.textContent = 'マルチプレイステージ';
   map.appendChild(head);
-  const ids = MULTI_AREA_IDS.filter(id => isEventArea(id));
+  map.appendChild(buildSubTabs(multiSub, k => { multiSub = k; }));
+  const isK = multiSub === 'kourin';
+  const ids = MULTI_AREA_IDS.filter(id => isEventArea(id) && isKourinId(id) === isK);
   if (!ids.length) {
-    const em = document.createElement('div'); em.className = 'ev-empty'; em.textContent = 'いまはマルチステージがありません';
+    const em = document.createElement('div'); em.className = 'ev-empty'; em.textContent = isK ? 'いまは降臨がありません' : 'いまはマルチステージがありません';
     map.appendChild(em);
   }
   ids.forEach(id => map.appendChild(buildEventBand(id)));
@@ -8988,7 +9258,7 @@ async function startGameFromHome() {
   _hpCache.key = '';
   playerCurrentHP = calcTotalHP();
   enemyAtkDowns = [];
-  enemyRecDown = null; enemyMoveDown = null; enemySkillSeal = null; enemyNoFall = null;
+  enemyRecDown = null; enemyMoveDown = null; enemyMoveFix = null; enemySkillSeal = null; enemyNoFall = null;
   clearRoulettes();
 
   const stageKey = currentStageType === 'boss' ? 'boss' : currentStageType;
@@ -9163,6 +9433,7 @@ function deToast(msg, ms = 2000) {
 
 function renderDungeonEntry() {
   updateDungeonEntryCost();
+  updateRensenBtn();
   const stageLabel = stageShortLabel(currentAreaNum, currentStageType);
   document.getElementById('de-stage-label').textContent = stageLabel;
   const dKey = `${currentAreaNum}-${currentStageType}`, dd = DUNGEON_DATA[dKey];
@@ -9413,6 +9684,7 @@ function moStartBattle() {
   MultiTurn.online = true; MultiTurn.localId = lob.seat; MultiTurn.count = 2;
   MultiTurn.transport = { send: s => MultiOnline.sendTurn(s) };
   multiLobby = null;
+  _rensenRun = false;
   moRenderOpp(); moRefreshBtn();
   document.getElementById('dungeon-entry').style.display = 'none';
   startGameFromHome();
@@ -9465,6 +9737,7 @@ async function startMultiMatching(areaNum, stageKey) {
       onLive: v => { if (window.MultiShare) MultiShare.onLive(v); },     // 相手が動かしている盤面
       onParty: v => { if (window.MultiShare) MultiShare.onParty(v); },   // 相手のパーティー（モンスター・HP・SP）
       onFx: v => { if (window.MultiShare) MultiShare.onFx(v); },         // 相手の操作中の出来事（コンボ・攻撃・HP…）
+      onChat: v => { if (window.MultiChat) MultiChat.receive(v); },      // 相手の定型文
     });
     openDungeonEntry(areaNum, stageKey);
   } catch (e) {
@@ -9487,7 +9760,15 @@ document.getElementById('de-back-btn').addEventListener('click', () => {
 function partyMemberCount() {
   return currentTeam.filter(uid => uid !== null && uid !== undefined && box.some(b => b.uid === uid)).length;
 }
-document.getElementById('de-challenge-btn').addEventListener('click', () => {
+// ★連戦：クリア後、ホームではなく「同じダンジョンの出撃準備（編成）画面」に戻る
+let _rensenRun = false;
+document.getElementById('de-challenge-btn').addEventListener('click', () => enterDungeonFromEntry(false));
+document.getElementById('de-rensen-btn').addEventListener('click', () => enterDungeonFromEntry(true));
+function updateRensenBtn() {
+  const b = document.getElementById('de-rensen-btn');
+  if (b) b.style.display = (multiLobby && !multiLobby.solo) ? 'none' : '';   // マルチの対戦中は連戦なし
+}
+function enterDungeonFromEntry(rensen) {
   if (multiLobby && !multiLobby.solo) { moOnDecide(); return; }   // マルチ：「決定」（両者そろったら自動で始まる）
   if (multiLobby && multiLobby.solo) { multiLobby = null; moRenderOpp(); moRefreshBtn(); }
   // パーティーが0匹ならダンジョンに入れない（おふだも消費しない）
@@ -9522,9 +9803,10 @@ document.getElementById('de-challenge-btn').addEventListener('click', () => {
     itemInventory[ent.item] = getItemCount(ent.item) - ent.cost;
     saveGame();
   }
+  _rensenRun = !!rensen;
   document.getElementById('dungeon-entry').style.display = 'none';
   startGameFromHome();
-});
+}
 
 document.getElementById('home').style.display = 'flex';
 buildStageMap();
@@ -9635,6 +9917,7 @@ function init() {
   { const o = document.getElementById('gameover-overlay'); if (o) o.remove(); const w = document.getElementById('grid-wrap'); if (w) w.classList.remove('go-collapsing'); const g = document.getElementById('game'); if (g) g.classList.remove('game-over', 'mt-spectate'); }
   moveTimeFixed = null;
   leaderMoveAddMs = 0;
+  _guardCarry = false;
   lastTurnCtx = null;
   resetLsGuard();
   [0,5].forEach(idx => {
@@ -9919,6 +10202,14 @@ function setDragFx(on) {
   const g = document.getElementById('grid');
   if (g) g.classList.toggle('drag-active', !!on);
 }
+// マルチ：掴んでいるドロップの指の位置（盤面の左上=0,0・1マス=1 の座標）を相手の画面へ送る（約30回/秒。なめらかに見せるため）
+function mtLivePos(x, y, flush) {
+  if (!window.MultiShare || !gridRectCache || dragR < 0) return;
+  const cw = curCellW || 1, ch = curCellH || 1;
+  const offX = Math.max(-cw, Math.min(cw, x - (gridRectCache.left + (dragC + 0.5) * cw)));
+  const offY = Math.max(-ch, Math.min(ch, y - (gridRectCache.top + (dragR + 0.5) * ch)));
+  MultiShare.live(!!flush, { r: dragR, c: dragC, x: dragC + 0.5 + offX / cw, y: dragR + 0.5 + offY / ch });
+}
 function onStart(e) {
   if (busy) return;
   e.preventDefault();
@@ -9937,6 +10228,7 @@ function onStart(e) {
   dragEl.classList.add('dragging');
   lastMoveX = x; lastMoveY = y;
   timerStarted = false;
+  mtLivePos(x, y, true);   // マルチ：掴んだことを相手の画面にも見せる
 }
 
 function onMove(e) {
@@ -9993,7 +10285,6 @@ function onMove(e) {
       dragEl = orbEls[dragR][dragC];
       dragEl.classList.add('dragging');
       playDropSound();
-      if (window.MultiShare) MultiShare.live();   // マルチ：動かしている盤面を相手の画面にも見せる
     }
   }
 
@@ -10004,6 +10295,7 @@ function onMove(e) {
   let offY = Math.max(-limY, Math.min(limY, y - centerY));
   dragEl.style.transform = `translate(${offX}px, ${offY}px) scale(1.28)`;
   lastMoveX = x; lastMoveY = y;
+  mtLivePos(x, y);   // マルチ：動かしている盤面と指の位置を相手の画面にも見せる（入れ替えもここで一緒に送る）
 }
 
 function onEnd(e) {
@@ -10013,8 +10305,8 @@ function onEnd(e) {
   if (dragEl) { dragEl.style.transform = ''; dragEl.classList.remove('dragging'); }
   setDragFx(false);
   dragEl = null; gridRectCache = null;
-  if (window.MultiShare) MultiShare.live(true);   // マルチ：指を離した時の盤面
   if (!timeStopActive) { _rlHold = roulettes.length > 0; setTimeout(evaluateIfMoved, 80); }
+  if (window.MultiShare) MultiShare.live(true, null);   // マルチ：指を離した時の盤面（針を止めたあとの状態で送る）
 }
 
 function findGroups() {
@@ -10123,6 +10415,7 @@ async function _evaluateInner() {
   const pendingSubFull = new Array(6).fill(0);   // 副属性の色で消した分の攻撃（満額。最後に 1/10 か 1/3 にする）
   const subMeta = [];                             // モンスター番号 → 副属性の色（パーティの上の数字の色用）
   clearComboChips();
+  flushCarriedGuard();   // 念のため：持ち越した軽減が残っていたらここで消す
   resetLsGuard();
   let lastGroupCells = null;
   damageElements.forEach(el => { if (el) { el.textContent = ''; el.classList.remove('show', 'pop'); } });
@@ -10514,7 +10807,7 @@ async function _evaluateInner() {
           if (mon) {
             let rec = calcMonsterStats(entry).rec;
             for (const eff of recEffects) {
-              const apply = eff.condition === 'type' ? mon.type === eff.attr : (!eff.attr || mon.attr === eff.attr);
+              const apply = isRarityCond(eff.condition) ? rarityEffApplies(eff, mon.attr, mon.type) : (eff.condition === 'type' ? mon.type === eff.attr : (!eff.attr || mon.attr === eff.attr));
               if (apply) rec *= eff.value;
             }
             // 条件つきリーダースキルの「回復力倍率」（例: 火ドロップを消す度に攻撃1.2倍、回復力1.3倍）
@@ -10697,8 +10990,14 @@ async function _evaluateInner() {
   enemyJudgeBoard = null;
 
   // リーダースキルのダメージ軽減は、そのターンの敵の攻撃で役目を終える（攻撃されなくても次のターン／ラウンドへ持ち越さない）
-  lastTurnCtx = null;
-  resetLsGuard();
+  // ただし敵を全滅させて次のフロアへ進むときは、次のフロアの先制攻撃にも軽減を効かせたいので、
+  // 軽減（リーダースキル／スキルのダメージ軽減）を消すのは「次のフロアの先制が終わったあと」（先制がなければ到着してすぐ）まで持ち越す
+  if (enemyList.every(e => e.hp <= 0) && currentBattleIndex < currentDungeonBattles.length - 1) {
+    _guardCarry = true;
+  } else {
+    lastTurnCtx = null;
+    resetLsGuard();
+  }
 
   tickPlayerBuffs();
   currentMoveMs = calcCurrentMoveMs();
@@ -11086,3 +11385,14 @@ document.getElementById('bag-open-btn').addEventListener('click', () => {
 document.getElementById('bag-close-btn').addEventListener('click', () => {
   document.getElementById('bag-screen').style.display = 'none';
 });
+
+
+// 敵の【〇コンボしろ】指定を、敵エリア右上に常時表示（横画面は未対応）
+setInterval(() => {
+  const el = document.getElementById('rule-banner');
+  if (!el) return;
+  let r = null;
+  try { const en = (typeof enemyList !== 'undefined') ? enemyList.find(e => e && e.hp > 0 && e._comboRule) : null; if (en) r = en._comboRule; } catch (e) {}
+  if (r) { const t = `【${r.combo}コンボしろ】`; if (el.textContent !== t) el.textContent = t; el.classList.add('show'); }
+  else el.classList.remove('show');
+}, 150);

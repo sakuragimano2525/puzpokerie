@@ -3,6 +3,7 @@
 //
 //   ホームの図鑑ボタン（本のアイコン）から開く。
 //
+//   ・（252番以降は、ダンジョンで出会うか、ゲットしてはじめて図鑑に載る）
 //   ・MONSTER_DATA にいるモンスターを、ID順に 横6匹 で並べる（縦はいくらでも。モンスターを追加すると自動で増える）
 //   ・表示は3種類
 //       ゲット済み   … m{id}.png をそのまま表示（いちどでも手に入れたら登録。合成で消えても残る）
@@ -27,7 +28,7 @@
   const LONGPRESS_MS = 250;      // 長押しと判定する時間
   const MOVE_CANCEL_PX = 10;     // これ以上指が動いたらスクロールとみなして長押しをやめる
   const $ = id => document.getElementById(id);
-  const HIDDEN_FROM = 152;       // この番号以降は、ゲットするまで図鑑に表示しない（まだ登場しないため）
+  const HIDDEN_FROM = 252;       // この番号以降は、ダンジョンで出会うかゲットするまで図鑑に表示しない（1〜251は最初から表示）
 
   // ── 記録 ───────────────────────────────────────────────────
   const seen = new Set();    // 出会った or 持った（owned も含む）
@@ -108,7 +109,7 @@
 
   function allIds() {
     return Object.keys(MONSTER_DATA).map(Number)
-      .filter(id => id > 0 && MONSTER_DATA[id] && (id < HIDDEN_FROM || owned.has(id)))   // 152番以降は、ゲットするまで図鑑に出さない
+      .filter(id => id > 0 && MONSTER_DATA[id] && (id < HIDDEN_FROM || owned.has(id) || seen.has(id)))   // 252番以降は、ダンジョンで出会う（見たことあり）かゲットするまで図鑑に出さない
       .sort((a, b) => a - b);
   }
   const maxLvOf = mon => (typeof getMonsterMaxLevel === 'function') ? getMonsterMaxLevel(mon) : 99;
