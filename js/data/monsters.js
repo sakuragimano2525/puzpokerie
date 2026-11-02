@@ -1824,14 +1824,20 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'light',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 2500,
     stats: { hp: { min: 404, max: 1076 }, atk: { min: 75, max: 165 }, rec: { min: 5, max: 25 } },
     skill: { name: 'ステルスロック', sp: 2, desc: '全ドロップをロック。', effects: [ { type: 'orbLock', target: 'all' } ] },
     leaderSkill: {
       name: 'ハーフアップ',
       desc: 'HP50%以上で攻撃1.3倍。',
       effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.5, value: 1.3 } ]
-    }
+    },
+    evolutions: [
+      {
+        to: 208,
+        materials: [ { item: 'spuzzle_42', count: 2 }, { item: 'puzzle32', count: 2 }, { item: 'puzzle4', count: 2 } ]
+      }
+    ]
   },
   96: {
     id: 96,
@@ -2843,7 +2849,7 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 1000,
-    stats: { hp: { min: 780, max: 5200 }, atk: { min: 220, max: 1180 }, rec: { min: 0, max: 10 } },
+    stats: { hp: { min: 780, max: 5200 }, atk: { min: 220, max: 1150 }, rec: { min: 0, max: 10 } },
     skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: {
       name: 'じきゅうりょく',
@@ -3070,6 +3076,26 @@ const MONSTER_DATA = {
       name: 'セブンクライシス',
       desc: '7コンボ以上で攻撃2倍。',
       effects: [ { type: 'atk', condition: 'combo', count: 7, value: 2 }, { type: 'moveTimeAdd', value: 1 } ]
+    }
+  },
+  208: {
+    id: 208,
+    name: 'ハガネール',
+    rarity: 4,
+    attr: 'light',
+    type: 'たいりょく',
+    baseExp: 10000,
+    stats: { hp: { min: 1000, max: 5100 }, atk: { min: 200, max: 1300 }, rec: { min: 0, max: 10 } },
+    skill: {
+      name: 'ステルスロック+',
+      sp: 2,
+      desc: '全ドロップをロックし、1ターンの間、ダメージ10%軽減。',
+      effects: [ { type: 'orbLock', target: 'all' }, { type: 'dmgReductionBuff', turns: 1, value: 0.1 } ]
+    },
+    leaderSkill: {
+      name: 'アイアンローラー',
+      desc: 'HP25%以下で攻撃1.5倍、受けるダメージ25%軽減。',
+      effects: [ { type: 'atk', condition: 'hpBelow', threshold: 0.25, value: 1.5, reduce: 0.25 } ]
     }
   },
   212: {
@@ -3354,8 +3380,8 @@ const MONSTER_DATA = {
     skill: {
       name: 'スカイハント',
       sp: 2,
-      desc: '2ターンの間、敵全体に攻撃。\n全ドロップをロック。',
-      effects: [ { type: 'allAttackBuff', turns: 2 }, { type: 'orbLock', target: 'all', orb_heal: true } ]
+      desc: '1ターンの間、敵全体に攻撃。\n全ドロップをロック。',
+      effects: [ { type: 'allAttackBuff', turns: 1 }, { type: 'orbLock', target: 'all', orb_heal: true } ]
     },
     leaderSkill: {
       name: 'はやてのつばさ',
@@ -3426,19 +3452,34 @@ const MONSTER_DATA = {
     id: 667,
     name: 'シシコ',
     rarity: 1,
+    attr: 'fire',
     type: 'こうげき',
     maxLevel: 25,
-    baseExp: 100,
-    stats: { hp: { min: 150, max: 340 }, atk: { min: 110, max: 250 }, rec: { min: 5, max: 9 } }
+    baseExp: 500,
+    stats: { hp: { min: 150, max: 340 }, atk: { min: 110, max: 250 }, rec: { min: 5, max: 9 } },
+    skill: { name: 'いかく', sp: 4, desc: '敵全体の行動を1ターン遅らせる。', effects: [ { type: 'enemyDelay', target: 'all', turns: 1 } ] },
+    leaderSkill: {
+      name: 'ハーフアップ',
+      desc: 'HP50%以上で攻撃1.3倍。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.5, value: 1.3 } ]
+    },
+    evolutions: [ { to: 668, materials: [ { item: 'puzzle13', count: 1 }, { item: 'puzzle1', count: 4 } ] } ]
   },
   668: {
     id: 668,
     name: 'カエンジシ',
     rarity: 3,
+    attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
-    stats: { hp: { min: 420, max: 2780 }, atk: { min: 310, max: 2090 }, rec: { min: 25, max: 71 } }
+    baseExp: 2500,
+    stats: { hp: { min: 620, max: 2620 }, atk: { min: 400, max: 2200 }, rec: { min: 30, max: 80 } },
+    skill: { name: 'いかく+', sp: 6, desc: '敵全体の行動を2ターン遅らせる。', effects: [ { type: 'enemyDelay', target: 'all', turns: 2 } ] },
+    leaderSkill: {
+      name: 'かがやきのひとみ',
+      desc: '5色同時に消すと攻撃1.8倍、受けるダメージ5%軽減。',
+      effects: [ { type: 'atk', condition: 'colorCount', count: 5, value: 1.8, reduce: 0.05 } ]
+    }
   },
   669: {
     id: 669,
@@ -3549,19 +3590,40 @@ const MONSTER_DATA = {
     id: 674,
     name: 'ヤンチャム',
     rarity: 1,
+    attr: 'fire',
     type: 'こうげき',
     maxLevel: 25,
-    baseExp: 100,
-    stats: { hp: { min: 180, max: 390 }, atk: { min: 130, max: 280 }, rec: { min: 5, max: 10 } }
+    baseExp: 500,
+    stats: { hp: { min: 180, max: 390 }, atk: { min: 130, max: 280 }, rec: { min: 5, max: 10 } },
+    skill: {
+      name: 'からてチョップ',
+      sp: 3,
+      desc: '最左の縦1列を火ドロップに変化。',
+      effects: [ { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'fire' } ]
+    },
+    leaderSkill: { name: 'パワーパンチ', desc: 'HP満タン時、攻撃1.5倍。', effects: [ { type: 'atk', condition: 'hpFull', value: 1.5 } ] },
+    evolutions: [ { to: 675, materials: [ { item: 'spuzzle_12', count: 1 }, { item: 'puzzle52', count: 3 } ] } ]
   },
   675: {
     id: 675,
     name: 'ゴロンダ',
     rarity: 3,
+    attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
-    stats: { hp: { min: 430, max: 2850 }, atk: { min: 310, max: 2070 }, rec: { min: 25, max: 71 } }
+    baseExp: 5500,
+    stats: { hp: { min: 450, max: 2850 }, atk: { min: 400, max: 2100 }, rec: { min: 25, max: 50 } },
+    skill: {
+      name: 'からてチョップ',
+      sp: 3,
+      desc: '最左の縦1列を火ドロップに変化。',
+      effects: [ { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'fire' } ]
+    },
+    leaderSkill: {
+      name: 'メガトンパンチ',
+      desc: 'HP満タン時、攻撃1.8倍。\n7コンボ以上で攻撃1.25倍。',
+      effects: [ { type: 'atk', condition: 'hpFull', value: 1.8 }, { type: 'atk', condition: 'combo', count: 7, value: 1.25 } ]
+    }
   },
   676: {
     id: 676,

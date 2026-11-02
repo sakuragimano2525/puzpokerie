@@ -80,6 +80,7 @@ const MULTI_UNLOCK_DATA = {
 //   例）700: 'kourin-boss' = ニンフィア(700) への進化は、kourin-boss をクリアすると出現
 const EVO_UNLOCK_DATA = {
 212: 'kourinb-boss',
+208: 'kourinc-boss',
   700: 'kourin-boss'
 };
 const EVENT_AREA_DATA = {
@@ -87,6 +88,8 @@ const EVENT_AREA_DATA = {
   halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
   kourin: { multiOnly: true, name: 'ニンフィア降臨', desc: 'クリアでニンフィアが解放！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ニンフィア降臨'} , stageLevels: { boss: '上級' }},
   kourinb: { multiOnly: true, name: 'ハッサム降臨', desc: 'クリアでハッサムが解放！', bg: 'dungeon10.png', hue: 200,stageNames: { boss: 'ハッサム降臨'} , stageLevels: { boss: '中級' }},
+kourinc: {both: true, name: 'ハガネール降臨', desc: 'クリアでハガネールが解放！', bg: 'dungeon12.png', hue: 200,stageNames: { boss: 'ハガネール降臨'} , stageLevels: { boss: '上級' }},
+
   BLLU: {both: true, name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'ブルアカ-スタジアム1',boss: 'ブルアカ-スタジアム2'} , stageLevels: { 1: '上級',boss: '超級' }},
    jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョ-スタジアム'} , stageLevels: { boss: '中級' }},
     stella: { both: true, name: 'ステラソラコラボ', desc: 'クリアでアルカナエキスゲット！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム'} , stageLevels: { boss: '上級' }},
