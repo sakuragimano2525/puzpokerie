@@ -7690,51 +7690,120 @@ function isLShape(cells) {
 //     ・ちょうど4個消し(exact4) ・L字消し(lShapes) ・十字消し(cross)
 //     ・〇個以上つなげて消し(orbConnect／2属性同時つなげ) ・ちょうど〇個消し(exactCount)
 // ============================================================
-const LS_SHAPE_CONDS = ['exact4', 'lShapes', 'cross', 'orbConnect', 'exactCount', 'connectEach', 'combo', 'attrCombos', 'fireCombos', 'darkCombos', 'healCombos'];   // 〇コンボ以上系もここ
+const LS_SHAPE_CONDS = ['exact4', 'lShapes', 'cross', 'orbConnect', 'exactCount', 'connectEach', 'combo', 'attrCombos', 'fireCombos', 'darkCombos', 'healCombos',
+  'fourColors', 'colorCount', 'colorCountHeal', 'colorRamp'];   // 〇コンボ以上系・〇色以上系もここ
 function lsShapeEffects() {
   return lsAllEffects().filter(e => e && LS_SHAPE_CONDS.includes(e.condition) && (e.type === 'atk' || e.type === 'dmgReduction'));
 }
 const LS_SHAPE_COLOR = { cross: '#ffd700', lShapes: '#d9a6ff', exact4: '#7fe9ff', combo: '#ffb347' };
 const LS_COMBO_ATTR = { fireCombos: 'fire', darkCombos: 'dark', healCombos: 'heal' };   // 旧形式の属性コンボ条件
-// この1グループが、リーダースキルのどの条件を満たしたか（満たしていなければ null）
-//   info: { color, cells, isCross, isL, maxConnect, passMax, totalCombo, attrCombos }
+// この1グループが、リーダースキルのどの条件を満たしたか → 出す演出の配列（何も満たさなければ空）
+//   info: { color, cells, isCross, isL, maxConnect, passMax, totalCombo, attrCombos, prevCounts, nowCounts }
+//     prevCounts … この塊を消す前の、属性ごとの消した個数 ／ nowCounts … この塊も数えた個数（〇色以上の判定用）
+//   返す要素：
+//     { kind:'cross'|'L'|'four'|'connect'|'combo', color, n, light, power } … 形・個数・コンボ系（同じ塊で複数満たしても、いちばん派手な1つだけ）
+//     { kind:'prism', colors:[…] }                                         … 〇色以上（条件が成立した、その1回だけ）
+//     { pending:true, need, pair }                                         … 2属性同時つなげで、相方がまだそろっていない塊
+//   演出の中身は js/ls-fx.js（LSFX）。
 function lsShapeMatch(effects, info) {
   const { color, cells, isCross, isL } = info;
   const n = cells.length;
+  const RANK = { cross: 5, L: 4, four: 3, connect: 2, combo: 1 };   // 同じ塊で複数の条件を満たした時の優先（派手な順）
+  let shape = null, prism = null;
+  const pend = [];
+  const offer = (d) => { if (!shape || RANK[d.kind] > RANK[shape.kind]) shape = d; };
+  const attrCol = ATTR_FX_COLOR[color] || '#fff';
+  // 「〇個つなげて」系：塊の形・個数で演出を選ぶ（十字→十字斬り／L字→L字斬り／ちょうど4個→四閃／5個以上→魔法陣）
+  const byShape = () => isCross ? { kind: 'cross', color: LS_SHAPE_COLOR.cross, n }
+    : isL ? { kind: 'L', color: LS_SHAPE_COLOR.lShapes, n }
+    : n === 4 ? { kind: 'four', color: LS_SHAPE_COLOR.exact4, n }
+    : n >= 5 ? { kind: 'connect', color: attrCol, n }
+    : { kind: 'combo', color: attrCol, n, light: true };
+  // コンボ数が多いほど派手に（3→等倍、15コンボ前後で最大）。条件ちょうどのコンボが本番、そのあとの塊は控えめ
+  const comboPower = 1 + Math.min(0.7, Math.max(0, (info.totalCombo || 0) - 3) * 0.06);
   for (const e of effects) {
     switch (e.condition) {
-      case 'cross':  if (isCross && (!e.shapeAttr || e.shapeAttr === color)) return LS_SHAPE_COLOR.cross; break;
-      case 'lShapes': if (isL && (!e.shapeAttr || e.shapeAttr === color)) return LS_SHAPE_COLOR.lShapes; break;
-      case 'exact4': if (n === 4) return LS_SHAPE_COLOR.exact4; break;
-      case 'combo':   // 〇コンボ以上：条件のコンボ数に届いてから消えた塊が光る
-        if ((info.totalCombo || 0) >= (e.count || 0)) return LS_SHAPE_COLOR.combo; break;
+      case 'cross':   if (isCross && (!e.shapeAttr || e.shapeAttr === color)) offer({ kind: 'cross', color: LS_SHAPE_COLOR.cross, n }); break;
+      case 'lShapes': if (isL && (!e.shapeAttr || e.shapeAttr === color)) offer({ kind: 'L', color: LS_SHAPE_COLOR.lShapes, n }); break;
+      case 'exact4':  if (n === 4) offer({ kind: 'four', color: LS_SHAPE_COLOR.exact4, n }); break;
+      case 'combo': {   // 〇コンボ以上：条件のコンボ数に届いた塊で本番の爆発、そのあとの塊は小さな爆発
+        const need = e.count || 0;
+        if ((info.totalCombo || 0) >= need) offer({ kind: 'combo', color: LS_SHAPE_COLOR.combo, power: comboPower, light: (info.totalCombo || 0) > need });
+        break;
+      }
       case 'attrCombos': case 'fireCombos': case 'darkCombos': case 'healCombos': {   // 〇属性の〇コンボ以上
-        const a = e.attr || LS_COMBO_ATTR[e.condition];
-        if (a === color && ((info.attrCombos || {})[color] || 0) >= (e.count || 0)) return ATTR_FX_COLOR[color] || '#fff';
+        const a = e.attr || LS_COMBO_ATTR[e.condition], need = e.count || 0, have = (info.attrCombos || {})[color] || 0;
+        if (a === color && have >= need) offer({ kind: 'combo', color: attrCol, power: comboPower, light: have > need });
         break;
       }
       case 'exactCount':
-        if (e.attr === color && n === e.count) return ATTR_FX_COLOR[color] || '#fff'; break;
+        if (e.attr === color && n === e.count) offer(byShape());
+        break;
       case 'connectEach':
-        if ((!e.attr || e.attr === color) && (e.exact ? n === e.count : n >= (e.count || 0))) return ATTR_FX_COLOR[color] || '#fff'; break;
+        if ((!e.attr || e.attr === color) && (e.exact ? n === e.count : n >= (e.count || 0))) offer(byShape());
+        break;
       case 'orbConnect': {
         const need = e.count || 0;
         if (e.attr2) {
           if ((color === e.attr || color === e.attr2) && n >= need) {
             // 2属性が両方そろったときだけ発動（同じ巡で後から消える分も数える）
             const got = (a) => Math.max(info.maxConnect[a] || 0, info.passMax[a] || 0);
-            if (got(e.attr) >= need && got(e.attr2) >= need) return ATTR_FX_COLOR[color] || '#fff';
-            return { pending: true, need, pair: [e.attr, e.attr2] };
+            if (got(e.attr) >= need && got(e.attr2) >= need) offer(byShape());
+            else pend.push({ pending: true, need, pair: [e.attr, e.attr2] });
           }
-        } else if (e.attr === color && n >= need) return ATTR_FX_COLOR[color] || '#fff';
+        } else if (e.attr === color && n >= need) offer(byShape());
+        break;
+      }
+      case 'fourColors': case 'colorCount': case 'colorCountHeal': case 'colorRamp': {
+        // 〇色以上：この塊を消して、条件が「成立した瞬間」に1回だけ（colorRamp は色が増えて倍率が上がる度）
+        const prev = colorCondResult(e, { orbCounts: info.prevCounts }), now = colorCondResult(e, { orbCounts: info.nowCounts });
+        if (now.ok && (!prev.ok || (e.condition === 'colorRamp' && (now.mult || 0) > (prev.mult || 0) + 1e-9)) && !prism) {
+          const nc = info.nowCounts || {};
+          prism = { kind: 'prism', color: '#ffffff', colors: ['fire', 'water', 'wood', 'light', 'dark', 'heal'].filter(a => (nc[a] || 0) >= 3).map(a => ATTR_FX_COLOR[a]) };
+        }
         break;
       }
     }
   }
-  return null;
+  const out = [];
+  if (shape) out.push(shape);
+  if (prism) out.push(prism);
+  return out.concat(pend);
 }
-// ドロップの形にそってふわっと光るエフェクト（邪魔にならないよう薄く短く）
-function lsShapeFx(cells, color) {
+// 消した塊の形から、演出の種類を選ぶ（2属性同時つなげで、あとから条件がそろった塊用）
+function lsHitForCells(cells, color) {
+  const n = cells.length;
+  if (isCrossGroup(cells)) return { kind: 'cross', color: LS_SHAPE_COLOR.cross, n };
+  if (isLShape(cells)) return { kind: 'L', color: LS_SHAPE_COLOR.lShapes, n };
+  if (n === 4) return { kind: 'four', color: LS_SHAPE_COLOR.exact4, n };
+  return { kind: 'connect', color: ATTR_FX_COLOR[color] || '#fff', n };
+}
+// 盤面の位置情報（ドロップの中心の画面座標・間隔・大きさ）。js/ls-fx.js に渡す
+//   ドロップが光る／消える途中でも狂わないよう、位置は中心から、大きさはレイアウト上の幅から取る
+function lsFxGeo() {
+  const a = orbEls[0] && orbEls[0][0], b = orbEls[0] && orbEls[0][1], d = orbEls[1] && orbEls[1][0];
+  if (!a || !b || !d) return null;
+  const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(), rd = d.getBoundingClientRect();
+  const ax = ra.left + ra.width / 2, ay = ra.top + ra.height / 2;
+  const size = a.offsetWidth || Math.min(ra.width, ra.height);
+  const px = (rb.left + rb.width / 2) - ax, py = (rd.top + rd.height / 2) - ay;
+  if (!(size > 0) || !(px > 0) || !(py > 0)) return null;
+  return { x0: ax, y0: ay, px, py, size, rows: ROWS, cols: COLS };
+}
+// 条件を満たした塊に、条件ごとの演出を出す（js/ls-fx.js）。ls-fx.js が無い時は、旧演出（形に沿って光る）
+function lsShapeFx(cells, hit) {
+  try {
+    if (!hit) return;
+    if (typeof hit === 'string') hit = { kind: 'connect', color: hit };   // 旧形式（色だけ）も受け付ける
+    if (window.LSFX && hit.kind) {
+      const geo = lsFxGeo();
+      if (geo && window.LSFX.play(hit.kind, cells, geo, hit)) return;
+    }
+    lsShapeFxLegacy(cells, hit.color || '#fff');
+  } catch (err) {}
+}
+// 【旧演出】ドロップの形にそってふわっと光るエフェクト（js/ls-fx.js が無い時だけ使う）
+function lsShapeFxLegacy(cells, color) {
   try {
     const set = new Set(cells.map(({ r, c }) => r + ',' + c));
     const rects = cells.map(({ r, c }) => {
@@ -10129,18 +10198,23 @@ async function _evaluateInner() {
         exactAttrCounts[color][cells.length] = true;
       }
 
-      // ★ リーダースキルの条件を満たした塊だけ、その形に光る（条件にない普通の消しは演出なし） ★
+      // ★ リーダースキルの条件を満たした塊だけ、条件ごとの演出（十字＝刀で十字斬り／L字／4つ消し／5つ以上＝魔法陣／〇コンボ以上／〇色以上）★
+      //   条件にない普通の消しは演出なし
       if (shapeFxEffects.length) {
-        const hit = lsShapeMatch(shapeFxEffects, { color, cells, isCross, isL, maxConnect, passMax, totalCombo, attrCombos });
-        if (typeof hit === 'string') {
-          lsShapeFx(cells, hit);
-          // 先に消えた相方の塊も、条件がそろったので光らせる
+        const nowCounts = { ...attrCounts };   // この塊も数えた個数（〇色以上は「成立した瞬間」に出す）
+        if (nowCounts[color] !== undefined) nowCounts[color] += cells.length;
+        const hits = lsShapeMatch(shapeFxEffects, { color, cells, isCross, isL, maxConnect, passMax, totalCombo, attrCombos, prevCounts: attrCounts, nowCounts });
+        let fired = false;
+        for (const hit of hits) {
+          if (hit.kind) { lsShapeFx(cells, hit); fired = true; }
+          else if (hit.pending) shapeFxPending.push({ cells: cells.map(q => ({ r: q.r, c: q.c })), color, need: hit.need, pair: hit.pair });
+        }
+        // 先に消えた相方の塊も、条件がそろったので演出する
+        if (fired) {
           for (let pi = shapeFxPending.length - 1; pi >= 0; pi--) {
             const pd = shapeFxPending[pi];
-            if (pd.pair.every(a => (maxConnect[a] || 0) >= pd.need)) { lsShapeFx(pd.cells, ATTR_FX_COLOR[pd.color] || '#fff'); shapeFxPending.splice(pi, 1); }
+            if (pd.pair.every(a => (maxConnect[a] || 0) >= pd.need)) { lsShapeFx(pd.cells, lsHitForCells(pd.cells, pd.color)); shapeFxPending.splice(pi, 1); }
           }
-        } else if (hit && hit.pending) {
-          shapeFxPending.push({ cells: cells.map(q => ({ r: q.r, c: q.c })), color, need: hit.need, pair: hit.pair });
         }
       }
 
