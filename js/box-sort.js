@@ -21,6 +21,7 @@
   const MODES = [
     { id: 'acq',    label: '入手順',       def:  1 },
     { id: 'id',     label: '図鑑番号順',   def:  1, val: true },   // 図鑑番号（モンスターID）順。同じモンスターは入手順
+    { id: 'fav',    label: 'お気に入り順', def:  1 },   // お気に入りのモンスターが先頭（同じ中は入手順）
     { id: 'level',  label: 'レベル順',     def: -1 },
     { id: 'attr',   label: '属性順',       def:  1 },
     { id: 'name',   label: '名前順',       def:  1 },
@@ -103,6 +104,7 @@
   function keyOf(id, e, mon, ctx) {
     switch (id) {
       case 'id':     return [Number(mon.id) || Number(e.monsterId) || 0];
+      case 'fav':    return [e.fav ? 0 : 1];
       case 'level':  return [e.level];
       case 'attr':   return [attrRankOf(mon.attr)];
       case 'name':   return [String(mon.name || '')];

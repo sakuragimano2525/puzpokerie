@@ -234,14 +234,15 @@
       mg.appendChild(e2);
     }
     mats.forEach(function (m) {
-      var cell = exTile(m.monsterId, m.inTeam ? 'team' : ''); cell.dataset.uid = m.uid;
+      var locked = m.inTeam || m.fav;
+      var cell = exTile(m.monsterId, locked ? 'team' : ''); cell.dataset.uid = m.uid;
       var chk = document.createElement('span'); chk.className = 'gs-ex-chk'; chk.textContent = '✓';
       var lv = document.createElement('span'); lv.className = 'gs-ex-lv' + (m.grown ? ' grown' : '');
-      lv.textContent = m.inTeam ? '編成中' : ('Lv' + m.level + (m.plus ? ' ＋' + m.plus : ''));
+      lv.textContent = m.inTeam ? '編成中' : m.fav ? 'お気に入り' : ('Lv' + m.level + (m.plus ? ' ＋' + m.plus : ''));
       var nm = document.createElement('span'); nm.className = 'gs-lu-name'; nm.textContent = MONSTER_DATA[m.monsterId].name;
       cell.appendChild(chk); cell.appendChild(lv); cell.appendChild(nm);
       cell._m = m;
-      if (!m.inTeam) cell.addEventListener('click', function () {
+      if (!locked) cell.addEventListener('click', function () {
         var i = exMats.indexOf(m.uid);
         if (i !== -1) exMats.splice(i, 1);
         else if (exMats.length < need) exMats.push(m.uid);

@@ -314,6 +314,8 @@ const activeTemplates = {
   damageAttrAtkMult:{label:'○属性の攻撃力×倍率の属性ダメージ',data:{type:'damageAttrAtkMult',target:'all',value:10,srcAttr:'fire',attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('srcAttr','参照する味方の属性（その属性の攻撃力合計）'),attrF('attr','攻撃の属性')]},
   damagePartyAtkMult:{label:'味方全員の攻撃力合計×倍率',data:{type:'damagePartyAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
   atkBuff:{label:'攻撃エンハンス',data:{type:'atkBuff',attr:'water',monType:'',value:1.5,turns:1},fields:[['attr','属性（指定なし=全属性）','attrAny'],typeF('monType','タイプ（空欄=指定なし）'),numF('value','攻撃倍率'),numF('turns','ターン数')]},
+  noFallBuff:{label:'○ターンの間、落ちコンなし',data:{type:'noFallBuff',turns:3},fields:[numF('turns','ターン数')]},
+  attrChange:{label:'自分の属性を○ターン○属性に変化',data:{type:'attrChange',attr:'fire',turns:3},fields:[['attr','変化先の属性（副属性は消えて単属性になる）','select','fire:火|water:水|wood:木|light:光|dark:闇|random:ランダム（今の属性以外から1つ）'],numF('turns','ターン数')]},
   defenseDown:{label:'敵の防御力を○ターン○%ダウン',data:{type:'defenseDown',target:'all',value:0.5,turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダウン率（50%=0.5）'),numF('turns','ターン数')]},
   selfDamage:{label:'【自傷系】HPを減らす',data:{type:'selfDamage',mode:'percent',value:0.2},fields:[['mode','種類','select','percent:最大HPの○%減少|toOne:HPが1になる'],numF('value','減少割合（20%=0.2。「HPが1になる」の時は無視）')]},
   heal:{label:'最大HP割合を回復',data:{type:'heal',value:0.2},fields:[numF('value','割合（20%=0.2）')]},
@@ -738,6 +740,8 @@ function describeActiveOne(e0){
     switch(e.type){
       case 'damageAll': case 'damageSingle': out.push(`敵${(e.target==='single'||e.type==='damageSingle')?'単体':'全体'}に${Number(e.value).toLocaleString()}の固定ダメージ`); break;
       case 'atkBuff': out.push(`${e.turns||1}ターンの間、${e.monType?e.monType+'タイプ':(e.attr?ATTR_NAME[e.attr]+'属性':'全属性')}の攻撃が${fmt(e.value)}倍`); break;
+      case 'noFallBuff': out.push(`${e.turns||1}ターンの間、落ちコンなし`); break;
+      case 'attrChange': out.push(`${e.turns||1}ターンの間、自分の属性が${ATTR_NAME[e.attr]?ATTR_NAME[e.attr]+'属性':'ランダムな属性'}に変化`); break;
       case 'defenseDown': out.push(`${e.turns||1}ターンの間、敵${e.target==='single'?'単体':'全体'}の防御力を${pct(e.value)}ダウン`); break;
       case 'damageSelfAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に攻撃力×${fmt(e.value)}倍の${a}属性攻撃`); break;
       case 'damageAttrAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に${ATTR_NAME[e.srcAttr]||''}属性の攻撃力×${fmt(e.value)}倍の${a}属性攻撃`); break;
@@ -895,7 +899,7 @@ function cmpKey(a,b){
   return 0;
 }
 // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','attrChange','noFallBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
 function skillSortKey(sk){
   const e = (sk.effects||[])[0] || {};
   const i = SK_TYPE_ORDER.indexOf(e.type);

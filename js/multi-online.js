@@ -240,10 +240,14 @@
   };
 
   // ---------- 4c. 操作中の盤面（見せるだけ。保存しなくてよいので軽く） ----------
+  //   戻り値：書き込みが相手のサーバーに届いたら解決する Promise（送りっぱなしにせず、届くのを待って次を送るため）
   MO.sendLive = function (obj) {
     const c = MO._room;
-    if (!c || !obj) return;
-    c.liveRef.set(Object.assign({ by: MO.seat }, obj));   // 盤面・ロック・掴んでいるドロップの位置・ルーレットの時計
+    if (!c || !obj) return Promise.resolve();
+    try {
+      const r = c.liveRef.set(Object.assign({ by: MO.seat }, obj));   // 盤面・ロック・掴んでいるドロップの位置・ルーレットの時計
+      return (r && typeof r.then === 'function') ? r : Promise.resolve();
+    } catch (e) { return Promise.resolve(); }
   };
 
   // ---------- 4d. パーティー情報（相手の画面に「相手のパーティー」を出す） ----------

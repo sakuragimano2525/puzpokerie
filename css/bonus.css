@@ -1,0 +1,50 @@
+/* ボーナス（竜石／ガチャ）メニュー  js/bonus.js */
+.bn-back { position: fixed; inset: 0; z-index: 150; font-family: inherit; display: grid; place-items: center; background: rgba(0,0,0,.55); padding: 16px; }
+.bn-box { width: min(86vw, 320px); max-height: 86vh; display: flex; flex-direction: column; gap: 12px; padding: 16px; box-sizing: border-box;
+  background: var(--paper, #fff); color: var(--ink, #222); border: var(--bw, 3px) solid var(--ink, #222); border-radius: 20px; box-shadow: 0 5px 0 var(--ink, #222); }
+.bn-box.wide { width: min(92vw, 380px); }
+.bn-title { text-align: center; font-weight: 900; font-size: 1.15rem; }
+.bn-btn { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; font-size: 1.2rem; font-weight: 900; color: var(--ink, #222);
+  border: var(--bw, 3px) solid var(--ink, #222); border-radius: 16px; box-shadow: 0 4px 0 var(--ink, #222); cursor: pointer; touch-action: manipulation; }
+.bn-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink, #222); }
+.bn-btn.ryu { background: linear-gradient(180deg, #e6f4ff 0%, #b9dcff 100%); }
+.bn-btn.gacha { background: linear-gradient(180deg, #fff7d1 0%, #ffd98a 100%); }
+.bn-btn img { width: 34px; height: 34px; object-fit: contain; }
+.bn-btn .ic { width: 30px; height: 30px; }
+.bn-btn b { font-size: 1.05rem; }
+.bn-close { padding: 10px; font-weight: 800; background: #eee; color: var(--ink, #222); border: var(--bw, 3px) solid var(--ink, #222); border-radius: 12px; cursor: pointer; }
+.bn-count { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.bn-count img { width: 44px; height: 44px; object-fit: contain; }
+.bn-count b { font-size: 1.8rem; }
+.bn-count small { font-size: 1rem; opacity: .7; }
+.bn-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; padding: 2px; }
+.bn-btn { position: relative; }
+.bn-dot { display: none; position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; background: var(--coral, #ff5d6c); border: 3px solid var(--ink, #222); }
+.bn-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #fff; border: 3px solid var(--ink, #222); border-radius: 14px; box-shadow: 0 3px 0 var(--ink, #222); }
+.bn-item.done { opacity: .55; }
+.bn-ico { width: 52px; height: 52px; flex-shrink: 0; display: grid; place-items: center; background: #eef3ff; border: 2px solid rgba(0,0,0,.25); border-radius: 12px; overflow: hidden; }
+.bn-ico img { width: 100%; height: 100%; object-fit: contain; }
+.bn-ico.item img { width: 84%; height: 84%; }
+.bn-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.bn-name { font-weight: 900; font-size: .92rem; line-height: 1.25; }
+.bn-name em { font-style: normal; color: #d2550a; }
+.bn-need { display: flex; align-items: center; gap: 4px; font-size: .8rem; font-weight: 800; color: #2d6fd0; }
+.bn-need img { width: 18px; height: 18px; object-fit: contain; }
+.bn-get { flex-shrink: 0; min-width: 76px; padding: 10px 8px; font-weight: 900; font-size: .95rem; color: #fff; background: linear-gradient(180deg, #ffb347 0%, #ff7a1a 100%);
+  border: 3px solid var(--ink, #222); border-radius: 12px; box-shadow: 0 3px 0 var(--ink, #222); cursor: pointer; touch-action: manipulation; }
+.bn-get:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink, #222); }
+.bn-get.lock, .bn-get.done { background: #cfcfcf; color: #777; box-shadow: none; cursor: default; }
+.bn-toast { position: fixed; left: 50%; bottom: 14%; transform: translateX(-50%); z-index: 9100; max-width: 88vw; padding: 10px 16px; border-radius: 999px; font-weight: 800; color: #fff; background: rgba(0,0,0,.85); text-align: center; }
+/* モンスター画像（mX.png）は枠・背景なし */
+.bn-ico.mon { background: none; border: none; border-radius: 0; overflow: visible; }
+
+/* ボーナスボタンの真上に出す2つのボタン */
+.bn-pop-back { position: fixed; inset: 0; z-index: 150; background: transparent; }
+.bn-pop { position: fixed; display: flex; flex-direction: column; gap: 10px; transform-origin: bottom center; animation: bnPop .14s ease-out; }
+.bn-pop .bn-btn { min-height: 56px; font-size: 1.05rem; }
+@keyframes bnPop { from { opacity: 0; transform: translateY(8px) scale(.92); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bn-pop { animation: none; } }
+
+/* 長押しでステータス：画像の保存メニュー・選択を出さない */
+.bn-ico[data-mid] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; cursor: pointer; }
+.bn-ico[data-mid] img { -webkit-user-drag: none; pointer-events: none; }

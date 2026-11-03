@@ -79,10 +79,10 @@
   background:rgba(255,255,255,.14); color:#fff; cursor:pointer; flex:0 0 auto; }
 #game.mt-online #mt-chat-btn { display:inline-block; }
 #mt-chat-btn:active { transform:scale(.94); }
-#mt-chat-menu { display:none; position:absolute; left:8px; top:calc(env(safe-area-inset-top, 0px) + 36px); z-index:90; flex-direction:column; gap:5px; padding:8px;
+#mt-chat-menu { display:none; position:absolute; left:8px; top:calc(env(safe-area-inset-top, 0px) + 36px); z-index:90; grid-template-columns:1fr 1fr; gap:5px; padding:8px;
   background:rgba(14,16,40,.96); border:2px solid #ffd54a; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.6); }
-#mt-chat-menu.on { display:flex; }
-#mt-chat-menu button { border:0; border-radius:8px; padding:8px 14px; font-size:14px; font-weight:800; text-align:left; color:#fff; background:rgba(255,255,255,.14); cursor:pointer; }
+#mt-chat-menu.on { display:grid; }
+#mt-chat-menu button { border:0; border-radius:8px; padding:8px 10px; font-size:14px; font-weight:800; text-align:left; white-space:nowrap; color:#fff; background:rgba(255,255,255,.14); cursor:pointer; }
 #mt-chat-menu button:active { background:rgba(255,213,74,.4); }
 #mt-chat-msg { position:absolute; right:8px; top:50%; z-index:80; max-width:46%; display:flex; flex-direction:column; align-items:flex-end; gap:1px;
   padding:6px 12px; border-radius:12px; background:rgba(14,16,40,.88); border:2px solid var(--mc, #fff); color:#fff; pointer-events:none;

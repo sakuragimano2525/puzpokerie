@@ -5,7 +5,9 @@
 //       ・盤面（ドロップ／暗闇／ルーレット）
 //       ・敵（階層・HP・行動カウント・敵のバフ／デバフ・ドロップ済みか など）
 //       ・プレイヤー側の効果（ダメージ軽減・攻撃アップ・操作時間・回復力・全体攻撃 などのバフ、
-//         敵からのデバフ：攻撃力ダウン／回復力ダウン／操作時間ダウン／スキル使用不可／落ちコンなし）
+//         敵からのデバフ：攻撃力ダウン／回復力ダウン／操作時間ダウン／操作時間固定／スキル使用不可／落ちコンなし／〇コンボしろ）
+//       ※ 敵の行動でかかった状態（バインド・スキル使用不可・落ちコンなし・〇コンボしろ…）は、行動の直後に
+//         fxStatus() で相手へ流し、相手の番を見ている人の画面にもすぐ出る（バインド・封印は演出つき）
 //   ■ 別々のもの
 //       ・パーティ、HP、SP／メモリ、バインド（モンスター個別のため）、リーダースキルの効果、
 //         もらえる経験値・エナ・ドロップ（それぞれが自分の分を受け取る）
@@ -42,7 +44,7 @@
   MS.on = on;
   MS.reset = function () {
     MS.kills = []; MS.remote = false; MS.applying = false; MS.spectating = false; cancelLive();
-    try { stopRemoteDrag(); } catch (e) {}
+    try { dropPendingLive(); stopRemoteDrag(); } catch (e) {}
     rlSync = null;
     MS.rp = null; MS.remoteView = false;
     const g = document.getElementById('game'); if (g) g.classList.remove('mt-spectate', 'mt-remote');
@@ -83,16 +85,19 @@
   // ---------- 共有する状態：書き出し ----------
   const ENEMY_KEYS = ['hp', 'maxHp', 'atk', 'turnProgress', 'turnInterval', '_baseTurnInterval', '_baseAtk', '_atkBuffTurns',
     'healUsed', 'preemptiveDone', '_hpCondUsed', '_orbNoneSeq', '_actSeq', '_delayed', '_fled', '_killCombo',
-    '_comboAbsorb', '_statusShield', '_dmgReduce', '_attrGuards', '_superGut', 'defDown'];
+    '_comboAbsorb', '_statusShield', '_dmgReduce', '_attrGuards', '_superGut', 'defDown',
+    '_comboRule'];   // 【〇コンボしろ】の指定：次の人の画面にも表示され、次の人のターンで判定される
   const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
   const gridStr = () => grid.map(r => r.map(v => v || '').join(',')).join('|');
   // ロック：盤面は2人で共通なので、ロックの位置も一緒に渡す（'1'＝ロック。blindと同じ形式）
   const lockStr = () => (typeof lockCells === 'undefined' ? '' : lockCells.map((row, r) => row.map((b, c) => (b && grid[r] && grid[r][c] ? 1 : 0)).join('')).join('|'));
-  function applyLocks(str) {
+  function applyLocks(str, diff) {
     if (typeof lockCells === 'undefined' || typeof setLockEl !== 'function') return;
     const rows = String(str || '').split('|');
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-      lockCells[r][c] = !!(rows[r] && rows[r][c] === '1' && grid[r][c]);
+      const nv = !!(rows[r] && rows[r][c] === '1' && grid[r][c]);
+      if (diff && lockCells[r][c] === nv) continue;   // 変わっていないマスは触らない
+      lockCells[r][c] = nv;
       setLockEl(r, c);
     }
   }
@@ -108,6 +113,7 @@
       ms: [buffMoveTimeShort, buffMoveTimeShortTurns],
       ad: clone(enemyAtkDowns),
       rd: clone(enemyRecDown), md: clone(enemyMoveDown), ss: clone(enemySkillSeal), nf: clone(enemyNoFall),
+      mf: clone(enemyMoveFix),   // 敵の「操作時間固定」
     };
   }
   function setBuffs(b) {
@@ -121,6 +127,7 @@
     [buffMoveTimeShort, buffMoveTimeShortTurns] = b.ms;
     enemyAtkDowns = b.ad || [];
     enemyRecDown = b.rd || null; enemyMoveDown = b.md || null; enemySkillSeal = b.ss || null; enemyNoFall = b.nf || null;
+    enemyMoveFix = b.mf || null;
   }
 
   MS.snapshot = function () {
@@ -145,18 +152,20 @@
   };
 
   // ---------- 共有する状態：反映 ----------
-  function setGridFromStr(str, lk) {
+  // diff=true（操作中のミラー）：色が変わったマスだけ更新する（全ドロップのclassを毎回書き換えない）
+  function setGridFromStr(str, lk, diff) {
     const rows = String(str).split('|');
     if (rows.length !== ROWS) return false;
     const cells = rows.map(r => r.split(','));
     if (cells.some(r => r.length !== COLS)) return false;
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const t = cells[r][c] || null;
+      if (diff && grid[r][c] === t) continue;
       grid[r][c] = t;
       const el = orbEls[r] && orbEls[r][c];
       if (el) { el.className = 'orb' + (t ? ' ' + t : ''); el.style.transform = ''; }
     }
-    applyLocks(lk);   // ロックの位置も相手の盤面と同じにする
+    applyLocks(lk, diff);   // ロックの位置も相手の盤面と同じにする
     return true;
   }
   function applyBlind(str) {
@@ -265,7 +274,7 @@
     const s = typeof json === 'string' ? JSON.parse(json) : json;
     if (!s) return;
     MS.applying = true;
-    stopRemoteDrag(); rlSync = null;   // ターンの確定状態で上書きするので、見せるだけの操作中の表示はここで終わり
+    dropPendingLive(); stopRemoteDrag(); rlSync = null;   // ターンの確定状態で上書きするので、見せるだけの操作中の表示はここで終わり
     try {
       try { clearComboChips(); rdmg.forEach(el => { if (el) { el.textContent = ''; el.classList.remove('show', 'pop', 'boosting'); } }); } catch (e) {}
       if (s.bi > currentBattleIndex) await advanceTo(s);
@@ -376,51 +385,99 @@
   //                 ルーレットの針も、相手の時計に合わせて自分の画面でも回す（色の変化は届いた盤面で更新）
   const LIVE_MS = 33;
   let liveT = 0, liveTimer = null, livePos = null, rlBeatT = 0;
-  function cancelLive() { if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; } livePos = null; }
+  // 送りっぱなしにしない：前の書き込みが相手のサーバーに届くまで次は送らない（通信が詰まっても遅れが溜まらず、
+  // 詰まっている間に動いた分は「最新の1つ」にまとめて、届いた直後に送る）
+  let liveBusy = false, liveDirty = false, liveGen = 0, liveSafety = null, liveSig = '', liveForce = false;
+  function liveDone(gen) {
+    if (gen !== liveGen) return;   // ターンが替わるなどで捨てた送信の返事
+    if (liveSafety) { clearTimeout(liveSafety); liveSafety = null; }
+    liveBusy = false;
+    if (liveDirty) { liveDirty = false; kickLive(false); }
+  }
+  function cancelLive() {
+    if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; }
+    if (liveSafety) { clearTimeout(liveSafety); liveSafety = null; }
+    livePos = null; liveBusy = false; liveDirty = false; liveSig = ''; liveForce = false;
+    liveGen++;   // 以前の送信の返事は無視する
+  }
+  function sendLiveNow() {
+    liveTimer = null;
+    if (!on() || !MultiTurn.isMyTurn()) return;
+    if (liveBusy) { liveDirty = true; return; }   // 前のがまだ届いていない → 届いたら最新の状態を送る
+    const o = { cur: MultiTurn.current, round: MultiTurn.round, g: gridStr(), lk: lockStr(), d: 0 };
+    if (livePos) {
+      o.d = 1; o.dr = livePos.r; o.dc = livePos.c;
+      o.px = Math.round(livePos.x * 100) / 100; o.py = Math.round(livePos.y * 100) / 100;   // 1/100マスで十分（通信量を減らす）
+    }
+    const sig = JSON.stringify(o);   // 時計(rt/rr)を足す前：前回と全く同じ内容なら送らない
+    if (typeof roulettes !== 'undefined' && roulettes.length) {   // ルーレットの針の時計（全部同じ時計で回る）と、いま回っているか
+      o.rt = Math.round(roulettes[0].t);
+      o.rr = (!busy && !timeStopActive && !_rlHold) ? 1 : 0;
+    }
+    if (sig === liveSig && !liveForce) return;
+    liveSig = sig; liveForce = false;
+    liveT = performance.now();
+    const gen = liveGen;
+    liveBusy = true;
+    liveSafety = setTimeout(() => liveDone(gen), 1500);   // 返事が来なくても止まりっぱなしにしない
+    let p;
+    try { p = MultiOnline.sendLive(o); } catch (e) { p = null; }
+    if (p && typeof p.then === 'function') p.then(() => liveDone(gen), () => liveDone(gen)); else liveDone(gen);
+  }
+  function kickLive(flush) {
+    if (flush) { if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; } sendLiveNow(); return; }
+    if (liveTimer) return;   // もう送る予定がある（そのとき最新の状態を送る）
+    const wait = LIVE_MS - (performance.now() - liveT);
+    if (wait <= 0) sendLiveNow(); else liveTimer = setTimeout(sendLiveNow, wait);
+  }
   // pos … 指の位置 { r, c, x, y }（x,y は盤面の左上を0,0・1マス=1 の座標でのドロップの中心）／ null＝指を離した／省略＝そのまま
   MS.live = function (flush, pos) {
     if (pos !== undefined) livePos = pos;
     if (!on() || !window.MultiOnline || MultiTurn.localId === null || !MultiTurn.isMyTurn() || !grid.length) return;
-    const send = () => {
-      liveTimer = null; liveT = performance.now();
-      if (!on() || !MultiTurn.isMyTurn()) return;
-      const o = { cur: MultiTurn.current, round: MultiTurn.round, g: gridStr(), lk: lockStr(), d: 0 };
-      if (livePos) {
-        o.d = 1; o.dr = livePos.r; o.dc = livePos.c;
-        o.px = Math.round(livePos.x * 1000) / 1000; o.py = Math.round(livePos.y * 1000) / 1000;
-      }
-      if (typeof roulettes !== 'undefined' && roulettes.length) {   // ルーレットの針の時計（全部同じ時計で回る）と、いま回っているか
-        o.rt = Math.round(roulettes[0].t);
-        o.rr = (!busy && !timeStopActive && !_rlHold) ? 1 : 0;
-      }
-      MultiOnline.sendLive(o);
-    };
-    if (flush) { if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; } send(); return; }
-    if (liveTimer) return;   // もう送る予定がある（そのとき最新の状態を送る）
-    const wait = LIVE_MS - (performance.now() - liveT);
-    if (wait <= 0) send(); else liveTimer = setTimeout(send, wait);
+    kickLive(flush);
   };
   // 操作中のルーレット：針が回っている間は、約0.25秒ごとに時計を送って相手の画面とずれないようにする（game.js の rouletteLoop から）
   MS.rlBeat = function (now) {
     if (now - rlBeatT < 250) return;
     rlBeatT = now;
+    liveForce = true;   // 盤面が同じでも、時計だけは送る
     MS.live();
   };
 
   // ---- 見ている側 ----
   let rlSync = null;   // 相手のルーレットの時計 { key, base(ms), at(受け取った時刻), run }
-  const RD = { on: false, r: 0, c: 0, tx: 0, ty: 0, cx: 0, cy: 0, el: null, raf: null, last: 0, msg: 0 };   // 相手が掴んでいるドロップ
-  function paintRemoteDrag() {
+  const RD = { on: false, r: 0, c: 0, tx: 0, ty: 0, cx: 0, cy: 0, el: null, raf: null, last: 0, msg: 0, tf: '' };   // 相手が掴んでいるドロップ
+
+  // 盤面の大きさ：毎フレーム測り直さない（getBoundingClientRect は強制レイアウトで重い）。大きさが変わった時だけ測り直す
+  const GM = { el: null, w: 0, h: 0, ok: false, ro: null };
+  function invalidateGM() { GM.ok = false; }
+  function gridMetrics() {
     const gEl = document.getElementById('grid');
+    if (!gEl) return GM;
+    if (GM.el !== gEl) {   // 盤面の要素が替わったら、監視も付け直す
+      GM.el = gEl; GM.ok = false;
+      if (window.ResizeObserver) { try { if (GM.ro) GM.ro.disconnect(); GM.ro = new ResizeObserver(invalidateGM); GM.ro.observe(gEl); } catch (e) {} }
+    }
+    if (!GM.ok) { const b = gEl.getBoundingClientRect(); GM.w = b.width; GM.h = b.height; GM.ok = b.width > 0 && b.height > 0; }
+    return GM;
+  }
+  window.addEventListener('resize', invalidateGM);
+  window.addEventListener('orientationchange', invalidateGM);
+
+  function paintRemoteDrag() {
     const el = orbEls[RD.r] && orbEls[RD.r][RD.c];
-    if (!gEl || !el) return;
-    const b = gEl.getBoundingClientRect(), cw = b.width / COLS, ch = b.height / ROWS;
+    if (!el) return;
+    const m = gridMetrics();
+    if (!m.ok) return;
+    const cw = m.w / COLS, ch = m.h / ROWS;
     const ox = Math.max(-cw, Math.min(cw, (RD.cx - (RD.c + 0.5)) * cw));
     const oy = Math.max(-ch, Math.min(ch, (RD.cy - (RD.r + 0.5)) * ch));
     if (RD.el && RD.el !== el) { RD.el.style.transform = ''; RD.el.classList.remove('dragging'); }
+    const fresh = RD.el !== el || !el.classList.contains('dragging');   // 描き直しで「掴んでいる」見た目が消えた時も付け直す
     RD.el = el;
-    el.classList.add('dragging');
-    el.style.transform = `translate(${ox}px, ${oy}px) scale(1.28)`;
+    if (fresh) el.classList.add('dragging');
+    const tf = 'translate(' + ox.toFixed(1) + 'px, ' + oy.toFixed(1) + 'px) scale(1.28)';
+    if (fresh || tf !== RD.tf) { el.style.transform = tf; RD.tf = tf; }   // 同じ値なら書かない
   }
   function remoteDragFrame(now) {
     RD.raf = null;
@@ -434,6 +491,7 @@
   function stopRemoteDrag() {
     if (RD.raf) { cancelAnimationFrame(RD.raf); RD.raf = null; }
     if (RD.el) { RD.el.style.transform = ''; RD.el.classList.remove('dragging'); RD.el = null; }
+    RD.tf = '';
     if (RD.on) { RD.on = false; try { if (!dragging) setDragFx(false); } catch (e) {} }
   }
   // game.js の rouletteLoop から：相手の番のあいだ、ルーレットの針を相手の時計に合わせて回す。回したら true
@@ -443,11 +501,31 @@
     for (const o of list) { const p = o.period || 2000; o.t = (((rlSync.base + el) % p) + p) % p; }
     return true;
   };
+  // 届いた操作は「1フレームにつき最新の1つ」だけ処理する（通信が一気に届いても、古い分を1つずつ描かない）
+  let liveIn = null, liveInRaf = 0, liveInTimer = 0;
+  function runLive() {
+    if (liveInRaf) { cancelAnimationFrame(liveInRaf); liveInRaf = 0; }
+    if (liveInTimer) { clearTimeout(liveInTimer); liveInTimer = 0; }
+    const v = liveIn; liveIn = null;
+    if (v) applyLive(v);
+  }
+  function dropPendingLive() {
+    liveIn = null;
+    if (liveInRaf) { cancelAnimationFrame(liveInRaf); liveInRaf = 0; }
+    if (liveInTimer) { clearTimeout(liveInTimer); liveInTimer = 0; }
+  }
   MS.onLive = function (v) {
+    if (!v) return;
+    liveIn = v;
+    if (liveInRaf || liveInTimer) return;
+    liveInRaf = requestAnimationFrame(runLive);
+    liveInTimer = setTimeout(runLive, 100);   // 裏タブなどで rAF が止まっていても取りこぼさない
+  };
+  function applyLive(v) {
     if (!on() || !v || MultiTurn.isMyTurn() || MS.applying || MultiTurn._receiving) return;
     if (v.cur !== MultiTurn.current || v.round !== MultiTurn.round) return;   // 前のターンの古い盤面は無視
     if (typeof v.g === 'string' && (v.g !== gridStr() || (v.lk || '') !== lockStr())) {   // 変わった時だけ描き直す
-      setGridFromStr(v.g, v.lk);
+      setGridFromStr(v.g, v.lk, true);   // 変わったマスだけ更新
       if (RD.on) { RD.el = null; paintRemoteDrag(); }   // 描き直しで消えた「掴んでいる」見た目をすぐ戻す
     }
     if (v.d) {
@@ -456,6 +534,7 @@
       RD.msg = performance.now();
       if (!RD.on) {
         RD.on = true; RD.cx = RD.tx; RD.cy = RD.ty; RD.last = RD.msg;
+        invalidateGM();   // 掴み始めに1回だけ盤面の大きさを測る
         try { setDragFx(true); } catch (e) {}   // 掴んでいる間はドロップの transition を止める（入れ替えは一瞬で切り替わる＝本人の画面と同じ）
         paintRemoteDrag();
         RD.raf = requestAnimationFrame(remoteDragFrame);
@@ -466,7 +545,7 @@
     rlSync = (v.rt !== undefined && v.rt !== null)
       ? { key: v.cur + ':' + v.round, base: Number(v.rt) || 0, at: performance.now(), run: !!v.rr }
       : null;
-  };
+  }
 
 
   // ============================================================
@@ -484,7 +563,7 @@
 
   // 自分のパーティー情報（相手に見せる分）
   MS.myParty = function () {
-    const s = [], bd = [];
+    const s = [], bd = [], as = [];   // as：属性変化中の枠 [枠, 属性, 残りターン]
     for (let i = 0; i < 6; i++) {
       const uid = i < partyUids.length ? partyUids[i] : null;
       let o = 0;
@@ -493,6 +572,8 @@
         if (m) {
           o = [e.monsterId, getRequiredSp(e, m)];
           if (bindTimers[uid] && bindTimers[uid] > 0) bd.push([i, bindTimers[uid]]);
+          const sh = (typeof attrShiftOf === 'function') ? attrShiftOf(uid) : null;
+          if (sh) as.push([i, sh.attr, sh.turns]);
         }
       }
       s.push(o);
@@ -502,7 +583,7 @@
       const e = uid !== null && box.find(b => b.uid === uid), m = e && MONSTER_DATA[e.monsterId];
       return (m && m.leaderSkill && m.leaderSkill.desc) || '（なし）';
     });
-    return { s, hp: Math.round(playerCurrentHP), mx: Math.round(playerMaxHP), sp: partySp, mem: partyMemory, bd, ls, seal: isSkillSealed() ? 1 : 0 };
+    return { s, hp: Math.round(playerCurrentHP), mx: Math.round(playerMaxHP), sp: partySp, mem: partyMemory, bd, as, ls, seal: isSkillSealed() ? 1 : 0 };
   };
   MS.publishParty = function () {
     if (!on() || !window.MultiOnline) return;
@@ -512,6 +593,7 @@
     if (!v) return;
     v.s = asArr(v.s).map(x => (x ? asArr(x) : 0));
     v.bd = asArr(v.bd).map(asArr);
+    v.as = asArr(v.as).map(asArr);
     v.ls = asArr(v.ls);
     MS.rp = v;
     if (MS.remoteView) MS.paintRemote();
@@ -551,9 +633,15 @@
           const ov = document.createElement('div'); ov.className = 'bind-overlay'; slot.appendChild(ov);
           const lb = document.createElement('div'); lb.className = 'bind-turn-label'; lb.textContent = 'バインド ' + bound[i] + 'T'; slot.appendChild(lb);
         }
+        const shf = (p.as || []).find(x => x[0] === i && x[2] > 0);
+        if (shf) {   // 相手の属性変化：画像の真ん中に「属性アイコン＋残りターン」
+          const bdg = makeAttrShiftBadge(shf[1], shf[2]);
+          slot.classList.add('attr-shifted'); slot.appendChild(bdg);
+          if (img.classList.contains('sk-lift')) bdg.classList.add('sk-lift');
+        }
         const dm = document.createElement('div');
         dm.className = 'monster-damage';
-        dm.style.color = colors[mon.attr] || '#fff';
+        dm.style.color = colors[(shf ? shf[1] : mon.attr)] || '#fff';
         slot.appendChild(dm);
         rdmg.push(dm);
       } else rdmg.push(null);
@@ -629,7 +717,11 @@
   MS.fxStatus = function () {
     if (!on() || MS.remote || MS.spectating || MS.applying) return;
     const en = enemyList.map(e => { const o = {}; for (const k of ENEMY_KEYS) if (k !== 'hp' && k !== 'maxHp' && e[k] !== undefined) o[k] = clone(e[k]); return o; });
-    MS.fx('st', { en, bf: getBuffs(), bi: currentBattleIndex });
+    // 操作している人のパーティーに起きた状態（バインド・スキル使用不可）も一緒に送る
+    //   （以前はターン終わりまで届かず、相手の番を見ている間はバインドなどが見えなかった）
+    let pt = null;
+    try { pt = MS.myParty(); } catch (e) {}
+    MS.fx('st', { en, bf: getBuffs(), bi: currentBattleIndex, pt });
   };
 
 
@@ -682,6 +774,45 @@
     return fn ? fn(v.d) : undefined;   // 階層移動など時間のかかるものは、終わるまで次を待つ
   }
 
+  // ---- 相手のパーティーに起きた状態の変化（バインド・スキル使用不可）を、見ている側の画面へ反映する ----
+  //   本人の画面の fxBind / fxSkillSeal（game.js）と同じ見た目：バインドはゆれ＋フラッシュ＋紫の暗幕、
+  //   スキル使用不可は全員に「S❌」の札。新しくかかった分だけ演出を出し、すでにかかっている分は表示を更新するだけ
+  function remoteStatusFx(newBind, sealNew) {
+    const slots = document.querySelectorAll('#party-grid .party-slot');
+    if (newBind.length || sealNew) { try { playSE('bind'); } catch (_) {} }
+    newBind.forEach(i => { try { bindHitFx(slots[i]); } catch (_) {} });   // 弾の知らせ（bd）が届かなかったときの代わり：当たった演出だけ
+    if (sealNew && typeof ICON_SKILL_SEAL !== 'undefined') {
+      slots.forEach((slot, i) => {
+        if (!slot || !slot.animate || !(MS.rp && MS.rp.s && MS.rp.s[i])) return;
+        const f = document.createElement('div');
+        f.style.cssText = 'position:absolute;left:50%;top:50%;width:70%;max-width:56px;aspect-ratio:1/1;z-index:31;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.8));transform:translate(-50%,-50%);background:url("' + ICON_SKILL_SEAL + '") center/contain no-repeat;';
+        slot.appendChild(f);
+        f.animate([
+          { opacity: 0, transform: 'translate(-50%,-50%) scale(2.4)' },
+          { opacity: 1, offset: .28, transform: 'translate(-50%,-50%) scale(1)' },
+          { opacity: 1, offset: .75, transform: 'translate(-50%,-50%) scale(1)' },
+          { opacity: 0, transform: 'translate(-50%,-50%) scale(.9)' }
+        ], { duration: 800, easing: 'ease-out' }).onfinish = () => f.remove();
+      });
+    }
+  }
+  function applyRemoteStatus(pt) {
+    if (!pt) return;
+    const nbd = asArr(pt.bd).map(asArr);
+    const nas = asArr(pt.as).map(asArr);
+    const nseal = pt.seal ? 1 : 0;
+    const prev = MS.rp;
+    const prevBd = {};
+    if (prev) (prev.bd || []).forEach(b => { prevBd[b[0]] = b[1]; });
+    const prevSeal = prev ? !!prev.seal : false;
+    if (!prev) MS.onParty(Object.assign({}, pt));   // まだ相手のパーティー情報が届いていなかった：これを最初の情報にする
+    else { prev.bd = nbd; prev.as = nas; prev.seal = nseal; if (MS.remoteView) MS.paintRemote(); }
+    if (!MS.remoteView) return;
+    const newBind = nbd.filter(b => b[1] > 0 && !(prevBd[b[0]] > 0)).map(b => b[0]);
+    const sealNew = !!nseal && !prevSeal;
+    if (newBind.length || sealNew) remoteStatusFx(newBind, sealNew);
+  }
+
   function cellEl(r, c) { return orbEls[r] && orbEls[r][c]; }
   // 盤面を反映する。落ちコンは、操作した人の画面の drop()（game.js）と同じ動きにする：
   //   消えたあとの空きマスの分だけ、残ったドロップは「元の位置から」下へ詰まり、新しいドロップは上から降ってくる
@@ -690,7 +821,8 @@
   function applyGridAnimated(str, lk) {
     const rows = String(str || '').split('|').map(s => s.split(',').map(v => v || null));
     const lkRows = String(lk || '').split('|');
-    const cellH = $id('grid').getBoundingClientRect().height / ROWS;
+    const _gm = gridMetrics();
+    const cellH = (_gm.ok ? _gm.h : $id('grid').getBoundingClientRect().height) / ROWS;
     let maxFall = 0;
     for (let c = 0; c < COLS; c++) {
       // 落ちる前の列（消えたマスは空き）
@@ -778,10 +910,25 @@
         }
         e._due = false; e._acting = false;
       });
+      const hadNoFall = !!(enemyNoFall && enemyNoFall.turns > 0);
       try { setBuffs(d.bf); } catch (_) {}
+      try { applyRemoteStatus(d.pt); } catch (e) { console.error('[multi-share] status', e); }   // バインド・スキル使用不可（相手のパーティー側）
       try { updateEnemyUI(); } catch (_) {}
       try { updateEnemyTurnBadge(); } catch (_) {}
       try { renderBuffIcons(); } catch (_) {}
+      // 敵から「落ちコンなし」をかけられた：本人の画面と同じマーク演出を、見ている側にも出す
+      if (!hadNoFall && enemyNoFall && enemyNoFall.turns > 0 && MS.remoteView) {
+        try { playSE('dna'); } catch (_) {}
+        try { if (typeof fxNoFall === 'function') fxNoFall(null, null, () => {}); } catch (_) {}
+      }
+    },
+    // コンボ下のメッセージ（「○ コンボ」「☠️ 毒 ○ ダメージ！」「❤️ ○ 回復！」「スキル発動！」など）を、相手の画面にも同じ文字で出す
+    lb(d) {
+      const el = $id('combo-label');
+      if (!el || !d) return;
+      const text = String(d.t == null ? '' : d.t);
+      el.textContent = text;
+      if (d.ms > 0) setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, Math.min(Number(d.ms), 5000));
     },
     // 「残りドロップ○個以下」などの合計倍率（盤面の真ん中の ×○）
     rm(d) { try { showRemainingOrbsMult(d.m); } catch (_) {} },
@@ -858,6 +1005,29 @@
         MS.applying = true;
         try { await advanceTo({ bi: d.bi, k: asArr(d.k) }); } finally { MS.applying = false; }
       });
+    },
+    // バインド：敵から紫のバインド弾（尾つき）が飛んでいき、当たった枠にバインドがかかる（本人の画面と同じ演出）
+    //   当たった瞬間に、その枠のバインド表示（暗幕・「バインド ○T」）を出す。終わるまで次の流れを待つ
+    bd(d) {
+      if (!d || !MS.remoteView || !MS.rp) return;   // 相手のパーティーを見ていないときは、ターン終わり／状態の知らせで反映される
+      const targets = asArr(d.t).map(a => ({ i: Number(a[0]), turns: Number(a[1]) || 1 })).filter(t => t.i >= 0 && t.i < 6);
+      if (!targets.length) return;
+      const units = document.querySelectorAll('#enemy-area .enemy-unit');
+      const wrap = units[d.e] && units[d.e].querySelector('.enemy-img-wrap');
+      const er = wrap ? wrap.getBoundingClientRect() : { left: window.innerWidth / 2 - 20, top: 90, width: 40, height: 40 };
+      const sx = er.left + er.width / 2, sy = er.top + er.height / 2;
+      let sePlayed = false;
+      const impact = t => {
+        if (!MS.rp) return;
+        const bd = MS.rp.bd = MS.rp.bd || [];
+        const ex = bd.find(b => b[0] === t.i);
+        if (ex) ex[1] += t.turns; else bd.push([t.i, t.turns]);
+        if (!sePlayed) { sePlayed = true; try { playSE('bind'); } catch (_) {} }
+        if (!MS.remoteView) return;
+        MS.paintRemote();
+        try { bindHitFx(document.querySelectorAll('#party-grid .party-slot')[t.i]); } catch (_) {}
+      };
+      try { return bindFlightFx(sx, sy, targets, impact); } catch (e) { targets.forEach(impact); }
     },
     // 次の階層の敵の状態（先制攻撃の結果など）・盤面・バフを、相手の画面へそろえる
     ss(snap) { return MS.apply(snap); },

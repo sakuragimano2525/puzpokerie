@@ -623,6 +623,22 @@
   #te-header .te-reset-btn .lbl { display: none; }
   #te-header .te-reset-btn { width: 38px; padding: 0; }
 }
+.te-fav-btn .ic { color: #ff5d8f; stroke-width: 2.6; }
+.te-fav-btn.active { background: var(--sun); box-shadow: 0 3px 0 var(--ink), 0 0 0 3px var(--sun), 0 0 0 5.5px var(--ink); }
+.te-fav-btn.active:active { transform: translateY(2px); }
+@media (max-width: 420px) {
+  #te-header .te-fav-btn .lbl { display: none; }
+  #te-header .te-fav-btn { width: 38px; padding: 0; }
+}
+/* お気に入りモード中は、ボックスのモンスターをタップで切り替え */
+#team-edit.fav-mode .te-mon-card { cursor: pointer; }
+/* お気に入りのモンスター：カード（枠）の右上にピンクのハート印。Lv は白のまま */
+.fav-heart { position: absolute; top: -3px; right: -3px; z-index: 4; width: 14px; height: 14px; pointer-events: none; display: block; }
+.fav-heart svg { width: 100%; height: 100%; display: block; fill: #ff5d8f; stroke: var(--ink); stroke-width: 2.2; stroke-linejoin: round; overflow: visible; }
+/* 右上に「編成中」の札があるカードは、ハートを少し下げる */
+.iku-mon-card[data-team] > .fav-heart, #evo-list-grid .iku-mon-card.in-team > .fav-heart { top: 14px; right: -1px; }
+/* ベース・素材スロットは右上に✕があるので、ハートは左上 */
+#iku-base-slot > .fav-heart, .iku-mat-slot > .fav-heart { right: auto; left: 2px; top: 2px; width: 14px; height: 14px; }
 .te-swap-btn.active { background: var(--sun); box-shadow: 0 3px 0 var(--ink), 0 0 0 3px var(--sun), 0 0 0 5.5px var(--ink); }
 .te-swap-btn.active:active { transform: translateY(2px); }
 .te-reset-btn .ic { color: var(--coral); stroke-width: 2.6; }

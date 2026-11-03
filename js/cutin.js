@@ -162,6 +162,63 @@
 
   let _active = null;   // 再生中のカットイン（二重に出さない）
 
+  // ── カットイン音の増幅 ＆ BGMのダッキング ──────────────────────────────
+  //   ・{ID}.mp3 は <audio> の音量が上限(1.0)なので、Web Audio のゲインでさらに大きくする（CUTIN_SE_GAIN 倍）
+  //   ・カットイン音が鳴っている間だけ、BGM（道中／ボス／menu）の音量を BGM_DUCK 倍に下げ、終わったら戻す
+  //   ※ file:// で開いていると増幅できない（無音になるのを避けるため、その場合は増幅だけ行わない）
+  const CUTIN_SE_GAIN = 2.5;    // ← カットイン音の増幅倍率（もっと大きくしたい時は数字を上げる）
+  const BGM_DUCK      = 0.25;   // ← カットイン音が鳴っている間のBGMの音量（0.25 = 25％）
+  const DUCK_FADE_MS  = 150;
+
+  let _boostCtx = null;
+  function boostSE(au) {
+    try {
+      if (!/^https?:$/.test(location.protocol)) return;
+      if (au.__boosted) { au.__boosted.ctx.state === 'suspended' && au.__boosted.ctx.resume(); return; }
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      const ctx = _boostCtx || (_boostCtx = new AC());
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const src = ctx.createMediaElementSource(au);
+      const g = ctx.createGain(); g.gain.value = CUTIN_SE_GAIN;
+      const comp = ctx.createDynamicsCompressor();   // 大きくしても音割れしにくいように
+      src.connect(g); g.connect(comp); comp.connect(ctx.destination);
+      au.__boosted = { ctx, g };
+    } catch (e) {}
+  }
+
+  function bgmEls() {
+    const a = [];
+    try { if (typeof dungeonBGMAudio !== 'undefined' && dungeonBGMAudio) a.push(dungeonBGMAudio); } catch (e) {}
+    try { if (typeof menuAudio !== 'undefined' && menuAudio) a.push(menuAudio); } catch (e) {}
+    return a;
+  }
+  let _duckEls = [], _duckTimer = null;
+  function duckBGM() {
+    unduckNow();
+    _duckEls = bgmEls().filter(el => !el.paused);
+    _duckEls.forEach(el => { el.__duckBase = el.volume; });
+    fadeDuck(BGM_DUCK);
+  }
+  function fadeDuck(k) {
+    clearInterval(_duckTimer);
+    const t0 = performance.now(), els = _duckEls.slice();
+    const from = els.map(el => el.__duckCur !== undefined ? el.__duckCur : 1);
+    _duckTimer = setInterval(() => {
+      const r = Math.min(1, (performance.now() - t0) / DUCK_FADE_MS);
+      els.forEach((el, i) => {
+        const m = from[i] + (k - from[i]) * r; el.__duckCur = m;
+        try { el.volume = (el.__duckBase || 0) * m; } catch (e) {}
+      });
+      if (r >= 1) { clearInterval(_duckTimer); if (k >= 1) els.forEach(el => { el.__duckCur = undefined; }); }
+    }, 30);
+  }
+  function unduck() { if (_duckEls.length) fadeDuck(1); }
+  function unduckNow() {   // 前のダッキングが残っていたら即座に戻す
+    clearInterval(_duckTimer);
+    _duckEls.forEach(el => { try { if (el.__duckBase !== undefined) el.volume = el.__duckBase; } catch (e) {} el.__duckCur = undefined; });
+    _duckEls = [];
+  }
+
   // ── カットイン専用の効果音（モンスターID.mp3 など）を読み込む ──
   //   見つからない／読めない時は null（→ 通常の cutin.mp3 を鳴らす）。読み込みが遅い時は長さ不明のまま進める。
   const _seCache = {};
@@ -269,8 +326,12 @@
         if (customSE && customSE.au) {
           const au = customSE.au;
           try { au.currentTime = 0; } catch (e) {}
-          au.play().catch(() => {});
+          boostSE(au);   // 音を大きく
+          duckBGM();     // 鳴っている間はBGMを小さく
+          au.addEventListener('ended', unduck, { once: true });
+          au.play().catch(() => { unduck(); });
           if (isFinite(au.duration) && au.duration > 0) T = clamp(au.duration * 1000, 1200, CUTIN_MAX_MS);
+          setTimeout(unduck, T + 300);   // 念のため：終わりの通知が来なくても必ず戻す
         } else if (typeof playSE === 'function') {
           playSE('cutin');
           const st = typeof _seState !== 'undefined' && _seState.cutin;

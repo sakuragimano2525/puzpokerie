@@ -999,6 +999,7 @@ body {
   z-index:10; cursor:grabbing;
   box-shadow:0 0 22px rgba(255,255,255,.7) !important;
   transition:none !important;
+  will-change:transform;   /* 掴んでいる間は専用レイヤーで動かす（相手の画面でも本人の画面でも軽く） */
 }
 /* ドロップを掴んで動かしている間は、盤面のドロップの動きアニメを止める（入れ替えは瞬間切り替え）。
    JS(setDragFx)が掴んでいる間だけ付ける。離すと外れて、元の戻りアニメ(.12s)が働く */
@@ -1364,13 +1365,13 @@ body {
   display:flex; align-items:center; justify-content:center;
   backface-visibility:hidden; -webkit-backface-visibility:hidden;
 }
-.bn-side.bn-back { transform:rotateY(180deg); }
+.bn-side.bn-rear { transform:rotateY(180deg); }
 /* iPhone(Safari)対策：backface-visibility は子要素に影・回転・overflow があると効かず、
    表面の「Battle n/n」が透けて残る。→ 真横(90°)になる瞬間に表/裏を opacity+visibility で明示的に切り替える */
 .bn-side, .bn-side * { -webkit-backface-visibility:hidden; backface-visibility:hidden; }
-.bn-side.bn-back { opacity:0; visibility:hidden; }
+.bn-side.bn-rear { opacity:0; visibility:hidden; }
 .bn-flip.bn-do-flip .bn-side.bn-front { animation:bnFrontOut .6s linear forwards; }
-.bn-flip.bn-do-flip .bn-side.bn-back  { animation:bnBackIn  .6s linear forwards; }
+.bn-flip.bn-do-flip .bn-side.bn-rear  { animation:bnBackIn  .6s linear forwards; }
 @keyframes bnFrontOut {
   0%, 34.9% { opacity:1; visibility:visible; }
   35%, 100% { opacity:0; visibility:hidden; }
@@ -1406,7 +1407,7 @@ body {
 @keyframes bnShine { 0% { left:-60%; } 60%,100% { left:130%; } }
 
 /* BOSS 面：飾り枠と赤い縁 */
-.bn-side.bn-back .bn-shape {
+.bn-side.bn-rear .bn-shape {
   border-color:#ff3a5c;
   box-shadow:
     0 0 0 max(1px,.4vw) rgba(255,190,200,.9),
@@ -1435,14 +1436,14 @@ body {
   color:#3b3b40; line-height:1;
   transform:translateY(-6%);
 }
-.bn-count { display:flex; align-items:baseline; justify-content:center; gap:.05em; margin-top:3%; line-height:1; }
-.bn-count .bn-now { font-size:calc(var(--bn) * .30); font-weight:700; color:#111; transform:translateY(2%); }
-.bn-count .bn-slash {
+.bn-cnt { display:flex; align-items:baseline; justify-content:center; gap:.05em; margin-top:3%; line-height:1; }
+.bn-cnt .bn-now { font-size:calc(var(--bn) * .30); font-weight:700; color:#111; transform:translateY(2%); }
+.bn-cnt .bn-slash {
   display:inline-block; width:.14em; height:calc(var(--bn) * .15);
   background:#666; transform:skewX(-28deg) translateY(10%);
   margin:0 calc(var(--bn) * .02);
 }
-.bn-count .bn-max { font-size:calc(var(--bn) * .105); font-weight:700; color:#555; align-self:flex-end; transform:translateY(-8%); }
+.bn-cnt .bn-max { font-size:calc(var(--bn) * .105); font-weight:700; color:#555; align-self:flex-end; transform:translateY(-8%); }
 .bn-boss-text {
   font-size:calc(var(--bn) * .21); font-weight:900; letter-spacing:.04em;
   color:#e0124c; line-height:1;
@@ -1492,7 +1493,7 @@ body {
 #dungeon-anim-overlay.bn-boss.bn-lastboss.bn-out { animation:bnUndimPurple .4s ease-in forwards; }
 @keyframes bnDimPurple   { to { background:rgba(22,0,40,.58); } }
 @keyframes bnUndimPurple { from { background:rgba(22,0,40,.58); } to { background:rgba(22,0,40,0); } }
-.bn-wrap.bn-last-wrap .bn-side.bn-back .bn-shape {
+.bn-wrap.bn-last-wrap .bn-side.bn-rear .bn-shape {
   border-color:#a65bff;
   box-shadow:
     0 0 0 max(1px,.4vw) rgba(226,200,255,.9),

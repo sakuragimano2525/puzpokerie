@@ -258,3 +258,25 @@
   .party-slot img,
   .party-slot .skill-ready { transition: none; }
 }
+
+/* ═══════════════════════════════════════
+   属性変化スキル：パーティ欄の「変化後の属性の枠」
+   （画像に描いてある元の属性の枠の上に重ねて、変化先の属性の色の縁＋属性アイコンを出す）
+   太さ・角丸・アイコンの大きさは下の変数で調整できる。
+   ═══════════════════════════════════════ */
+.party-slot.attr-shifted { --asf-icon: 30%; }
+.party-slot .attr-shift-frame {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; gap: 2px;   /* 画像の真ん中に「属性アイコン ＋ ターン数」 */
+  transition: transform .18s ease-out;
+}
+.party-slot .attr-shift-frame.sk-lift { transform: translateY(-7%); }
+/* 属性アイコン（<img>だと .party-slot img の指定で全面に広がるので、背景画像で出す） */
+.attr-shift-frame .asf-icon {
+  flex: none; width: var(--asf-icon, 30%); aspect-ratio: 1;
+  background: center / contain no-repeat; filter: drop-shadow(0 0 2px rgba(0,0,0,.9));
+}
+.attr-shift-frame .asf-turns {
+  flex: none; font: 900 1.05rem/1 var(--ff-num, var(--ff, sans-serif)); color: #fff; font-style: normal;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px rgba(0,0,0,.8);
+}
