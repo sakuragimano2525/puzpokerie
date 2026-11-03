@@ -91,7 +91,7 @@ const EVENT_AREA_DATA = {
   kourin: { multiOnly: true, name: 'ニンフィア降臨', desc: 'クリアでニンフィアが解放！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ニンフィア降臨'} , stageLevels: { boss: '上級' }},
   kourinb: { multiOnly: true, name: 'ハッサム降臨', desc: 'クリアでハッサムが解放！', bg: 'dungeon10.png', hue: 200,stageNames: { boss: 'ハッサム降臨'} , stageLevels: { boss: '中級' }},
 kourinc: {both: true, name: 'ハガネール降臨', desc: 'クリアでハガネールが解放！', bg: 'dungeon12.png', hue: 200,stageNames: { boss: 'ハガネール降臨'} , stageLevels: { boss: '上級' }},
-kourind: {both: true, name: 'クシャムシャ降臨', desc: '武者が現れる…', bg: 'kourin1.png', hue: 200,stageNames: { boss: 'クシャムシャ降臨'} , stageLevels: { boss: '中〜超級' }},
+kourind: {both: true, name: 'クシャムシャ降臨', desc: '武者が現れる…', bg: 'kourina.png', hue: 200,stageNames: { boss: 'クシャムシャ降臨'} , stageLevels: { boss: '中〜超級' }},
 kourine: {both: true, name: 'キングドラ降臨', desc: 'クリアでキングドラが解放！', bg: 'dungeon3.png', hue: 200,stageNames: { boss: 'キングドラ降臨'} , stageLevels: { boss: '上級' }},
 
   BLLU: {both: true, name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'ブルアカ-スタジアム1',boss: 'ブルアカ-スタジアム2'} , stageLevels: { 1: '上級',boss: '超級' }},

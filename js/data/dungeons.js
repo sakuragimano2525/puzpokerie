@@ -39287,7 +39287,7 @@ const DUNGEON_DATA = {
     }
   },
   "kourind-boss": {
-    "bgImg": "Kourin1.png",
+    "bgImg": "kourina.png",
     "bgm": "b3.mp3",
     "battles": [
       {
