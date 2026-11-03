@@ -6,33 +6,36 @@
 <meta name="theme-color" content="#e8f0fd">
 <title>パズリエ</title>
 <script>
-/* キャッシュ対策：読み込みのたびに別URLにして、古いCSS/JSが混ざらないようにする */
-var __V=Date.now();
-function __C(u){document.write('<link rel="stylesheet" href="'+u+'?v='+__V+'">');}
-function __S(u){document.write('<script src="'+u+'?v='+__V+'"><\/script>');}
+/* キャッシュ用バージョン：ファイルを更新してすぐ反映させたい時だけ、この数字を変える（例 20261104）。
+   以前は毎回 Date.now() で別URLにしていたため、全ファイルを毎回ダウンロードして遅くなっていました。 */
+var __V="20261103";
+/* マルチ用 Firebase は裏で読み込む（読み込みを待たせない） */
+(function(){function L(u,cb){var s=document.createElement("script");s.src=u;s.async=false;if(cb)s.onload=cb;document.head.appendChild(s);}
+L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function(){L("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js");});})();
 </script>
 <link rel="manifest" href="manifest.json">
 <!-- UIフォント（オフライン時は端末の丸ゴシックに自動で切り替わります） -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
-<script>__C("css/style.css")</script>
-<script>__C("css/ui.css")</script>
-<script>__C("css/battle-plus.css")</script>
-<script>__C("css/landscape.css")</script>
-<script>__C("css/cutin.css")</script>
-<script>__C("css/orb-spawn-fx.css")</script>
-<script>__C("css/zukan.css")</script>
-<script>__C("css/settings.css")</script>
-<script>__C("css/ls-search.css")</script>
-<script>__C("css/multi-turn.css")</script>
-<script>__C("css/multi-online.css")</script>
-<script>__C("css/gacha.css")</script>
-<script>__C("css/ryuseki.css")</script>
-<script>__C("css/bonus.css")</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap"></noscript>
+<link rel="stylesheet" href="css/style.css?v=20261103">
+<link rel="stylesheet" href="css/ui.css?v=20261103">
+<link rel="stylesheet" href="css/battle-plus.css?v=20261103">
+<link rel="stylesheet" href="css/landscape.css?v=20261103">
+<link rel="stylesheet" href="css/cutin.css?v=20261103">
+<link rel="stylesheet" href="css/orb-spawn-fx.css?v=20261103">
+<link rel="stylesheet" href="css/zukan.css?v=20261103">
+<link rel="stylesheet" href="css/settings.css?v=20261103">
+<link rel="stylesheet" href="css/ls-search.css?v=20261103">
+<link rel="stylesheet" href="css/multi-turn.css?v=20261103">
+<link rel="stylesheet" href="css/multi-online.css?v=20261103">
+<link rel="stylesheet" href="css/gacha.css?v=20261103">
+<link rel="stylesheet" href="css/ryuseki.css?v=20261103">
+<link rel="stylesheet" href="css/bonus.css?v=20261103">
 <!-- 画像の自動再読み込み（ページ前半の画像も拾うため、必ず head の中で読み込む） -->
-<script>__S("js/img-retry.js")</script>
-<script>__S("js/settings.js")</script>
+<script src="js/img-retry.js?v=20261103"></script>
+<script src="js/settings.js?v=20261103"></script>
 </head>
 <body>
 
@@ -999,46 +1002,44 @@ function __S(u){document.write('<script src="'+u+'?v='+__V+'"><\/script>');}
 </div>
 
 <!-- 画面サイズ補正 / 全画面化 -->
-<script>__S("js/screen-fit.js")</script>
+<script defer src="js/screen-fit.js?v=20261103"></script>
 <!-- データ -->
-<script>__S("js/data/monsters.js")</script>
-<script>__S("js/data/dungeons.js")</script>
-<script>__S("js/data/areas.js")</script>
-<script>__S("js/data/exp.js")</script>
-<script>__S("js/data/mail.js")</script>
-<script>__S("js/data/items.js")</script>
-<script>__S("js/data/gacha.js")</script>
+<script defer src="js/data/monsters.js?v=20261103"></script>
+<script defer src="js/data/dungeons.js?v=20261103"></script>
+<script defer src="js/data/areas.js?v=20261103"></script>
+<script defer src="js/data/exp.js?v=20261103"></script>
+<script defer src="js/data/mail.js?v=20261103"></script>
+<script defer src="js/data/items.js?v=20261103"></script>
+<script defer src="js/data/gacha.js?v=20261103"></script>
 <!-- ゲーム本体 -->
-<script>__S("js/damage-number.js")</script>
-<script>__S("js/skill-text.js")</script>
-<script>__S("js/box-sort.js")</script>
-<script>__S("js/ls-search.js")</script>
-<script>__S("js/boss-cloud.js")</script>
-<script>__S("js/multi-turn.js")</script>
+<script defer src="js/damage-number.js?v=20261103"></script>
+<script defer src="js/skill-text.js?v=20261103"></script>
+<script defer src="js/box-sort.js?v=20261103"></script>
+<script defer src="js/ls-search.js?v=20261103"></script>
+<script defer src="js/boss-cloud.js?v=20261103"></script>
+<script defer src="js/multi-turn.js?v=20261103"></script>
 <!-- マルチ通信（自動マッチング） -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script>__S("js/firebase-config.js")</script>
-<script>__S("js/multi-online.js")</script>
-<script>__S("js/enemy-autofit.js")</script>
-<script>__S("js/ryuseki.js")</script>
-<script>__S("js/game.js")</script>
-<script>__S("js/audio-fast.js")</script>
+<script defer src="js/firebase-config.js?v=20261103"></script>
+<script defer src="js/multi-online.js?v=20261103"></script>
+<script defer src="js/enemy-autofit.js?v=20261103"></script>
+<script defer src="js/ryuseki.js?v=20261103"></script>
+<script defer src="js/game.js?v=20261103"></script>
+<script defer src="js/audio-fast.js?v=20261103"></script>
 <!-- マルチ：2人で盤面・敵・バフ/デバフを共有（game.js の変数を使うので game.js のあと） -->
-<script>__S("js/multi-share.js")</script>
-<script>__S("js/multi-chat.js")</script>
-<script>__S("js/stat-fit.js")</script>
-<script>__S("js/evo-puzzle.js")</script>
-<script>__S("js/evo-scene.js")</script>
-<script>__S("js/zukan.js")</script>
-<script>__S("js/gacha.js")</script>
-<script>__S("js/bonus.js")</script>
-<script>__S("js/allattack-fx.js")</script>
-<script>__S("js/enemy-attack-fx.js")</script>
-<script>__S("js/orb-spawn-fx.js")</script>
-<script>__S("js/ls-fx.js")</script>
-<script>__S("js/cutin.js")</script>
-<script>__S("js/landscape.js")</script>
-<script>__S("js/preload.js")</script>
+<script defer src="js/multi-share.js?v=20261103"></script>
+<script defer src="js/multi-chat.js?v=20261103"></script>
+<script defer src="js/stat-fit.js?v=20261103"></script>
+<script defer src="js/evo-puzzle.js?v=20261103"></script>
+<script defer src="js/evo-scene.js?v=20261103"></script>
+<script defer src="js/zukan.js?v=20261103"></script>
+<script defer src="js/gacha.js?v=20261103"></script>
+<script defer src="js/bonus.js?v=20261103"></script>
+<script defer src="js/allattack-fx.js?v=20261103"></script>
+<script defer src="js/enemy-attack-fx.js?v=20261103"></script>
+<script defer src="js/orb-spawn-fx.js?v=20261103"></script>
+<script defer src="js/ls-fx.js?v=20261103"></script>
+<script defer src="js/cutin.js?v=20261103"></script>
+<script defer src="js/landscape.js?v=20261103"></script>
+<script defer src="js/preload.js?v=20261103"></script>
 </body>
 </html>
