@@ -5939,7 +5939,7 @@ const MONSTER_DATA = {
       effects: [ { type: 'atk', condition: 'orbConnect', attr: 'water', count: 6, value: 2, attr2: 'dark', comboAdd: 1 } ]
     },
     evolutions: [
-      { to: 5015, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_52', count: 2 } ] },
+      { to: 5015, materials: [ { item: 'puzzle22', count: 2 }, { item: 'spuzzle_52', count: 2 } ] },
       { to: 5053, materials: [ { item: 'spuzzle_22', count: 2 }, { item: 'puzzle52', count: 3 } ] }
     ]
   },
@@ -5955,10 +5955,10 @@ const MONSTER_DATA = {
     stats: { hp: { min: 340, max: 2800 }, atk: { min: 260, max: 2300 }, rec: { min: 40, max: 180 } },
     skill: {
       name: '漣',
-      sp: 5,
-      desc: '敵単体に攻撃力×20倍の水属性攻撃。',
+      sp: 4,
+      desc: '敵単体に攻撃力×40倍の水属性攻撃。',
       cutin: true,
-      effects: [ { type: 'damageSelfAtkMult', value: 20, attr: 'water', target: 'single' } ]
+      effects: [ { type: 'damageSelfAtkMult', value: 40, attr: 'water', target: 'single' } ]
     },
     leaderSkill: {
       name: '龍薙閃',
@@ -6644,10 +6644,20 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '水海の主',
-      desc: '水と闇のドロップを同時に6個以上つなげて消すと攻撃2倍、受けるダメージ30%軽減。',
+      desc: '水と闇ドロップを同時に9個以上つなげて消すと攻撃3倍、1コンボ加算、受けるダメージ30%軽減。',
       effects: [
-        { type: 'atk', condition: 'orbConnect', attr: 'water', count: 6, value: 2, attr2: 'dark', reduce: 0.3 },
-        { type: 'expMult', value: 1.5 }
+        {
+          type: 'atk',
+          condition: 'orbConnect',
+          attr: 'water',
+          count: 9,
+          value: 3,
+          attr2: 'dark',
+          reduce: 0.3,
+          comboAdd: 1
+        },
+        { type: 'expMult', value: 1.5 },
+        { type: 'eggDropUp', value: 20 }
       ]
     }
   },
@@ -6835,9 +6845,9 @@ const MONSTER_DATA = {
     skill: {
       name: '霜華乱咲',
       sp: 5,
-      desc: '6秒間、時を止める。\n左上に水を逆L字型に生成。',
+      desc: '7秒間、時を止める。\n左上に水を逆L字型に生成。',
       cutin: true,
-      effects: [ { type: 'timeStop', seconds: 6 }, { type: 'orbChangeReverseL', attr: 'water' } ]
+      effects: [ { type: 'timeStop', seconds: 8 }, { type: 'orbChangeReverseL', attr: 'water' } ]
     },
     leaderSkill: {
       name: '氷鋒斧踏',
@@ -6846,7 +6856,7 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'connectEach', attr: 'water', count: 5, value: 1.4, exponential: true, exact: true },
         { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.4, exponential: true, exact: true },
         { type: 'hp', condition: 'type', attr: 'バランス', value: 1.2 },
-        { type: 'chipDropUp', value: 5 }
+        { type: 'eggDropUp', value: 10 }
       ]
     }
   },
@@ -7109,11 +7119,11 @@ const MONSTER_DATA = {
     stats: { hp: { min: 900, max: 3200 }, atk: { min: 600, max: 1800 }, rec: { min: 100, max: 300 } },
     skill: {
       name: '前進的論証',
-      sp: 6,
-      desc: 'ドロップを火・水・回復ドロップに変化。\n1ターンの間、操作時間が1秒延長。',
+      sp: 5,
+      desc: 'ドロップを火・水ドロップに変化。\n1ターンの間、操作時間が1秒延長。',
       cutin: true,
       effects: [
-        { type: 'orbChangeMulti', orb_fire: true, orb_water: true, orb_heal: true },
+        { type: 'orbChangeMulti', orb_fire: true, orb_water: true },
         { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 }
       ]
     },
@@ -7124,7 +7134,7 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.3 },
         { type: 'atk', condition: 'type', attr: 'バランス', value: 1.3 },
         { type: 'spCharge', size: 'medium' },
-        { type: 'eggDropUp', value: 5 },
+        { type: 'eggDropUp', value: 10 },
         { type: 'coinMult', value: 1.5 }
       ]
     }
