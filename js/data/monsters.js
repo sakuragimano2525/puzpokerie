@@ -6617,7 +6617,8 @@ const MONSTER_DATA = {
       effects: [
         { type: 'atk', condition: 'exact4', value: 1.15, exponential: true },
         { type: 'atk', condition: 'colorCountHeal', count: 5, value: 1.2, recValue: 1.2 },
-        { type: 'eggDropUp', value: 5 }
+        { type: 'eggDropUp', value: 5 },
+        { type: 'spCharge', size: 'medium' }
       ]
     }
   },
@@ -6788,7 +6789,8 @@ const MONSTER_DATA = {
       effects: [
         { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.18 },
         { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.18 },
-        { type: 'eggDropUp', value: 6 }
+        { type: 'eggDropUp', value: 10 },
+        { type: 'spCharge', size: 'small' }
       ]
     }
   },
@@ -6914,13 +6916,13 @@ const MONSTER_DATA = {
       desc: '闇ドロップを消す度に攻撃1.2倍。',
       effects: [
         { type: 'atk', condition: 'eraseAttr', attr: 'dark', value: 1.25 },
-        { type: 'spCharge', size: 'small' },
-        { type: 'eggDropUp', value: 5 }
+        { type: 'spCharge', size: 'medium' },
+        { type: 'eggDropUp', value: 10 }
       ]
     },
     evolutions: [
       { to: 5049, materials: [ { item: 'puzzle42', count: 2 }, { item: 'puzzle52', count: 2 } ] },
-      { to: 5056, materials: [ { item: 'puzzle_42', count: 2 }, { item: 'puzzle43', count: 1 } ] }
+      { to: 5056, materials: [ { item: 'spuzzle_42', count: 2 }, { item: 'puzzle43', count: 1 } ] }
     ]
   },
   5049: {
@@ -6959,7 +6961,7 @@ const MONSTER_DATA = {
         },
         { type: 'atk', condition: 'connectEach', attr: 'dark', count: 4, value: 1.45, exponential: true, exact: true },
         { type: 'noDrop', value: true },
-        { type: 'eggDropUp', value: 10 }
+        { type: 'eggDropUp', value: 15 }
       ]
     }
   },
@@ -7201,8 +7203,8 @@ const MONSTER_DATA = {
           reduce: 0.08
         },
         { type: 'noDrop', value: true },
-        { type: 'spCharge', size: 'small' },
-        { type: 'chipDropUp', value: 10 }
+        { type: 'spCharge', size: 'medium' },
+        { type: 'chipDropUp', value: 15 }
       ]
     }
   },
