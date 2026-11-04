@@ -6644,13 +6644,13 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '水海の主',
-      desc: '水と闇ドロップを同時に9個以上つなげて消すと攻撃3倍、1コンボ加算、受けるダメージ30%軽減。',
+      desc: '水と闇ドロップを同時に6個以上つなげて消すと攻撃3倍、1コンボ加算、受けるダメージ30%軽減。',
       effects: [
         {
           type: 'atk',
           condition: 'orbConnect',
           attr: 'water',
-          count: 9,
+          count: 6,
           value: 3,
           attr2: 'dark',
           reduce: 0.3,
