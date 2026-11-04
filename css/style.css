@@ -828,6 +828,8 @@ body {
   background:rgba(255,255,255,0.08);
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
+.sp-common-seg { min-width:0; }
+#sp-common-bar.sp-wide { gap:1px; }   /* SP上限が拡張されたときは、すき間を詰める */
 .sp-common-seg.filled {
   background:linear-gradient(180deg, #7ef7ff, #00bfff);
   box-shadow:0 0 5px rgba(0,191,255,0.9);

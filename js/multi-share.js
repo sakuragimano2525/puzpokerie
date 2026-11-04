@@ -385,31 +385,31 @@
   //                 ルーレットの針も、相手の時計に合わせて自分の画面でも回す（色の変化は届いた盤面で更新）
   const LIVE_MS = 33;
   let liveT = 0, liveTimer = null, livePos = null, rlBeatT = 0;
-  // 送りっぱなしにしない：前の書き込みが相手のサーバーに届くまで次は送らない（通信が詰まっても遅れが溜まらず、
-  // 詰まっている間に動いた分は「最新の1つ」にまとめて、届いた直後に送る）
-  let liveBusy = false, liveDirty = false, liveGen = 0, liveSafety = null, liveSig = '', liveForce = false;
+  // 送りっぱなしにはしない。ただし「前の書き込みが届くまで次を待つ」方式だと、通信の往復時間（日本→米国サーバーで
+  // 0.15〜0.3秒）ごとに1回しか送れず、相手の画面が1秒に4〜6コマのカクカクになる。
+  // → 返事を待たずに続けて送る（最大 LIVE_MAX 個まで同時に飛ばす）。それ以上詰まった時だけ、「最新の1つ」にまとめて待つ。
+  const LIVE_MAX = 10;
+  let liveInflight = 0, liveDirty = false, liveGen = 0, liveSig = '', liveForce = false;
   function liveDone(gen) {
     if (gen !== liveGen) return;   // ターンが替わるなどで捨てた送信の返事
-    if (liveSafety) { clearTimeout(liveSafety); liveSafety = null; }
-    liveBusy = false;
-    if (liveDirty) { liveDirty = false; kickLive(false); }
+    liveInflight = Math.max(0, liveInflight - 1);
+    if (liveDirty && liveInflight < LIVE_MAX) { liveDirty = false; kickLive(false); }
   }
   function cancelLive() {
     if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; }
-    if (liveSafety) { clearTimeout(liveSafety); liveSafety = null; }
-    livePos = null; liveBusy = false; liveDirty = false; liveSig = ''; liveForce = false;
+    livePos = null; liveInflight = 0; liveDirty = false; liveSig = ''; liveForce = false;
     liveGen++;   // 以前の送信の返事は無視する
   }
   function sendLiveNow() {
     liveTimer = null;
     if (!on() || !MultiTurn.isMyTurn()) return;
-    if (liveBusy) { liveDirty = true; return; }   // 前のがまだ届いていない → 届いたら最新の状態を送る
+    if (liveInflight >= LIVE_MAX) { liveDirty = true; return; }   // 詰まっている → 空いたら最新の状態を送る
     const o = { cur: MultiTurn.current, round: MultiTurn.round, g: gridStr(), lk: lockStr(), d: 0 };
     if (livePos) {
       o.d = 1; o.dr = livePos.r; o.dc = livePos.c;
       o.px = Math.round(livePos.x * 100) / 100; o.py = Math.round(livePos.y * 100) / 100;   // 1/100マスで十分（通信量を減らす）
     }
-    const sig = JSON.stringify(o);   // 時計(rt/rr)を足す前：前回と全く同じ内容なら送らない
+    const sig = JSON.stringify(o);   // 時計(rt/rr/ts)を足す前：前回と全く同じ内容なら送らない
     if (typeof roulettes !== 'undefined' && roulettes.length) {   // ルーレットの針の時計（全部同じ時計で回る）と、いま回っているか
       o.rt = Math.round(roulettes[0].t);
       o.rr = (!busy && !timeStopActive && !_rlHold) ? 1 : 0;
@@ -417,12 +417,15 @@
     if (sig === liveSig && !liveForce) return;
     liveSig = sig; liveForce = false;
     liveT = performance.now();
+    o.ts = Math.round(liveT);   // 送った時刻（見ている側が、届き方のばらつきをならして一定のテンポで再生するため）
     const gen = liveGen;
-    liveBusy = true;
-    liveSafety = setTimeout(() => liveDone(gen), 1500);   // 返事が来なくても止まりっぱなしにしない
+    liveInflight++;
+    let fin = false, tm = null;
+    const done = () => { if (fin) return; fin = true; if (tm) clearTimeout(tm); liveDone(gen); };
+    tm = setTimeout(done, 1500);   // 返事が来なくても止まりっぱなしにしない
     let p;
     try { p = MultiOnline.sendLive(o); } catch (e) { p = null; }
-    if (p && typeof p.then === 'function') p.then(() => liveDone(gen), () => liveDone(gen)); else liveDone(gen);
+    if (p && typeof p.then === 'function') p.then(done, done); else done();
   }
   function kickLive(flush) {
     if (flush) { if (liveTimer) { clearTimeout(liveTimer); liveTimer = null; } sendLiveNow(); return; }
@@ -501,25 +504,96 @@
     for (const o of list) { const p = o.period || 2000; o.t = (((rlSync.base + el) % p) + p) % p; }
     return true;
   };
-  // 届いた操作は「1フレームにつき最新の1つ」だけ処理する（通信が一気に届いても、古い分を1つずつ描かない）
-  let liveIn = null, liveInRaf = 0, liveInTimer = 0;
-  function runLive() {
-    if (liveInRaf) { cancelAnimationFrame(liveInRaf); liveInRaf = 0; }
-    if (liveInTimer) { clearTimeout(liveInTimer); liveInTimer = 0; }
-    const v = liveIn; liveIn = null;
-    if (v) applyLive(v);
+  // 届いた操作の再生：
+  //   通信は届く間隔にばらつきがある（0.1秒あいたり、2つ同時に来たり）。届いた順にそのまま描くとカクカクに見えるので、
+  //   ・相手が送った時刻（ts）つきで受け取り、少しだけ（約0.1秒）遅らせて再生し、
+  //   ・前後2つの指の位置のあいだを毎フレーム補間してなめらかに動かす。
+  //   ばらつきが大きい回線では、遅らせる時間を自動で少し長くする。
+  const PB = { q: [], off: null, jit: 0, delay: 100, cur: null, prev: null, applied: null, raf: 0, lastArr: 0, lastTs: -1 };
+  const PB_MIN = 75, PB_MAX = 260, PB_QMAX = 120;
+  function resetPlay() {
+    PB.q.length = 0; PB.off = null; PB.jit = 0; PB.delay = 100;
+    PB.cur = PB.prev = PB.applied = null; PB.lastTs = -1;
+    if (PB.raf) { cancelAnimationFrame(PB.raf); PB.raf = 0; }
   }
-  function dropPendingLive() {
-    liveIn = null;
-    if (liveInRaf) { cancelAnimationFrame(liveInRaf); liveInRaf = 0; }
-    if (liveInTimer) { clearTimeout(liveInTimer); liveInTimer = 0; }
+  function dropPendingLive() { resetPlay(); }
+  // 受け取った1件を時刻つきで並べる（再生は playFrame が行う）
+  function playPush(v, arr) {
+    if (PB.lastTs >= 0 && v.ts < PB.lastTs - 1500) { resetPlay(); }   // 相手がつなぎ直した等で時計が戻った
+    if (v.ts <= PB.lastTs) return;   // 古い・重複
+    PB.lastTs = v.ts;
+    const d = arr - v.ts;            // 相手の時計とのずれ＋通信にかかった時間
+    if (PB.off === null || d < PB.off) PB.off = d;   // いちばん速く届いた時を基準にする
+    else PB.off += 0.2;                              // 回線が遅くなった時にも少しずつ追従する
+    const late = d - PB.off;                         // 基準より遅れて届いた分＝ばらつき
+    PB.jit += (late - PB.jit) * 0.1;
+    PB.lastArr = arr;
+    PB.q.push({ ts: v.ts, v });
+    if (PB.q.length > PB_QMAX) PB.q.splice(0, PB.q.length - PB_QMAX);
+    if (!PB.raf) PB.raf = requestAnimationFrame(playFrame);
+  }
+  function playApplyGrid(v) {
+    if (typeof v.g === 'string' && (v.g !== gridStr() || (v.lk || '') !== lockStr())) {   // 変わった時だけ描き直す
+      setGridFromStr(v.g, v.lk, true);   // 変わったマスだけ更新
+      if (RD.on) { RD.el = null; paintRemoteDrag(); }   // 描き直しで消えた「掴んでいる」見た目をすぐ戻す
+    }
+  }
+  function playFrame(now) {
+    PB.raf = 0;
+    if (!on() || MultiTurn.isMyTurn() || MS.applying || MultiTurn._receiving) { resetPlay(); stopRemoteDrag(); return; }
+    // 遅らせる時間：ばらつきに合わせて、ゆっくり増減（急に変えると動きの速さが変わって見える）
+    const want = Math.max(PB_MIN, Math.min(PB_MAX, 66 + PB.jit * 2.2));
+    PB.delay += (want - PB.delay) * 0.04;
+    const T = now - PB.off - PB.delay;   // いま再生する「相手の時刻」
+    // 再生時刻に達したものを順に進める（最新の1つを「いま」とする）
+    while (PB.q.length && PB.q[0].ts <= T) { PB.prev = PB.cur; PB.cur = PB.q.shift(); }
+    const cur = PB.cur, nxt = PB.q[0] || null;
+    if (cur) {
+      const cv = cur.v;
+      if (cur !== PB.applied) {
+        PB.applied = cur;
+        playApplyGrid(cv);
+      }
+      if (cv.d) {
+        RD.r = Math.max(0, Math.min(ROWS - 1, Number(cv.dr) || 0)); RD.c = Math.max(0, Math.min(COLS - 1, Number(cv.dc) || 0));
+        let x = Number(cv.px) || 0, y = Number(cv.py) || 0;
+        if (nxt && nxt.v.d) {   // 次の位置が届いている → 2点のあいだを補間
+          const span = nxt.ts - cur.ts;
+          const a = span > 0 ? Math.max(0, Math.min(1, (T - cur.ts) / span)) : 1;
+          x += ((Number(nxt.v.px) || 0) - x) * a; y += ((Number(nxt.v.py) || 0) - y) * a;
+        } else if (!nxt && PB.prev && PB.prev.v.d && cur.ts > PB.prev.ts) {   // 次がまだ届いていない → 直前の速さで少しだけ先を予測（最大0.06秒）
+          const dt = Math.min(60, Math.max(0, T - cur.ts)), sp = cur.ts - PB.prev.ts;
+          x += ((x - (Number(PB.prev.v.px) || 0)) / sp) * dt; y += ((y - (Number(PB.prev.v.py) || 0)) / sp) * dt;
+        }
+        RD.tx = RD.cx = x; RD.ty = RD.cy = y; RD.msg = now;
+        if (!RD.on) {
+          RD.on = true; RD.last = now;
+          invalidateGM();   // 掴み始めに1回だけ盤面の大きさを測る
+          try { setDragFx(true); } catch (e) {}   // 掴んでいる間はドロップの transition を止める（入れ替えは一瞬で切り替わる＝本人の画面と同じ）
+        }
+        paintRemoteDrag();
+      } else if (RD.on) {
+        stopRemoteDrag();
+      }
+    }
+    // 続ける：再生待ちがある／掴んでいる間。届かなくなったら（切断など）止める
+    if (PB.q.length || RD.on) {
+      if (!PB.q.length && now - PB.lastArr > 2500) { stopRemoteDrag(); return; }
+      PB.raf = requestAnimationFrame(playFrame);
+    }
   }
   MS.onLive = function (v) {
     if (!v) return;
-    liveIn = v;
-    if (liveInRaf || liveInTimer) return;
-    liveInRaf = requestAnimationFrame(runLive);
-    liveInTimer = setTimeout(runLive, 100);   // 裏タブなどで rAF が止まっていても取りこぼさない
+    if (!on() || MultiTurn.isMyTurn() || MS.applying || MultiTurn._receiving) return;
+    if (v.cur !== MultiTurn.current || v.round !== MultiTurn.round) return;   // 前のターンの古い盤面は無視
+    const arr = performance.now();
+    // ルーレットの針の時計は、届いた時点で合わせる（針は自分の時計で回すので、遅らせない）
+    rlSync = (v.rt !== undefined && v.rt !== null)
+      ? { key: v.cur + ':' + v.round, base: Number(v.rt) || 0, at: arr, run: !!v.rr }
+      : null;
+    if (typeof v.ts === 'number') { playPush(v, arr); return; }
+    // 古い版の相手（ts なし）：従来どおり届いた最新を描く
+    applyLive(v);
   };
   function applyLive(v) {
     if (!on() || !v || MultiTurn.isMyTurn() || MS.applying || MultiTurn._receiving) return;
@@ -583,7 +657,25 @@
       const e = uid !== null && box.find(b => b.uid === uid), m = e && MONSTER_DATA[e.monsterId];
       return (m && m.leaderSkill && m.leaderSkill.desc) || '（なし）';
     });
-    return { s, hp: Math.round(playerCurrentHP), mx: Math.round(playerMaxHP), sp: partySp, mem: partyMemory, bd, as, ls, seal: isSkillSealed() ? 1 : 0 };
+    return { s, rw: myRewardEffects(), hp: Math.round(playerCurrentHP), mx: Math.round(playerMaxHP), sp: partySp, cap: getSpCap(), mem: partyMemory, bd, as, ls, seal: isSkillSealed() ? 1 : 0 };
+  };
+  // 自分のリーダー／フレンドの「報酬系」スキル（経験値・エナ倍率、タマゴ／チップドロップ率UP）を相手にも知らせる
+  //   → マルチでは、2人分（リーダー2＋フレンド2）の効果が両方の報酬にかかる
+  const REWARD_TYPES = ['expMult', 'coinMult', 'eggDropUp', 'chipDropUp'];
+  function myRewardEffects() {
+    const out = [];
+    [0, 5].forEach(idx => {
+      const uid = partyUids.length > idx ? partyUids[idx] : null;
+      const e = uid !== null && uid !== undefined && box.find(b => b.uid === uid), m = e && MONSTER_DATA[e.monsterId];
+      const effs = m && m.leaderSkill && m.leaderSkill.effects;
+      if (Array.isArray(effs)) for (const x of effs) if (x && REWARD_TYPES.includes(x.type) && isFinite(Number(x.value))) out.push([x.type, Number(x.value)]);
+    });
+    return out;
+  }
+  // 相手のリーダー／フレンドの報酬系スキル（type一致の値だけ）。マルチ(オンライン)中以外は空
+  MS.remoteRewardValues = function (type) {
+    if (!on() || !MS.rp || !MS.rp.rw) return [];
+    return asArr(MS.rp.rw).map(asArr).filter(a => a[0] === type).map(a => Number(a[1])).filter(v => isFinite(v));
   };
   MS.publishParty = function () {
     if (!on() || !window.MultiOnline) return;
@@ -664,13 +756,15 @@
     if (!p || !bar) return;
     bar.innerHTML = '';
     const sp = p.sp || 0;
-    for (let i = 0; i < SP_CAP; i++) {
+    const cap = Math.max(SP_CAP_BASE, Math.min(SP_CAP_MAX, p.cap || SP_CAP_BASE));
+    bar.classList.toggle('sp-wide', cap > SP_CAP_BASE);
+    for (let i = 0; i < cap; i++) {
       const seg = document.createElement('div');
       seg.className = 'sp-common-seg';
-      if (i < sp) { seg.classList.add('filled'); if (sp >= SP_CAP) seg.classList.add('ready'); }
+      if (i < sp) { seg.classList.add('filled'); if (sp >= cap) seg.classList.add('ready'); }
       bar.appendChild(seg);
     }
-    if (cnt) cnt.textContent = sp + ' / ' + SP_CAP;
+    if (cnt) cnt.textContent = sp + ' / ' + cap;
   }
   function paintRemoteLs() {
     const p = MS.rp;

@@ -599,7 +599,9 @@ function lsEffectValues(type) {
     if (!Array.isArray(effs)) return;
     for (const x of effs) if (x && x.type === type) { const v = Number(x.value); if (isFinite(v)) out.push(v); }
   });
-  return out;
+  // マルチ(オンライン)：相手のリーダー／フレンドの効果も合算（どちらが倒しても、2人分が常に効く）
+  try { if (window.MultiShare && MultiShare.remoteRewardValues) out.push(...MultiShare.remoteRewardValues(type)); } catch (e) {}
+  return out.sort((a, b) => a - b);   // 端末ごとに計算順が変わらないよう並べ替え（2人の報酬を完全に一致させる）
 }
 function lsRewardMult(type) { return lsEffectValues(type).reduce((a, v) => a * (v > 0 ? v : 1), 1); }
 function lsDropUp(type) { return lsEffectValues(type).reduce((a, v) => a + (v > 0 ? v / 100 : 0), 0); }   // 10 → 0.10（+10%）
@@ -6993,9 +6995,39 @@ function setLeaderSkillText(i, text) {
 //   ・1コンボごとにメモリが1進み、メモリが5貯まるとSP+1（パーティ共通）。
 //   ・スキル発動には必要SP（今回は全モンスター共通1）を消費する。
 // ============================================================
-const SP_MEMORY_MAX = 5; // このメモリ数が貯まるとSP+1
-const SP_CAP = 10; // SPが貯まる上限（本家パズドラZ仕様）
+const SP_MEMORY_BASE = 5; // 通常、このメモリ数（コンボ数）が貯まるとSP+1
+const SP_CAP_BASE = 10;   // SPが貯まる上限の基本値（本家パズドラZ仕様）
+const SP_CAP_MAX = 20;    // リーダースキルで拡張できる最大値（+10）
 const SKILL_SP_COST = 1; // スキル発動に必要なSP（共通・固定）
+
+// ── リーダー／フレンドのSP系スキル ──
+//   spCapUp  … { type:'spCapUp', value:N }            SPの上限が+N（リーダーとフレンドは足し算。最大+10）
+//   spCharge … { type:'spCharge', size:'small'|'medium' } 小＝4コンボごとに1SP／中＝3コンボごとに1SP（リーダーとフレンドは良いほう）
+function _lsSpEffects() {
+  const out = [];
+  [0, 5].forEach(idx => {
+    if (typeof partyUids === 'undefined' || partyUids.length <= idx || partyUids[idx] === null || partyUids[idx] === undefined) return;
+    const e = box.find(b => b.uid === partyUids[idx]);
+    const m = e && MONSTER_DATA[e.monsterId];
+    const effs = m && m.leaderSkill && m.leaderSkill.effects;
+    if (Array.isArray(effs)) for (const x of effs) if (x && (x.type === 'spCapUp' || x.type === 'spCharge')) out.push(x);
+  });
+  return out;
+}
+function getSpCap() {
+  let up = 0;
+  for (const x of _lsSpEffects()) if (x.type === 'spCapUp') up += Math.max(0, Math.floor(Number(x.value) || 0));
+  return SP_CAP_BASE + Math.min(10, up);
+}
+function getSpMemoryMax() {
+  let need = SP_MEMORY_BASE;
+  for (const x of _lsSpEffects()) {
+    if (x.type !== 'spCharge') continue;
+    const n = x.size === 'medium' ? 3 : 4;
+    if (n < need) need = n;
+  }
+  return need;
+}
 
 let partySp = 0;     // パーティ共有の現在SP
 let partyMemory = 0; // パーティ共有の現在メモリ（0〜4）
@@ -7003,24 +7035,25 @@ let partyMemory = 0; // パーティ共有の現在メモリ（0〜4）
 // 必要SP（スキル発動に必要な最低SP。全モンスター共通で1に固定）
 function getRequiredSp(entry, mon) {
   const sp = mon && mon.skill && mon.skill.sp;
-  return (typeof sp === 'number' && sp >= 1) ? Math.min(SP_CAP, Math.floor(sp)) : SKILL_SP_COST;
+  return (typeof sp === 'number' && sp >= 1) ? Math.min(getSpCap(), Math.floor(sp)) : SKILL_SP_COST;
 }
 
 // パーティ共有SPにメモリを進める（1コンボ=1メモリ）。
 function addMemoryToParty(comboCount) {
   if (!comboCount || comboCount <= 0) return;
-  if (partySp >= SP_CAP) return; // 上限まで貯まっていたら進めない
+  const cap = getSpCap(), memMax = getSpMemoryMax();
+  if (partySp >= cap) return; // 上限まで貯まっていたら進めない
   partyMemory += comboCount;
-  while (partyMemory >= SP_MEMORY_MAX) {
-    partyMemory -= SP_MEMORY_MAX;
-    if (partySp < SP_CAP) partySp++;
-    if (partySp >= SP_CAP) { partyMemory = 0; break; }
+  while (partyMemory >= memMax) {
+    partyMemory -= memMax;
+    if (partySp < cap) partySp++;
+    if (partySp >= cap) { partyMemory = 0; break; }
   }
 }
 
 // 共通SPを直接加算（「いっかつ」等のスキル効果用）
 function addPartySp(amount) {
-  partySp = Math.min(SP_CAP, partySp + (amount || 1));
+  partySp = Math.min(getSpCap(), partySp + (amount || 1));
 }
 
 // 今スキルが使えるモンスターの数（SPが足りているメンバー数）。
@@ -7053,17 +7086,18 @@ function updateSpGaugeUI() {
   const countEl = document.getElementById('sp-common-count');
   if (!bar) return;
   bar.innerHTML = '';
-  const isReady = partySp >= SKILL_SP_COST;
-  for (let i = 0; i < SP_CAP; i++) {
+  const cap = getSpCap();
+  bar.classList.toggle('sp-wide', cap > SP_CAP_BASE);
+  for (let i = 0; i < cap; i++) {
     const seg = document.createElement('div');
     seg.className = 'sp-common-seg';
     if (i < partySp) {
       seg.classList.add('filled');
-      if (partySp >= SP_CAP) seg.classList.add('ready');
+      if (partySp >= cap) seg.classList.add('ready');
     }
     bar.appendChild(seg);
   }
-  if (countEl) countEl.textContent = `${partySp} / ${SP_CAP}`;
+  if (countEl) countEl.textContent = `${partySp} / ${cap}`;
   if (window.MultiShare) MultiShare.fx('sp', { sp: partySp, mem: partyMemory });   // マルチ：相手の画面のSPへ
 }
 
@@ -7080,7 +7114,7 @@ function openSkillConfirm(uid) {
   skillTargetUid = uid;
   document.getElementById('sp-title').textContent = mon.skill.name;
   setSkillText(document.getElementById('sp-desc'), mon.skill.desc);
-  document.getElementById('sp-cooldown').textContent = `SP ${partySp} / ${SP_CAP}（消費${requiredSp}）`;
+  document.getElementById('sp-cooldown').textContent = `SP ${partySp} / ${getSpCap()}（消費${requiredSp}）`;
   document.getElementById('skill-confirm').style.display = 'flex';
 }
 
@@ -9458,6 +9492,7 @@ async function startGameFromHome() {
     if (i < partyUids.length) partyUids[i] = newPartyUids[i] !== undefined ? newPartyUids[i] : null;
     else partyUids.push(newPartyUids[i] !== undefined ? newPartyUids[i] : null);
   }
+  try { updateSpGaugeUI(); } catch (e) {}   // リーダー/フレンドのSP上限アップを、入場時にバーへ反映
   resetPlayerBuffs();
   moveTimeFixed = null;
   currentMoveMs = baseMoveMs;
@@ -11473,6 +11508,17 @@ function redeemGiftCode() {
   const msg = document.getElementById('md2-code-msg');
   // 全角→半角、空白除去、大文字化
   const code = input.value.replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\s+/g, '').toUpperCase();
+  // デバッグ用：FLCCC151 … メインステージをエリア15まで開放（エリア1〜14のボスをクリア済みにする）
+  if (code === 'FLCCC151') {
+    const target = 15;
+    for (let a = 1; a < target; a++) clearedBosses.add(a);
+    try { localStorage.setItem(CLEARED_BOSSES_KEY, JSON.stringify([...clearedBosses])); } catch (e) {}
+    try { saveGame(); } catch (e) {}
+    try { if (typeof buildMainMap === 'function') buildMainMap(); } catch (e) {}
+    msg.className = 'ok'; msg.textContent = 'メインステージをエリア' + target + 'まで開放しました！';
+    input.value = '';
+    return;
+  }
   const m = /^DESAYA(\d+)$/.exec(code);
   const monsterId = m ? parseInt(m[1], 10) : NaN;
   const mon = m ? MONSTER_DATA[monsterId] : null;

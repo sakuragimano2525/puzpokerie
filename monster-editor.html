@@ -399,6 +399,8 @@ const leaderTemplates = {
   eraseAnyAtk:{label:'ドロップを消す度に',data:{type:'atk',condition:'eraseAny',value:1.2},fields:[numF('value','攻撃倍率（1回ごと）'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   exactCountAtk:{label:'属性をちょうど○個消して',data:{type:'atk',condition:'exactCount',attr:'fire',count:4,value:2},fields:[attrF('attr','属性'),numF('count','ちょうどの個数'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')]},
   connectEachAtk:{label:'○個つなげて消す度に',data:{type:'atk',condition:'connectEach',attr:'fire',count:4,value:1.5,exponential:true},fields:[['attr','属性','attrAny'],numF('count','個数'),['exact','ちょうどの個数のみ','bool'],['exponential','条件の塊の数だけ倍率を累乗','bool'],numF('value','攻撃倍率'),numF('recValue','回復力倍率'),numF('reduce','ダメージ軽減'),numF('comboAdd','コンボ加算')]},
+  spCapUp:{label:'SPの上限アップ',data:{type:'spCapUp',value:5},fields:[numF('value','SP上限の増加数（1〜10。10なら最大SP20。リーダーとフレンドは足し算で最大+10）')]},
+  spCharge:{label:'SPが溜まりやすくなる',data:{type:'spCharge',size:'small'},fields:[['size','効果','select','small:小（4コンボごとに1SP）|medium:中（3コンボごとに1SP）']]},
   noDrop:{label:'落ちコンなし',data:{type:'noDrop',value:true},fields:[]},
   poisonImmune:{label:'毒ダメージを無効にする',data:{type:'poisonImmune',value:true},fields:[]},
   moveTimeFixed:{label:'操作時間固定',data:{type:'moveTimeFixed',value:3000},fields:[numF('value','ミリ秒（3秒=3000）')]},
@@ -641,6 +643,8 @@ function describeLeader(effs){
     const mult = fmt(e.value)+'倍';
     switch(e.type){
       case 'noDrop': pre.push('【落ちコンなし】'); break;
+      case 'spCapUp': { const v=Math.max(1,Math.min(10,Math.floor(Number(e.value)||0))); out.push(`SPの上限が${v}アップ（最大${10+v}）`); break; }
+      case 'spCharge': out.push(e.size==='medium'?'SPが溜まりやすくなる（中）：3コンボごとに1SP':'SPが溜まりやすくなる（小）：4コンボごとに1SP'); break;
       case 'poisonImmune': out.push('毒ダメージを無効化'); break;
       case 'moveTimeFixed': pre.push(`【操作時間${fmt(e.value/1000)}秒固定】`); break;
       case 'moveTimeAdd': { const v=Number(e.value)||0; if(v) pre.push(`【操作時間${fmt(Math.abs(v))}秒${v>0?'延長':'短縮'}】`); break; }

@@ -1,9 +1,9 @@
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBp9QP0_mzlSrEmcajRJSMj0oNVLLRpXSo",
-  authDomain: "pokerie-factory.firebaseapp.com",
-  databaseURL: "https://pokerie-factory-default-rtdb.firebaseio.com",
-  projectId: "pokerie-factory",
-  storageBucket: "pokerie-factory.firebasestorage.app",
-  messagingSenderId: "1035072362363",
-  appId: "1:1035072362363:web:045ecbbcd7f9ae32a94fde"
+  apiKey: "AIzaSyDu0XvecsEETS8LAF0TAv7PGNl07no6oe8",
+  authDomain: "puzpokerie.firebaseapp.com",
+  databaseURL: "https://puzpokerie-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "puzpokerie",
+  storageBucket: "puzpokerie.firebasestorage.app",
+  messagingSenderId: "1013670780012",
+  appId: "1:1013670780012:web:d124ebb6d240eb6ca24c49"
 };
