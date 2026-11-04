@@ -97,6 +97,8 @@ kourine: {both: true, name: 'キングドラ降臨', desc: 'クリアでキン�
   BLLU: {both: true, name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'ブルアカ-スタジアム1',boss: 'ブルアカ-スタジアム2'} , stageLevels: { 1: '上級',boss: '超級' }},
    jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョ-スタジアム'} , stageLevels: { boss: '中級' }},
     stella: { both: true, name: 'ステラソラコラボ', desc: 'クリアでアルカナエキスゲット！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム'} , stageLevels: { boss: '上級' }},
+stellab: { both: true, name: 'ステラソラコラボ2', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium3.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム2'} , stageLevels: { boss: '超級' }},
+
     Astral: { both: true, name: 'アストラルパーティー', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL.png', hue: 200,stageNames: { boss: 'アストラルパーティー'} , stageLevels: { boss: '超級' }},
 Astralb: { both: true, name: 'アストラルパーティー2', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL2.png', hue: 200,stageNames: { boss: 'アストラルパーティー2'} , stageLevels: { boss: '超級' }},
 

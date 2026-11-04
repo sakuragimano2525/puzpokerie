@@ -814,7 +814,10 @@ const MONSTER_DATA = {
     leaderSkill: {
       name: 'シックスセンス',
       desc: '6コンボ以上で攻撃1.8倍。',
-      effects: [ { type: 'atk', condition: 'combo', count: 6, value: 1.8 } ]
+      effects: [
+        { type: 'atk', condition: 'combo', count: 6, value: 1.8 },
+        { type: 'atk', condition: 'type', attr: '神秘', value: 0.001 }
+      ]
     },
     evolutions: [ { to: 169, materials: [ { item: 'puzzle53', count: 2 } ] } ]
   },
@@ -2737,8 +2740,12 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'セブンフォース',
-      desc: '【落ちコンなし】7コンボ以上で攻撃2倍、受けるダメージ15%軽減。',
-      effects: [ { type: 'atk', condition: 'combo', count: 7, value: 2, reduce: 0.15 }, { type: 'noDrop', value: true } ]
+      desc: '【落ちコンなし】7コンボ以上で攻撃2倍、受けるダメージ15%軽減。\n神秘タイプの攻撃0倍。',
+      effects: [
+        { type: 'atk', condition: 'combo', count: 7, value: 2, reduce: 0.15 },
+        { type: 'noDrop', value: true },
+        { type: 'atk', condition: 'type', attr: '神秘', value: 0.0001 }
+      ]
     }
   },
   137: {
@@ -3249,7 +3256,11 @@ const MONSTER_DATA = {
     leaderSkill: {
       name: 'セブンクライシス',
       desc: '7コンボ以上で攻撃2倍。',
-      effects: [ { type: 'atk', condition: 'combo', count: 7, value: 2 }, { type: 'moveTimeAdd', value: 1 } ]
+      effects: [
+        { type: 'atk', condition: 'combo', count: 7, value: 2 },
+        { type: 'moveTimeAdd', value: 1 },
+        { type: 'atk', condition: 'type', attr: '神秘', value: 0.0001 }
+      ]
     }
   },
   170: {
@@ -5589,17 +5600,20 @@ const MONSTER_DATA = {
     type: '神秘',
     maxLevel: 99,
     baseExp: 500,
-    stats: { hp: { min: 210, max: 2100 }, atk: { min: 210, max: 2100 }, rec: { min: 0, max: 0 } },
+    stats: { hp: { min: 110, max: 2100 }, atk: { min: 110, max: 2100 }, rec: { min: 0, max: 0 } },
     skill: {
       name: '制圧射撃',
-      sp: 6,
+      sp: 5,
       desc: '1ターンの間、敵全体の防御力を85%ダウン。',
-      effects: [ { type: 'defenseDown', target: 'all', value: 0.85, turns: 1, message: '💥 防御力ダウン！' } ]
+      effects: [
+        { type: 'defenseDown', target: 'all', value: 0.85, turns: 1, message: '💥 防御力ダウン！' },
+        { type: 'orbLock', target: 'attrs', orb_ojama: true, orb_poison: true }
+      ]
     },
     leaderSkill: {
       name: '集中突破',
       desc: '火ドロップを消す度に攻撃1.1倍。',
-      effects: [ { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.09 } ]
+      effects: [ { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.05 } ]
     }
   },
   5001: {
@@ -5769,7 +5783,7 @@ const MONSTER_DATA = {
     name: 'ジョナサン',
     rarity: 4,
     attr: 'fire',
-    type: 'こうげき',
+    type: '神秘',
     maxLevel: 99,
     baseExp: 1500,
     stats: { hp: { min: 230, max: 2200 }, atk: { min: 205, max: 2100 }, rec: { min: 45, max: 110 } },
@@ -5793,7 +5807,7 @@ const MONSTER_DATA = {
     name: '承太郎',
     rarity: 4,
     attr: 'dark',
-    type: 'こうげき',
+    type: '神秘',
     maxLevel: 99,
     baseExp: 1500,
     stats: { hp: { min: 270, max: 2700 }, atk: { min: 205, max: 2050 }, rec: { min: 0, max: 0 } },
@@ -5809,15 +5823,15 @@ const MONSTER_DATA = {
     name: 'DIO',
     rarity: 4,
     attr: 'dark',
-    type: 'こうげき',
+    type: '神秘',
     maxLevel: 99,
     baseExp: 1500,
     stats: { hp: { min: 290, max: 2741 }, atk: { min: 210, max: 2159 }, rec: { min: 0, max: 0 } },
     skill: { name: '時よ止まれッ！', sp: 5, desc: '9秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 9 } ] },
     leaderSkill: {
       name: '「世界」のタロット',
-      desc: '【落ちコンなし】8コンボ以上で攻撃2倍、受けるダメージ20%軽減。',
-      effects: [ { type: 'atk', condition: 'combo', count: 8, value: 2, reduce: 0.2 }, { type: 'noDrop', value: true } ]
+      desc: '【落ちコンなし】8コンボ以上で攻撃2倍、受けるダメージ15%軽減。',
+      effects: [ { type: 'atk', condition: 'combo', count: 8, value: 2, reduce: 0.15 }, { type: 'noDrop', value: true } ]
     }
   },
   5011: {
@@ -5825,7 +5839,7 @@ const MONSTER_DATA = {
     name: 'ポルナレフ',
     rarity: 3,
     attr: 'water',
-    type: 'こうげき',
+    type: '神秘',
     maxLevel: 99,
     baseExp: 500,
     stats: { hp: { min: 410, max: 2650 }, atk: { min: 300, max: 2000 }, rec: { min: 25, max: 50 } },
@@ -5852,7 +5866,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 50,
-    baseExp: 1000,
+    baseExp: 10000,
     stats: { hp: { min: 400, max: 2400 }, atk: { min: 350, max: 2000 }, rec: { min: 20, max: 40 } },
     skill: {
       name: '烈火の華',
@@ -5869,7 +5883,10 @@ const MONSTER_DATA = {
       desc: '火属性/こうげきタイプのHP1.25倍。',
       effects: [ { type: 'hp', attr: 'fire', value: 1.25 }, { type: 'hp', condition: 'type', attr: 'こうげき', value: 1.25 } ]
     },
-    evolutions: [ { to: 5013, materials: [ { item: 'puzzle13', count: 1 }, { item: 'puzzle1', count: 5 } ] } ]
+    evolutions: [
+      { to: 5013, materials: [ { item: 'puzzle13', count: 1 }, { item: 'puzzle1', count: 5 } ] },
+      { to: 5052, materials: [ { item: 'puzzle22', count: 2 }, { item: 'spuzzle_22', count: 3 } ] }
+    ]
   },
   5013: {
     id: 5013,
@@ -5907,8 +5924,8 @@ const MONSTER_DATA = {
     rarity: 4,
     attr: 'water',
     type: 'こうげき',
-    maxLevel: 75,
-    baseExp: 500,
+    maxLevel: 50,
+    baseExp: 10000,
     stats: { hp: { min: 270, max: 2700 }, atk: { min: 220, max: 2200 }, rec: { min: 50, max: 150 } },
     skill: {
       name: '連段滝',
@@ -5921,7 +5938,10 @@ const MONSTER_DATA = {
       desc: '水と闇ドロップを同時に6個以上つなげて消すと攻撃2倍、1コンボ加算。',
       effects: [ { type: 'atk', condition: 'orbConnect', attr: 'water', count: 6, value: 2, attr2: 'dark', comboAdd: 1 } ]
     },
-    evolutions: [ { to: 5015, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_52', count: 2 } ] } ]
+    evolutions: [
+      { to: 5015, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_52', count: 2 } ] },
+      { to: 5053, materials: [ { item: 'puzzle_22', count: 2 }, { item: 'puzzle52', count: 3 } ] }
+    ]
   },
   5015: {
     id: 5015,
@@ -6072,7 +6092,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 50,
-    baseExp: 500,
+    baseExp: 25500,
     stats: { hp: { min: 200, max: 2000 }, atk: { min: 500, max: 2500 }, rec: { min: 50, max: 250 } },
     skill: {
       name: 'フリーダムペイント',
@@ -6113,7 +6133,7 @@ const MONSTER_DATA = {
       cutin: true,
       effects: [
         { type: 'orbChangeMulti', orb_heal: true, orb_wood: true, orb_dark: true },
-        { type: 'damagePartyAtkMult', target: 'all', value: 4, attr: 'poison' }
+        { type: 'damagePartyAtkMult', target: 'all', value: 7, attr: 'poison' }
       ]
     },
     leaderSkill: {
@@ -6666,22 +6686,24 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 500, max: 3350 }, atk: { min: 225, max: 500 }, rec: { min: 75, max: 250 } },
+    stats: { hp: { min: 500, max: 3350 }, atk: { min: 50, max: 1000 }, rec: { min: 75, max: 150 } },
     skill: {
       name: 'ライフ・ブック',
       sp: 1,
       desc: '敵単体に味方のレベルに比例した光属性攻撃。',
       cutin: true,
-      effects: [ { type: 'damagePartyAtkMult', target: 'single', value: 1, attr: 'light' } ]
+      effects: [ { type: 'damagePartyAtkMult', target: 'single', value: 1.2, attr: 'light' } ]
     },
     leaderSkill: {
       name: '調査結果',
-      desc: '光属性の攻撃1.2倍。\nリーダー/フレンドの時、貰えるエナが1.1倍。',
+      desc: '全属性の攻撃1.1倍。\nリーダー/フレンドの時、貰えるエナが1.1倍。',
       effects: [
-        { type: 'atk', attr: 'light', value: 1.2 },
-        { type: 'eggDropUp', value: 5 },
-        { type: 'chipDropUp', value: 5 },
-        { type: 'coinMult', value: 1.5 }
+        { type: 'atk', value: 1.2 },
+        { type: 'eggDropUp', value: 10 },
+        { type: 'chipDropUp', value: 10 },
+        { type: 'coinMult', value: 1.5 },
+        { type: 'expMult', value: 1.5 },
+        { type: 'spCharge', size: 'medium' }
       ]
     }
   },
@@ -6716,6 +6738,484 @@ const MONSTER_DATA = {
         { type: 'eggDropUp', value: 5 }
       ]
     }
+  },
+  5042: {
+    id: 5042,
+    name: 'フユカ',
+    rarity: 4,
+    attr: 'fire',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 10000,
+    stats: { hp: { min: 400, max: 2300 }, atk: { min: 300, max: 2100 }, rec: { min: 50, max: 100 } },
+    skill: {
+      name: 'チェンジハート・火',
+      sp: 3,
+      desc: '木ドロップを回復ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'wood', to: 'heal' } ]
+    },
+    leaderSkill: {
+      name: 'レイジングソウル',
+      desc: '火属性の全パラメータが1.2倍。\nSPの上限が3アップ（最大13）。',
+      effects: [ { type: 'allStat', attr: 'fire', value: 1.25 }, { type: 'spCapUp', value: 3 } ]
+    },
+    evolutions: [ { to: 5043, materials: [ { item: 'puzzle1', count: 3 }, { item: 'spuzzle_22', count: 2 } ] } ]
+  },
+  5043: {
+    id: 5043,
+    name: 'フユカ(覚醒)',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25500,
+    stats: { hp: { min: 500, max: 2750 }, atk: { min: 500, max: 2450 }, rec: { min: 20, max: 100 } },
+    skill: {
+      name: '閃火の心',
+      sp: 2,
+      desc: 'HPが最大HPの50%減る。\n火と水ドロップをランダムで3つずつ生成。',
+      cutin: true,
+      effects: [
+        { type: 'selfDamage', mode: 'percent', value: 0.5 },
+        { type: 'orbChangeRandom', attr: 'fire', count: 3 },
+        { type: 'orbChangeRandom', attr: 'water', count: 3 }
+      ]
+    },
+    leaderSkill: {
+      name: 'マーシャルヒーツ',
+      desc: '火ドロップ/水ドロップを消す度に攻撃1.1倍。',
+      effects: [
+        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.18 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.18 },
+        { type: 'eggDropUp', value: 6 }
+      ]
+    }
+  },
+  5044: {
+    id: 5044,
+    name: 'フリージア',
+    rarity: 5,
+    attr: 'water',
+    type: 'バランス',
+    maxLevel: 50,
+    baseExp: 12500,
+    stats: { hp: { min: 1200, max: 3800 }, atk: { min: 300, max: 1600 }, rec: { min: 100, max: 200 } },
+    skill: {
+      name: '激情戦斧',
+      sp: 2,
+      desc: '水ドロップをランダムで3つ生成。\n1ターンの間、水ドロップが少し落ちやすくなる。',
+      effects: [
+        { type: 'orbChangeRandom', attr: 'water', count: 3, message: '☠️ 毒ドロップ生成！' },
+        { type: 'orbSpawnBoost', attr: 'water', rate: 0.15, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'ウォーターコンボ・超',
+      desc: '水ドロップの2コンボ以上で攻撃2.1倍、受けるダメージ20%軽減。',
+      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 2.1, reduce: 0.2 } ]
+    },
+    evolutions: [
+      { to: 5045, materials: [ { item: 'puzzle22', count: 2 }, { item: 'puzzle2', count: 3 } ] },
+      { to: 5054, materials: [ { item: 'spuzzle_22', count: 2 }, { item: 'spuzzle_12', count: 2 } ] }
+    ]
+  },
+  5045: {
+    id: 5045,
+    name: 'フリージア（覚醒）',
+    rarity: 5,
+    attr: 'water',
+    sub: 'dark',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 600, max: 2300 }, atk: { min: 600, max: 2500 }, rec: { min: 30, max: 200 } },
+    skill: {
+      name: '霜華乱咲',
+      sp: 5,
+      desc: '6秒間、時を止める。\n左上に水を逆L字型に生成。',
+      cutin: true,
+      effects: [ { type: 'timeStop', seconds: 6 }, { type: 'orbChangeReverseL', attr: 'water' } ]
+    },
+    leaderSkill: {
+      name: '氷鋒斧踏',
+      desc: '水ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.4倍。\nバランスタイプのHP1.2倍。',
+      effects: [
+        { type: 'atk', condition: 'connectEach', attr: 'water', count: 5, value: 1.4, exponential: true, exact: true },
+        { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.4, exponential: true, exact: true },
+        { type: 'hp', condition: 'type', attr: 'バランス', value: 1.2 },
+        { type: 'chipDropUp', value: 5 }
+      ]
+    }
+  },
+  5046: {
+    id: 5046,
+    name: 'ティリア',
+    rarity: 4,
+    attr: 'light',
+    type: 'たいりょく',
+    maxLevel: 50,
+    baseExp: 10000,
+    stats: { hp: { min: 1200, max: 4500 }, atk: { min: 250, max: 1500 }, rec: { min: 25, max: 100 } },
+    skill: { name: '護りの力・光', sp: 8, desc: '1ターンの間、ダメージを無効化。', effects: [ { type: 'dmgReductionBuff', turns: 1, value: 1 } ] },
+    leaderSkill: {
+      name: '護りの力・祝',
+      desc: '光属性のHP1.7倍。\nスキル使用時、攻撃1.3倍。',
+      effects: [ { type: 'hp', attr: 'light', value: 1.7 }, { type: 'atk', condition: 'skillUsed', value: 1.3 } ]
+    },
+    evolutions: [
+      { to: 5047, materials: [ { item: 'puzzle42', count: 1 }, { item: 'spuzzle_4', count: 4 } ] },
+      { to: 5055, materials: [ { item: 'spuzzle_4', count: 2 }, { item: 'spuzzle_22', count: 3 } ] }
+    ]
+  },
+  5047: {
+    id: 5047,
+    name: 'ティリア（覚醒）',
+    rarity: 5,
+    attr: 'light',
+    sub: 'light',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 1200, max: 4500 }, atk: { min: 250, max: 1500 }, rec: { min: 25, max: 100 } },
+    skill: {
+      name: '閃光の加護',
+      sp: 3,
+      desc: '1ターンの間、ダメージを10%軽減。\n1ターンの間、操作時間が2秒延長。',
+      effects: [ { type: 'dmgReductionBuff', turns: 1, value: 0.1 }, { type: 'moveTimeBuff', turns: 1, seconds: 2, mult: 1 } ]
+    },
+    leaderSkill: {
+      name: '聖誓・光明賛歌',
+      desc: 'スキル使用時、攻撃1.8倍。',
+      effects: [
+        { type: 'spCharge', size: 'small' },
+        { type: 'atk', condition: 'skillUsed', value: 1.8 },
+        { type: 'eggDropUp', value: 5 }
+      ]
+    }
+  },
+  5048: {
+    id: 5048,
+    name: 'キャラメル',
+    rarity: 4,
+    attr: 'dark',
+    type: 'バランス',
+    maxLevel: 50,
+    baseExp: 12500,
+    stats: { hp: { min: 1200, max: 3800 }, atk: { min: 300, max: 1600 }, rec: { min: 100, max: 200 } },
+    skill: {
+      name: '共鳴する音色',
+      sp: 2,
+      desc: '3ターンの間、光と闇ドロップが落ちやすくなる。',
+      effects: [ { type: 'orbSpawnBoost2', attr: 'light', rate: 0.2, attr2: 'dark', rate2: 0.2, turns: 3 } ]
+    },
+    leaderSkill: {
+      name: 'ノリノリセッション',
+      desc: '闇ドロップを消す度に攻撃1.2倍。',
+      effects: [
+        { type: 'atk', condition: 'eraseAttr', attr: 'dark', value: 1.25 },
+        { type: 'spCharge', size: 'small' },
+        { type: 'eggDropUp', value: 5 }
+      ]
+    },
+    evolutions: [
+      { to: 5049, materials: [ { item: 'puzzle42', count: 2 }, { item: 'puzzle52', count: 2 } ] },
+      { to: 5056, materials: [ { item: 'puzzle_42', count: 2 }, { item: 'puzzle43', count: 1 } ] }
+    ]
+  },
+  5049: {
+    id: 5049,
+    name: 'キャラメル(覚醒)',
+    rarity: 5,
+    attr: 'dark',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 600, max: 3000 }, atk: { min: 300, max: 2300 }, rec: { min: 50, max: 200 } },
+    skill: {
+      name: 'ファントムノーツ',
+      sp: 2,
+      desc: 'HPが最大HPの20%減る。\n光と闇ドロップをランダムで4つずつ生成。',
+      cutin: true,
+      effects: [
+        { type: 'selfDamage', mode: 'percent', value: 0.2 },
+        { type: 'orbChangeRandom', attr: 'light', count: 4 },
+        { type: 'orbChangeRandom', attr: 'dark', count: 4 }
+      ]
+    },
+    leaderSkill: {
+      name: '堕天使降臨',
+      desc: '【落ちコンなし】\n光ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.4倍。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'light',
+          count: 4,
+          value: 1.45,
+          exponential: true,
+          exact: true
+        },
+        { type: 'atk', condition: 'connectEach', attr: 'dark', count: 4, value: 1.45, exponential: true, exact: true },
+        { type: 'noDrop', value: true },
+        { type: 'eggDropUp', value: 10 }
+      ]
+    }
+  },
+  5050: {
+    id: 5050,
+    name: 'ミスティ',
+    rarity: 4,
+    attr: 'dark',
+    type: 'バランス',
+    maxLevel: 50,
+    baseExp: 12500,
+    stats: { hp: { min: 1200, max: 3800 }, atk: { min: 300, max: 1600 }, rec: { min: 100, max: 200 } },
+    skill: {
+      name: '代わりによろしく★',
+      sp: 2,
+      desc: '1ターンの間、闇ドロップが落ちやすくなる。',
+      effects: [ { type: 'orbSpawnBoost', attr: 'dark', rate: 0.3, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: '流星のように★',
+      desc: 'SPの上限が5アップ（最大15）。',
+      effects: [ { type: 'spCapUp', value: 5 }, { type: 'spCharge', size: 'medium' }, { type: 'eggDropUp', value: 5 } ]
+    },
+    evolutions: [ { to: 5051, materials: [ { item: 'puzzle53', count: 1 }, { item: 'puzzle52', count: 2 } ] } ]
+  },
+  5051: {
+    id: 5051,
+    name: 'ミスティ(覚醒)',
+    rarity: 5,
+    attr: 'dark',
+    sub: 'dark',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 600, max: 2300 }, atk: { min: 600, max: 2200 }, rec: { min: 100, max: 350 } },
+    skill: { name: 'ベストショット', sp: 3, desc: 'HPを最大HPの50%回復。', cutin: true, effects: [ { type: 'heal', value: 0.5 } ] },
+    leaderSkill: {
+      name: '寝ない子だ～れだ★',
+      desc: '闇を10個以上つなげて消すと攻撃2.5倍、1コンボ加算。\nリーダー/フレンドの時、チップドロップ率が少し上がる。',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'dark', count: 10, value: 3, comboAdd: 1 },
+        { type: 'chipDropUp', value: 5 },
+        { type: 'expMult', value: 1.5 }
+      ]
+    }
+  },
+  5052: {
+    id: 5052,
+    name: 'コハク(水着)',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'water',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 600, max: 3000 }, atk: { min: 200, max: 1600 }, rec: { min: 150, max: 450 } },
+    skill: {
+      name: '散火の舞',
+      sp: 5,
+      desc: '最上段横2列を火と水ドロップに変化。\n1ターンの間、敵単体の防御力を50%ダウン。',
+      cutin: true,
+      effects: [
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'fire' },
+        { type: 'orbChangeLine', dir: 'row', index: 1, count: 1, attr: 'water' },
+        { type: 'defenseDown', target: 'single', value: 0.5, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '追魂の華',
+      desc: '【落ちコンなし】火と水ドロップを同時に6個以上つなげて消すと攻撃2.5倍、受けるダメージ20%軽減、1コンボ加算。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'orbConnect',
+          attr: 'fire',
+          count: 6,
+          value: 2.5,
+          attr2: 'water',
+          comboAdd: 1,
+          reduce: 0.2
+        },
+        { type: 'noDrop', value: true },
+        { type: 'spCharge', size: 'small' }
+      ]
+    }
+  },
+  5053: {
+    id: 5053,
+    name: 'チトセ(朝顔ノ乙女）',
+    rarity: 5,
+    attr: 'water',
+    sub: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 440, max: 3230 }, atk: { min: 300, max: 2000 }, rec: { min: 60, max: 220 } },
+    skill: {
+      name: '暴れまわる蛟龍',
+      sp: 6,
+      desc: '1ターンの間、水属性の攻撃が1.5倍。\n最上段の横1列を水ドロップに変化。最下段の横1列を闇ドロップに変化。',
+      cutin: true,
+      effects: [
+        { type: 'atkBuff', value: 1.5, turns: 1, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'dark' }
+      ]
+    },
+    leaderSkill: {
+      name: '蛟龍の型',
+      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.1倍、受けるダメージ9%軽減。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'water',
+          count: 4,
+          value: 1.15,
+          exponential: true,
+          exact: true,
+          reduce: 0.09
+        },
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'dark',
+          count: 4,
+          value: 1.15,
+          exponential: true,
+          reduce: 0.09,
+          exact: true
+        },
+        { type: 'spCharge', size: 'small' }
+      ]
+    }
+  },
+  5054: {
+    id: 5054,
+    name: 'フリージア（聖夜)',
+    rarity: 5,
+    attr: 'water',
+    sub: 'fire',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 900, max: 3200 }, atk: { min: 600, max: 1800 }, rec: { min: 100, max: 300 } },
+    skill: {
+      name: '前進的論証',
+      sp: 6,
+      desc: 'ドロップを火・水・回復ドロップに変化。\n1ターンの間、操作時間が1秒延長。',
+      cutin: true,
+      effects: [
+        { type: 'orbChangeMulti', orb_fire: true, orb_water: true, orb_heal: true },
+        { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '義・理・善',
+      desc: 'かいふくとバランスタイプの攻撃1.3倍。',
+      effects: [
+        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.3 },
+        { type: 'atk', condition: 'type', attr: 'バランス', value: 1.3 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'eggDropUp', value: 5 },
+        { type: 'coinMult', value: 1.5 }
+      ]
+    }
+  },
+  5055: {
+    id: 5055,
+    name: 'ティリア(チア)',
+    rarity: 5,
+    attr: 'light',
+    sub: 'water',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 800, max: 3100 }, atk: { min: 200, max: 1300 }, rec: { min: 200, max: 600 } },
+    skill: {
+      name: 'ブライトアップ',
+      sp: 4,
+      desc: '1ターンの間、回復力が1.5倍。\n火ドロップを光ドロップに変化。木ドロップを回復ドロップに変化。',
+      cutin: true,
+      effects: [
+        { type: 'recMult', turns: 1, value: 1.5 },
+        { type: 'orbConvert', from: 'fire', to: 'light' },
+        { type: 'orbConvert', from: 'wood', to: 'heal' }
+      ]
+    },
+    leaderSkill: {
+      name: 'チアアップ',
+      desc: '7コンボ以上で攻撃2倍。\nかいふくタイプの全パラメータが1.1倍。',
+      effects: [
+        { type: 'atk', condition: 'combo', count: 7, value: 2 },
+        { type: 'allStat', condition: 'type', attr: 'かいふく', value: 1.1 },
+        { type: 'spCharge', size: 'small' },
+        { type: 'eggDropUp', value: 3 }
+      ]
+    }
+  },
+  5056: {
+    id: 5056,
+    name: 'キャラメル(アナザー)',
+    rarity: 5,
+    attr: 'light',
+    sub: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 600, max: 2900 }, atk: { min: 300, max: 2000 }, rec: { min: 50, max: 700 } },
+    skill: {
+      name: '星ノ塔の音',
+      sp: 2,
+      desc: '回復ドロップをランダムで4つ生成。',
+      cutin: true,
+      effects: [ { type: 'orbChangeRandom', attr: 'heal', count: 4 } ]
+    },
+    leaderSkill: {
+      name: '悪魔のステージ',
+      desc: '【落ちコンなし】\n光ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.2倍、受けるダメージ8%軽減。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'light',
+          count: 4,
+          value: 1.2,
+          exponential: true,
+          exact: true,
+          recValue: 1.2
+        },
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'dark',
+          count: 4,
+          value: 1.2,
+          exponential: true,
+          exact: true,
+          reduce: 0.08
+        },
+        { type: 'noDrop', value: true },
+        { type: 'spCharge', size: 'small' },
+        { type: 'chipDropUp', value: 10 }
+      ]
+    }
+  },
+  5057: {
+    id: 5057,
+    name: '新モンスター',
+    rarity: 3,
+    attr: 'fire',
+    type: 'バランス',
+    baseExp: 100,
+    stats: { hp: { min: 500, max: 1500 }, atk: { min: 200, max: 600 }, rec: { min: 50, max: 150 } },
+    skill: { name: 'スキル名', sp: 1, desc: '', effects: [] },
+    leaderSkill: { name: 'リーダースキル名', desc: '', effects: [ { type: 'atk', attr: 'fire', value: 1.2 } ] }
   }
 };
 
