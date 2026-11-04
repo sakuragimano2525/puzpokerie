@@ -5940,7 +5940,7 @@ const MONSTER_DATA = {
     },
     evolutions: [
       { to: 5015, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_52', count: 2 } ] },
-      { to: 5053, materials: [ { item: 'puzzle_22', count: 2 }, { item: 'puzzle52', count: 3 } ] }
+      { to: 5053, materials: [ { item: 'spuzzle_22', count: 2 }, { item: 'puzzle52', count: 3 } ] }
     ]
   },
   5015: {
@@ -6111,7 +6111,7 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'connectEach', attr: 'wood', count: 5, value: 1.5, exponential: true, exact: true },
         { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.5, exponential: true, exact: true },
         { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.2 },
-        { type: 'coinMult', value: 1.5 }
+        { type: 'eggDropUp', value: 10 }
       ]
     },
     evolutions: [ { to: 5021, materials: [ { item: 'puzzle32', count: 2 }, { item: 'puzzle33', count: 1 } ] } ]
