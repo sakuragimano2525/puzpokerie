@@ -484,12 +484,9 @@
       const nameEl = document.createElement('div'); nameEl.className = 'cutin-name';
       const chars = Array.from(name);
       const chEls = chars.map(c => {
-        // 1文字 = 外側(動かす) ＋ 中に「黒フチ＋光」の層と「白い文字」の層。
-        // 白い文字を ::after ではなく本物の要素にして、iPhoneで白が描かれず光だけ透けるのを防ぐ
+        // 文字は最後に canvas（ただの絵）に描き替える。文字のまま動かすと iPhone で白が抜けて光だけ見えるため
         const s = document.createElement('span'); s.className = 'cutin-ch';
-        const b = document.createElement('span'); b.className = 'cutin-ch-b'; b.textContent = c;
-        const f = document.createElement('span'); f.className = 'cutin-ch-f'; f.textContent = c;
-        s.append(b, f); nameEl.appendChild(s); return s;
+        s.textContent = c; nameEl.appendChild(s); return s;
       });
       strip.append(hit, nameEl);   // hit（白い光）は文字の下
       content.append(strip);
@@ -503,6 +500,45 @@
       const maxW = W * 0.88;
       const nw = nameEl.offsetWidth;
       if (nw > maxW) { fs = Math.max(12, fs * maxW / nw); nameEl.style.fontSize = fs + 'px'; }
+
+      // 1文字ずつ canvas に描く（黒い太フチ＋属性色の光＋白い文字）。以降は絵として動かすので描画が崩れない
+      try {
+        const cs = getComputedStyle(nameEl), rs = getComputedStyle(root);
+        const glow = (rs.getPropertyValue('--c-tglow') || rs.getPropertyValue('--c-glow') || '#ff8a3d').trim();
+        const tlight = (rs.getPropertyValue('--c-tlight') || rs.getPropertyValue('--c-light') || '#ffe0b0').trim();
+        const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+        const pad = Math.ceil(fs * .45);
+        const font = `900 ${fs}px ${cs.fontFamily}`;
+        chEls.forEach((el, i) => {
+          const ch = chars[i];
+          const w = el.offsetWidth;
+          el.textContent = '';
+          el.style.cssText += `;position:relative;display:inline-block;width:${w}px;height:${fs}px;margin-right:${(fs * .03).toFixed(2)}px;`;
+          if (ch.trim() === '') return;
+          const cv = document.createElement('canvas');
+          cv.width = Math.ceil((w + pad * 2) * dpr); cv.height = Math.ceil((fs + pad * 2) * dpr);
+          cv.style.cssText = `position:absolute;left:${-pad}px;top:${-pad}px;width:${w + pad * 2}px;height:${fs + pad * 2}px;pointer-events:none;`;
+          const g = cv.getContext('2d');
+          g.scale(dpr, dpr);
+          g.font = font; g.textBaseline = 'middle'; g.textAlign = 'center'; g.lineJoin = 'round';
+          const x = pad + w / 2, y = pad + fs * .52;
+          g.lineWidth = fs * .24;
+          g.strokeStyle = '#000';
+          // 光（属性色）：2回重ねる
+          g.shadowColor = glow;
+          g.shadowBlur = fs * .5 * dpr; g.strokeText(ch, x, y);
+          g.shadowBlur = fs * .22 * dpr; g.strokeText(ch, x, y);
+          // 黒フチ
+          g.shadowColor = 'transparent'; g.shadowBlur = 0;
+          g.strokeText(ch, x, y + fs * .05);
+          g.strokeText(ch, x, y);
+          // 白い文字（下側だけほんのり属性色）
+          const gr = g.createLinearGradient(0, pad, 0, pad + fs);
+          gr.addColorStop(0, '#fff'); gr.addColorStop(.56, '#fff'); gr.addColorStop(1, tlight);
+          g.fillStyle = gr; g.fillText(ch, x, y);
+          el.appendChild(cv);
+        });
+      } catch (e) { /* 失敗したら文字のまま表示 */ }
 
       // ── 動き ──
       let done = false, timer = 0;

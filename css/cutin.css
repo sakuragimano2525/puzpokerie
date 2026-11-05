@@ -92,28 +92,9 @@
   letter-spacing:.03em;
   -webkit-font-smoothing:antialiased; text-rendering:geometricPrecision;
 }
-/* 1文字ずつ：外側(.cutin-ch)＝動く入れ物、.cutin-ch-b＝黒い太フチ＋属性色の光、.cutin-ch-f＝その上に重ねる白い文字 */
+/* 1文字ずつ：js/cutin.js が canvas に「黒い太フチ＋光＋白い文字」を描いて入れる（動かすのはこの入れ物） */
 .cutin-ch {
   position:relative; z-index:0; display:inline-block; white-space:pre;
   transform:skewX(-11deg);
-  -webkit-transform:skewX(-11deg) translateZ(0);
-  isolation:isolate;
 }
-.cutin-ch-b {
-  display:inline-block; white-space:pre; position:relative; z-index:0;
-  color:#000; -webkit-text-stroke:.24em #000;
-  text-shadow:0 .05em 0 #000, 0 0 .22em var(--c-tglow,var(--c-glow)), 0 0 .5em var(--c-tglow,var(--c-glow));
-}
-.cutin-ch-f {
-  position:absolute; left:0; top:0; z-index:1; white-space:pre;
-  -webkit-text-stroke:0; text-shadow:none;
-  color:#fff; -webkit-text-fill-color:#fff;
-}
-/* PC・Android：下側だけほんのり属性色のグラデーション（iPhone/iPadは下の指定で単色の白にする） */
-@supports not (-webkit-touch-callout: none) {
-  .cutin-ch-f {
-    background:linear-gradient(180deg, #fff 0%, #fff 56%, var(--c-tlight,var(--c-light)) 100%);
-    -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent; color:transparent;
-  }
-}
+.cutin-ch canvas { display:block; }
