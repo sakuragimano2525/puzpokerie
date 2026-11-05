@@ -331,7 +331,8 @@
       const W = Math.round(hr.width), DH = Math.round(hr.height);
       if (!W || !DH) { resolve(); return; }   // 画面が見えていない時は飛ばす
 
-      const th = THEMES[enemy && enemy.attr] || THEMES.fire;
+      // 主属性が「無」（none）のモンスターは、副属性（sub）の色にする。どちらも無ければ火（赤）
+      const th = THEMES[enemy && enemy.attr] || THEMES[enemy && enemy.sub] || THEMES.fire;
       const name = cleanName(rawName);
 
       // ── 効果音（cutin.mp3）：鳴らせたら、その長さに合わせて表示時間を決める ──
@@ -483,8 +484,12 @@
       const nameEl = document.createElement('div'); nameEl.className = 'cutin-name';
       const chars = Array.from(name);
       const chEls = chars.map(c => {
+        // 1文字 = 外側(動かす) ＋ 中に「黒フチ＋光」の層と「白い文字」の層。
+        // 白い文字を ::after ではなく本物の要素にして、iPhoneで白が描かれず光だけ透けるのを防ぐ
         const s = document.createElement('span'); s.className = 'cutin-ch';
-        s.dataset.c = c; s.textContent = c; nameEl.appendChild(s); return s;
+        const b = document.createElement('span'); b.className = 'cutin-ch-b'; b.textContent = c;
+        const f = document.createElement('span'); f.className = 'cutin-ch-f'; f.textContent = c;
+        s.append(b, f); nameEl.appendChild(s); return s;
       });
       strip.append(hit, nameEl);   // hit（白い光）は文字の下
       content.append(strip);

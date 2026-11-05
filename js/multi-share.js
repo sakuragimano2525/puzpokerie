@@ -873,7 +873,7 @@
     tx.append(h, n);
     if (mon && mon.skill && mon.skill.desc) {
       const ds = document.createElement('div'); ds.className = 'mst-desc';
-      try { setSkillText(ds, mon.skill.desc); } catch (e) { ds.textContent = mon.skill.desc; }
+      try { setSkillDesc(ds, mon.skill); } catch (e) { ds.textContent = mon.skill.desc; }
       tx.appendChild(ds);
     }
     el.appendChild(tx);
@@ -1182,7 +1182,7 @@
       try { playSkillSound(); showRemoteSkillToast(d || {}); } catch (_) {}
       const mon = d && d.m != null ? MONSTER_DATA[d.m] : null;
       if (mon && mon.skill && mon.skill.cutin === true && window.EnemyCutIn) {
-        try { await window.EnemyCutIn.show({ attr: mon.attr, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (_) {}
+        try { await window.EnemyCutIn.show({ attr: mon.attr, sub: mon.sub, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (_) {}
       }
     },
   };

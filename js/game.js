@@ -1349,8 +1349,16 @@ function compileEnemyActions(enemyDef) {
   // ★ 敵の属性はMONSTER_DATAと必ず連動させる ★
   // ダンジョンデータ側にattrが書かれていても、対応するモンスターが
   // MONSTER_DATAに存在する場合はそちらの属性を優先する。
+  // ただし主属性が「無（none）」のモンスターは、ダンジョン側のattrが有効ならそれを残し、無ければ副属性を使う
+  //（無のまま上書きすると属性アイコン・HPバーなどが闇扱いになってしまうため）
   const linkedAttr = getMonsterAttrFromImg(enemyDef.img);
-  if (linkedAttr) compiled.attr = linkedAttr;
+  if (linkedAttr && ENEMY_ATTRS.includes(linkedAttr)) compiled.attr = linkedAttr;
+  else if (linkedAttr) {
+    if (!ENEMY_ATTRS.includes(enemyDef.attr)) {
+      const lm = MONSTER_DATA[parseInt((enemyDef.img || '').match(/mp(\d+)\.png/)[1])];
+      if (lm && ENEMY_ATTRS.includes(lm.sub)) compiled.attr = lm.sub;
+    }
+  }
   const rawActions = enemyDef.actions || [];
   const runtimeActions = [];
 
@@ -2371,7 +2379,8 @@ function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし�
       }
       if (monId && MONSTER_DATA[monId]) { droppedMonsters.push(monId); dropped = true; 
         // ギフト画像は落ちたモンスターの属性に連動（火=gift1 水=2 木=3 光=4 闇=5）
-        const mAttr = Array.isArray(MONSTER_DATA[monId].attr) ? MONSTER_DATA[monId].attr[0] : MONSTER_DATA[monId].attr;
+        let mAttr = Array.isArray(MONSTER_DATA[monId].attr) ? MONSTER_DATA[monId].attr[0] : MONSTER_DATA[monId].attr;
+        if (!ENEMY_ATTRS.includes(mAttr) && ENEMY_ATTRS.includes(MONSTER_DATA[monId].sub)) mAttr = MONSTER_DATA[monId].sub;   // 主属性が無なら副属性の色のタマゴ
         const giftNo = (parseInt(ATTR_TO_IMG[mAttr]) >= 1 && parseInt(ATTR_TO_IMG[mAttr]) <= 5) ? ATTR_TO_IMG[mAttr] : ((droppedMonsters.length + droppedItems.length) % 5 + 1);
         // ★4以上のモンスターが落ちたら giftXs.png（＋虹の光）。giftXs.png が無ければ通常の giftX.png
         const rare = (Number(MONSTER_DATA[monId].rarity) || 0) >= 4;
@@ -5984,7 +5993,7 @@ function renderMonsterDetail() {
   document.getElementById('md-skill-turn').textContent = `必要SP ${requiredSp}`;
   const slvRow = document.getElementById('md-skill-lv-row');
   if (slvRow) slvRow.style.display = 'none';
-  setSkillText(document.getElementById('md-skill-desc'), skill.desc);
+  setSkillDesc(document.getElementById('md-skill-desc'), skill);
   document.getElementById('md-hp').textContent = lvStats.hp.toLocaleString();
   document.getElementById('md-atk').textContent = lvStats.atk.toLocaleString();
   document.getElementById('md-rec').textContent = lvStats.rec.toLocaleString();
@@ -6254,7 +6263,7 @@ function renderEvoScreen() {
   if (skLabel) skLabel.textContent = `スキル：${toSkill.name}`;
   const skSp = document.getElementById('evo-skill-sp');
   if (skSp) skSp.textContent = `必要SP ${getRequiredSp(null, toMon)}`;
-  setSkillText(document.getElementById('evo-skill-desc'), toSkill.desc || '---');
+  setSkillDesc(document.getElementById('evo-skill-desc'), toSkill.desc ? toSkill : { ...toSkill, desc: '---' });
   const toLs = toMon.leaderSkill;
   const lsNameEl = document.getElementById('evo-ls-name');
   if (lsNameEl) lsNameEl.textContent = toLs ? toLs.name : '';
@@ -7160,6 +7169,43 @@ function addPartySp(amount) {
 // 例：SP0→1でチーム全員が使用可能になった時に1回、以降SPが増えても鳴らない。
 // スキルを使ってSPが足りなくなって下がり、再び使えるようになったらまた鳴る。
 let _lastReadySkillCount = 0;
+// ── 発動条件つきスキル（skill.condition）──
+//   条件を満たしていないスキルは、SPが溜まっていても使えない（光る枠も出ない）。条件の種類は js/skill-text.js の冒頭を参照。
+function boardOrbCount(attr) {
+  let n = 0;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (grid[r] && grid[r][c] === attr) n++;
+  return n;
+}
+function skillCondOk(skill) {
+  const c = skill && skill.condition;
+  if (!c || !c.type) return true;
+  const v = Number(c.value) || 0;
+  switch (c.type) {
+    case 'orbCount':     return boardOrbCount(c.attr) >= Math.max(1, v);
+    case 'hpBelow':      return playerMaxHP > 0 && playerCurrentHP * 100 <= playerMaxHP * v;
+    case 'battleBefore': return (currentBattleIndex + 1) <= v;
+    case 'battleAfter':  return (currentBattleIndex + 1) >= v;
+    case 'orbBoost':     return orbBoosts.some(b => b.attr === c.attr && b.turns > 0 && (!b.enemy || c.attr === 'poison' || c.attr === 'ojama'));
+  }
+  return true;
+}
+// 条件の変化（盤面・HP・バトル数・目覚め）でスキルの「使える／使えない」が変わったら、パーティ欄を描き直す
+let _skillCondSig = '';
+function refreshSkillCondUI() {
+  if (busy || isUsingSkill) return;
+  if (!document.getElementById('party-grid')) return;
+  let sig = '';
+  for (const uid of partyUids) {
+    if (uid === null || uid === undefined) { sig += '-'; continue; }
+    const entry = box.find(b => b.uid === uid); const mon = entry && MONSTER_DATA[entry.monsterId];
+    sig += (mon && mon.skill && mon.skill.condition) ? (skillCondOk(mon.skill) ? '1' : '0') : '-';
+  }
+  if (sig === _skillCondSig) return;
+  _skillCondSig = sig;
+  try { renderParty(); } catch (e) {}
+}
+setInterval(refreshSkillCondUI, 250);
+
 function countReadySkills() {
   let n = 0;
   for (const uid of partyUids) {
@@ -7168,7 +7214,7 @@ function countReadySkills() {
     if (!entry) continue;
     const mon = MONSTER_DATA[entry.monsterId];
     if (!mon) continue;
-    if (partySp >= getRequiredSp(entry, mon)) n++;
+    if (partySp >= getRequiredSp(entry, mon) && skillCondOk(mon.skill)) n++;
   }
   return isSkillSealed() ? 0 : n;   // スキル使用不可の間は「使える」扱いにしない
 }
@@ -7209,10 +7255,11 @@ function openSkillConfirm(uid) {
   if (!mon || !mon.skill) return;   // スキル未設定のモンスターは発動できない
   const requiredSp = getRequiredSp(entry, mon);
   if (partySp < requiredSp) return;
+  if (!skillCondOk(mon.skill)) { showSkillMessage('条件を満たしていません：' + skillCondText(mon.skill.condition), 1600); return; }
 
   skillTargetUid = uid;
   document.getElementById('sp-title').textContent = mon.skill.name;
-  setSkillText(document.getElementById('sp-desc'), mon.skill.desc);
+  setSkillDesc(document.getElementById('sp-desc'), mon.skill);
   document.getElementById('sp-cooldown').textContent = `SP ${partySp} / ${getSpCap()}（消費${requiredSp}）`;
   document.getElementById('skill-confirm').style.display = 'flex';
 }
@@ -7810,7 +7857,7 @@ async function runPendingTransforms() {
     renderBuffIcons();
     // 敵の⚠️技と同じカットイン（変身後の姿を大きく出す）
     // 画像は mp{id}.png（無ければ通常の画像）
-    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, img: `mp${newMon.id}.png`, imgFallback: monsterImg(newMon) }, newMon.name + 'に へんしん！', { face: true }); } catch (err) {}
+    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, sub: newMon.sub, img: `mp${newMon.id}.png`, imgFallback: monsterImg(newMon) }, newMon.name + 'に へんしん！', { face: true }); } catch (err) {}
   }
 }
 
@@ -7831,7 +7878,7 @@ async function confirmSkill() {
   const mon = MONSTER_DATA[entry.monsterId];
   if (!mon || !mon.skill) return;
   const requiredSp = getRequiredSp(entry, mon);
-  if (partySp < requiredSp || isSkillSealed()) { closeSkillConfirm(); return; }
+  if (partySp < requiredSp || isSkillSealed() || !skillCondOk(mon.skill)) { closeSkillConfirm(); return; }
 
   closeSkillConfirm();
   busy = true;
@@ -7842,7 +7889,7 @@ async function confirmSkill() {
   if (window.MultiShare) MultiShare.fx('sk', { n: mon.skill.name, m: entry.monsterId });   // マルチ：スキル発動を相手の画面へ
   // カットイン（モンスターエディターで ON にしたスキル）：画像は mp{ID}.png、効果音は {ID}.mp3（cutin.mp3 の代わり。無ければ cutin.mp3）
   if (mon.skill.cutin === true && window.EnemyCutIn) {
-    try { await window.EnemyCutIn.show({ attr: mon.attr, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (err) {}
+    try { await window.EnemyCutIn.show({ attr: mon.attr, sub: mon.sub, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (err) {}
   }
   if (mon.skill.effects && mon.skill.effects.length) {
     runSkillEffects(mon.skill.effects, entry, mon);
@@ -10341,7 +10388,7 @@ function showSkillHoldInfo(mon, entry) {
   const nm = document.createElement('span'); nm.className = 'shi-name'; nm.textContent = mon.skill.name || 'スキル';
   const sp = document.createElement('span'); sp.className = 'shi-sp'; sp.textContent = `必要SP ${need}`;
   head.append(nm, sp);
-  const ds = document.createElement('div'); ds.className = 'shi-desc'; setSkillText(ds, mon.skill.desc || '');
+  const ds = document.createElement('div'); ds.className = 'shi-desc'; setSkillDesc(ds, mon.skill);
   const who = document.createElement('div'); who.className = 'shi-who'; who.textContent = mon.name;
   box.append(who, head, ds);
   box.classList.add('on');
@@ -10438,7 +10485,7 @@ function renderParty() {
           }
 
           const requiredSp = getRequiredSp(entry, mon);
-          const isSpReady = partySp >= requiredSp && !isSkillSealed(); // 共通SPで発動可能か（スキル使用不可の間は不可）
+          const isSpReady = partySp >= requiredSp && !isSkillSealed() && skillCondOk(mon.skill); // 共通SPで発動可能か（スキル使用不可の間は不可）
           // スキル使用不可中の印は、右のバフアイコン欄に出すので、各モンスターには付けない
 
           if (isSpReady) {

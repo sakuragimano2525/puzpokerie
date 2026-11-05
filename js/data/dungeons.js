@@ -165,7 +165,8 @@ const DUNGEON_BGM = {
   "stellab-boss": {"field":"b11.mp3","boss":"boss8.mp3"},
   "stellac-boss": {"field":"b11.mp3","boss":"boss8.mp3"},
   "monhan-1": {"field":"b10.mp3","boss":"dino.mp3"},
-  "monhan-2": {"field":"b10.mp3","boss":"zin.mp3"}
+  "monhan-2": {"field":"b10.mp3","boss":"zin.mp3"},
+  "monhan-3": {"field":"b10.mp3","boss":"baru.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -41724,6 +41725,184 @@ const DUNGEON_DATA = {
               "count": 1
             },
             "subAttr": "wood"
+          }
+        ]
+      }
+    ]
+  },
+  "monhan-3": {
+    "bgImg": "dungeon14.png",
+    "bgm": "b10.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "バルファルク",
+            "img": "mp5068.png",
+            "attr": "fire",
+            "hp": 1750000,
+            "atk": 1200,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 50000,
+            "coin": 500,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.5
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "かみつき",
+                "condition": "normal",
+                "weight": 33,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.1
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "龍閃",
+                "condition": "normal",
+                "weight": 34,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "combo_absorb",
+                    "turn": 1,
+                    "combo": 4
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "槍翼なぎ払い",
+                "condition": "normal",
+                "weight": 33,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_ratio",
+                    "basis": "max",
+                    "rate": 33
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "龍気連弾",
+                "condition": "normal",
+                "weight": 50,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "time_reduce",
+                    "seconds": 2,
+                    "turn": 1
+                  }
+                ],
+                "hpBelow": 40
+              },
+              {
+                "name": "連続かみつき",
+                "condition": "normal",
+                "weight": 50,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage",
+                    "value": 170,
+                    "repeat": 20
+                  }
+                ],
+                "hpBelow": 40
+              },
+              {
+                "name": "龍気解放",
+                "condition": "hp<=40%",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 2,
+                    "turn": -1
+                  },
+                  {
+                    "type": "combo_rule",
+                    "combo": 10,
+                    "mode": "min",
+                    "damage": 9999999
+                  },
+                  {
+                    "type": "no_fall",
+                    "turn": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "exact",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": "",
+                    "counts": {
+                      "fire": 6,
+                      "water": 6,
+                      "wood": 6,
+                      "light": 6,
+                      "dark": 6
+                    }
+                  },
+                  {
+                    "type": "move_fix",
+                    "seconds": 9,
+                    "turn": 1
+                  },
+                  {
+                    "type": "skill_seal",
+                    "turn": 1
+                  },
+                  {
+                    "type": "bind",
+                    "target": "all",
+                    "turnMin": 1,
+                    "turnMax": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.5,
+              "count": 1
+            },
+            "subAttr": "dark"
           }
         ]
       }

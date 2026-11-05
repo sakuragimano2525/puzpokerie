@@ -93,6 +93,37 @@
     el.innerHTML = html;
   }
 
+  // ── スキルの発動条件（skill.condition）の説明文 ──
+  //   { type:'orbCount', attr:'fire', value:5 }  盤面に火ドロップが5個以上ある場合、使用可能。
+  //   { type:'hpBelow', value:50 }               HP50%以下で使用可能。
+  //   { type:'battleBefore', value:3 }           バトル3以前で使用可能。
+  //   { type:'battleAfter', value:3 }            バトル3以降で使用可能。
+  //   { type:'orbBoost', attr:'fire' }           火ドロップの目覚め中使用可能。
+  //   attr は fire/water/wood/light/dark/heal/poison/ojama（毒・お邪魔も可）
+  const COND_ORB = { fire: '火', water: '水', wood: '木', light: '光', dark: '闇', heal: '回復', poison: '毒', ojama: 'お邪魔' };
+  function skillCondText(c) {
+    if (!c || !c.type) return '';
+    const o = COND_ORB[c.attr] || '火';
+    const v = Math.max(0, Math.floor(Number(c.value) || 0));
+    switch (c.type) {
+      case 'orbCount':     return `盤面に${o}ドロップが${v || 1}個以上ある場合、使用可能。`;
+      case 'hpBelow':      return `HP${v || 1}%以下で使用可能。`;
+      case 'battleBefore': return `バトル${v || 1}以前で使用可能。`;
+      case 'battleAfter':  return `バトル${v || 1}以降で使用可能。`;
+      case 'orbBoost':     return `${o}ドロップの目覚め中使用可能。`;
+    }
+    return '';
+  }
+  // スキルの説明を入れる。発動条件があれば、必ず先頭に青文字で出す
+  function setSkillDesc(el, skill, numHL) {
+    if (!el) return;
+    setSkillText(el, skill && skill.desc, numHL);
+    const ct = skillCondText(skill && skill.condition);
+    if (ct) el.innerHTML = `<span class="sk-cond">${skillTextHTML(ct)}</span>` + el.innerHTML;
+  }
+
+  window.skillCondText = skillCondText;
+  window.setSkillDesc = setSkillDesc;
   window.skillTextHTML = skillTextHTML;
   window.setSkillText = setSkillText;
 })();

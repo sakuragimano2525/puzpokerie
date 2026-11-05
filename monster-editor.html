@@ -154,6 +154,25 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
     <label class="wide">説明（ゲーム内表示用）<textarea id="skDesc"></textarea></label>
     <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skCutin" type="checkbox" style="width:auto"> スキル発動時にカットインを出す</label>
     <p class="small wide" id="skCutinHint" style="margin:0"></p>
+    <label class="wide">発動条件（条件を満たしていないと、SPが溜まっていても使えません）
+      <select id="skCondType">
+        <option value="">なし</option>
+        <option value="orbCount">盤面に○ドロップがX個以上ある場合、使用可能</option>
+        <option value="hpBelow">HP X%以下で使用可能</option>
+        <option value="battleBefore">バトル X以前で使用可能</option>
+        <option value="battleAfter">バトル X以降で使用可能</option>
+        <option value="orbBoost">○ドロップの目覚め中使用可能</option>
+      </select>
+    </label>
+    <label id="skCondAttrWrap">条件のドロップ
+      <select id="skCondAttr">
+        <option value="fire">火</option><option value="water">水</option><option value="wood">木</option>
+        <option value="light">光</option><option value="dark">闇</option><option value="heal">回復</option>
+        <option value="poison">毒</option><option value="ojama">お邪魔</option>
+      </select>
+    </label>
+    <label id="skCondValWrap"><span id="skCondValLabel">X</span><input id="skCondVal" type="number" min="1" step="1" value="5"></label>
+    <p class="small wide" id="skCondHint" style="margin:0"></p>
   </div>
   <div id="activeEffects"></div>
   <p class="small" id="skDup" style="color:#b45309"></p>
@@ -543,7 +562,7 @@ function buildMonster(){
   if($('monMaxLevel').value!=='') m.maxLevel = Math.max(1,Math.min(EXP_TABLE_LEN,Math.floor(num('monMaxLevel'))));
   m.baseExp = num('monBaseExp',100);
   m.stats = { hp:{min:num('hpMin'),max:num('hpMax')}, atk:{min:num('atkMin'),max:num('atkMax')}, rec:{min:num('recMin'),max:num('recMax')} };
-  m.skill = { name:$('skName').value, sp:Math.max(1,Math.floor(num('skSp',1))), desc:$('skDesc').value, ...($('skCutin').checked?{cutin:true}:{}), effects:activeEffects.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))))) };
+  m.skill = { name:$('skName').value, sp:Math.max(1,Math.floor(num('skSp',1))), desc:$('skDesc').value, ...($('skCutin').checked?{cutin:true}:{}), ...readSkillCond(), effects:activeEffects.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))))) };
   m.leaderSkill = { name:$('lsName').value, desc:$('lsDesc').value, effects:leaderEffects.map(e=>cleanEff(e.data)) };
   const evos = evolutions.filter(e=>e.to!==''&&e.to!=null).map(e=>({to:Number(e.to),materials:e.materials.filter(x=>x.item).map(x=>({item:x.item,count:Number(x.count)||1}))}));
   if(evos.length) m.evolutions = evos;
@@ -570,6 +589,7 @@ function loadMonsterToForm(m){
   $('skSp').value = sk.sp ?? 1;
   $('skDesc').value = sk.desc ?? '';
   $('skCutin').checked = sk.cutin === true;
+  writeSkillCond(sk.condition);
   const ls = m.leaderSkill||{};
   $('lsName').value = ls.name ?? ''; $('lsDesc').value = ls.desc ?? '';
   const toEff=(templates,e)=>{ e=templates===leaderTemplates?normLeaderEff(e):structuredClone(e); if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; } if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; } return {key:matchTemplate(templates,e),data:e}; };
@@ -927,6 +947,7 @@ function applySkill(sk){
   $('skSp').value=sk.sp ?? 1;
   $('skDesc').value=sk.desc??'';
   $('skCutin').checked = sk.cutin === true;
+  writeSkillCond(sk.condition);
   activeEffects=normActiveEffs(sk.effects).map(e=>({key:matchTemplate(activeTemplates,e),data:structuredClone(e)}));
   renderEffects('active'); dirty=true; update();
 }
@@ -1016,6 +1037,36 @@ function refreshIdNames(){
     span.textContent = ids.map(id=>`${id}: ${(db[id]&&db[id].name)||(hasDb?'（未登録のID）':'')}`).join(' ／ ');
   });
 }
+// ---------- スキルの発動条件 ----------
+//   skill.condition = { type, attr?, value? }（type: orbCount / hpBelow / battleBefore / battleAfter / orbBoost）
+//   ゲーム内の説明文では、条件の文章が一番先頭に青文字で自動的に付きます（説明欄に書く必要はありません）
+const COND_JP={fire:'火',water:'水',wood:'木',light:'光',dark:'闇',heal:'回復',poison:'毒',ojama:'お邪魔'};
+function condText(c){
+  if(!c||!c.type) return '';
+  const o=COND_JP[c.attr]||'火', v=Math.max(1,Math.floor(Number(c.value)||1));
+  return {orbCount:`盤面に${o}ドロップが${v}個以上ある場合、使用可能。`,hpBelow:`HP${v}%以下で使用可能。`,battleBefore:`バトル${v}以前で使用可能。`,battleAfter:`バトル${v}以降で使用可能。`,orbBoost:`${o}ドロップの目覚め中使用可能。`}[c.type]||'';
+}
+function readSkillCond(){
+  const type=$('skCondType').value; if(!type) return {};
+  const c={type};
+  if(type==='orbCount'||type==='orbBoost') c.attr=$('skCondAttr').value;
+  if(type!=='orbBoost') c.value=Math.max(1,Math.floor(num('skCondVal',1)));
+  return {condition:c};
+}
+function writeSkillCond(c){
+  c=c||{};
+  $('skCondType').value=c.type||'';
+  if(c.attr) $('skCondAttr').value=c.attr;
+  $('skCondVal').value=c.value??5;
+}
+function updateCondUI(){
+  const t=$('skCondType').value;
+  $('skCondAttrWrap').style.display=(t==='orbCount'||t==='orbBoost')?'':'none';
+  $('skCondValWrap').style.display=(t&&t!=='orbBoost')?'':'none';
+  $('skCondValLabel').textContent={orbCount:'個数 X（個以上）',hpBelow:'HP X（%以下）',battleBefore:'バトル X（以前）',battleAfter:'バトル X（以降）'}[t]||'X';
+  const h=$('skCondHint'); const ct=condText(readSkillCond().condition);
+  h.textContent=ct?`ゲーム内では説明の先頭に青文字で表示：「${ct}」`:'';
+}
 function updateCutinHint(){
   const h=$('skCutinHint'); if(!h) return;
   const id=$('monId').value||'?';
@@ -1028,6 +1079,7 @@ function update(){
   refreshIdNames();
   updateImgHint();
   updateCutinHint();
+  updateCondUI();
   updateStatPreview();
   renderSkillLib();
   renderLeaderLib();

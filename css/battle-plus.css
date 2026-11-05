@@ -357,3 +357,7 @@
   background-blend-mode: normal, multiply, normal;
   transition: width .15s ease-out, background-size .15s ease-out;
 }
+
+/* スキルの発動条件の説明（説明文の一番先頭に青文字で出る） */
+.sk-cond { display:block; color:#2b8cff; font-weight:900; margin-bottom:.25em; text-shadow:0 0 1px rgba(255,255,255,.6); }
+.sk-cond .sk-ic { vertical-align:-0.28em; }
