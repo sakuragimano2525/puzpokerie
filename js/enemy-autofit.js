@@ -132,6 +132,10 @@
     img.dataset.afOrig = img.dataset.afOrig || '';
     if (unit) unit.classList.add('autofit');
     if (img.getAttribute('src') !== url) img.src = url;   // 読み込み完了で fitEnemyImagesSoon が走る
+    // 動く画像（APNG/GIF）や余白なしの画像は src が変わらず load も起きない → ここで明示的にフィットをかけ直す
+    // （これが無いと、小さい原寸のまま（XSのような大きさ）で表示されてしまう）
+    if (typeof window.fitEnemyImagesSoon === 'function') window.fitEnemyImagesSoon();
+    else if (typeof fitEnemyImagesSoon === 'function') fitEnemyImagesSoon();
   }
 
   // renderEnemyUI から呼ぶ：img（敵画像）と unit（.enemy-unit）に自動フィットをかける
@@ -151,6 +155,7 @@
       clearTimeout(timer);
       if (url && img.dataset.afOrig === src && img.isConnected) mark(img, unit, url);
       show();
+      if (typeof fitEnemyImagesSoon === 'function') fitEnemyImagesSoon();
     });
   }
 

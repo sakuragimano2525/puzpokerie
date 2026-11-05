@@ -1488,7 +1488,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 500,
-    stats: { hp: { min: 450, max: 3000 }, atk: { min: 150, max: 1700 }, rec: { min: 39, max: 100 } },
+    stats: { hp: { min: 450, max: 3000 }, atk: { min: 150, max: 1700 }, rec: { min: 100, max: 200 } },
     skill: {
       name: 'れんごく',
       sp: 6,
@@ -2209,10 +2209,10 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'たいりょく',
     maxLevel: 50,
-    baseExp: 12500,
+    baseExp: 15000,
     stats: { hp: { min: 600, max: 6000 }, atk: { min: 1, max: 100 }, rec: { min: 5, max: 50 } },
     skill: { name: 'タマゴうみ', sp: 5, desc: 'HPを最大HPの70%回復。', effects: [ { type: 'heal', value: 0.7 } ] },
-    leaderSkill: { name: 'ハピハピハッピー', desc: 'リーダー/フレンドの時、チップドロップ率が1.1倍。', effects: [ { type: 'chipDropUp', value: 3 } ] }
+    leaderSkill: { name: 'ハピハピハッピー', desc: 'リーダー/フレンドの時、チップドロップ率が1.2倍。', effects: [ { type: 'chipDropUp', value: 10 } ] }
   },
   114: {
     id: 114,
@@ -5612,8 +5612,11 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '集中突破',
-      desc: '火ドロップを消す度に攻撃1.1倍。',
-      effects: [ { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.05 } ]
+      desc: '火ドロップを消す度に攻撃1.05倍。\n6コンボ以上で攻撃1.4倍、受けるダメージ10%軽減。',
+      effects: [
+        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.05 },
+        { type: 'atk', condition: 'combo', count: 6, value: 1.4, reduce: 0.1 }
+      ]
     }
   },
   5001: {
@@ -5846,14 +5849,14 @@ const MONSTER_DATA = {
     skill: {
       name: 'シルバーチャリオッツ',
       sp: 5,
-      desc: '1ターンの間、敵単体の防御力を80%ダウン。',
-      effects: [ { type: 'defenseDown', target: 'single', value: 0.8, turns: 1, message: '💥 防御力ダウン！' } ]
+      desc: '2ターンの間、敵単体の防御力を80%ダウン。',
+      effects: [ { type: 'defenseDown', target: 'single', value: 0.8, turns: 2, message: '💥 防御力ダウン！' } ]
     },
     leaderSkill: {
       name: '「戦車」のタロット',
-      desc: '【落ちコンなし】火と光を同時に5個以上繋げて消すと攻撃1.3倍。\n残りドロップ3個以下で攻撃1.5倍。',
+      desc: '【落ちコンなし】水と光を同時に5個以上繋げて消すと攻撃1.3倍。\n残りドロップ3個以下で攻撃1.5倍。',
       effects: [
-        { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 5, value: 1.3, attr2: 'light' },
+        { type: 'atk', condition: 'orbConnect', attr: 'water', count: 5, value: 1.3, attr2: 'light' },
         { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 1.5 },
         { type: 'noDrop', value: true }
       ]
@@ -5885,7 +5888,8 @@ const MONSTER_DATA = {
     },
     evolutions: [
       { to: 5013, materials: [ { item: 'puzzle13', count: 1 }, { item: 'puzzle1', count: 5 } ] },
-      { to: 5052, materials: [ { item: 'puzzle22', count: 2 }, { item: 'spuzzle_22', count: 3 } ] }
+      { to: 5052, materials: [ { item: 'puzzle22', count: 2 }, { item: 'spuzzle_22', count: 3 } ] },
+      { to: 5064, materials: [ { item: 'puzzle1', count: 1 } ] }
     ]
   },
   5013: {
@@ -7233,7 +7237,6 @@ const MONSTER_DATA = {
     attr: 'none',
     sub: 'light',
     type: 'かいふく',
-    maxLevel: 99,
     baseExp: 15000,
     stats: { hp: { min: 1000, max: 3000 }, atk: { min: 3000, max: 6000 }, rec: { min: 300, max: 700 } },
     skill: {
@@ -7260,7 +7263,6 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'こうげき',
-    maxLevel: 99,
     baseExp: 12500,
     stats: { hp: { min: 440, max: 3000 }, atk: { min: 300, max: 2200 }, rec: { min: 60, max: 220 } },
     skill: {
@@ -7380,14 +7382,10 @@ const MONSTER_DATA = {
     stats: { hp: { min: 600, max: 4000 }, atk: { min: 6000, max: 8000 }, rec: { min: 100, max: 300 } },
     skill: {
       name: 'キャンバス拡張',
-      sp: 5,
-      desc: '99ターンの間、自分の属性が木属性に変化。\n1ターンの間、操作時間が3秒延長、HPを最大HPの25%回復。',
+      sp: 2,
+      desc: '99ターンの間、自分の属性が木属性に変化。\n1ターンの間、操作時間が1秒延長。',
       cutin: true,
-      effects: [
-        { type: 'attrChange', attr: 'wood', turns: 99 },
-        { type: 'moveTimeBuff', turns: 1, seconds: 5, mult: 1 },
-        { type: 'heal', value: 0.25 }
-      ]
+      effects: [ { type: 'attrChange', attr: 'wood', turns: 99 }, { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 } ]
     },
     leaderSkill: {
       name: '令嬢戦術：爆花',
