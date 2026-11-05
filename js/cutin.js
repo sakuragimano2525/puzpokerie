@@ -533,6 +533,7 @@
         { transform: 'translateX(0) scaleY(1)', easing: 'cubic-bezier(.6,0,.9,.5)' },
         { transform: 'translateX(108%) scaleY(.86)' }
       ], { duration: OUT_MS, delay: T - OUT_MS, fill: 'forwards' });
+      stage.style.transform = '';   // 最初に画面の外へ置いていた指定を外す（入り終わったあとは、アニメなしで通常位置に止まる）
 
       // 敵：ぐっと寄ってから、ゆっくり引く（光ってから元の明るさへ）
       A(mon, [

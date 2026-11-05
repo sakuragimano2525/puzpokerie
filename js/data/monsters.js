@@ -7539,6 +7539,36 @@ const MONSTER_DATA = {
       desc: '5色同時に消すと攻撃2倍、受けるダメージ10%軽減。',
       effects: [ { type: 'atk', condition: 'colorCount', count: 5, value: 2, reduce: 0.1 } ]
     }
+  },
+  5068: {
+    id: 5068,
+    name: 'バルファルク',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 400, max: 3200 }, atk: { min: 400, max: 2000 }, rec: { min: 20, max: 100 } },
+    skill: {
+      name: '彗星',
+      sp: 5,
+      desc: '敵全体に攻撃力×3の火属性攻撃。\nロックを解除し、ドロップを5属性＋回復ドロップに変化。',
+      cutin: true,
+      effects: [
+        { type: 'damagePartyAtkMult', target: 'all', value: 3, attr: 'fire' },
+        { type: 'orbUnlock', target: 'all' },
+        { type: 'orbChange5ColorHeal' }
+      ]
+    },
+    leaderSkill: {
+      name: '銀翼の凶星',
+      desc: '【操作時間2秒固定】5コンボ以上で攻撃2.5倍、受けるダメージ25%軽減。',
+      effects: [
+        { type: 'moveTimeFixed', value: 2500 },
+        { type: 'atk', condition: 'combo', count: 5, value: 2.5, reduce: 0.25 }
+      ]
+    }
   }
 };
 
