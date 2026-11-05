@@ -6093,7 +6093,7 @@ const MONSTER_DATA = {
   5020: {
     id: 5020,
     name: 'エレノア',
-    rarity: 4,
+    rarity: 5,
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 50,
@@ -6653,20 +6653,18 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '水海の主',
-      desc: '水と闇ドロップを同時に6個以上つなげて消すと攻撃3倍、1コンボ加算、受けるダメージ30%軽減。',
+      desc: '水と闇ドロップを同時に6個以上つなげて消すと攻撃2倍、受けるダメージ30%軽減、1コンボ加算。',
       effects: [
         {
           type: 'atk',
           condition: 'orbConnect',
           attr: 'water',
           count: 6,
-          value: 3,
+          value: 2,
           attr2: 'dark',
           reduce: 0.3,
           comboAdd: 1
-        },
-        { type: 'expMult', value: 1.5 },
-        { type: 'eggDropUp', value: 20 }
+        }
       ]
     }
   },
@@ -7141,7 +7139,7 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '義・理・善',
-      desc: 'かいふくとバランスタイプの攻撃1.3倍。',
+      desc: 'かいふくタイプとバランスタイプの攻撃1.3倍。',
       effects: [
         { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.3 },
         { type: 'atk', condition: 'type', attr: 'バランス', value: 1.3 },

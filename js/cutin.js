@@ -42,7 +42,7 @@
     fire:  { main:'#ff3d1e', deep:'#8a0c0c', dark:'#2b0606', glow:'#ff8a3d', light:'#ffe2b4' },
     water: { main:'#1e8cff', deep:'#0b3f9a', dark:'#04122f', glow:'#58c8ff', light:'#d6f2ff' },
     wood:  { main:'#2fbf4a', deep:'#0e6025', dark:'#041b0b', glow:'#86ff7e', light:'#e2ffd2' },
-    light: { main:'#ffc414', deep:'#a06a00', dark:'#2f1e00', glow:'#fff27a', light:'#fffbe2' },
+    light: { main:'#ffc414', deep:'#a06a00', dark:'#2f1e00', glow:'#fff27a', light:'#fffbe2', tglow:'#6b4500', tlight:'#ffffff' },
     dark:  { main:'#9b3cff', deep:'#43107f', dark:'#13051f', glow:'#cc84ff', light:'#f2dcff' }
   };
 
@@ -174,6 +174,7 @@
   function boostSE(au) {
     try {
       if (!/^https?:$/.test(location.protocol)) return;
+      if (window.AudioFast && window.AudioFast.IS_IOS) return;   // iPhoneは増幅で音が途切れやすいので使わない
       if (au.__boosted) { au.__boosted.ctx.state === 'suspended' && au.__boosted.ctx.resume(); return; }
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       const ctx = _boostCtx || (_boostCtx = new AC());
@@ -303,12 +304,25 @@
   function show(enemy, rawName, opts) {
     const file = opts && opts.se;
     const wantFace = !!(opts && opts.face);
+    const AF = window.AudioFast;
+    if (AF && AF.IS_IOS && AF.loadCutBuf) {
+      // iPhone：<audio> ではなく AudioBuffer で鳴らす（前半の繰り返し・音切れ対策）
+      const wait = ms => new Promise(r => setTimeout(() => r(null), ms));
+      const pick = (file ? Promise.race([AF.loadCutBuf(file), wait(900)]) : Promise.resolve(null))
+        .then(b => b ? { buf: b, gain: CUTIN_SE_GAIN, duck: true }
+                     : Promise.race([AF.loadCutBuf('cutin.mp3'), wait(500)]).then(b2 => b2 ? { buf: b2, gain: 1, duck: false } : null));
+      return Promise.all([pick, wantFace ? prepareImg(enemy) : null]).then(r => {
+        const sb = r[0], face = r[1] ? faceLayout(r[1], opts.focus) : null;
+        if (sb) return _show(enemy, rawName, null, face, sb);
+        return prepareSE(file).then(c => _show(enemy, rawName, c, face, null));   // 読めなかった時は今までの方法
+      });
+    }
     if (!file && !wantFace) return _show(enemy, rawName, null, null);
     return Promise.all([prepareSE(file), wantFace ? prepareImg(enemy) : null])
       .then(r => _show(enemy, rawName, r[0], r[1] ? faceLayout(r[1], opts.focus) : null));
   }
 
-  function _show(enemy, rawName, customSE, face) {
+  function _show(enemy, rawName, customSE, face, seBuf) {
     return new Promise(resolve => {
       if (_active) { try { _active(); } catch (e) {} }
 
@@ -322,8 +336,16 @@
 
       // ── 効果音（cutin.mp3）：鳴らせたら、その長さに合わせて表示時間を決める ──
       let T = CUTIN_MIN_MS;
+      let _bufPlay = null;
       try {
-        if (customSE && customSE.au) {
+        if (seBuf && window.AudioFast) {
+          if (seBuf.duck) { duckBGM(); }
+          _bufPlay = window.AudioFast.playGain(seBuf.buf, seBuf.gain, seBuf.duck ? unduck : null);
+          if (_bufPlay) {
+            if (isFinite(_bufPlay.duration) && _bufPlay.duration > 0) T = clamp(_bufPlay.duration * 1000, 1200, CUTIN_MAX_MS);
+            if (seBuf.duck) setTimeout(unduck, T + 300);
+          } else { if (seBuf.duck) unduck(); playSE('cutin'); }
+        } else if (customSE && customSE.au) {
           const au = customSE.au;
           try { au.currentTime = 0; } catch (e) {}
           boostSE(au);   // 音を大きく
@@ -350,7 +372,7 @@
 
       const root = document.createElement('div');
       root.className = 'cutin-root';
-      Object.entries({ '--c-main': th.main, '--c-deep': th.deep, '--c-dark': th.dark, '--c-glow': th.glow, '--c-light': th.light })
+      Object.entries({ '--c-main': th.main, '--c-deep': th.deep, '--c-dark': th.dark, '--c-glow': th.glow, '--c-light': th.light, '--c-tglow': th.tglow || th.glow, '--c-tlight': th.tlight || th.light })
         .forEach(([k, v]) => root.style.setProperty(k, v));
 
       // 背景（暗転＋星＋フラッシュ）
@@ -503,12 +525,14 @@
 
       // 帯：左から滑り込む（少し行き過ぎて戻る）→ 止まる → 右へ抜ける
       A(stage, [
-        { offset: 0,        transform: 'translateX(-108%) scaleY(.7)', easing: 'cubic-bezier(.12,.85,.25,1)' },
-        { offset: fIn * .8, transform: 'translateX(1.6%) scaleY(1.05)', easing: 'ease-out' },
-        { offset: fIn,      transform: 'translateX(0) scaleY(1)' },
-        { offset: fOut,     transform: 'translateX(0) scaleY(1)', easing: 'cubic-bezier(.6,0,.9,.5)' },
-        { offset: 1,        transform: 'translateX(108%) scaleY(.86)' }
-      ], { duration: T });
+        { offset: 0,   transform: 'translateX(-108%) scaleY(.7)', easing: 'cubic-bezier(.12,.85,.25,1)' },
+        { offset: .8,  transform: 'translateX(1.6%) scaleY(1.05)', easing: 'ease-out' },
+        { offset: 1,   transform: 'translateX(0) scaleY(1)' }
+      ], { duration: IN_MS, fill: 'backwards' });
+      A(stage, [
+        { transform: 'translateX(0) scaleY(1)', easing: 'cubic-bezier(.6,0,.9,.5)' },
+        { transform: 'translateX(108%) scaleY(.86)' }
+      ], { duration: OUT_MS, delay: T - OUT_MS, fill: 'forwards' });
 
       // 敵：ぐっと寄ってから、ゆっくり引く（光ってから元の明るさへ）
       A(mon, [
@@ -566,19 +590,20 @@
       // 技名：1文字ずつ「ドン！」と叩きつけるように入る
       const TEXT_AT = IN_MS * .75, STEP = Math.min(45, 340 / Math.max(1, chars.length));
       chEls.forEach((c, i) => {
+        c.style.opacity = '0';   // 出番が来るまで隠す（アニメ開始で上書きされる）
         const an = A(c, [
-          { opacity: 0, transform: `translate(${W * .05}px,${-stripH * .35}px) scale(2.8)` },
-          { opacity: 1, transform: 'translate(0,0) scale(.9)', offset: .58 },
-          { opacity: 1, transform: 'translate(0,0) scale(1)' }
+          { opacity: 0, transform: `translate(${W * .05}px,${-stripH * .35}px) scale(2.8) skewX(-11deg)` },
+          { opacity: 1, transform: 'translate(0,0) scale(.9) skewX(-11deg)', offset: .58 },
+          { opacity: 1, transform: 'translate(0,0) scale(1) skewX(-11deg)' }
         ], { duration: 280, delay: TEXT_AT + i * STEP, easing: 'cubic-bezier(.2,.8,.3,1)' });
-        if (an) an.onfinish = () => { try { an.cancel(); } catch (e) {} };
+        if (an) an.onfinish = () => { try { c.style.transform = 'skewX(-11deg)'; c.style.opacity = '1'; an.cancel(); } catch (e) {} };
       });
       const landAt = TEXT_AT + 280 * .58;
       A(hit, [{ opacity: 0 }, { opacity: .9, offset: .2 }, { opacity: 0 }], { duration: 380, delay: landAt });
       setTimeout(() => { if (!done && typeof battleShake === 'function') { try { battleShake(10); } catch (e) {} } }, landAt);
       // 最後の文字が入った瞬間にもう一度、帯が少し膨らむ
       A(strip, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(1.08)', offset: .35 }, { transform: 'scaleY(1)' }],
-        { duration: 260, delay: TEXT_AT + (chars.length - 1) * STEP + 170 });
+        { duration: 260, delay: TEXT_AT + (chars.length - 1) * STEP + 170, fill: 'none' });
     });
   }
 

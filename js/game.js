@@ -8640,6 +8640,11 @@ function spawnAttrImpact(attr, x, y, big) {
 // ============================================================
 // ★ 攻撃アニメーション（複数敵対応） ★
 // ============================================================
+// マルチ：1ヒットごとの「弱点だったか・副属性のダメージ」を控えておき、at1 で相手（観戦側）の画面へ送る
+function _msLogHit(i, mainWeak, sub) {
+  if (!window.MultiShare) return;
+  (window._msHitLog = window._msHitLog || []).push({ i, mw: mainWeak ? 1 : 0, v: sub ? sub.value : 0, a: sub ? sub.attr : '', w: sub && sub.weak ? 1 : 0 });
+}
 function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
   return new Promise((resolve) => {
     const slots = document.querySelectorAll('#party-grid .party-slot');
@@ -8686,6 +8691,7 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
           finalDmg = dealt.main; dealtSub = dealt.sub;
           if (window.DamageTotal) DamageTotal.add(enemyIndex, finalDmg + dealtSub);   // HPバー上の合計ダメージ（副属性ぶんも足す）
         }
+        if (!absorbed) _msLogHit(enemyIndex, attrMult > 1, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
         // 着弾の瞬間に敵本体へノックバックと属性の爆発を重ねる。
         if (enemyUnit && enemyUnit.animate) enemyUnit.animate([
           { transform:'translate(0,0) scale(1)' }, { transform:'translate(-5px,2px) scale(1.06)' },
@@ -9934,7 +9940,7 @@ function renderDungeonEntryInfo(dKey, dd) {
   if (seenMon.size || seenChip.size) section.style.display = 'flex';
 }
 
-// 【全属性必須】ダンジョン：火〜闇の5属性がパーティーに1匹以上いないと入れない（dungeonData.requireAllAttr = true で有効）
+// 【全属性必須】ダンジョン：火〜闇の5属性がパーティーに1匹以上（主属性・副属性どちらでもOK）いないと入れない（dungeonData.requireAllAttr = true で有効）
 function dungeonRequiresAllAttr(areaNum, stageKey) {
   const d = DUNGEON_DATA[`${areaNum}-${stageKey}`];
   return !!(d && d.requireAllAttr);
@@ -9945,7 +9951,7 @@ function teamHasAllAttrs() {
     if (uid === null || uid === undefined) continue;
     const entry = box.find(b => b.uid === uid);
     const mon = entry && MONSTER_DATA[entry.monsterId];
-    if (mon) got.add(mon.attr);
+    if (mon) { got.add(mon.attr); const sa = subAttrOf(mon); if (sa) got.add(sa); }   // 副属性もカウント（主が無属性でも、副属性があればその属性として数える）
   }
   return ['fire', 'water', 'wood', 'light', 'dark'].every(a => got.has(a));
 }
@@ -10013,7 +10019,7 @@ function moOnDecide() {
   if (lob.ready) { lob.ready = false; MultiOnline.setReady(false, moTeamStr()); moRefreshBtn(); return; }
   if (lob.seen && !(lob.opp && lob.opp.present)) { deToast('あいてが退出しました。戻ってもういちど探してね', 2800); return; }
   if (partyMemberCount() === 0) { deToast('パーティーにモンスターがいません。編成してね', 2600); return; }
-  if (dungeonRequiresAllAttr(currentAreaNum, currentStageType) && !teamHasAllAttrs()) { deToast('【全属性必須】火・水・木・光・闇のモンスターを1匹ずつ以上編成してね', 3000); return; }
+  if (dungeonRequiresAllAttr(currentAreaNum, currentStageType) && !teamHasAllAttrs()) { deToast('【全属性必須】火・水・木・光・闇（副属性も可）をそろえて編成してね', 3000); return; }
   lob.ready = true; lob.sig = moTeamStr();
   MultiOnline.setReady(true, lob.sig);
   moRefreshBtn();
@@ -10122,7 +10128,7 @@ function enterDungeonFromEntry(rensen) {
   }
   // 【全属性必須】：火〜闇の5属性がそろっていなければ入れない（おふだも消費しない）
   if (dungeonRequiresAllAttr(currentAreaNum, currentStageType) && !teamHasAllAttrs()) {
-    deToast('【全属性必須】火・水・木・光・闇のモンスターを1匹ずつ以上編成してね', 3000);
+    deToast('【全属性必須】火・水・木・光・闇（副属性も可）をそろえて編成してね', 3000);
     return;
   }
   // 日替わりダンジョン：0:00をまたいで曜日が変わっていたら入れない（ホームに戻す）
@@ -11297,17 +11303,17 @@ async function _evaluateInner() {
         if (plannedIdx === -2) {
           if (!enemyList.some(e => e.hp > 0)) continue;
           // 全体攻撃：単体攻撃と同じく弾を飛ばし、当たったら ATK_GAP_MS 後に次へ（演出は裏で流れ続ける）
-          if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: -2 });
+          window._msHitLog = []; if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: -2 });
           await allAttackAnimation(slotIdx, dmg, attr, subHit);
-          if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp) });
+          if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp), sb: window._msHitLog || [] });
           continue;
         }
         let eIdx = plannedIdx;
         if (eIdx === -1) eIdx = getTargetIdx();   // 1匹倒しても、次の敵（ロック中ならその敵）へ自動で狙いを移す
         if (eIdx < 0 || !enemyList[eIdx] || enemyList[eIdx].hp <= 0) continue;
-        if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: eIdx });
+        window._msHitLog = []; if (window.MultiShare) MultiShare.fx('at0', { s: slotIdx, a: attr, e: eIdx });
         await attackAnimation(slotIdx, dmg, attr, eIdx, subHit);
-        if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp) });
+        if (window.MultiShare) MultiShare.fx('at1', { s: slotIdx, a: attr, cb: totalCombo, hp: enemyList.map(e => e.hp), sb: window._msHitLog || [] });
         await sleep(ATK_GAP_MS);   // 当たったあと、次の攻撃までの間（全体攻撃と共通）
       }
       if (window.DamageTotal) DamageTotal.finish();   // 全員の攻撃が終わった：合計は0.3秒残ってから、上がって消える

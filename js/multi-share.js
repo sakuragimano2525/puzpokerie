@@ -989,7 +989,8 @@
     setTimeout(() => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const e = cellEl(r, c); if (e) e.classList.remove('drop-fast'); } }, 140 + maxFall * 22 + COLS * 6 + 120);
   }
   // 敵のHPを、相手の画面と同じ値にする（減った分は着弾の演出つき。倒れたらドロップも）
-  function hitEnemies(hps, cb, attr, slot) {
+  function hitEnemies(hps, cb, attr, slot, subs) {
+    const subList = asArr(subs).filter(o => o && typeof o === 'object');
     const units = document.querySelectorAll('#enemy-area .enemy-unit');
     asArr(hps).forEach((hp, i) => {
       const e = enemyList[i];
@@ -1001,7 +1002,12 @@
         if (unit) {
           const r = unit.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
           if (attr) { try { playAttrHitSE(attr); spawnEnergyBurst(x, y, attr, 1); spawnAttrImpact(attr, x, y, false); } catch (_) {} }
-          try { showDamageNumber(x, y - 10, prev - hp, attr || undefined, false, slot == null ? null : slot); } catch (_) {}
+          // 副属性：本人の画面と同じく、主属性の数字の下に副属性の色の小さい数字を出す（弱点の拡大も同じ）
+          const info = subList.find(o => Number(o.i) === i);
+          const subV = info ? Number(info.v) || 0 : 0;
+          const subObj = subV > 0 && info.a ? { value: subV, attr: info.a, weak: !!info.w } : null;
+          const mainV = subObj ? Math.max(0, (prev - hp) - subV) : (prev - hp);
+          try { showDamageNumber(x, y - 10, mainV, attr || undefined, !!(info && info.mw), slot == null ? null : slot, subObj); } catch (_) {}
           if (unit.animate) unit.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-5px,2px) scale(1.05)' }, { transform: 'translate(7px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 230, easing: 'ease-out' });
         }
       }
@@ -1092,7 +1098,7 @@
       try { flyAttrProjectile(sx, sy, er.left + er.width / 2, er.top + er.height / 2, d.a, ATK_FLY_MS); } catch (_) {}
     },
     // 着弾：敵のHPが減る
-    at1(d) { hitEnemies(d.hp, d.cb, d.a, d.s); },
+    at1(d) { hitEnemies(d.hp, d.cb, d.a, d.s, d.sb); },
     // スキルなどで敵のHPが変わった
     en(d) { hitEnemies(d.hp, 0, null, null); },
     // 敵の行動：スキルウインドウ／カットイン・ため・弾・着弾（フラッシュ・揺れ）を、自分の画面と同じ演出で再生する

@@ -758,6 +758,7 @@
     if (absorbed) enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg);   // コンボ吸収：ダメージの代わりにHP回復
     else { const dealt = dealHitDamage(enemy, hit); dmg = dealt.main; dealtSub = dealt.sub; if (window.DamageTotal) DamageTotal.add(idx, dmg + dealtSub); }   // 超根性対応（実際に与えたダメージ）／HPバー上の合計ダメージ
 
+    if (!absorbed && typeof _msLogHit === 'function') _msLogHit(idx, mult > 1, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);   // マルチ：観戦側へ副属性ぶんも伝える
     // 被弾：のけぞり＋属性色のフラッシュ
     if (unit.animate) unit.animate([
       { transform: 'translate(0,0) scale(1)' }, { transform: 'translate(-5px,2px) scale(1.06)' },

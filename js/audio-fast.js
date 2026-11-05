@@ -246,6 +246,44 @@
     } catch (e) { return false; }
   }
 
+
+  // ---- カットイン用：<audio> を使わず AudioBuffer で鳴らす（iPhone対策）-------------------
+  //   iPhoneは <audio> に currentTime=0 を入れて鳴らすと「前半が繰り返される／途切れる」ことがあり、
+  //   createMediaElementSource で増幅しても不安定。AudioBufferなら途切れず、長さも正確に分かる。
+  //   サイズ制限なし・使うときに読み込み、一度読んだらメモリに残す。
+  const cutBufs = new Map(), cutPending = new Map();
+  function getCutBuf(file) { return buffers.get(file) || cutBufs.get(file) || null; }
+  function loadCutBuf(file) {
+    if (!file) return Promise.resolve(null);
+    const have = getCutBuf(file); if (have) return Promise.resolve(have);
+    if (cutPending.has(file)) return cutPending.get(file);
+    const p = fetch(file)
+      .then(r => { if (!r.ok) throw new Error('http'); return r.arrayBuffer(); })
+      .then(decode)
+      .then(b => { cutBufs.set(file, b); cutPending.delete(file); return b; })
+      .catch(() => { cutPending.delete(file); return null; });
+    cutPending.set(file, p);
+    return p;
+  }
+  // gain>1 のときは増幅＋音割れ防止のコンプレッサー。鳴らせたら { duration, stop }、鳴らせなければ null
+  function playGain(buf, gain, onEnd) {
+    if (!buf) return null;
+    if (ctx.state !== 'running') { try { ctx.resume().catch(() => {}); } catch (e) {} }
+    if (ctx.state !== 'running') return null;
+    try {
+      const src = ctx.createBufferSource(), g = ctx.createGain();
+      src.buffer = buf; g.gain.value = Math.max(0, gain);
+      let tail = g;
+      src.connect(g);
+      if (gain > 1) { const comp = ctx.createDynamicsCompressor(); g.connect(comp); tail = comp; }
+      tail.connect(ctx.destination);
+      let ended = false;
+      src.onended = () => { if (ended) return; ended = true; try { tail.disconnect(); g.disconnect(); } catch (e) {} if (onEnd) onEnd(); };
+      src.start(0);
+      return { duration: buf.duration, stop: () => { try { src.stop(); } catch (e) {} } };
+    } catch (e) { return null; }
+  }
+
   // ---- 既存の再生関数を包む（準備できていれば速い方、まだなら今まで通り）------------------
   function wrap(name, fn) {
     const orig = window[name];
@@ -294,6 +332,7 @@
   prefetchBGM('menu.mp3', true);
   KEEP_FILES.forEach(f => prefetchBGM(f, true));   // 敵スキルのウインドウ音(skillwin.mp3)・必殺技の音(cutin.mp3)
   ['skillwin.mp3', 'tap.mp3', 'modo.mp3', 'combo.mp3', 'drop.mp3', 'swipe.mp3'].forEach(f => enqueueSE(f, true));   // skillwin：iPhoneでは <audio> が自動再生制限で鳴らないので、AudioBufferで鳴らす   // 画面を触ってすぐ使う音は最優先
+  if (IS_IOS) loadCutBuf('cutin.mp3');   // 必殺技の音：iPhoneでは AudioBuffer で鳴らす
   // 敵のスキル・行動で鳴る効果音を、他の効果音より先に
   try { PRIO_SE.forEach(k => { if (BATTLE_SE[k] && !NO_FAST_SE[k]) enqueueSE(BATTLE_SE[k].file, true); }); } catch (e) {}
   // 2) バトル効果音（定義の順）
@@ -353,5 +392,5 @@
   // preload.js 用：BGMかどうか（BGMは上の仕組みで読み込むので、preload.js 側では二重に読み込まない）
   const bgmFileSet = new Set(['menu.mp3']);
   try { for (const k in DUNGEON_BGM) { const c = DUNGEON_BGM[k]; if (c) { if (c.field) bgmFileSet.add(c.field); if (c.boss) bgmFileSet.add(c.boss); } } } catch (e) {}
-  window.AudioFast = { ctx, buffers, blobs, playTimed, prefetchBGM, prefetchAreaBGM, isBGM: f => bgmFileSet.has(f) };
+  window.AudioFast = { IS_IOS, getCutBuf, loadCutBuf, playGain, ctx, buffers, blobs, playTimed, prefetchBGM, prefetchAreaBGM, isBGM: f => bgmFileSet.has(f) };
 })();
