@@ -61,7 +61,8 @@
   }
 
   function trim(src) {
-    return isAnimated(src).then(anim => anim ? null : loadImg(src)).then(im => {
+    return isAnimated(src).then(anim => anim ? 'KEEP' : loadImg(src)).then(im => {
+      if (im === 'KEEP') return src;   // 動く画像：加工はしないが、大きさのフィットはかける
       if (!im) return null;
       try {
         const w = im.naturalWidth, h = im.naturalHeight;
@@ -87,7 +88,7 @@
         const ex = Math.min(w, Math.ceil((x1 + 1) / sc) + px), ey = Math.min(h, Math.ceil((y1 + 1) / sc) + px);
         const bw = ex - sx, bh = ey - sy;
         const gain = Math.max(sx / w, sy / h, (w - ex) / w, (h - ey) / h);
-        if (bw <= 0 || bh <= 0 || gain < MIN_GAIN) return null;   // ほとんど余白が無い → 加工不要
+        if (bw <= 0 || bh <= 0 || gain < MIN_GAIN) return src;   // ほとんど余白が無い → 切り取りは不要。でも大きさのフィットはかける（元のURLのまま）
         const k = Math.min(1, OUT_MAX / Math.max(bw, bh));
         const ow = Math.max(1, Math.round(bw * k)), oh = Math.max(1, Math.round(bh * k));
         const c2 = document.createElement('canvas'); c2.width = ow; c2.height = oh;
@@ -96,7 +97,7 @@
           if (c2.toBlob) c2.toBlob(b => res(b ? URL.createObjectURL(b) : null), 'image/png');
           else res(c2.toDataURL('image/png'));
         });
-      } catch (e) { return null; }
+      } catch (e) { return src; }   // file:// 等で加工できない → 元の画像のままフィットだけかける
     });
   }
 

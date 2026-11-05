@@ -46,7 +46,7 @@
     MS.kills = []; MS.remote = false; MS.applying = false; MS.spectating = false; cancelLive();
     try { dropPendingLive(); stopRemoteDrag(); } catch (e) {}
     rlSync = null;
-    MS.rp = null; MS.remoteView = false;
+    MS.rp = null; MS.remoteView = false; MS.solo = false;
     const g = document.getElementById('game'); if (g) g.classList.remove('mt-spectate', 'mt-remote');
   };
 
@@ -637,7 +637,7 @@
 
   // 自分のパーティー情報（相手に見せる分）
   MS.myParty = function () {
-    const s = [], bd = [], as = [];   // as：属性変化中の枠 [枠, 属性, 残りターン]
+    const s = [], bd = [], as = [], se = [];   // as：属性変化中の枠 [枠, 属性, 残りターン]
     for (let i = 0; i < 6; i++) {
       const uid = i < partyUids.length ? partyUids[i] : null;
       let o = 0;
@@ -648,6 +648,8 @@
           if (bindTimers[uid] && bindTimers[uid] > 0) bd.push([i, bindTimers[uid]]);
           const sh = (typeof attrShiftOf === 'function') ? attrShiftOf(uid) : null;
           if (sh) as.push([i, sh.attr, sh.turns]);
+          const sb = (typeof selfAtkBuffOf === 'function') ? selfAtkBuffOf(uid) : null;
+          if (sb) se.push([i, sb.turns]);   // 自己エンハンス [枠, 残りターン]
         }
       }
       s.push(o);
@@ -657,7 +659,7 @@
       const e = uid !== null && box.find(b => b.uid === uid), m = e && MONSTER_DATA[e.monsterId];
       return (m && m.leaderSkill && m.leaderSkill.desc) || '（なし）';
     });
-    return { s, rw: myRewardEffects(), hp: Math.round(playerCurrentHP), mx: Math.round(playerMaxHP), sp: partySp, cap: getSpCap(), mem: partyMemory, bd, as, ls, seal: isSkillSealed() ? 1 : 0 };
+    return { s, rw: myRewardEffects(), hp: Math.round(playerCurrentHP), mx: Math.round(playerMaxHP), sp: partySp, cap: getSpCap(), mem: partyMemory, bd, as, se, ls, seal: isSkillSealed() ? 1 : 0 };
   };
   // 自分のリーダー／フレンドの「報酬系」スキル（経験値・エナ倍率、タマゴ／チップドロップ率UP）を相手にも知らせる
   //   → マルチでは、2人分（リーダー2＋フレンド2）の効果が両方の報酬にかかる
@@ -686,6 +688,7 @@
     v.s = asArr(v.s).map(x => (x ? asArr(x) : 0));
     v.bd = asArr(v.bd).map(asArr);
     v.as = asArr(v.as).map(asArr);
+    v.se = asArr(v.se).map(asArr);
     v.ls = asArr(v.ls);
     MS.rp = v;
     if (MS.remoteView) MS.paintRemote();
@@ -730,6 +733,12 @@
           const bdg = makeAttrShiftBadge(shf[1], shf[2]);
           slot.classList.add('attr-shifted'); slot.appendChild(bdg);
           if (img.classList.contains('sk-lift')) bdg.classList.add('sk-lift');
+        }
+        const sbf = (p.se || []).find(x => x[0] === i && x[1] > 0);
+        if (sbf) {   // 相手の自己エンハンス：赤い矢印＋残りターン
+          const sbb = makeSelfBuffBadge(sbf[1]);
+          slot.classList.add('self-buffed'); slot.appendChild(sbb);
+          if (img.classList.contains('sk-lift')) sbb.classList.add('sk-lift');
         }
         const dm = document.createElement('div');
         dm.className = 'monster-damage';
@@ -777,11 +786,13 @@
   // ---- 自分⇄相手の切り替え：いまのパーティーが左へ消えて、右から次のパーティーが入ってくる ----
   const VIEW_IDS = ['party-grid', 'sp-common-wrap', 'hp-row'];
   async function doSetView(remote, animate) {
+    if (MS.solo) remote = false;   // あいてが退出したあとは、もう相手のパーティーは見せない
     if (MS.remoteView === remote) { if (remote) MS.paintRemote(); return; }
     const g = $id('game'), pa = $id('party-area');
     const els = VIEW_IDS.map($id).filter(Boolean);
     const play = (keys, opts) => Promise.all(els.map(el => (el.animate ? el.animate(keys, opts).finished.catch(() => {}) : Promise.resolve())));
     if (animate) await play([{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(-70%)', opacity: 0 }], { duration: 200, easing: 'ease-in', fill: 'forwards' });
+    if (MS.solo) remote = false;   // アニメーション中にあいてが退出した場合も、自分のパーティーへ
     MS.remoteView = remote;
     if (g) g.classList.toggle('mt-remote', remote);
     if (pa && window.MultiTurn) pa.setAttribute('data-who', MultiTurn.name(1 - (MultiTurn.localId === null ? 0 : MultiTurn.localId)) + ' のパーティー');
@@ -792,6 +803,27 @@
       await play([{ transform: 'translateX(70%)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 240, easing: 'ease-out' });
     }
   }
+  // あいてが退出した：相手のターンを見ている最中でも、自分のパーティー表示へ戻してソロで続ける
+  //   （相手の操作のミラー・届いていた再生・相手のパーティー表示（HP/SP/リーダースキル）をすべて片づける）
+  MS.goSolo = function () {
+    if (!on()) return Promise.resolve();
+    MS.solo = true;
+    fxChain = Promise.resolve();   // 相手から届いていた再生待ちの出来事は捨てる
+    cancelLive();
+    try { dropPendingLive(); stopRemoteDrag(); } catch (e) {}
+    rlSync = null;
+    viewChain = Promise.resolve();   // 途中で止まっている切り替えがあっても待たない
+    const g = $id('game');
+    // 表示の切り替え中に残った動き（左へ消える途中など）を止める
+    VIEW_IDS.map($id).forEach(el => { if (el && el.getAnimations) { try { el.getAnimations().forEach(a => a.cancel()); } catch (e) {} } });
+    return doSetView(false, false).catch(() => {}).then(() => {
+      if (g) g.classList.remove('mt-remote');
+      try { updatePlayerHP(); } catch (e) {}
+      try { updateSpGaugeUI(); } catch (e) {}
+      try { updateLeaderSkill2(); } catch (e) {}
+      try { renderBuffIcons(); } catch (e) {}
+    });
+  };
   // remote=true：相手のパーティーを見せる／false：自分のに戻す
   MS.setView = function (remote, animate) {
     if (!on()) return Promise.resolve();
@@ -894,13 +926,14 @@
     if (!pt) return;
     const nbd = asArr(pt.bd).map(asArr);
     const nas = asArr(pt.as).map(asArr);
+    const nse = asArr(pt.se).map(asArr);
     const nseal = pt.seal ? 1 : 0;
     const prev = MS.rp;
     const prevBd = {};
     if (prev) (prev.bd || []).forEach(b => { prevBd[b[0]] = b[1]; });
     const prevSeal = prev ? !!prev.seal : false;
     if (!prev) MS.onParty(Object.assign({}, pt));   // まだ相手のパーティー情報が届いていなかった：これを最初の情報にする
-    else { prev.bd = nbd; prev.as = nas; prev.seal = nseal; if (MS.remoteView) MS.paintRemote(); }
+    else { prev.bd = nbd; prev.as = nas; prev.se = nse; prev.seal = nseal; if (MS.remoteView) MS.paintRemote(); }
     if (!MS.remoteView) return;
     const newBind = nbd.filter(b => b[1] > 0 && !(prevBd[b[0]] > 0)).map(b => b[0]);
     const sealNew = !!nseal && !prevSeal;
@@ -1137,7 +1170,15 @@
     // 相手のSP
     sp(d) { if (!MS.rp) return; MS.rp.sp = d.sp; MS.rp.mem = d.mem; paintRemoteSp(); },
     // スキル発動
-    sk(d) { try { playSkillSound(); showRemoteSkillToast(d || {}); } catch (_) {} },
+    // 相手のスキル発動：スキル音＋上のトースト。カットイン付きのスキルなら、相手と同じカットイン（画像 mp{ID}.png・ボイス {ID}.mp3）も出す
+    //   ※ 終わるまで待つので、カットインの間は次の演出（盤面・敵HPの変化）が後ろに回る＝相手の画面と同じ順番になる
+    async sk(d) {
+      try { playSkillSound(); showRemoteSkillToast(d || {}); } catch (_) {}
+      const mon = d && d.m != null ? MONSTER_DATA[d.m] : null;
+      if (mon && mon.skill && mon.skill.cutin === true && window.EnemyCutIn) {
+        try { await window.EnemyCutIn.show({ attr: mon.attr, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (_) {}
+      }
+    },
   };
 
   window.MultiShare = MS;

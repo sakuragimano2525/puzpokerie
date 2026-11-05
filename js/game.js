@@ -116,6 +116,29 @@ function makeAttrShiftBadge(attr, turns) {
   return el;
 }
 function attrShiftOf(uid) { const s = attrShifts[uid]; return (s && s.turns > 0) ? s : null; }
+// ============================================================
+// ★ 自己エンハンス（○ターンの間、自分の攻撃力が○倍） ★
+//   属性エンハンス(atkBuffs)とは別に、スキルを使ったモンスター本人だけにかかる。
+//   スキル側の書き方：{ type:'selfAtkBuff', value:2, turns:1 }
+//   表示：モンスター画像の真ん中に赤い矢印＋残りターン（例：⬆3）
+// ============================================================
+let selfAtkBuffs = {};   // uid → { value, turns }
+function clearSelfAtkBuffs() { selfAtkBuffs = {}; }
+function selfAtkBuffOf(uid) { const b = selfAtkBuffs[uid]; return (b && b.turns > 0) ? b : null; }
+let _sbbSeq = 0;
+function makeSelfBuffBadge(turns) {
+  const gid = 'sbbG' + (++_sbbSeq);   // バッジごとに別のid（同じidが複数あるとグラデが消えることがある）
+  const el = document.createElement('div');
+  el.className = 'self-buff-badge';
+  // 赤い二重矢印（︽型）＋ 白い縁取り数字。2段のシェブロンを重ねて、上を明るく・下を濃い赤にする
+  const chev = 'M12 1.5 L23 11 L23 15.2 L12 5.8 L1 15.2 L1 11 Z';
+  el.innerHTML = `<svg class="sbb-arrow" viewBox="0 0 24 25" aria-hidden="true">`
+    + `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a78"/><stop offset="0.5" stop-color="#f02a1c"/><stop offset="1" stop-color="#b80d0d"/></linearGradient></defs>`
+    + `<g stroke="#2a0606" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke" fill="url(#${gid})">`
+    + `<path d="${chev}" transform="translate(0,8)"/><path d="${chev}"/></g></svg>`
+    + `<b class="sbb-turns">${Math.max(0, Math.floor(Number(turns) || 0))}</b>`;
+  return el;
+}
 // 戦闘用のモンスター情報。変化中なら attr を変化先に、sub を空にしたコピーを返す（それ以外は元のデータそのもの）
 function battleMonOf(entry) {
   const base = entry && MONSTER_DATA[entry.monsterId];
@@ -1717,6 +1740,23 @@ function toggleLockEnemy(i) {
   updateLockMarks();
 }
 
+// ── 敵の2属性（主属性＋副属性） ──
+//   主属性＝HPが半分以上の間 / 副属性＝HPが半分を切ってから。enemy.attr は「いまの属性」を返すので、
+//   ダメージの相性（弱点・半減）・敵の攻撃演出・属性アイコンなど、attr を見ているところは全部これに従う。
+//   HPバー：右半分＝主属性の色、左半分＝副属性の色（HPは右から減るので、主属性の色が先に減る）
+const ENEMY_ATTRS = ['fire', 'water', 'wood', 'light', 'dark'];
+function applyEnemyDualAttr(enemy, subAttr) {
+  const main = enemy.attr;
+  if (!ENEMY_ATTRS.includes(subAttr) || !ENEMY_ATTRS.includes(main) || subAttr === main) { delete enemy.subAttr; return; }
+  enemy.mainAttr = main;
+  enemy.subAttr = subAttr;
+  Object.defineProperty(enemy, 'attr', {
+    configurable: true, enumerable: true,
+    get() { return (this.hp > 0 && this.hp * 2 < this.maxHp) ? this.subAttr : this.mainAttr; },
+    set(v) { this.mainAttr = v; }
+  });
+}
+
 async function loadBattle(battleData, autoStart = true) {
   if (window.Ryuseki) Ryuseki.reset();   // 前のバトルの宝箱の状態を消す
   _defeatPending = [];
@@ -1742,6 +1782,7 @@ async function loadBattle(battleData, autoStart = true) {
     };
     if (!base.turnInterval) base.turnInterval = 2;
     base._baseTurnInterval = base.turnInterval;
+    applyEnemyDualAttr(base, e.subAttr);   // 副属性つき：HPが半分を切ったら副属性になる
     return base;
   });
   buffMoveTimeShort = false;
@@ -2062,11 +2103,17 @@ function renderEnemyUI(hideForAppear = false) {
     barFill.className = 'enemy-hp-bar-fill';
     barFill.id = `enemy-hp-bar-${i}`;
     barFill.dataset.attr = ATTR_HP_GRAD[enemy.attr] ? enemy.attr : 'dark';   // 色はCSS（battle-plus.css）が属性ごとに決める
+    if (enemy.subAttr) {   // 2属性：右半分＝主属性、左半分＝副属性の色
+      barFill.classList.add('dual');
+      barFill.dataset.main = enemy.mainAttr; barFill.dataset.sub = enemy.subAttr;
+      barFill.style.setProperty('--r', 1);
+    }
     barFill.style.width = '100%';
     barWell.appendChild(barFill);
     barWrap.appendChild(barWell);
     hpRow.appendChild(barWrap);
     enemy._hpRatioShown = 100;
+    enemy._shownAttr = enemy.attr;   // 2属性の敵：いま画面（属性アイコン）に出している属性。変わったら playEnemyAttrChanges で演出
 
     const imgWrap = document.createElement('div');
     imgWrap.className = 'enemy-img-wrap';
@@ -2124,6 +2171,9 @@ function updateEnemyUI() {
       const ratio = enemy.hp <= 0 ? 0 : Math.max(0, (enemy.hp / enemy.maxHp) * 100);
       bar.style.width = ratio + '%';
       bar.dataset.attr = ATTR_HP_GRAD[enemy.attr] ? enemy.attr : 'dark';
+      if (enemy.subAttr) {   // 2属性：色の境目をバー全体の真ん中に固定（バーが縮んでも色の位置は動かない）
+        bar.style.setProperty('--r', Math.max(0.02, ratio / 100));
+      }
       const row = bar.closest('.enemy-hp-row');
       if (row) {
         const prev = enemy._hpRatioShown == null ? 100 : enemy._hpRatioShown;
@@ -2322,7 +2372,7 @@ function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし�
       if (monId && MONSTER_DATA[monId]) { droppedMonsters.push(monId); dropped = true; 
         // ギフト画像は落ちたモンスターの属性に連動（火=gift1 水=2 木=3 光=4 闇=5）
         const mAttr = Array.isArray(MONSTER_DATA[monId].attr) ? MONSTER_DATA[monId].attr[0] : MONSTER_DATA[monId].attr;
-        const giftNo = parseInt(ATTR_TO_IMG[mAttr]) <= 5 ? ATTR_TO_IMG[mAttr] : ((droppedMonsters.length + droppedItems.length) % 5 + 1);
+        const giftNo = (parseInt(ATTR_TO_IMG[mAttr]) >= 1 && parseInt(ATTR_TO_IMG[mAttr]) <= 5) ? ATTR_TO_IMG[mAttr] : ((droppedMonsters.length + droppedItems.length) % 5 + 1);
         // ★4以上のモンスターが落ちたら giftXs.png（＋虹の光）。giftXs.png が無ければ通常の giftX.png
         const rare = (Number(MONSTER_DATA[monId].rarity) || 0) >= 4;
         dropImgs.push({ src: rare ? `gift${giftNo}s.png` : `gift${giftNo}.png`, fallback: `gift${giftNo}.png`, rare });
@@ -2430,6 +2480,7 @@ function battleShake(power = 8) {
   ], { duration: 190, easing:'ease-out' });
 }
 function spawnEnergyBurst(x, y, attr, strength = 1) {
+  if (window.FxLite && FxLite.burst(x, y, attr, strength)) return;   // 軽量版（js/fx-lite.js：Canvas1枚にまとめて描く）
   const color = fxColor(attr), layer = document.createElement('div');
   layer.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:0;height:0;z-index:220;pointer-events:none;`;
   document.body.appendChild(layer);
@@ -3433,10 +3484,53 @@ function clearEnemyDelay(enemy) {
 // カウントが0になった敵がいる時、「あと0」を見せてから攻撃に入るまでの間（ミリ秒）
 const ENEMY_ZERO_PAUSE_MS = 520;
 
+// ── 敵の属性チェンジ演出（2属性の敵）：HPバーの横の属性アイコンが、新しい属性の光に包まれて入れ替わる ──
+async function playEnemyAttrChanges() {
+  const jobs = [];
+  enemyList.forEach((enemy, i) => {
+    if (!enemy || !enemy.subAttr) return;
+    const shown = enemy._shownAttr || enemy.mainAttr;
+    if (enemy.hp <= 0 || shown === enemy.attr) return;
+    jobs.push(fxEnemyAttrChange(enemy, i, enemy.attr));
+  });
+  if (jobs.length) await Promise.all(jobs);
+}
+async function fxEnemyAttrChange(enemy, i, to) {
+  enemy._shownAttr = to;
+  const unit = document.querySelectorAll('#enemy-area .enemy-unit')[i];
+  const orb = unit && unit.querySelector('.enemy-attr-orb');
+  const newSrc = `${ATTR_TO_IMG[to] || '5'}.png`;
+  if (!orb || !orb.animate) { if (orb) orb.src = newSrc; return; }
+  const r = orb.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2, d = Math.max(r.width, r.height, 24);
+  const col = ATTR_FX_COLOR[to] || '#fff';
+  const mk = css => { const el = document.createElement('div'); el.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:${d}px;height:${d}px;margin:${-d / 2}px 0 0 ${-d / 2}px;border-radius:50%;z-index:190;pointer-events:none;opacity:0;${css}`; document.body.appendChild(el); return el; };
+  const aura = mk(`background:radial-gradient(circle,#fff 0%,${col} 42%,rgba(0,0,0,0) 72%);box-shadow:0 0 ${d * .6}px ${col},0 0 ${d * 1.3}px ${col};`);
+  const ring = mk(`border:${Math.max(2, d / 10)}px solid ${col};box-shadow:0 0 ${d * .5}px ${col},inset 0 0 ${d * .4}px ${col};`);
+  const T1 = 460, T2 = 420;
+  // ① 新しい属性の光が集まってきて、アイコンを包む
+  ring.animate([{ opacity: 0, transform: 'scale(3.4)' }, { opacity: 1, offset: .5 }, { opacity: .95, transform: 'scale(1.1)' }], { duration: T1, easing: 'ease-in', fill: 'forwards' });
+  aura.animate([{ opacity: 0, transform: 'scale(.5)' }, { opacity: .95, transform: 'scale(1.7)' }], { duration: T1, easing: 'ease-in', fill: 'forwards' });
+  orb.animate([{ transform: 'scale(1)', filter: 'brightness(1)' }, { transform: 'scale(.78)', filter: 'brightness(2.2) saturate(.5)' }], { duration: T1, easing: 'ease-in', fill: 'forwards' });
+  await sleep(T1);
+  // ② 包まれたところで中身を新しい属性に入れ替え → ぱっと弾ける
+  orb.src = newSrc; orb.alt = to; orb.style.display = '';
+  const x = orb.animate([{ transform: 'scale(1.7)', filter: 'brightness(2.6)' }, { transform: 'scale(1)', filter: 'brightness(1)' }], { duration: T2, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+  ring.animate([{ opacity: .95, transform: 'scale(1.1)' }, { opacity: 0, transform: 'scale(2.8)' }], { duration: T2, easing: 'ease-out', fill: 'forwards' });
+  aura.animate([{ opacity: .95, transform: 'scale(1.7)' }, { opacity: 0, transform: 'scale(2.6)' }], { duration: T2, easing: 'ease-out', fill: 'forwards' });
+  try { spawnEnergyBurst(cx, cy, to, 1); } catch (err) {}
+  await sleep(T2);
+  try { x.cancel(); } catch (err) {}
+  orb.getAnimations().forEach(a => a.cancel());
+  aura.remove(); ring.remove();
+  await sleep(120);
+}
+
 // 敵のターン処理（パズドラZと同じ流れ）
 //   ① 全員のカウントを1つ進める。0になった敵は「あと0」で止まる（複数いれば全員が0になる）
 //   ② 0になった敵が左から順に攻撃する。自分の番が来るまでは「0のまま攻撃待機」、攻撃が終わったらカウントが元に戻る
 async function processEnemyTurns() {
+  await playEnemyAttrChanges();   // 2属性の敵：こちらの攻撃でHPが半分を切って属性が変わっていたら、行動の前に演出
   // ① カウントを進める
   for (const enemy of enemyList) {
     enemy._acting = false;
@@ -3804,6 +3898,7 @@ function resetPlayerBuffs() {
   atkBuffs = [];
   buffNoFall = null;
   clearAttrShifts();   // 属性変化スキルの効果もダンジョンの始めにリセット
+  clearSelfAtkBuffs();   // 自己エンハンスもリセット
   orbBoosts = [];
   buffMoveTimeShort = false; buffMoveTimeShortTurns = 0;
   enemyAtkDowns = [];
@@ -3835,6 +3930,10 @@ function tickPlayerBuffs() {
   if (buffAllAttack && --buffAllAttackTurns <= 0) { buffAllAttack = false; buffAllAttackTurns = 0; }
   atkBuffs.forEach(b => b.turns--);
   atkBuffs = atkBuffs.filter(b => b.turns > 0);
+  // 自己エンハンス：ターンが尽きたら消す（残りターンの数字を更新するので、あれば描き直す）
+  { let _sbTouched = false;
+    for (const k of Object.keys(selfAtkBuffs)) { _sbTouched = true; if (--selfAtkBuffs[k].turns <= 0) delete selfAtkBuffs[k]; }
+    if (_sbTouched && typeof renderParty === 'function' && document.getElementById('party-grid')) { try { renderParty(); } catch (err) {} } }
   if (buffNoFall && --buffNoFall.turns <= 0) buffNoFall = null;   // 落ちコンなし（味方スキル）
   // 属性変化：ターンが尽きたら元の属性に戻す（枠の表示も戻すので、戻った時だけパーティ欄を描き直す）
   let _attrShiftEnded = false;
@@ -5786,7 +5885,7 @@ function syncIkuSelectMode() {
 // ============================================================
 // モンスター詳細画面
 // ============================================================
-const ATTR_TO_IMG = { fire:'1', water:'2', wood:'3', light:'4', dark:'5', heal:'6', poison:'8', ojama:'ojama' };
+const ATTR_TO_IMG = { none:'0', fire:'1', water:'2', wood:'3', light:'4', dark:'5', heal:'6', poison:'8', ojama:'ojama' };
 let detailBoxIndex = 0;
 let detailFromScreen = 'team-edit';
 let detailFromList = false;        // ボックス一覧のカードから開いた（→ 左右ボタンは一覧の並び順で巡回）
@@ -5846,7 +5945,7 @@ function renderMonsterDetail() {
   attrEl.innerHTML = '';
   const aImg = document.createElement('img');
   aImg.className = 'md-attr-icon';
-  aImg.src = `${ATTR_TO_IMG[mon.attr] || '1'}.png`;
+  aImg.src = `${ATTR_TO_IMG[mon.attr] || '1'}.png`;   // 無（主属性なし）は 0.png
   aImg.alt = mon.attr;
   aImg.onerror = () => { aImg.style.display = 'none'; };
   const subA = subAttrOf(mon);
@@ -7309,6 +7408,18 @@ function runSkillEffect(eff, context) {
       if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
+    case 'selfAtkBuff': { // 自分（スキルを使ったモンスター）の攻撃力を ○ターン ○倍（属性エンハンスとは別枠）
+      const ent = context && context.entry;
+      const base = ent && MONSTER_DATA[ent.monsterId];
+      if (!base) break;
+      const turns = Math.max(1, Math.floor(Number(eff.turns) || 1));
+      const value = Number(eff.value) || 1;
+      selfAtkBuffs[ent.uid] = { value, turns };   // すでに掛かっていれば新しい倍率・ターン数で上書き
+      if (typeof renderParty === 'function' && document.getElementById('party-grid')) { try { renderParty(); } catch (err) {} }
+      if (window.MultiShare) { try { MultiShare.fxStatus(); } catch (e) {} }
+      showSkillMessage(eff.message || `⬆ ${turns}ターンの間、${base.name}の攻撃力が${value}倍！`, 1400);
+      break;
+    }
     case 'defenseDown': { // 敵の防御力を ○ターンの間 ○% ダウン（target:'single' なら先頭の敵のみ、それ以外は敵全体）
       const targets = eff.target === 'single' ? [enemyList[getTargetIdx()]] : enemyList.filter(e => e.hp > 0);
       let rate = Number(eff.value) || 0;
@@ -7670,6 +7781,7 @@ function restoreTransforms() {
   _pendingTransforms.length = 0;
   buffNoFall = null;
   clearAttrShifts();   // 属性変化もダンジョンの外には持ち出さない
+  clearSelfAtkBuffs();   // 自己エンハンスも持ち出さない
   let changed = false;
   for (const e of box) {
     if (e && e._tfFrom !== undefined) { e.monsterId = e._tfFrom; delete e._tfFrom; changed = true; }
@@ -7979,23 +8091,7 @@ function buildBuffItems() {
     items.push({ icon: up ? 'j3.png' : 'j4.png', turns: buffMoveTimeTurns, name: up ? '操作時間アップ' : '操作時間ダウン', text: `ドロップ操作時間が${parts.join('・')}になる` });
   }
   if (buffAllAttack)       items.push({ icon:'zen.png', turns: buffAllAttackTurns, name:'全体攻撃', text:'敵全体に攻撃する' });
-  // 属性変化：同じ属性・同じ残りターンの味方は1つのアイコンにまとめる
-  { const _ag = {};
-    const _shList = [];
-    if (window.MultiShare && MultiShare.remoteView && MultiShare.rp) {   // 相手のパーティーを見ている間は、相手の属性変化
-      (MultiShare.rp.as || []).forEach(x => { if (x && x[2] > 0) _shList.push({ attr: x[1], turns: x[2] }); });
-    } else {
-      for (const u of Object.keys(attrShifts)) { const sh = attrShifts[u]; if (sh && sh.turns > 0 && partyUids.includes(Number(u))) _shList.push(sh); }
-    }
-    for (const sh of _shList) {
-      const k = sh.attr + '_' + sh.turns;
-      (_ag[k] = _ag[k] || { attr: sh.attr, turns: sh.turns, n: 0 }).n++;
-    }
-    for (const k of Object.keys(_ag)) {
-      const g = _ag[k], nm = ATTR_NAME_JP[g.attr] || g.attr;
-      items.push({ icon: `${ATTR_TO_IMG[g.attr] || '1'}.png`, turns: g.turns, name: `${nm}属性に変化`, text: `${g.n}体の属性が${nm}属性（単属性）に変化している` });
-    }
-  }
+  // （属性変化・自己エンハンスは、右のエフェクト詳細アイコンには出さない。モンスター側の表示だけ）
   // ドロップ目覚め：ドロップの画像に「落ちてくる⬇」を重ねたアイコン（右に残りターン）
   for (const b of orbBoosts) {
     if (b.turns <= 0) continue;
@@ -8447,6 +8543,7 @@ function makeAttrProjectile(attr) {
 
 // 飛んでいる間の軌跡
 function spawnAttrTrail(attr, x, y, ang) {
+  if (window.FxLite && FxLite.trail(attr, x, y, ang)) return;   // 軽量版（js/fx-lite.js）
   const bx = -Math.cos(ang), by = -Math.sin(ang);   // 進行方向の後ろ
   if (attr === 'fire') {
     for (let i = 0; i < 2; i++) {
@@ -8482,10 +8579,11 @@ function spawnAttrTrail(attr, x, y, ang) {
 // 着弾エフェクト
 function spawnAttrImpact(attr, x, y, big) {
   const k = big ? 1.3 : 1;
+  const _fl = !!(window.FxLite && FxLite.impact(attr, x, y, k));   // 軽量版：粒の部分だけ js/fx-lite.js のCanvasで描く（true のとき下の粒ループは回さない）
   if (attr === 'fire') {
     const ring = fxAdd(`left:${x}px;top:${y}px;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:radial-gradient(circle,#fff6c0 0%,#ffb000 30%,#ff4a00 60%,rgba(255,40,0,0) 100%);`, 700);
     ring.animate([{ transform:'scale(.2)', opacity:1 }, { transform:`scale(${1.5 * k})`, opacity:0 }], { duration:520, easing:'ease-out', fill:'forwards' });
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < (_fl ? 0 : 12); i++) {
       const w = fxRand(14, 28), dx = fxRand(-70, 70) * k;
       const f = fxAdd(`left:${x}px;top:${y}px;width:${w}px;height:${w * 1.7}px;margin:${-w * .85}px 0 0 ${-w / 2}px;border-radius:50% 50% 50% 50% / 70% 70% 30% 30%;background:radial-gradient(circle at 50% 75%,#ffe27a,#ff6a00 55%,rgba(255,40,0,0) 90%);`, 900);
       f.animate([{ transform:'translate(0,0) scale(.5)', opacity:1 }, { transform:`translate(${dx}px,${-fxRand(60, 140) * k}px) scale(1.1)`, opacity:0 }], { duration:fxRand(500, 800), easing:'ease-out', fill:'forwards' });
@@ -8495,7 +8593,7 @@ function spawnAttrImpact(attr, x, y, big) {
       const r = fxAdd(`left:${x}px;top:${y}px;width:100px;height:46px;margin:-23px 0 0 -50px;border-radius:50%;border:3px solid rgba(190,235,255,.9);box-shadow:0 0 12px #4cb8ff;`, 800);
       r.animate([{ transform:'scale(.2)', opacity:1 }, { transform:`scale(${(1.6 + i * .7) * k})`, opacity:0 }], { duration:520 + i * 140, delay:i * 90, easing:'ease-out', fill:'both' });
     }
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < (_fl ? 0 : 16); i++) {
       const s = fxRand(6, 14), dx = fxRand(-90, 90) * k, up = fxRand(50, 120) * k;
       const d = fxAdd(`left:${x}px;top:${y}px;width:${s}px;height:${s}px;margin:${-s / 2}px 0 0 ${-s / 2}px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff,#6cc4ff 60%,#1f7ae0);`, 1000);
       d.animate([{ transform:'translate(0,0)', opacity:1 }, { transform:`translate(${dx * .6}px,${-up}px)`, opacity:1, offset:.45 }, { transform:`translate(${dx}px,${fxRand(10, 50)}px)`, opacity:0 }], { duration:fxRand(600, 850), easing:'ease-in-out', fill:'forwards' });
@@ -8505,7 +8603,7 @@ function spawnAttrImpact(attr, x, y, big) {
       const a = fxAdd(`left:${x}px;top:${y}px;width:${90 + i * 40}px;height:${90 + i * 40}px;margin:${-(45 + i * 20)}px 0 0 ${-(45 + i * 20)}px;border-radius:50%;border:4px solid transparent;border-top-color:#d8ffc0;border-right-color:#5ee35e;filter:drop-shadow(0 0 6px #5ee35e);`, 800);
       a.animate([{ transform:`scale(.2) rotate(${i * 90}deg)`, opacity:1 }, { transform:`scale(${1.3 * k}) rotate(${i * 90 + 300}deg)`, opacity:0 }], { duration:560, delay:i * 60, easing:'ease-out', fill:'both' });
     }
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < (_fl ? 0 : 14); i++) {
       const s = fxRand(10, 18), ang = Math.random() * Math.PI * 2, dist = fxRand(50, 130) * k;
       const l = fxAdd(`left:${x}px;top:${y}px;width:${s}px;height:${s * .55}px;margin:${-s * .28}px 0 0 ${-s / 2}px;border-radius:0 100% 0 100%;background:linear-gradient(135deg,#b8ff90,#2fa83a);box-shadow:0 0 6px #5ee35e;`, 1000);
       l.animate([{ transform:'translate(0,0) rotate(0)', opacity:1 }, { transform:`translate(${Math.cos(ang) * dist}px,${Math.sin(ang) * dist}px) rotate(${fxRand(-540, 540)}deg)`, opacity:0 }], { duration:fxRand(550, 850), easing:'ease-out', fill:'forwards' });
@@ -8521,7 +8619,7 @@ function spawnAttrImpact(attr, x, y, big) {
       svg.innerHTML = `<svg width="200" height="240" viewBox="0 0 200 240" style="overflow:visible"><polyline points="${pts}" fill="none" stroke="#fffbd0" stroke-width="${4 - i}" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px #ffe14a) drop-shadow(0 0 14px #ffd000)"/></svg>`;
       svg.animate([{ opacity:1 }, { opacity:.2 }, { opacity:1 }, { opacity:0 }], { duration:380, delay:i * 50, fill:'both' });
     }
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < (_fl ? 0 : 10); i++) {
       const ang = Math.random() * Math.PI * 2, dist = fxRand(40, 110) * k;
       const sp = fxAdd(`left:${x}px;top:${y}px;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 10px #ffe14a;`, 700);
       sp.animate([{ transform:'translate(0,0)', opacity:1 }, { transform:`translate(${Math.cos(ang) * dist}px,${Math.sin(ang) * dist}px)`, opacity:0 }], { duration:fxRand(300, 550), easing:'ease-out', fill:'forwards' });
@@ -8529,7 +8627,7 @@ function spawnAttrImpact(attr, x, y, big) {
   } else if (attr === 'dark') {
     const v = fxAdd(`left:${x}px;top:${y}px;width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:50%;background:conic-gradient(from 0deg,#0a0016,#8a3cd6,#0a0016,#5a1a9c,#0a0016);filter:blur(1px);box-shadow:0 0 30px #7a2cc0;`, 800);
     v.animate([{ transform:'scale(.2) rotate(0)', opacity:0 }, { transform:`scale(${1.1 * k}) rotate(-200deg)`, opacity:.95, offset:.35 }, { transform:'scale(.1) rotate(-540deg)', opacity:0 }], { duration:700, easing:'ease-in-out', fill:'forwards' });
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < (_fl ? 0 : 12); i++) {
       const ang = Math.random() * Math.PI * 2, dist = fxRand(60, 120) * k, s = fxRand(8, 18);
       const w = fxAdd(`left:${x}px;top:${y}px;width:${s}px;height:${s}px;margin:${-s / 2}px 0 0 ${-s / 2}px;border-radius:50%;background:radial-gradient(circle,#2a0050,rgba(130,50,200,0) 75%);`, 900);
       w.animate([{ transform:`translate(${Math.cos(ang) * dist}px,${Math.sin(ang) * dist}px) scale(1.4)`, opacity:.9 }, { transform:'translate(0,0) scale(.2)', opacity:0 }], { duration:fxRand(450, 700), easing:'ease-in', fill:'forwards' });
@@ -8616,9 +8714,9 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
 function flyAttrProjectile(startX, startY, endX, endY, attr, duration = ATK_FLY_MS) {
   return new Promise((resolve) => {
     const projectile = makeAttrProjectile(attr);
-    projectile.style.left = startX + 'px';
-    projectile.style.top = startY + 'px';
-    projectile.style.transform = 'translate(-50%, -50%) scale(0.6)';
+    projectile.style.left = '0px';
+    projectile.style.top = '0px';
+    projectile.style.transform = `translate(${startX}px, ${startY}px) translate(-50%, -50%) scale(0.6)`;   // 位置は transform で動かす（left/top だと毎フレーム layout が走って重い）
     document.body.appendChild(projectile);
 
     let done = false;
@@ -8644,9 +8742,7 @@ function flyAttrProjectile(startX, startY, endX, endY, attr, duration = ATK_FLY_
       const tdx = 2*mt*(midX - startX) + 2*t*(endX - midX);
       const tdy = 2*mt*(midY - startY) + 2*t*(endY - midY);
       const ang = Math.atan2(tdy, tdx);
-      projectile.style.left = cx + 'px';
-      projectile.style.top = cy + 'px';
-      projectile.style.transform = `translate(-50%, -50%) rotate(${ang}rad) scale(${scale})`;
+      projectile.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%) rotate(${ang}rad) scale(${scale})`;
       spawnAttrTrail(attr, cx, cy, ang);
       if (t < 1) requestAnimationFrame(animStep);
       else finish();
@@ -9949,9 +10045,12 @@ function moOnOpponent(o) {
     if (_gameOverActive || _clearActive) return;   // クリア／ゲームオーバー画面の間は、あいてが先にホームへ戻っても何もしない
     if (window.MultiShare && MultiShare.spectating) { if (MultiTurn.banner) MultiTurn.banner('MULTI', 'あいてが退出しました', 1); return; }   // 観戦中：もう見るものがない（ホームへは上のボタンから）
     const waiting = !MultiTurn.isMyTurn();
-    MultiTurn.localId = null;
+    // のこりの自分はソロで続ける：ターンを自分に戻す＋相手のパーティー表示（相手のターンを見ていた時）を自分のへ戻す
+    if (MultiTurn.partnerLeft) MultiTurn.partnerLeft(); else MultiTurn.localId = null;
+    if (window.MultiShare && MultiShare.goSolo) MultiShare.goSolo();
     if (MultiTurn.banner) MultiTurn.banner('MULTI', 'あいてが退出しました', 1);
     if (waiting) busy = false;
+
   }
 }
 async function startMultiMatching(areaNum, stageKey) {
@@ -10323,6 +10422,15 @@ function renderParty() {
             slot.appendChild(attrFrameEl);
           }
 
+          // 自己エンハンス中：画像の真ん中に赤い矢印＋残りターン（⬆3）
+          let selfBuffEl = null;
+          const _sbf = selfAtkBuffOf(entry.uid);
+          if (_sbf) {
+            selfBuffEl = makeSelfBuffBadge(_sbf.turns);
+            slot.classList.add('self-buffed');
+            slot.appendChild(selfBuffEl);
+          }
+
           const requiredSp = getRequiredSp(entry, mon);
           const isSpReady = partySp >= requiredSp && !isSkillSealed(); // 共通SPで発動可能か（スキル使用不可の間は不可）
           // スキル使用不可中の印は、右のバフアイコン欄に出すので、各モンスターには付けない
@@ -10341,14 +10449,15 @@ function renderParty() {
             const wasLifted = _prevLift.has(uid);
             if (!wasLifted) _newlyReady = true;
             if (!(bindTimers[uid] && bindTimers[uid] > 0)) {   // バインド中は上げない（暗幕とズレるため）
-              if (wasLifted) { img.classList.add('sk-lift'); ready.classList.add('sk-lift'); if (attrFrameEl) attrFrameEl.classList.add('sk-lift'); }   // すでに上がっている：そのまま
-              else _raf2(() => { img.classList.add('sk-lift'); ready.classList.add('sk-lift'); if (attrFrameEl) attrFrameEl.classList.add('sk-lift'); });   // あらたに溜まった：ふわっと上がる
+              if (wasLifted) { img.classList.add('sk-lift'); ready.classList.add('sk-lift'); if (attrFrameEl) attrFrameEl.classList.add('sk-lift'); if (selfBuffEl) selfBuffEl.classList.add('sk-lift'); }   // すでに上がっている：そのまま
+              else _raf2(() => { img.classList.add('sk-lift'); ready.classList.add('sk-lift'); if (attrFrameEl) attrFrameEl.classList.add('sk-lift'); if (selfBuffEl) selfBuffEl.classList.add('sk-lift'); });   // あらたに溜まった：ふわっと上がる
             }
           } else if (_prevLift.has(uid) && !(bindTimers[uid] && bindTimers[uid] > 0)) {
             // スキルが使えなくなった：上がった位置から、元の位置へ戻る
             img.classList.add('sk-lift');
             if (attrFrameEl) attrFrameEl.classList.add('sk-lift');
-            _raf2(() => { img.classList.remove('sk-lift'); if (attrFrameEl) attrFrameEl.classList.remove('sk-lift'); });
+            if (selfBuffEl) selfBuffEl.classList.add('sk-lift');
+            _raf2(() => { img.classList.remove('sk-lift'); if (attrFrameEl) attrFrameEl.classList.remove('sk-lift'); if (selfBuffEl) selfBuffEl.classList.remove('sk-lift'); });
           }
 
           if (bindTimers[uid] && bindTimers[uid] > 0) {
@@ -11020,6 +11129,8 @@ async function _evaluateInner() {
         if (!b.attr || b.attr === mon.attr) buffMain *= b.value;
         if (_subA && (!b.attr || b.attr === _subA)) buffSub *= b.value;
       }
+      const _sab = selfAtkBuffOf(uid);   // 自己エンハンス（本人だけ・属性を問わず主属性にも副属性にも効く）
+      if (_sab) { buffMain *= _sab.value; buffSub *= _sab.value; }
       const atkMultLS = atkMult;
       atkMult = atkMultLS * buffMain;
 

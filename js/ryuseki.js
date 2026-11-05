@@ -176,7 +176,7 @@
       if (t === 'vert5') m.attr = pick(ATTRS);
       else if (t === 'simul6') { m.attr = pick(ATTRS); m.n = 6; }
       else if (t === 'combo') m.n = rint(5, 8);
-      else if (t === 'total') { m.n = rint(19, 23); m.sum = 0; }
+      else if (t === 'total') { m.n = rint(15, 20); m.sum = 0; }
       out.push(m);
     }
     return out;

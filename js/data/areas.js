@@ -98,9 +98,11 @@ kourine: {both: true, name: 'キングドラ降臨', desc: 'クリアでキン�
    jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョ-スタジアム'} , stageLevels: { boss: '中級' }},
     stella: { both: true, name: 'ステラソラコラボ', desc: 'クリアでアルカナエキスゲット！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム'} , stageLevels: { boss: '上級' }},
 stellab: { both: true, name: 'ステラソラコラボ2', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium3.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム2'} , stageLevels: { boss: '超級' }},
+stellac: { both: true, name: 'ステラソラコラボ3', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium3.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム3'} , stageLevels: { boss: '超級' }},
 
     Astral: { both: true, name: 'アストラルパーティー', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL.png', hue: 200,stageNames: { boss: 'アストラルパーティー'} , stageLevels: { boss: '超級' }},
 Astralb: { both: true, name: 'アストラルパーティー2', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL2.png', hue: 200,stageNames: { boss: 'アストラルパーティー2'} , stageLevels: { boss: '超級' }},
+monhan: { both: true, name: 'モンスターハンター', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'VS.ディノバルド',2: 'VS.ジンオウガ'} , stageLevels: { 1: '上級', 2: '上級'}},
 
 
   // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──

@@ -1,7 +1,7 @@
 /* ============================================================
    battle-plus.css  —  戦闘画面の追加スタイル（ui.css の後に読み込む）
    1) 敵の「あと〇」：あと0（攻撃中／攻撃待機）の表示
-   2) 敵のHPバー：金の細枠＋暗い溝＋属性色のツヤ付きゲージ＋ダメージの残像
+   2) 敵のHPバー：磨いた鋼の枠＋深いガラスの溝＋属性色のツヤ付きゲージ
    3) スキルが使える時の印（パーティのモンスター）
    ============================================================ */
 
@@ -77,63 +77,92 @@
 
 /* ════════════════════════════════════════════════════════════
    2) 敵のHPバー
-   ・下の自分のHPプレート（暗いガラス＋金の細枠）と同じ素材感にして、画面全体で統一
-   ・暗い溝＋金の枠＋白い縁取りの影で、明るい草原でも暗い洞窟でも読める
-   ・ゲージは属性色のグラデ＋上半分のツヤ＋先端の光。目盛りは25%ごと
-   ・ダメージを受けると、減った分が淡い色で残ってから縮む
+   ・バーの左端は属性アイコンの「真ん中」まで潜り込ませる → アイコンの丸みの裏から自然にバーが伸びる
+   ・外枠＝磨いた鋼（上が明るく下が暗い面取り）／溝＝深いガラス／ゲージ＝属性ごとの色の深みのある液体
+   ・模様（点・縞・格子）は使わない。なめらかなグラデーションとツヤだけ
+   ・質感は静的なCSSグラデーションだけ（画像・canvas・blur・アニメ無し＝低スペック端末でも軽い）。目盛りは付けない
    ════════════════════════════════════════════════════════════ */
 #enemy-area .enemy-unit .enemy-hp-row {
+  --ow: clamp(23px, 13cqw, 34px);          /* 属性アイコンの直径 */
+  --bh: max(15px, 6.8cqw);                 /* バーの高さ */
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .75));
   margin-top: 3px;
 }
+#enemy-area .enemy-unit.size-XL .enemy-hp-row {
+  --ow: clamp(30px, 9cqw, 50px);
+  --bh: max(20px, 4.4cqw);
+}
 #enemy-area .enemy-unit .enemy-attr-orb {
-  width: 13cqw; height: 13cqw;
-  min-width: 23px; min-height: 23px; max-width: 34px; max-height: 34px;
-  margin-right: -7px;
+  width: var(--ow); height: var(--ow);
+  min-width: 0; min-height: 0; max-width: none; max-height: none;
+  margin-right: calc(var(--ow) * -.5);     /* バーの左端をアイコンの中心まで重ねる */
   filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, .95)) drop-shadow(0 1px 2px rgba(0, 0, 0, .8));
 }
+
+/* 外枠：磨いた鋼。上の縁は明るく光り、下の縁は暗く沈む（浮き上がって見える面取り） */
 #enemy-area .enemy-unit .enemy-hp-bar-wrap {
   position: relative; flex: 1; min-width: 0;
-  height: max(15px, 6.8cqw);
-  padding: 2px 2px 2px 8px;
-  border: 0; border-radius: 0; overflow: visible;
-  background: linear-gradient(180deg, #fbebb8 0%, #d8b25a 34%, #8d6522 62%, #d9b765 100%);   /* 金の枠 */
+  height: var(--bh);
+  padding: 2px 2px 2px calc(var(--ow) * .5 - 2px);   /* 溝の左端はアイコンの縁より2px内側＝アイコンの下に隠れる */
+  border: 0; overflow: visible;
+  border-radius: 999px 0 0 999px;
+  background: linear-gradient(180deg, #f6f9ff 0%, #c3cce0 14%, #7d88a3 34%, #343a50 56%, #1b1e2e 74%, #4a5270 90%, #aeb8d0 100%);
   box-shadow: none;
   clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 0 100%);
 }
+
+/* 溝：深いガラス。縁の内側に細い黒線を引いて、ゲージが枠から浮かないようにする */
 .ehp-well {
   position: relative; width: 100%; height: 100%; overflow: hidden;
-  background: linear-gradient(180deg, #08060d 0%, #181223 55%, #0b0810 100%);
+  border-radius: 0;                                   /* 左端は四角のままアイコンの下に隠す */
+  background: linear-gradient(180deg, #030208 0%, #100b1c 55%, #07050d 100%);
   clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 50%, calc(100% - 4px) 100%, 0 100%);
-  box-shadow: inset 0 2px 3px rgba(0, 0, 0, .9);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .7), inset 0 2px 3px rgba(0, 0, 0, .9);
+}
+.ehp-well::after {                                    /* ガラスの反射（ゲージの上にも空の部分にも薄くかかる） */
+  content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .14) 0, rgba(255, 255, 255, .04) 46%, rgba(255, 255, 255, 0) 50%);
 }
 
-/* ゲージ本体 */
+/* ゲージ本体：模様なし。上から「明るい縁 → 鮮やかな本体 → 深い影」、いちばん下に照り返し */
 #enemy-area .enemy-unit .enemy-hp-bar-fill {
   position: absolute; left: 0; top: 0; bottom: 0; height: auto;
   width: 100%; border-radius: 0;
   transition: width .15s ease-out;
 }
-#enemy-area .enemy-unit .enemy-hp-bar-fill::before {          /* 上半分のツヤ */
-  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 48%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, .1));
+#enemy-area .enemy-unit .enemy-hp-bar-fill::before {  /* 上半分のツヤ：一番上に白い1pxの線＋やわらかい白 */
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .8) 0, rgba(255, 255, 255, .8) 1px, rgba(255, 255, 255, .3) 1px, rgba(255, 255, 255, .06) 100%);
 }
-#enemy-area .enemy-unit .enemy-hp-bar-fill::after {           /* 先端の光（いまのHPの端が分かる） */
-  content: ''; position: absolute; top: 0; bottom: 0; left: auto; right: 0; height: auto; width: 7px;
+#enemy-area .enemy-unit .enemy-hp-bar-fill::after {   /* ゲージの先端：ごく細い明るい縁（いまのHPの端が分かる程度） */
+  content: ''; position: absolute; top: 0; bottom: 0; left: auto; right: 0; height: auto; width: 3px;
   border-radius: 0;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .8));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .5));
 }
-.enemy-hp-bar-fill[data-attr="fire"]  { background: linear-gradient(180deg, #ffb67f 0%, #ff6a2c 38%, #d5330f 72%, #8f1a05 100%); }
-.enemy-hp-bar-fill[data-attr="water"] { background: linear-gradient(180deg, #9ddcff 0%, #3a96f4 38%, #1a62c8 72%, #0c3a86 100%); }
-.enemy-hp-bar-fill[data-attr="wood"]  { background: linear-gradient(180deg, #b4f090 0%, #4cc35a 38%, #25883a 72%, #0f5222 100%); }
-.enemy-hp-bar-fill[data-attr="light"] { background: linear-gradient(180deg, #fff3b0 0%, #ffd23a 38%, #e0a010 72%, #9a6504 100%); }
-.enemy-hp-bar-fill[data-attr="dark"]  { background: linear-gradient(180deg, #e0a0f5 0%, #a948d8 38%, #7425a8 72%, #431060 100%); }
-
-/* XL：バーを大きく */
-#enemy-area .enemy-unit.size-XL .enemy-hp-bar-wrap { height: max(20px, 4.4cqw); padding-left: 11px; }
-#enemy-area .enemy-unit.size-XL .enemy-attr-orb {
-  width: 9cqw; height: 9cqw; min-width: 30px; min-height: 30px; max-width: 50px; max-height: 50px;
-  margin-right: -8px;
+.enemy-hp-bar-fill[data-attr="fire"] {
+  background:
+    linear-gradient(0deg, rgba(255, 235, 170, .4) 0, rgba(255, 235, 170, 0) 26%),
+    linear-gradient(180deg, #ffd978 0%, #ff9a2a 20%, #ff5c16 44%, #d92c08 70%, #8c1203 100%);
+}
+.enemy-hp-bar-fill[data-attr="water"] {
+  background:
+    linear-gradient(0deg, rgba(190, 240, 255, .4) 0, rgba(190, 240, 255, 0) 26%),
+    linear-gradient(180deg, #bdf1ff 0%, #4fc0ff 20%, #1d8af0 44%, #1352c6 70%, #0a2c80 100%);
+}
+.enemy-hp-bar-fill[data-attr="wood"] {
+  background:
+    linear-gradient(0deg, rgba(210, 255, 170, .38) 0, rgba(210, 255, 170, 0) 26%),
+    linear-gradient(180deg, #d6ffa2 0%, #7de05c 20%, #33b244 44%, #1d7e31 70%, #0b471b 100%);
+}
+.enemy-hp-bar-fill[data-attr="light"] {
+  background:
+    linear-gradient(0deg, rgba(255, 248, 190, .45) 0, rgba(255, 248, 190, 0) 26%),
+    linear-gradient(180deg, #fff8c8 0%, #ffe35a 20%, #ffb71e 44%, #e08800 70%, #9a5800 100%);
+}
+.enemy-hp-bar-fill[data-attr="dark"] {
+  background:
+    linear-gradient(0deg, rgba(230, 190, 255, .38) 0, rgba(230, 190, 255, 0) 26%),
+    linear-gradient(180deg, #e8bcff 0%, #b05cf0 20%, #7a28c6 44%, #4b1189 70%, #200440 100%);
 }
 
 
@@ -279,4 +308,52 @@
 .attr-shift-frame .asf-turns {
   flex: none; font: 900 1.05rem/1 var(--ff-num, var(--ff, sans-serif)); color: #fff; font-style: normal;
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px rgba(0,0,0,.8);
+}
+
+/* ═══════════════════════════════════════
+   自己エンハンス：モンスター画像の真ん中に「赤い矢印 ＋ 残りターン」（⬆3）
+   ═══════════════════════════════════════ */
+.party-slot .self-buff-badge {
+  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; gap: 4%;
+  container-type: size;   /* 中の矢印・数字をモンスター画像の大きさに合わせて小さく出す */
+  transition: transform .18s ease-out;
+}
+.party-slot .self-buff-badge.sk-lift { transform: translateY(-7%); }
+.self-buff-badge .sbb-arrow {
+  flex: none; width: 24cqw; height: auto;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.8));
+}
+.self-buff-badge .sbb-turns {
+  flex: none; font: 900 26cqw/1 var(--ff-num, var(--ff, sans-serif)); color: #fff; font-style: normal;
+  -webkit-text-stroke: 0.09em #1c1c1c; paint-order: stroke fill;
+  text-shadow: 0 1px 2px rgba(0,0,0,.7);
+}
+/* 属性変化と重なる時は、自己エンハンスを少し下にずらす */
+.party-slot.attr-shifted .self-buff-badge { align-items: flex-end; padding-bottom: 8%; box-sizing: border-box; }
+
+
+/* ════════════════════════════════════════════════════════════
+   敵の2属性（主属性＋副属性）のHPバー
+   右半分＝主属性の色 / 左半分＝副属性の色。区切り線は無し。色の境目はバー全体の真ん中で固定
+   （--r = いまのHP割合。背景の横幅を 1/--r 倍にして、バーが縮んでも色の位置が動かないようにする）
+   ════════════════════════════════════════════════════════════ */
+.enemy-hp-bar-fill.dual[data-main="fire"]  { --cm: #ff6a14; }
+.enemy-hp-bar-fill.dual[data-main="water"] { --cm: #1f8fff; }
+.enemy-hp-bar-fill.dual[data-main="wood"]  { --cm: #35c444; }
+.enemy-hp-bar-fill.dual[data-main="light"] { --cm: #ffb814; }
+.enemy-hp-bar-fill.dual[data-main="dark"]  { --cm: #a548ee; }
+.enemy-hp-bar-fill.dual[data-sub="fire"]   { --cs: #ff6a14; }
+.enemy-hp-bar-fill.dual[data-sub="water"]  { --cs: #1f8fff; }
+.enemy-hp-bar-fill.dual[data-sub="wood"]   { --cs: #35c444; }
+.enemy-hp-bar-fill.dual[data-sub="light"]  { --cs: #ffb814; }
+.enemy-hp-bar-fill.dual[data-sub="dark"]   { --cs: #a548ee; }
+#enemy-area .enemy-unit .enemy-hp-bar-fill.dual {
+  --r: 1;
+  background:
+    linear-gradient(0deg, rgba(255,255,255,.26) 0, rgba(255,255,255,0) 26%) 0 0 / 100% 100% no-repeat,
+    linear-gradient(180deg, #fff 0%, #fff 14%, #f1ebf5 40%, #c9b9d0 72%, #8f7d9c 100%) 0 0 / 100% 100% no-repeat,   /* 下ほど少し暗く・やや青紫に（色の鮮やかさは保つ：乗算） */
+    linear-gradient(90deg, var(--cs) 0, var(--cs) 49%, var(--cm) 51%, var(--cm) 100%) 0 0 / calc(100% / var(--r)) 100% no-repeat;
+  background-blend-mode: normal, multiply, normal;
+  transition: width .15s ease-out, background-size .15s ease-out;
 }

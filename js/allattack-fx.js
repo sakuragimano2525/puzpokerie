@@ -174,7 +174,14 @@
       E.cv = c; E.g = c.getContext('2d');
     }
     // キャンバスは戦闘画面（ダンジョン枠）だけに敷く：描く面積が減って軽く、盤面やパーティ欄にはみ出さない
-    const d = document.getElementById('dungeon'), dr = d ? d.getBoundingClientRect() : null;
+    // 戦闘枠の位置は毎フレーム測らず、300msだけ使い回す（測るたびに強制的にレイアウト計算が走って重くなるため）。
+    // 描く座標は画面座標のまま（下の setTransform で ox/oy を引く）なので、少し古い位置でも絵はずれない
+    const nowC = performance.now();
+    if (E.rcT === undefined || nowC - E.rcT > 300) {
+      const d0 = document.getElementById('dungeon');
+      E.rc = d0 ? d0.getBoundingClientRect() : null; E.rcT = nowC;
+    }
+    const dr = E.rc;
     const ok = dr && dr.width > 100 && dr.height > 100;
     const ox = ok ? dr.left : 0, oy = ok ? dr.top : 0, w = ok ? dr.width : window.innerWidth, h = ok ? dr.height : window.innerHeight;
     const px = Math.min(window.devicePixelRatio || 1, 1.5) * E.scale;
@@ -185,11 +192,12 @@
     }
   }
   function engineAdd(fx) {
+    if (!E.running) E.rcT = undefined;   // 新しく始めるときは、戦闘枠の位置を測り直す
     ensureCanvas();
     fx.t0 = performance.now();
     E.fx.push(fx);
     if (!E.running) {
-      E.scale = Math.min(1, E.scale * 1.25);
+      if (E.fe < 22) E.scale = Math.min(1, E.scale * 1.25);   // 動きが軽いときだけ解像度を戻す（重いままなら戻さない）
       ensureCanvas();
       E.running = true; E.last = fx.t0; E.cv.style.display = 'block';
       requestAnimationFrame(engineLoop);
@@ -198,7 +206,7 @@
   function engineLoop(now) {
     ensureCanvas();
     const g = E.g, raw = now - E.last, dt = Math.min(.05, Math.max(0, raw / 1000));
-    if (raw > 0 && raw < 500) E.fe = E.fe * .85 + raw * .15;
+    if (raw > 0 && raw < 500) { E.fe = E.fe * .85 + raw * .15; if (window.FxPerf) window.FxPerf.report(raw); }
     E.last = now;
     g.setTransform(E.px, 0, 0, E.px, -E.ox * E.px, -E.oy * E.px);   // 演出側は画面座標のまま描ける
     g.clearRect(E.ox, E.oy, E.W, E.H);
@@ -210,7 +218,7 @@
       g.restore();
     }
     // 動きが重い端末（フレーム間隔が長い）では解像度を自動で落とす。演出の見た目はほぼ変わらず、動きが止まらない
-    if (++E.n % 6 === 0 && E.fe > 34 && E.scale > .5) E.scale = Math.max(.5, E.scale * .8);
+    if (++E.n % 4 === 0 && E.fe > 30 && E.scale > .45) E.scale = Math.max(.45, E.scale * .85);
     if (E.fx.length) requestAnimationFrame(engineLoop);
     else { E.running = false; E.cv.style.display = 'none'; }
   }
@@ -269,11 +277,16 @@
 
   // ---------- 描画ヘルパー ----------
   function drawSpr(g, spr, x, y, size, alpha, rot, st) {
-    if (alpha <= .004 || size <= 1) return;
+    if (alpha <= .01 || size <= 1) return;           // ほぼ見えない粒は描かない（見た目は変わらない）
     g.globalAlpha = alpha > 1 ? 1 : alpha;
     const h = size * (st || 1);                      // st：縦の伸び率
-    if (rot) { g.save(); g.translate(x, y); g.rotate(rot); g.drawImage(spr, -size / 2, -h / 2, size, h); g.restore(); }
-    else g.drawImage(spr, x - size / 2, y - h / 2, size, h);
+    if (rot) {
+      // save/translate/rotate/restore を粒ごとに繰り返すと重いので、変換行列を1回で設定する
+      const k = E.px, co = Math.cos(rot) * k, si = Math.sin(rot) * k;
+      g.setTransform(co, si, -si, co, (x - E.ox) * k, (y - E.oy) * k);
+      g.drawImage(spr, -size / 2, -h / 2, size, h);
+      g.setTransform(k, 0, 0, k, -E.ox * k, -E.oy * k);
+    } else g.drawImage(spr, x - size / 2, y - h / 2, size, h);
   }
   // 色の段階 p（0〜5）に最も近い1枚を描く
   function drawRamp(g, ramp, p, v, x, y, size, alpha, rot, st) {
@@ -751,11 +764,18 @@
       { transform: 'translate(7px,-2px) scale(.98)' }, { transform: 'translate(0,0) scale(1)' }
     ], { duration: 230, easing: 'ease-out' });
     const img = unit.querySelector('.enemy-img-wrap img');
-    if (img && img.animate) img.animate([
-      { filter: 'brightness(1)' },
-      { filter: `brightness(2.1) saturate(.7) drop-shadow(0 0 10px ${COL[attr] || '#fff'})`, offset: .22 },
-      { filter: 'brightness(1)' }
-    ], { duration: 320 });
+    if (img && img.animate) {
+      const nowF = performance.now();
+      if (!(img._fxFlashT && nowF - img._fxFlashT < 110)) {   // 連続ヒットで画像フィルターの演出を重ねすぎない
+        img._fxFlashT = nowF;
+        const lite = window.FxPerf && window.FxPerf.q() < .85;   // 重い端末では光る影（drop-shadow）なしの軽い版
+        img.animate([
+          { filter: 'brightness(1)' },
+          { filter: lite ? 'brightness(2.1) saturate(.7)' : `brightness(2.1) saturate(.7) drop-shadow(0 0 10px ${COL[attr] || '#fff'})`, offset: .22 },
+          { filter: 'brightness(1)' }
+        ], { duration: 320 });
+      }
+    }
 
     const jx = rnd(-14, 14);   // 連続で当たっても数字が完全に重ならないように（縦のずらしは showDamageNumber 側）
     if (absorbed) {
@@ -799,7 +819,7 @@
         const tg = collectTargets();
         if (!tg.length) { resolve(); return; }
         // 演出（裏で流れ続ける）。重なっているときほど粒を減らして軽くする
-        const q = active >= 4 ? .45 : active >= 2 ? .7 : 1;
+        const q = Math.min(active >= 4 ? .45 : active >= 2 ? .7 : 1, window.FxPerf ? window.FxPerf.q() : 1);   // 端末が重いときだけ、さらに減らす（js/fx-lite.js）
         const domFx = FX_DOM[attr], cvFx = FX_CV[attr];
         if (domFx) {                       // 光：DOM演出
           const L = makeLayer(1400);

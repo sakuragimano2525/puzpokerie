@@ -2594,7 +2594,7 @@ const MONSTER_DATA = {
     stats: { hp: { min: 50, max: 50 }, atk: { min: 5, max: 25 }, rec: { min: 0, max: 5 } },
     skill: {
       name: 'へんしん',
-      sp: 4,
+      sp: 1,
       desc: 'ランダムでほかのモンスターにへんしんする。',
       effects: [
         {
@@ -5871,10 +5871,10 @@ const MONSTER_DATA = {
     skill: {
       name: '烈火の華',
       sp: 3,
-      desc: '火と回復ドロップをランダムで3つずつ生成。\n火と回復ドロップをロック。',
+      desc: '火と回復ドロップをランダムで4つずつ生成。\n火と回復ドロップをロック。',
       effects: [
-        { type: 'orbChangeRandom', attr: 'fire', count: 3, message: '☠️ 毒ドロップ生成！' },
-        { type: 'orbChangeRandom', attr: 'heal', count: 3 },
+        { type: 'orbChangeRandom', attr: 'fire', count: 4, message: '☠️ 毒ドロップ生成！' },
+        { type: 'orbChangeRandom', attr: 'heal', count: 4 },
         { type: 'orbLock', target: 'attrs', orb_fire: true, orb_heal: true }
       ]
     },
@@ -5897,7 +5897,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 2500,
-    stats: { hp: { min: 400, max: 2400 }, atk: { min: 700, max: 2500 }, rec: { min: 20, max: 40 } },
+    stats: { hp: { min: 400, max: 2500 }, atk: { min: 700, max: 2500 }, rec: { min: 20, max: 40 } },
     skill: {
       name: 'アークブラスト',
       sp: 4,
@@ -5911,10 +5911,11 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'デュアルファイア',
-      desc: '火ドロップを消す度に攻撃1.2倍、受けるダメージ5%軽減。\nスキル使用時、攻撃1.1倍。',
+      desc: '火ドロップを消す度に攻撃1.2倍、受けるダメージ5%軽減。\nスキル使用時、攻撃1.3倍。',
       effects: [
         { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.2, reduce: 0.05 },
-        { type: 'atk', condition: 'skillUsed', value: 1.1 }
+        { type: 'atk', condition: 'skillUsed', value: 1.3 },
+        { type: 'expMult', value: 1.3 }
       ]
     }
   },
@@ -5956,20 +5957,20 @@ const MONSTER_DATA = {
     skill: {
       name: '漣',
       sp: 4,
-      desc: '敵単体に攻撃力×40倍の水属性攻撃。',
+      desc: '敵単体に攻撃力×50倍の水属性攻撃。',
       cutin: true,
-      effects: [ { type: 'damageSelfAtkMult', value: 40, attr: 'water', target: 'single' } ]
+      effects: [ { type: 'damageSelfAtkMult', value: 60, attr: 'water', target: 'single' } ]
     },
     leaderSkill: {
       name: '龍薙閃',
-      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.2倍、受けるダメージ9%軽減。',
+      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.25倍、受けるダメージ9%軽減。',
       effects: [
         {
           type: 'atk',
           condition: 'connectEach',
           attr: 'water',
           count: 4,
-          value: 1.21,
+          value: 1.25,
           exponential: true,
           exact: true,
           reduce: 0.09
@@ -5979,7 +5980,7 @@ const MONSTER_DATA = {
           condition: 'connectEach',
           attr: 'dark',
           count: 4,
-          value: 1.21,
+          value: 1.25,
           exponential: true,
           reduce: 0.09,
           exact: true
@@ -6093,7 +6094,7 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 50,
     baseExp: 25500,
-    stats: { hp: { min: 200, max: 2000 }, atk: { min: 500, max: 2500 }, rec: { min: 50, max: 250 } },
+    stats: { hp: { min: 200, max: 3000 }, atk: { min: 500, max: 2500 }, rec: { min: 50, max: 250 } },
     skill: {
       name: 'フリーダムペイント',
       sp: 4,
@@ -6111,10 +6112,14 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'connectEach', attr: 'wood', count: 5, value: 1.5, exponential: true, exact: true },
         { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.5, exponential: true, exact: true },
         { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.2 },
-        { type: 'eggDropUp', value: 10 }
+        { type: 'coinMult', value: 1.5 },
+        { type: 'spCharge', size: 'small' }
       ]
     },
-    evolutions: [ { to: 5021, materials: [ { item: 'puzzle32', count: 2 }, { item: 'puzzle33', count: 1 } ] } ]
+    evolutions: [
+      { to: 5021, materials: [ { item: 'puzzle32', count: 2 }, { item: 'puzzle33', count: 1 } ] },
+      { to: 5062, materials: [ { item: 'spuzzle_32', count: 3 }, { item: 'puzzle3', count: 1 } ] }
+    ]
   },
   5021: {
     id: 5021,
@@ -6125,15 +6130,15 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 2500,
-    stats: { hp: { min: 600, max: 3000 }, atk: { min: 200, max: 1500 }, rec: { min: 100, max: 500 } },
+    stats: { hp: { min: 600, max: 4000 }, atk: { min: 200, max: 1500 }, rec: { min: 100, max: 500 } },
     skill: {
       name: 'ロケットパーティー',
-      sp: 7,
-      desc: 'ドロップを木・闇・回復ドロップに変化。\n敵全体に仲間の絆に比例する無属性の攻撃。',
+      sp: 6,
+      desc: 'ドロップを木・闇ドロップに変化。\n敵全体に仲間の絆に比例する無属性の攻撃。',
       cutin: true,
       effects: [
-        { type: 'orbChangeMulti', orb_heal: true, orb_wood: true, orb_dark: true },
-        { type: 'damagePartyAtkMult', target: 'all', value: 7, attr: 'poison' }
+        { type: 'orbChangeMulti', orb_wood: true, orb_dark: true },
+        { type: 'damagePartyAtkMult', target: 'all', value: 10, attr: 'poison' }
       ]
     },
     leaderSkill: {
@@ -6161,7 +6166,7 @@ const MONSTER_DATA = {
           reduce: 0.1
         },
         { type: 'atk', condition: 'orbConnect', attr: 'wood', count: 5, value: 1, attr2: 'dark', comboAdd: 1 },
-        { type: 'expMult', value: 1.5 }
+        { type: 'eggDropUp', value: 10 }
       ]
     }
   },
@@ -6797,8 +6802,8 @@ const MONSTER_DATA = {
       name: 'マーシャルヒーツ',
       desc: '火ドロップ/水ドロップを消す度に攻撃1.1倍。',
       effects: [
-        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.18 },
-        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.18 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.19 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.19 },
         { type: 'eggDropUp', value: 10 },
         { type: 'spCharge', size: 'small' }
       ]
@@ -6995,7 +7000,10 @@ const MONSTER_DATA = {
       desc: 'SPの上限が5アップ（最大15）。',
       effects: [ { type: 'spCapUp', value: 5 }, { type: 'spCharge', size: 'medium' }, { type: 'eggDropUp', value: 5 } ]
     },
-    evolutions: [ { to: 5051, materials: [ { item: 'puzzle53', count: 1 }, { item: 'puzzle52', count: 2 } ] } ]
+    evolutions: [
+      { to: 5051, materials: [ { item: 'puzzle53', count: 1 }, { item: 'puzzle52', count: 2 } ] },
+      { to: 5065, materials: [ { item: 'puzzle52', count: 2 }, { item: 'puzzle12', count: 2 } ] }
+    ]
   },
   5051: {
     id: 5051,
@@ -7006,15 +7014,15 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 12500,
-    stats: { hp: { min: 600, max: 2300 }, atk: { min: 600, max: 2200 }, rec: { min: 100, max: 350 } },
+    stats: { hp: { min: 600, max: 2300 }, atk: { min: 600, max: 2200 }, rec: { min: 100, max: 400 } },
     skill: { name: 'ベストショット', sp: 3, desc: 'HPを最大HPの50%回復。', cutin: true, effects: [ { type: 'heal', value: 0.5 } ] },
     leaderSkill: {
       name: '寝ない子だ～れだ★',
-      desc: '闇を10個以上つなげて消すと攻撃2.5倍、1コンボ加算。\nリーダー/フレンドの時、チップドロップ率が少し上がる。',
+      desc: 'HP5%以下で攻撃3倍、回復力2倍。',
       effects: [
-        { type: 'atk', condition: 'orbConnect', attr: 'dark', count: 10, value: 3, comboAdd: 1 },
-        { type: 'chipDropUp', value: 5 },
-        { type: 'expMult', value: 1.5 }
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 1.5 },
+        { type: 'atk', condition: 'hpBelow', threshold: 0.05, value: 3, recValue: 2 }
       ]
     }
   },
@@ -7081,14 +7089,14 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '蛟龍の型',
-      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.1倍、受けるダメージ9%軽減。',
+      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.2倍、受けるダメージ9%軽減。',
       effects: [
         {
           type: 'atk',
           condition: 'connectEach',
           attr: 'water',
           count: 4,
-          value: 1.15,
+          value: 1.2,
           exponential: true,
           exact: true,
           reduce: 0.09
@@ -7098,7 +7106,7 @@ const MONSTER_DATA = {
           condition: 'connectEach',
           attr: 'dark',
           count: 4,
-          value: 1.15,
+          value: 1.2,
           exponential: true,
           reduce: 0.09,
           exact: true
@@ -7166,7 +7174,7 @@ const MONSTER_DATA = {
       effects: [
         { type: 'atk', condition: 'combo', count: 7, value: 2 },
         { type: 'allStat', condition: 'type', attr: 'かいふく', value: 1.1 },
-        { type: 'spCharge', size: 'small' },
+        { type: 'spCharge', size: 'medium' },
         { type: 'eggDropUp', value: 3 }
       ]
     }
@@ -7220,14 +7228,321 @@ const MONSTER_DATA = {
   },
   5057: {
     id: 5057,
-    name: '新モンスター',
-    rarity: 3,
-    attr: 'fire',
+    name: 'ベスティナ',
+    rarity: 1,
+    attr: 'none',
+    sub: 'light',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 15000,
+    stats: { hp: { min: 1000, max: 3000 }, atk: { min: 3000, max: 6000 }, rec: { min: 300, max: 700 } },
+    skill: {
+      name: 'プリチーエンハンス',
+      sp: 3,
+      desc: '10ターンの間、自分の攻撃力が1.5倍。\n1ターンの間、回復力が1.2倍。',
+      cutin: true,
+      effects: [ { type: 'selfAtkBuff', value: 1.5, turns: 10 }, { type: 'recMult', turns: 1, value: 1.2 } ]
+    },
+    leaderSkill: {
+      name: 'プリチーなベスティナ',
+      desc: 'チームの総レア度が8以下の場合、かいふくタイプの攻撃力が3倍。\nL字消しをすると受けるダメージ15%軽減。',
+      effects: [
+        { type: 'rarity', condition: 'totalBelow', threshold: 8, atk: true, value: 3, monType: 'かいふく' },
+        { type: 'atk', condition: 'lShapes', value: 1, reduce: 0.15 },
+        { type: 'eggDropUp', value: 15 },
+        { type: 'spCharge', size: 'medium' }
+      ]
+    }
+  },
+  5058: {
+    id: 5058,
+    name: 'トーナ',
+    rarity: 1,
+    attr: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 440, max: 3000 }, atk: { min: 300, max: 2200 }, rec: { min: 60, max: 220 } },
+    skill: {
+      name: 'パペットキャンペーン',
+      sp: 2,
+      desc: '4ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', value: 1.5, turns: 4 } ]
+    },
+    leaderSkill: {
+      name: 'アイシクルデリバリー',
+      desc: '水ドロップをちょうど4個つなげて消す度に攻撃1.6倍、受けるダメージ9%軽減。',
+      effects: [
+        {
+          type: 'atk',
+          condition: 'connectEach',
+          attr: 'water',
+          count: 4,
+          value: 1.6,
+          exponential: true,
+          exact: true,
+          reduce: 0.09
+        },
+        { type: 'spCharge', size: 'small' }
+      ]
+    },
+    evolutions: [ { to: 5059, materials: [ { item: 'puzzle1', count: 4 }, { item: 'puzzle2', count: 4 } ] } ]
+  },
+  5059: {
+    id: 5059,
+    name: 'トーナ（覚醒）',
+    rarity: 1,
+    attr: 'water',
+    sub: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 440, max: 3000 }, atk: { min: 300, max: 2350 }, rec: { min: 60, max: 180 } },
+    skill: {
+      name: 'トーミナスペシャル',
+      sp: 2,
+      desc: '1ターンの間、水ドロップが落ちやすくなる。',
+      cutin: true,
+      effects: [ { type: 'orbSpawnBoost', attr: 'water', rate: 0.4, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'スプラッシュシュート',
+      desc: '火ドロップ/水ドロップを消す度に攻撃1.1倍。\nHP50%以下で攻撃1.5倍、受けるダメージ25%軽減。',
+      effects: [
+        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.1 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.1 },
+        { type: 'eggDropUp', value: 10 },
+        { type: 'spCharge', size: 'small' },
+        { type: 'atk', condition: 'hpBelow', threshold: 0.5, value: 1.5, reduce: 0.25 }
+      ]
+    }
+  },
+  5060: {
+    id: 5060,
+    name: 'ナツカ',
+    rarity: 4,
+    attr: 'wood',
+    type: '神秘',
+    maxLevel: 75,
+    baseExp: 2500,
+    stats: { hp: { min: 300, max: 1800 }, atk: { min: 300, max: 600 }, rec: { min: 25, max: 25 } },
+    skill: {
+      name: '花びらの詩',
+      sp: 2,
+      desc: '1ターンの間、かいふくタイプの攻撃が1.2倍。',
+      effects: [
+        { type: 'atkBuff', value: 1.2, turns: 1, monType: 'かいふく' },
+        { type: 'atkBuff', monType: '神秘', value: 0.001, turns: 99 }
+      ]
+    },
+    leaderSkill: {
+      name: '凪の誘い',
+      desc: 'リーダー/フレンドの時、タマゴとチップドロップ率が上昇。',
+      effects: [ { type: 'eggDropUp', value: 5 }, { type: 'atk', value: 0.75 }, { type: 'chipDropUp', value: 5 } ]
+    },
+    evolutions: [ { to: 5061, materials: [ { item: 'puzzle33', count: 3 } ] } ]
+  },
+  5061: {
+    id: 5061,
+    name: 'ナツカ(覚醒)',
+    rarity: 5,
+    attr: 'wood',
+    sub: 'water',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 450, max: 2700 }, atk: { min: 350, max: 2050 }, rec: { min: 25, max: 100 } },
+    skill: {
+      name: '散華の夢',
+      sp: 3,
+      desc: 'HPが1になる。\n木ドロップをお邪魔ドロップに変化。',
+      cutin: true,
+      effects: [ { type: 'selfDamage', mode: 'toOne', value: 0 }, { type: 'orbConvert', from: 'wood', to: 'ojama' } ]
+    },
+    leaderSkill: {
+      name: '天つ花風',
+      desc: '【落ちコンなし】残りドロップ3個以下で回復力2.5倍。',
+      effects: [
+        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 1, recValue: 2.5 },
+        { type: 'noDrop', value: true }
+      ]
+    }
+  },
+  5062: {
+    id: 5062,
+    name: 'エレノア(令嬢)',
+    rarity: 5,
+    attr: 'none',
+    sub: 'wood',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 600, max: 4000 }, atk: { min: 6000, max: 8000 }, rec: { min: 100, max: 300 } },
+    skill: {
+      name: 'キャンバス拡張',
+      sp: 5,
+      desc: '99ターンの間、自分の属性が木属性に変化。\n1ターンの間、操作時間が3秒延長、HPを最大HPの25%回復。',
+      cutin: true,
+      effects: [
+        { type: 'attrChange', attr: 'wood', turns: 99 },
+        { type: 'moveTimeBuff', turns: 1, seconds: 5, mult: 1 },
+        { type: 'heal', value: 0.25 }
+      ]
+    },
+    leaderSkill: {
+      name: '令嬢戦術：爆花',
+      desc: 'チームのレア度が全員同じ場合、攻撃力とHPが1.5倍。\n木ドロップ/闇ドロップのL字消しする度に攻撃1.6倍、受けるダメージ5%軽減。',
+      effects: [
+        { type: 'rarity', condition: 'allSame', atk: true, value: 1.5, hp: true },
+        { type: 'atk', condition: 'lShapes', shapeAttr: 'wood', value: 1.6, exponential: true, reduce: 0.05 },
+        { type: 'atk', condition: 'lShapes', shapeAttr: 'dark', value: 1.6, exponential: true, reduce: 0.05 },
+        { type: 'eggDropUp', value: 15 },
+        { type: 'coinMult', value: 1.2 }
+      ]
+    }
+  },
+  5063: {
+    id: 5063,
+    name: 'ヴェルジュ(バニー)',
+    rarity: 1,
+    attr: 'none',
+    sub: 'dark',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 15000,
+    stats: { hp: { min: 1600, max: 3600 }, atk: { min: 6000, max: 9999 }, rec: { min: 20, max: 100 } },
+    skill: {
+      name: '破滅',
+      sp: 4,
+      desc: 'HPが1になる。\n1ターンの間、かいふくタイプの攻撃が1.5倍にし自分の攻撃力が2倍。',
+      cutin: true,
+      effects: [
+        { type: 'selfDamage', mode: 'toOne', value: 0.2 },
+        { type: 'atkBuff', monType: 'かいふく', value: 1.5, turns: 1 },
+        { type: 'selfAtkBuff', value: 2, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '悪魔のような天使',
+      desc: 'チームの総レア度が8以下の場合、かいふくタイプの攻撃力が3倍。\nかいふくタイプのHP1.3倍。',
+      effects: [
+        { type: 'rarity', condition: 'totalBelow', threshold: 8, atk: true, value: 3, monType: 'かいふく' },
+        { type: 'eggDropUp', value: 15 },
+        { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.3 }
+      ]
+    }
+  },
+  5064: {
+    id: 5064,
+    name: 'コハク(正月)',
+    rarity: 5,
+    attr: 'none',
+    sub: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 1000, max: 3000 }, atk: { min: 5550, max: 8420 }, rec: { min: 50, max: 100 } },
+    skill: {
+      name: '銃火の余韻',
+      sp: 2,
+      desc: '99ターンの間、火ドロップが少し落ちやすくなる。\n99ターンの間、自分の属性が火属性に変化。',
+      cutin: true,
+      effects: [
+        { type: 'orbSpawnBoost', attr: 'fire', rate: 0.1, turns: 99 },
+        { type: 'attrChange', attr: 'fire', turns: 99 }
+      ]
+    },
+    leaderSkill: {
+      name: 'アルティメットバーン',
+      desc: '火ドロップを消す度に攻撃1.35倍、受けるダメージ3%軽減。',
+      effects: [ { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.35, reduce: 0.03 } ]
+    }
+  },
+  5065: {
+    id: 5065,
+    name: 'ミスティ(水着)',
+    rarity: 5,
+    attr: 'dark',
+    sub: 'fire',
     type: 'バランス',
-    baseExp: 100,
-    stats: { hp: { min: 500, max: 1500 }, atk: { min: 200, max: 600 }, rec: { min: 50, max: 150 } },
-    skill: { name: 'スキル名', sp: 1, desc: '', effects: [] },
-    leaderSkill: { name: 'リーダースキル名', desc: '', effects: [ { type: 'atk', attr: 'fire', value: 1.2 } ] }
+    maxLevel: 99,
+    baseExp: 12500,
+    stats: { hp: { min: 2000, max: 3600 }, atk: { min: 700, max: 2300 }, rec: { min: 150, max: 300 } },
+    skill: {
+      name: '夜間疾走',
+      sp: 2,
+      desc: 'HPが1になる。\n火と闇ドロップをランダムで4つずつ生成。',
+      cutin: true,
+      effects: [
+        { type: 'selfDamage', mode: 'toOne', value: 0.5 },
+        { type: 'orbChangeRandom', attr: 'fire', count: 4 },
+        { type: 'orbChangeRandom', attr: 'dark', count: 4 }
+      ]
+    },
+    leaderSkill: {
+      name: '魔女の微笑み',
+      desc: 'HP1%以下で攻撃3倍、受けるダメージ30%軽減。',
+      effects: [
+        { type: 'atk', condition: 'hpBelow', threshold: 0.01, value: 3, reduce: 0.3 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'atk', condition: 'combo', count: 7, value: 1, recValue: 2 },
+        { type: 'eggDropUp', value: 10 }
+      ]
+    }
+  },
+  5066: {
+    id: 5066,
+    name: 'ディノバルド',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 400, max: 3200 }, atk: { min: 400, max: 2000 }, rec: { min: 20, max: 100 } },
+    skill: {
+      name: '尻尾砥ぎ',
+      sp: 5,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。\n左から2列目の縦1列を火ドロップに変化。',
+      effects: [
+        { type: 'selfAtkBuff', value: 1.5, turns: 1 },
+        { type: 'orbChangeLine', dir: 'col', index: 1, count: 1, attr: 'fire' }
+      ]
+    },
+    leaderSkill: {
+      name: '灼熱の刃',
+      desc: '火ドロップか闇ドロップの十字消しする度に攻撃1.5倍。\nHP3%以下で回復力3倍。',
+      effects: [
+        { type: 'atk', condition: 'cross', shapeAttr: 'fire', value: 1.5, exponential: true },
+        { type: 'hp', condition: 'type', attr: '神秘', value: 0.001 },
+        { type: 'atk', condition: 'type', attr: '神秘', value: 0.01 },
+        { type: 'atk', condition: 'cross', shapeAttr: 'dark', value: 1.5, exponential: true },
+        { type: 'atk', condition: 'hpBelow', threshold: 0.05, value: 1, recValue: 3 }
+      ]
+    }
+  },
+  5067: {
+    id: 5067,
+    name: 'ジンオウガ',
+    rarity: 5,
+    attr: 'light',
+    sub: 'wood',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 600, max: 4200 }, atk: { min: 300, max: 1700 }, rec: { min: 25, max: 100 } },
+    skill: {
+      name: '落雷放電',
+      sp: 4,
+      desc: 'ドロップを5属性＋回復ドロップに変化。\n光ドロップをランダムで3つ生成。',
+      cutin: true,
+      effects: [ { type: 'orbChange5ColorHeal' }, { type: 'orbChangeRandom', attr: 'light', count: 3 } ]
+    },
+    leaderSkill: {
+      name: '真なる覚醒',
+      desc: '5色同時に消すと攻撃2倍、受けるダメージ10%軽減。',
+      effects: [ { type: 'atk', condition: 'colorCount', count: 5, value: 2, reduce: 0.1 } ]
+    }
   }
 };
 

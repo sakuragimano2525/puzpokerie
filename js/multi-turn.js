@@ -24,6 +24,7 @@
   const MT = {
     active: false,
     dead: [false, false, false, false],   // ゲームオーバーになって観戦中の人（オンライン：のこりの人だけでダンジョンを続ける）
+    left: [false, false, false, false],   // 途中で退出（リタイア・切断）した人。のこりの人はソロで続ける
     count: 2,          // 参加人数（2〜4）
     current: 0,        // 今パズルしている人
     round: 1,          // 何周目か
@@ -80,9 +81,9 @@
       const p = document.createElement('div');
       const me = MT.online && i === MT.localId;
       p.className = 'mt-pl p' + i + (MT.dead[i] ? ' dead' : (i === MT.current ? ' on' : ''));
+      // シンプル表示：A・B の丸だけ（いまの人が光る）。文字は、脱落・退出した人にだけ出す
       p.innerHTML = '<span class="mt-av">' + MT.name(i) + '</span>' + (MT.dead[i]
-        ? '<span class="mt-tag x">' + (me ? '観戦中' : '脱落') + '</span>'
-        : (i === MT.current ? '<span class="mt-tag">' + (me ? 'あなた' : 'パズル中') + '</span>' : '<span class="mt-tag w">' + (me ? 'あなた' : 'まち') + '</span>'));
+        ? '<span class="mt-tag x">' + (me ? '観戦中' : (MT.left[i] ? '退出' : '脱落')) + '</span>' : '');
       box.appendChild(p);
     }
     $('mt-count').textContent = MT.count + '人';
@@ -112,6 +113,7 @@
     MT.current = 0;
     MT.round = 1;
     MT.dead = [false, false, false, false];
+    MT.left = [false, false, false, false];
     MT.ready = !MT.online;       // オンラインは、開始演出が終わるまで相手の状態を受け取らずに待たせる
     MT._queued = null; MT._receiving = false;
     if (window.MultiShare) MultiShare.reset();
@@ -204,9 +206,24 @@
     if (MT._queued) { const q = MT._queued; MT._queued = null; await MT.receive(q); }
   };
 
+  // あいてが退出（リタイア・切断）した：のこりの自分だけで続ける（ソロ）
+  //   ・あいては「退出」扱い（ターンはとばす）／ターンは自分に戻す
+  //   ・自分は自由に操作できる（localId = null）。相手のターンを見ていた最中なら、画面の暗さも戻す
+  //   ※ 相手のパーティー表示を自分のに戻すのは MultiShare.goSolo()（game.js の moOnOpponent から呼ぶ）
+  MT.partnerLeft = function () {
+    if (!MT.active || !MT.online || MT.localId === null) return false;
+    const me = MT.localId;
+    for (let i = 0; i < MT.count; i++) if (i !== me) { MT.dead[i] = true; MT.left[i] = true; }
+    MT.current = me;
+    MT.localId = null;
+    renderHud();   // 盤面の暗さ（mt-wait）・「パズル中」の表示を、いまの状態に合わせる
+    return true;
+  };
+
   MT.end = function () {
     MT.active = false;
     MT.dead = [false, false, false, false];
+    MT.left = [false, false, false, false];
     if (MT.online) {
       MT.online = false; MT.localId = null; MT.ready = true; MT._queued = null;
       MT.transport = { send(_s) {} };

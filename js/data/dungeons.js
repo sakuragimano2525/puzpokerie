@@ -162,7 +162,10 @@ const DUNGEON_BGM = {
   "Astral-boss": {"field":"ASTRALb.mp3","boss":"ASTRALboss.mp3"},
   "kourine-boss": {"field":"b2.mp3","boss":"boss2.mp3"},
   "Astralb-boss": {"field":"ASTRALb.mp3","boss":"ASTRALboss.mp3"},
-  "stellab-boss": {"field":"b11.mp3","boss":"boss8.mp3"}
+  "stellab-boss": {"field":"b11.mp3","boss":"boss8.mp3"},
+  "stellac-boss": {"field":"b11.mp3","boss":"boss8.mp3"},
+  "monhan-1": {"field":"b10.mp3","boss":"dino.mp3"},
+  "monhan-2": {"field":"b10.mp3","boss":"zin.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -9596,7 +9599,7 @@ const DUNGEON_DATA = {
             "def": 2000,
             "turnInterval": 2,
             "size": "S",
-            "exp": 50,
+            "exp": 2500,
             "coin": 0,
             "monsterDrop": {
               "enabled": true,
@@ -31691,17 +31694,17 @@ const DUNGEON_DATA = {
             "name": "バタフリー",
             "img": "mp12.png",
             "attr": "wood",
-            "hp": 66550,
+            "hp": 100,
             "atk": 7200,
-            "def": 3000,
+            "def": 10000,
             "turnInterval": 2,
             "size": "S",
             "exp": 5000,
-            "coin": 0,
+            "coin": 50,
             "monsterDrop": {
               "enabled": false,
               "rate": 0.05,
-              "monsterId": 33
+              "monsterId": 5
             },
             "drops": [],
             "actions": [
@@ -31732,7 +31735,7 @@ const DUNGEON_DATA = {
             "isBoss": false,
             "turnInterval": 2,
             "size": "S",
-            "exp": 3000,
+            "exp": 5000,
             "coin": 0,
             "drops": [],
             "actions": [
@@ -41066,6 +41069,661 @@ const DUNGEON_DATA = {
               "rate": 0.33,
               "count": 1
             }
+          }
+        ]
+      }
+    ]
+  },
+  "stellac-boss": {
+    "bgImg": "stadium3.png",
+    "bgm": "b11.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "ナツカ",
+            "img": "mp5060.png",
+            "attr": "wood",
+            "hp": 60000,
+            "atk": 1200,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 5000,
+            "coin": 1000,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.2
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "先制攻撃",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "col",
+                    "to": "wood",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": true,
+                    "orb_water": true,
+                    "orb_wood": false,
+                    "orb_light": false,
+                    "orb_dark": false,
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": "",
+                    "pos": "random",
+                    "lines": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "トーナ",
+            "img": "mp5058.png",
+            "attr": "water",
+            "hp": 200000,
+            "atk": 3600,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 7500,
+            "coin": 150,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.2
+            },
+            "drops": [
+              {
+                "item": "puzzle23",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ],
+                "hpAbove": 51
+              },
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 100
+                  }
+                ],
+                "hpBelow": 50
+              }
+            ],
+            "isBoss": false,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.1,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ベスティナ",
+            "img": "mp5057.png",
+            "attr": "light",
+            "hp": 200000,
+            "atk": 15000,
+            "def": 0,
+            "turnInterval": 5,
+            "size": "XL",
+            "exp": 7500,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.2
+            },
+            "drops": [
+              {
+                "item": "puzzle43",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.1,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ラッキー",
+            "img": "mp113.png",
+            "attr": "light",
+            "hp": 100,
+            "atk": 1,
+            "def": 5000,
+            "isBoss": false,
+            "turnInterval": 2,
+            "size": "S",
+            "exp": 5000,
+            "coin": 0,
+            "drops": [],
+            "actions": [
+              {
+                "name": "にげる",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "flee"
+                  }
+                ]
+              }
+            ],
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 1
+            },
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "youbi",
+              "rate": 0.1,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ヴェルジュ(バニー)",
+            "img": "mp5063.png",
+            "attr": "dark",
+            "hp": 200000,
+            "atk": 2500,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 15000,
+            "coin": 250,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.2
+            },
+            "drops": [
+              {
+                "item": "puzzle53",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.33,
+              "count": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "monhan-1": {
+    "bgImg": "stadium.png",
+    "bgm": "b10.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "ディノバルド",
+            "img": "mp5066.png",
+            "attr": "fire",
+            "hp": 999999,
+            "atk": 1900,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 25000,
+            "coin": 250,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.15
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "かみつき",
+                "condition": "normal",
+                "weight": 20,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "火球ブレス",
+                "condition": "normal",
+                "weight": 20,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "convert",
+                    "from": "wood",
+                    "to": "fire",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "地走り火炎攻撃",
+                "condition": "normal",
+                "weight": 20,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "col",
+                    "to": "fire",
+                    "pos": "random",
+                    "lines": 1,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "col",
+                    "to": "wood",
+                    "pos": "random",
+                    "lines": 1,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "ジャンプ尻尾攻撃",
+                "condition": "normal",
+                "weight": 20,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "damage_ratio",
+                    "basis": "current",
+                    "rate": 65
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "尻尾叩きつけ攻撃",
+                "condition": "normal",
+                "weight": 20,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.3
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "3連火球ブレス",
+                "condition": "normal",
+                "weight": 50,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "convert",
+                    "from": "heal",
+                    "to": "fire",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ],
+                "hpBelow": 40
+              },
+              {
+                "name": "尻尾大回転攻撃",
+                "condition": "normal",
+                "weight": 50,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage",
+                    "value": 280,
+                    "repeat": 10
+                  }
+                ],
+                "hpBelow": 40
+              },
+              {
+                "name": "尻尾赤熱状態",
+                "condition": "hp<=50%",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.5,
+                    "turn": -1
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.25,
+              "count": 1
+            },
+            "subAttr": "dark"
+          }
+        ]
+      }
+    ]
+  },
+  "monhan-2": {
+    "bgImg": "stadium.png",
+    "bgm": "b10.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "ジンオウガ",
+            "img": "mp5067.png",
+            "attr": "light",
+            "hp": 1250000,
+            "atk": 2000,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 35000,
+            "coin": 350,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.25
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "かみつき",
+                "condition": "normal",
+                "weight": 33,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.1
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "雷狼竜一閃",
+                "condition": "normal",
+                "weight": 34,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "convert",
+                    "from": "dark",
+                    "to": "light",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "叩きつけ",
+                "condition": "normal",
+                "weight": 33,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_ratio",
+                    "basis": "current",
+                    "rate": 65
+                  }
+                ],
+                "hpAbove": 41
+              },
+              {
+                "name": "雷光虫弾",
+                "condition": "normal",
+                "weight": 50,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "bind",
+                    "target": "random",
+                    "countMin": 1,
+                    "countMax": 2,
+                    "turnMin": 1,
+                    "turnMax": 2
+                  }
+                ],
+                "hpBelow": 40
+              },
+              {
+                "name": "連続雷撃",
+                "condition": "normal",
+                "weight": 50,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage",
+                    "value": 310,
+                    "repeat": 10
+                  }
+                ],
+                "hpBelow": 40
+              },
+              {
+                "name": "超帯電状態",
+                "condition": "hp<=30%",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.5,
+                    "turn": -1
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.25,
+              "count": 1
+            },
+            "subAttr": "wood"
           }
         ]
       }

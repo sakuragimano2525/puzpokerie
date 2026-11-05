@@ -276,6 +276,7 @@ const $ = id => document.getElementById(id);
 // ---------- 定数 ----------
 const ATTRS = [['fire','火'],['water','水'],['wood','木'],['light','光'],['dark','闇'],['heal','回復'],['poison','毒'],['ojama','お邪魔']];
 const ATTR_NAME = Object.fromEntries(ATTRS);
+ATTR_NAME.none = '無';   // 無＝主属性なし（モンスターの主属性だけで使う。スキルの属性選択には出さない）
 const DEFAULT_TYPES = ['バランス','こうげき','たいりょく','かいふく','バード','マター','悪魔'];
 // 旧表記「回復」（漢字）は「かいふく」に統一。読み込み時・保存時にデータ内のタイプ名を自動で直す
 const normType = t => (t === '回復' ? 'かいふく' : t);
@@ -314,6 +315,7 @@ const activeTemplates = {
   damageAttrAtkMult:{label:'○属性の攻撃力×倍率の属性ダメージ',data:{type:'damageAttrAtkMult',target:'all',value:10,srcAttr:'fire',attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('srcAttr','参照する味方の属性（その属性の攻撃力合計）'),attrF('attr','攻撃の属性')]},
   damagePartyAtkMult:{label:'味方全員の攻撃力合計×倍率',data:{type:'damagePartyAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
   atkBuff:{label:'攻撃エンハンス',data:{type:'atkBuff',attr:'water',monType:'',value:1.5,turns:1},fields:[['attr','属性（指定なし=全属性）','attrAny'],typeF('monType','タイプ（空欄=指定なし）'),numF('value','攻撃倍率'),numF('turns','ターン数')]},
+  selfAtkBuff:{label:'自己エンハンス（自分の攻撃力を○ターン○倍）',data:{type:'selfAtkBuff',value:2,turns:1},fields:[numF('value','攻撃倍率（自分だけ）'),numF('turns','ターン数')]},
   noFallBuff:{label:'○ターンの間、落ちコンなし',data:{type:'noFallBuff',turns:3},fields:[numF('turns','ターン数')]},
   attrChange:{label:'自分の属性を○ターン○属性に変化',data:{type:'attrChange',attr:'fire',turns:3},fields:[['attr','変化先の属性（副属性は消えて単属性になる）','select','fire:火|water:水|wood:木|light:光|dark:闇|random:ランダム（今の属性以外から1つ）'],numF('turns','ターン数')]},
   defenseDown:{label:'敵の防御力を○ターン○%ダウン',data:{type:'defenseDown',target:'all',value:0.5,turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダウン率（50%=0.5）'),numF('turns','ターン数')]},
@@ -479,7 +481,7 @@ let activeEffects = [], leaderEffects = [], evolutions = [];
 
 // ---------- 画面部品 ----------
 const attrOptions = ATTRS.filter(([v])=>v!=='ojama').map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
-$('monAttr').innerHTML = attrOptions;
+$('monAttr').innerHTML = attrOptions + '<option value="none">無（主属性なし）</option>';   // 無＝主属性なし。副属性だけで攻撃する
 $('monSub').innerHTML = '<option value="">なし</option>' + attrOptions;   // 副属性：主属性と同じなら攻撃力の1/10・違えば1/3で攻撃
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function allTypes(){
@@ -745,6 +747,7 @@ function describeActiveOne(e0){
       case 'damageAll': case 'damageSingle': out.push(`敵${(e.target==='single'||e.type==='damageSingle')?'単体':'全体'}に${Number(e.value).toLocaleString()}の固定ダメージ`); break;
       case 'atkBuff': out.push(`${e.turns||1}ターンの間、${e.monType?e.monType+'タイプ':(e.attr?ATTR_NAME[e.attr]+'属性':'全属性')}の攻撃が${fmt(e.value)}倍`); break;
       case 'noFallBuff': out.push(`${e.turns||1}ターンの間、落ちコンなし`); break;
+      case 'selfAtkBuff': out.push(`${e.turns||1}ターンの間、自分の攻撃力が${fmt(e.value)}倍`); break;
       case 'attrChange': out.push(`${e.turns||1}ターンの間、自分の属性が${ATTR_NAME[e.attr]?ATTR_NAME[e.attr]+'属性':'ランダムな属性'}に変化`); break;
       case 'defenseDown': out.push(`${e.turns||1}ターンの間、敵${e.target==='single'?'単体':'全体'}の防御力を${pct(e.value)}ダウン`); break;
       case 'damageSelfAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に攻撃力×${fmt(e.value)}倍の${a}属性攻撃`); break;
@@ -903,7 +906,7 @@ function cmpKey(a,b){
   return 0;
 }
 // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','attrChange','noFallBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','selfAtkBuff','attrChange','noFallBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
 function skillSortKey(sk){
   const e = (sk.effects||[])[0] || {};
   const i = SK_TYPE_ORDER.indexOf(e.type);
@@ -1329,10 +1332,10 @@ $('blApply').onclick=()=>{
 // ---------- ステータス一覧 ----------
 const ST_SORTS=[['id','ID順'],['atk.max','こうげき順'],['hp.max','HP順'],['rec.max','回復順'],['rarity','★（レアリティ）順'],['attr','属性順'],['type','タイプ順'],['name','名前順'],['maxLv','最大Lv順']];
 const ST_ASC_FIRST=['id','name','attr','type'];   // この項目は最初は昇順、それ以外は大きい順
-const ATTR_COLOR={fire:'#ef4444',water:'#3b82f6',wood:'#22c55e',light:'#facc15',dark:'#a855f7',heal:'#f472b6',poison:'#84cc16',ojama:'#9ca3af'};
+const ATTR_COLOR={fire:'#ef4444',water:'#3b82f6',wood:'#22c55e',light:'#facc15',dark:'#a855f7',heal:'#f472b6',poison:'#84cc16',ojama:'#9ca3af',none:'#cbd5e1'};
 let stSort='id', stDesc=false;
 $('stSort').innerHTML=ST_SORTS.map(([k,n])=>`<option value="${k}">${n}</option>`).join('');
-$('stAttr').innerHTML='<option value="">すべて</option>'+ATTRS.filter(([v])=>v!=='ojama').map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
+$('stAttr').innerHTML='<option value="">すべて</option>'+ATTRS.filter(([v])=>v!=='ojama').map(([v,n])=>`<option value="${v}">${n}</option>`).join('')+'<option value="none">無</option>';
 const stGet=(m,s,w)=>Number(m.stats&&m.stats[s]&&m.stats[s][w])||0;
 const stMaxLv=m=>m.maxLevel||rarityMaxLevel(m.rarity);
 function stVal(m,key){
