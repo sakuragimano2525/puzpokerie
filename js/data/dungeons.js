@@ -39707,8 +39707,8 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 5000,
-            "coin": 20,
+            "exp": 0,
+            "coin": 0,
             "monsterDrop": {
               "enabled": true,
               "rate": 0.15
@@ -39822,7 +39822,7 @@ const DUNGEON_DATA = {
             "exp": 5000,
             "coin": 0,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.15
             },
             "drops": [
@@ -39895,7 +39895,7 @@ const DUNGEON_DATA = {
             "exp": 5000,
             "coin": 100,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.15
             },
             "drops": [
@@ -39943,7 +39943,7 @@ const DUNGEON_DATA = {
             "exp": 5000,
             "coin": 100,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.15
             },
             "drops": [
@@ -40022,20 +40022,14 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 12500,
-            "coin": 100,
+            "exp": 0,
+            "coin": 0,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.2,
               "monsterId": 5031
             },
-            "drops": [
-              {
-                "item": "puzzle23",
-                "rate": 0.1,
-                "count": 1
-              }
-            ],
+            "drops": [],
             "actions": [
               {
                 "name": "通常攻撃",
@@ -40114,12 +40108,6 @@ const DUNGEON_DATA = {
               }
             ],
             "isBoss": true,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.2,
-              "count": 1
-            },
             "actionMode": "sequence"
           }
         ]
@@ -40451,16 +40439,16 @@ const DUNGEON_DATA = {
             "name": "ジャスミン",
             "img": "mp5039.png",
             "attr": "wood",
-            "hp": 1000000,
+            "hp": 200000,
             "atk": 1000,
             "def": 0,
             "turnInterval": 2,
             "size": "XL",
-            "exp": 25000,
+            "exp": 0,
             "coin": 100,
             "monsterDrop": {
               "enabled": true,
-              "rate": 0.15
+              "rate": 0.05
             },
             "drops": [
               {
@@ -40519,19 +40507,13 @@ const DUNGEON_DATA = {
                   {
                     "type": "damage_ratio",
                     "basis": "max",
-                    "rate": 100
+                    "rate": 50
                   }
                 ],
                 "hpBelow": 50
               }
             ],
-            "isBoss": false,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.05,
-              "count": 1
-            }
+            "isBoss": false
           }
         ]
       },
@@ -40542,7 +40524,7 @@ const DUNGEON_DATA = {
             "img": "mp5038.png",
             "attr": "water",
             "hp": 200000,
-            "atk": 4300,
+            "atk": 5000,
             "def": 0,
             "turnInterval": 2,
             "size": "XL",
@@ -40591,12 +40573,12 @@ const DUNGEON_DATA = {
             "hp": 200000,
             "atk": 10000,
             "def": 0,
-            "turnInterval": 4,
+            "turnInterval": 3,
             "size": "XL",
-            "exp": 5000,
-            "coin": 100,
+            "exp": 0,
+            "coin": 0,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.15
             },
             "drops": [
@@ -40636,7 +40618,7 @@ const DUNGEON_DATA = {
             "name": "リン",
             "img": "mp5040.png",
             "attr": "light",
-            "hp": 350000,
+            "hp": 450000,
             "atk": 1800,
             "def": 0,
             "turnInterval": 1,
@@ -40645,7 +40627,7 @@ const DUNGEON_DATA = {
             "coin": 100,
             "monsterDrop": {
               "enabled": true,
-              "rate": 0.15
+              "rate": 0.1
             },
             "drops": [
               {
@@ -40691,13 +40673,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": false,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.1,
-              "count": 1
-            }
+            "isBoss": false
           }
         ]
       },
@@ -40707,7 +40683,7 @@ const DUNGEON_DATA = {
             "name": "ミサキ（真龍御札）",
             "img": "mp5037.png",
             "attr": "fire",
-            "hp": 600000,
+            "hp": 800000,
             "atk": 2800,
             "def": 0,
             "turnInterval": 1,
@@ -40716,13 +40692,13 @@ const DUNGEON_DATA = {
             "coin": 100,
             "monsterDrop": {
               "enabled": true,
-              "rate": 0.2,
+              "rate": 0.1,
               "monsterId": 5036
             },
             "drops": [
               {
                 "item": "spuzzle_12",
-                "rate": 0.15,
+                "rate": 0.1,
                 "count": 1
               }
             ],
@@ -40744,7 +40720,7 @@ const DUNGEON_DATA = {
             "ofudaDrop": {
               "enabled": true,
               "item": "ohuda1",
-              "rate": 0.25,
+              "rate": 0.05,
               "count": 1
             }
           }
@@ -40762,15 +40738,15 @@ const DUNGEON_DATA = {
             "name": "ティリア",
             "img": "mp5046.png",
             "attr": "light",
-            "hp": 300000,
+            "hp": 200000,
             "atk": 3600,
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 25000,
-            "coin": 100,
+            "exp": 0,
+            "coin": 0,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.1
             },
             "drops": [
@@ -40829,7 +40805,7 @@ const DUNGEON_DATA = {
             "ofudaDrop": {
               "enabled": true,
               "item": "ohuda1",
-              "rate": 0.05,
+              "rate": 0.01,
               "count": 1
             }
           }
@@ -40846,10 +40822,10 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 7500,
-            "coin": 150,
+            "exp": 0,
+            "coin": 0,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.1
             },
             "drops": [
@@ -40872,13 +40848,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": false,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.05,
-              "count": 1
-            }
+            "isBoss": false
           }
         ]
       },
@@ -40893,10 +40863,10 @@ const DUNGEON_DATA = {
             "def": 0,
             "turnInterval": 4,
             "size": "XL",
-            "exp": 7500,
-            "coin": 100,
+            "exp": 0,
+            "coin": 0,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.1
             },
             "drops": [
@@ -40920,13 +40890,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": false,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.1,
-              "count": 1
-            }
+            "isBoss": false
           }
         ]
       },
@@ -40944,16 +40908,10 @@ const DUNGEON_DATA = {
             "exp": 5000,
             "coin": 100,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.1
             },
-            "drops": [
-              {
-                "item": "puzzle53",
-                "rate": 0.1,
-                "count": 1
-              }
-            ],
+            "drops": [],
             "actions": [
               {
                 "name": "通常攻撃",
@@ -40968,60 +40926,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": false,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.2,
-              "count": 1
-            }
-          }
-        ]
-      },
-      {
-        "enemies": [
-          {
-            "name": "ラッキー",
-            "img": "mp113.png",
-            "attr": "light",
-            "hp": 100,
-            "atk": 1,
-            "def": 5000,
-            "isBoss": false,
-            "turnInterval": 2,
-            "size": "S",
-            "exp": 5000,
-            "coin": 0,
-            "drops": [
-              {
-                "item": "arukana",
-                "rate": 1,
-                "count": 1
-              }
-            ],
-            "actions": [
-              {
-                "name": "にげる",
-                "condition": "normal",
-                "weight": 100,
-                "once": false,
-                "skills": [
-                  {
-                    "type": "flee"
-                  }
-                ]
-              }
-            ],
-            "monsterDrop": {
-              "enabled": true,
-              "rate": 1
-            },
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.1,
-              "count": 1
-            }
+            "isBoss": false
           }
         ]
       },
@@ -41032,20 +40937,20 @@ const DUNGEON_DATA = {
             "img": "mp5042.png",
             "attr": "fire",
             "hp": 600000,
-            "atk": 2800,
+            "atk": 5200,
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
             "exp": 12500,
             "coin": 100,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.15
             },
             "drops": [
               {
                 "item": "puzzle12",
-                "rate": 0.15,
+                "rate": 0.05,
                 "count": 1
               }
             ],
@@ -41063,13 +40968,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": true,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.33,
-              "count": 1
-            }
+            "isBoss": true
           }
         ]
       }
@@ -41094,7 +40993,7 @@ const DUNGEON_DATA = {
             "coin": 1000,
             "monsterDrop": {
               "enabled": true,
-              "rate": 0.2
+              "rate": 0.05
             },
             "drops": [],
             "actions": [
@@ -41117,29 +41016,6 @@ const DUNGEON_DATA = {
                   {
                     "type": "damage_mult",
                     "value": 1
-                  },
-                  {
-                    "type": "board_change",
-                    "pattern": "col",
-                    "to": "wood",
-                    "counts.fire": 1,
-                    "counts.water": 1,
-                    "counts.wood": 1,
-                    "counts.light": 1,
-                    "counts.dark": 1,
-                    "counts.heal": 1,
-                    "counts.poison": 1,
-                    "counts.ojama": 1,
-                    "orb_fire": true,
-                    "orb_water": true,
-                    "orb_wood": false,
-                    "orb_light": false,
-                    "orb_dark": false,
-                    "orb_heal": "",
-                    "orb_poison": "",
-                    "orb_ojama": "",
-                    "pos": "random",
-                    "lines": 1
                   }
                 ]
               }
@@ -41162,16 +41038,10 @@ const DUNGEON_DATA = {
             "exp": 7500,
             "coin": 150,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.2
             },
-            "drops": [
-              {
-                "item": "puzzle23",
-                "rate": 0.1,
-                "count": 1
-              }
-            ],
+            "drops": [],
             "actions": [
               {
                 "name": "通常攻撃",
@@ -41199,13 +41069,7 @@ const DUNGEON_DATA = {
                 "hpBelow": 50
               }
             ],
-            "isBoss": false,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.1,
-              "count": 1
-            }
+            "isBoss": false
           }
         ]
       },
@@ -41223,13 +41087,13 @@ const DUNGEON_DATA = {
             "exp": 7500,
             "coin": 100,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.2
             },
             "drops": [
               {
                 "item": "puzzle43",
-                "rate": 0.1,
+                "rate": 0.01,
                 "count": 1
               }
             ],
@@ -41247,54 +41111,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": false,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.1,
-              "count": 1
-            }
-          }
-        ]
-      },
-      {
-        "enemies": [
-          {
-            "name": "ラッキー",
-            "img": "mp113.png",
-            "attr": "light",
-            "hp": 100,
-            "atk": 1,
-            "def": 5000,
-            "isBoss": false,
-            "turnInterval": 2,
-            "size": "S",
-            "exp": 5000,
-            "coin": 0,
-            "drops": [],
-            "actions": [
-              {
-                "name": "にげる",
-                "condition": "normal",
-                "weight": 100,
-                "once": false,
-                "skills": [
-                  {
-                    "type": "flee"
-                  }
-                ]
-              }
-            ],
-            "monsterDrop": {
-              "enabled": true,
-              "rate": 1
-            },
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "youbi",
-              "rate": 0.1,
-              "count": 1
-            }
+            "isBoss": false
           }
         ]
       },
@@ -41304,24 +41121,18 @@ const DUNGEON_DATA = {
             "name": "ヴェルジュ(バニー)",
             "img": "mp5063.png",
             "attr": "dark",
-            "hp": 200000,
-            "atk": 2500,
+            "hp": 1000000,
+            "atk": 3000,
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
-            "exp": 15000,
-            "coin": 250,
+            "exp": 0,
+            "coin": 0,
             "monsterDrop": {
-              "enabled": true,
+              "enabled": false,
               "rate": 0.2
             },
-            "drops": [
-              {
-                "item": "puzzle53",
-                "rate": 0.1,
-                "count": 1
-              }
-            ],
+            "drops": [],
             "actions": [
               {
                 "name": "通常攻撃",
@@ -41336,13 +41147,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": true,
-            "ofudaDrop": {
-              "enabled": true,
-              "item": "ohuda1",
-              "rate": 0.33,
-              "count": 1
-            }
+            "isBoss": true
           }
         ]
       }

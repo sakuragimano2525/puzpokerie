@@ -3875,9 +3875,9 @@ const MONSTER_DATA = {
       name: '水のアミュレット',
       desc: '水属性の全パラメータが1.2倍。',
       effects: [
-        { type: 'hp', attr: 'water', value: 1.25 },
-        { type: 'atk', attr: 'water', value: 1.25 },
-        { type: 'rec', attr: 'water', value: 1.25 }
+        { type: 'hp', attr: 'water', value: 1.3 },
+        { type: 'atk', attr: 'water', value: 1.3 },
+        { type: 'rec', attr: 'water', value: 1.3 }
       ]
     }
   },
@@ -3885,10 +3885,13 @@ const MONSTER_DATA = {
     id: 227,
     name: 'エアームド',
     rarity: 3,
+    attr: 'fire',
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 500,
-    stats: { hp: { min: 675, max: 4470 }, atk: { min: 205, max: 1495 }, rec: { min: 40, max: 110 } }
+    stats: { hp: { min: 675, max: 4470 }, atk: { min: 205, max: 1495 }, rec: { min: 40, max: 110 } },
+    skill: { name: '', sp: 1, desc: '', effects: [] },
+    leaderSkill: { name: '', desc: '', effects: [] }
   },
   228: {
     id: 228,
@@ -4018,7 +4021,7 @@ const MONSTER_DATA = {
     stats: { hp: { min: 450, max: 2700 }, atk: { min: 200, max: 1600 }, rec: { min: 50, max: 250 } },
     skill: {
       name: 'あまごいステップ',
-      sp: 2,
+      sp: 5,
       desc: '3ターンの間、水と木ドロップが少し落ちやすくなる。',
       effects: [ { type: 'orbSpawnBoost2', attr: 'water', rate: 0.15, attr2: 'wood', rate2: 0.15, turns: 3 } ]
     },
@@ -5579,14 +5582,13 @@ const MONSTER_DATA = {
     skill: {
       name: 'ハートエンハンス',
       sp: 4,
-      desc: '1ターンの間、かいふくタイプの攻撃が2倍。',
-      effects: [ { type: 'atkBuff', value: 2, turns: 1, monType: 'かいふく' } ]
+      desc: '1ターンの間、かいふくタイプの攻撃が1.5倍。',
+      effects: [ { type: 'atkBuff', value: 1.5, turns: 1, monType: 'かいふく' } ]
     },
     leaderSkill: {
       name: '主の裁きに従え',
-      desc: 'かいふくタイプの攻撃1.2倍。\n回復ドロップの3コンボ以上で攻撃2.5倍、受けるダメージ10%軽減。',
+      desc: '回復ドロップの3コンボ以上で攻撃2.5倍、受けるダメージ10%軽減。',
       effects: [
-        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.2 },
         { type: 'atk', condition: 'attrCombos', attr: 'heal', count: 3, value: 2.5, reduce: 0.1 },
         { type: 'eggDropUp', value: 10 }
       ]
@@ -5944,8 +5946,8 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '引波の型',
-      desc: '水と闇ドロップを同時に6個以上つなげて消すと攻撃2倍、1コンボ加算。',
-      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'water', count: 6, value: 2, attr2: 'dark', comboAdd: 1 } ]
+      desc: '水と闇のドロップを同時に6個以上つなげて消すと攻撃と回復力2倍。',
+      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'water', count: 6, value: 2, attr2: 'dark', recValue: 2 } ]
     },
     evolutions: [
       { to: 5015, materials: [ { item: 'puzzle22', count: 2 }, { item: 'spuzzle_52', count: 2 } ] },
@@ -5971,7 +5973,7 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '龍薙閃',
-      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.25倍、受けるダメージ9%軽減。',
+      desc: '水ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.25倍、受けるダメージ8%軽減。',
       effects: [
         {
           type: 'atk',
@@ -5981,7 +5983,7 @@ const MONSTER_DATA = {
           value: 1.25,
           exponential: true,
           exact: true,
-          reduce: 0.09
+          reduce: 0.08
         },
         {
           type: 'atk',
@@ -5990,7 +5992,7 @@ const MONSTER_DATA = {
           count: 4,
           value: 1.25,
           exponential: true,
-          reduce: 0.09,
+          reduce: 0.08,
           exact: true
         }
       ]
@@ -6116,13 +6118,13 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'フローラルストーム',
-      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍。\nかいふくタイプの回復力1.2倍。',
+      desc: '木ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.5倍。\nかいふくタイプの回復力1.2倍、SP上限が上がる。',
       effects: [
         { type: 'atk', condition: 'connectEach', attr: 'wood', count: 5, value: 1.5, exponential: true, exact: true },
         { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.5, exponential: true, exact: true },
         { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.2 },
         { type: 'coinMult', value: 1.5 },
-        { type: 'spCharge', size: 'small' }
+        { type: 'spCapUp', value: 10 }
       ]
     },
     evolutions: [
@@ -6176,7 +6178,8 @@ const MONSTER_DATA = {
           reduce: 0.1
         },
         { type: 'atk', condition: 'orbConnect', attr: 'wood', count: 5, value: 1, attr2: 'dark', comboAdd: 1 },
-        { type: 'eggDropUp', value: 10 }
+        { type: 'eggDropUp', value: 10 },
+        { type: 'spCharge', size: 'medium' }
       ]
     }
   },
@@ -6222,8 +6225,8 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '書記のこだわり',
-      desc: 'L字消しする度に攻撃1.3倍、受けるダメージ8%軽減。',
-      effects: [ { type: 'atk', condition: 'lShapes', value: 1.3, exponential: true, reduce: 0.08 } ]
+      desc: 'L字消しする度に攻撃1.25倍、受けるダメージ8%軽減。',
+      effects: [ { type: 'atk', condition: 'lShapes', value: 1.25, exponential: true, reduce: 0.08 } ]
     }
   },
   5024: {
@@ -6266,10 +6269,10 @@ const MONSTER_DATA = {
     skill: {
       name: 'チョコミントな音の階段',
       sp: 2,
-      desc: '4ターンの間、木と闇ドロップが落ちやすくなる。\n4ターンの間、落ちコンなし。',
+      desc: '8ターンの間、木と闇ドロップが少し落ちやすくなる。\n8ターンの間、落ちコンなし。',
       effects: [
-        { type: 'orbSpawnBoost2', attr: 'wood', rate: 0.2, attr2: 'dark', rate2: 0.2, turns: 4 },
-        { type: 'noFallBuff', turns: 4 }
+        { type: 'orbSpawnBoost2', attr: 'wood', rate: 0.2, attr2: 'dark', rate2: 0.2, turns: 8 },
+        { type: 'noFallBuff', turns: 8 }
       ]
     },
     leaderSkill: {
@@ -6344,8 +6347,9 @@ const MONSTER_DATA = {
     stats: { hp: { min: 500, max: 2600 }, atk: { min: 300, max: 2200 }, rec: { min: 100, max: 250 } },
     skill: {
       name: 'AP弾装填',
-      sp: 6,
+      sp: 5,
       desc: 'ドロップを水・光・闇・回復ドロップに変化。\n1ターンの間、火と木属性の攻撃が激減。',
+      condition: { type: 'orbCount', attr: 'dark', value: 5 },
       effects: [
         { type: 'orbChangeMulti', orb_heal: true, orb_light: true, orb_water: true, orb_dark: true },
         { type: 'atkBuff', attr: 'fire', value: 0.01, turns: 1 },
@@ -6435,19 +6439,19 @@ const MONSTER_DATA = {
     stats: { hp: { min: 700, max: 3100 }, atk: { min: 150, max: 1300 }, rec: { min: 100, max: 500 } },
     skill: {
       name: 'お手伝い完璧',
-      sp: 2,
+      sp: 3,
       desc: '1ターンの間、回復力が1.5倍、水ドロップと木ドロップが少し落ちやすくなる。\n水・木・回復ドロップをロック。',
       cutin: true,
       condition: { type: 'orbBoost', attr: 'wood' },
       effects: [
         { type: 'recMult', turns: 1, value: 1.5 },
-        { type: 'orbSpawnBoost2', attr: 'water', rate: 0.3, attr2: 'wood', rate2: 0.3, turns: 1 },
+        { type: 'orbSpawnBoost2', attr: 'water', rate: 0.15, attr2: 'wood', rate2: 0.15, turns: 1 },
         { type: 'orbLock', target: 'attrs', orb_water: true, orb_wood: true, orb_heal: true }
       ]
     },
     leaderSkill: {
       name: '白沢よ、福を与えよ',
-      desc: '【落ちコンなし】水ドロップ/木ドロップをちょうど4個つなげて消す度に攻撃1.25倍、受けるダメージ8%軽減。',
+      desc: '【落ちコンなし】水ドロップ/木ドロップをちょうど4個つなげて消す度に攻撃1.2倍、受けるダメージ8%軽減。',
       effects: [
         {
           type: 'atk',
@@ -6487,7 +6491,7 @@ const MONSTER_DATA = {
     stats: { hp: { min: 750, max: 3100 }, atk: { min: 1000, max: 1800 }, rec: { min: 250, max: 600 } },
     skill: {
       name: '急急如律令！！',
-      sp: 4,
+      sp: 5,
       desc: 'ドロップを水・木・回復ドロップに変化。',
       cutin: true,
       condition: { type: 'orbBoost', attr: 'wood' },
@@ -6497,8 +6501,8 @@ const MONSTER_DATA = {
       name: '禍福倚伏',
       desc: '木属性とこうげきタイプの攻撃1.5倍。',
       effects: [
-        { type: 'expMult', value: 1.5 },
-        { type: 'eggDropUp', value: 5 },
+        { type: 'expMult', value: 2 },
+        { type: 'eggDropUp', value: 15 },
         { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.5 },
         { type: 'atk', attr: 'wood', value: 1.5 }
       ]
@@ -6527,10 +6531,10 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '粘着スライム',
-      desc: 'かいふくタイプの回復力1.2倍。\nチームの総レア度が24以上の場合、木属性の攻撃力が2.2倍。',
+      desc: 'かいふくタイプの回復力1.2倍。\nチームの総レア度が26以上の場合、木属性の攻撃力が2.3倍。',
       effects: [
         { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.2 },
-        { type: 'rarity', condition: 'totalAbove', threshold: 24, atk: true, value: 2.2, attr: 'wood' },
+        { type: 'rarity', condition: 'totalAbove', threshold: 26, atk: true, value: 2.3, attr: 'wood' },
         { type: 'eggDropUp', value: 8 }
       ]
     }
@@ -6538,13 +6542,13 @@ const MONSTER_DATA = {
   5034: {
     id: 5034,
     name: 'ボニー',
-    rarity: 5,
+    rarity: 1,
     attr: 'light',
     sub: 'fire',
-    type: 'こうげき',
+    type: 'かいふく',
     maxLevel: 99,
     baseExp: 7500,
-    stats: { hp: { min: 300, max: 2300 }, atk: { min: 300, max: 2600 }, rec: { min: 10, max: 100 } },
+    stats: { hp: { min: 250, max: 2500 }, atk: { min: 250, max: 2000 }, rec: { min: 100, max: 300 } },
     skill: {
       name: 'インシークレット',
       sp: 4,
@@ -6559,11 +6563,11 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '真実への鍵',
-      desc: '【落ちコンなし】回復も含む4色以上同時消しで攻撃上昇、最大2.2倍。\n残りドロップ3個以下で攻撃1.3倍、受けるダメージ25%軽減。',
+      desc: '【落ちコンなし】4色以上同時に消すと攻撃力上昇、最大2倍。\n残りドロップ4個以下で攻撃1.3倍、受けるダメージ5%軽減。',
       effects: [
-        { type: 'atk', condition: 'colorRamp', count: 4, healCounts: true, value: 1.2, maxValue: 2.2 },
+        { type: 'atk', condition: 'colorRamp', count: 4, healCounts: true, value: 1.2, maxValue: 2 },
         { type: 'noDrop', value: true },
-        { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 1.3, reduce: 0.25 },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 1.3, reduce: 0.1 },
         { type: 'moveTimeAdd', value: 1 }
       ]
     }
@@ -6597,19 +6601,12 @@ const MONSTER_DATA = {
     maxLevel: 50,
     baseExp: 7500,
     stats: { hp: { min: 300, max: 2150 }, atk: { min: 600, max: 2700 }, rec: { min: 10, max: 100 } },
-    skill: {
-      name: '桜裂空斬',
-      sp: 1,
-      desc: '敵全体に500の固定ダメージ。',
-      cutin: true,
-      condition: { type: 'battleBefore', value: 3 },
-      effects: [ { type: 'damageAll', target: 'all', value: 500 } ]
-    },
+    skill: { name: '桜裂空斬', sp: 1, desc: '敵全体に100の固定ダメージ。', effects: [ { type: 'damageAll', target: 'all', value: 100 } ] },
     leaderSkill: {
       name: '剣気',
-      desc: '【落ちコンなし】7コンボ以上で攻撃2倍。\nチームのレア度が全員同じ場合、HPと攻撃力が1.1倍。',
+      desc: '【落ちコンなし】7コンボ以上で攻撃1.5倍。\nチームのレア度が全員同じ場合、HPと攻撃力が1.1倍。',
       effects: [
-        { type: 'atk', condition: 'combo', count: 7, value: 2 },
+        { type: 'atk', condition: 'combo', count: 7, value: 1.5 },
         { type: 'noDrop', value: true },
         { type: 'rarity', condition: 'allSame', atk: true, value: 1.1, hp: true }
       ]
@@ -6685,10 +6682,10 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'チャージステップ',
-      desc: '水ドロップ/木ドロップの2コンボ以上で攻撃1.8倍、受けるダメージ5%軽減。',
+      desc: '水ドロップ/木ドロップの2コンボ以上で攻撃1.5倍、受けるダメージ5%軽減。',
       effects: [
-        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1.8, reduce: 0.05 },
-        { type: 'atk', condition: 'attrCombos', attr: 'wood', count: 2, value: 1.8, reduce: 0.05 }
+        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1.5, reduce: 0.05 },
+        { type: 'atk', condition: 'attrCombos', attr: 'wood', count: 2, value: 1.5, reduce: 0.05 }
       ]
     }
   },
@@ -6701,7 +6698,7 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 500, max: 3350 }, atk: { min: 50, max: 1000 }, rec: { min: 75, max: 150 } },
+    stats: { hp: { min: 500, max: 3350 }, atk: { min: 50, max: 500 }, rec: { min: 75, max: 150 } },
     skill: {
       name: 'ライフ・ブック',
       sp: 1,
@@ -6726,7 +6723,7 @@ const MONSTER_DATA = {
       sp: 4,
       desc: '敵全体の行動を1ターン遅らせ、回復ドロップが少し落ちやすくなる。\nお邪魔と毒ドロップを回復ドロップに変化。',
       cutin: true,
-      condition: { type: 'orbCount', attr: 'dark', value: 5 },
+      condition: { type: 'orbBoost', attr: 'wood' },
       effects: [
         { type: 'enemyDelay', target: 'all', turns: 1 },
         { type: 'orbConvert', from: 'ojama', to: 'heal' },
@@ -6736,8 +6733,11 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'テンタクルアビス',
-      desc: '闇ドロップを消す度に攻撃1.1倍。\nドロップを消すと最大HPの10%回復。',
-      effects: [ { type: 'atk', condition: 'eraseAttr', attr: 'dark', value: 1.1 }, { type: 'hpRecovery', value: 0.1 } ]
+      desc: '闇ドロップを消す度に攻撃1.1倍、回復1.05倍。',
+      effects: [
+        { type: 'atk', condition: 'eraseAttr', attr: 'dark', value: 1.19, recValue: 1.05 },
+        { type: 'eggDropUp', value: 10 }
+      ]
     }
   },
   5042: {
@@ -6753,13 +6753,18 @@ const MONSTER_DATA = {
       name: 'チェンジハート・火+',
       sp: 2,
       desc: '木ドロップを回復ドロップに変化。',
-      condition: { type: 'orbBoost', attr: 'water' },
+      condition: { type: 'orbBoost', attr: 'fire' },
       effects: [ { type: 'orbConvert', from: 'wood', to: 'heal' } ]
     },
     leaderSkill: {
       name: 'レイジングソウル',
       desc: '火属性の全パラメータが1.2倍。\nSPの上限が3アップ（最大13）。',
-      effects: [ { type: 'allStat', attr: 'fire', value: 1.25 }, { type: 'spCapUp', value: 3 } ]
+      effects: [
+        { type: 'allStat', attr: 'fire', value: 1.28 },
+        { type: 'spCapUp', value: 3 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'eggDropUp', value: 10 }
+      ]
     },
     evolutions: [ { to: 5043, materials: [ { item: 'puzzle1', count: 3 }, { item: 'spuzzle_22', count: 2 } ] } ]
   },
@@ -6776,12 +6781,13 @@ const MONSTER_DATA = {
     skill: {
       name: '閃火の心',
       sp: 2,
-      desc: 'HPが最大HPの20%減る。\n火と水ドロップをランダムで3つずつ生成。',
+      desc: 'HPが最大HPの20%減る。\n火と水ドロップをランダムで4つずつ生成。',
       cutin: true,
+      condition: { type: 'orbBoost', attr: 'fire' },
       effects: [
         { type: 'selfDamage', mode: 'percent', value: 0.2 },
-        { type: 'orbChangeRandom', attr: 'fire', count: 3 },
-        { type: 'orbChangeRandom', attr: 'water', count: 3 }
+        { type: 'orbChangeRandom', attr: 'fire', count: 4 },
+        { type: 'orbChangeRandom', attr: 'water', count: 4 }
       ]
     },
     leaderSkill: {
@@ -6791,7 +6797,7 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.19 },
         { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.19 },
         { type: 'eggDropUp', value: 10 },
-        { type: 'spCharge', size: 'small' }
+        { type: 'spCharge', size: 'medium' }
       ]
     }
   },
@@ -6807,17 +6813,14 @@ const MONSTER_DATA = {
     skill: {
       name: '激情戦斧',
       sp: 2,
-      desc: '水ドロップをランダムで4つ生成。\n1ターンの間、水ドロップが少し落ちやすくなる。',
-      effects: [
-        { type: 'orbChangeRandom', attr: 'water', count: 4, message: '☠️ 毒ドロップ生成！' },
-        { type: 'orbSpawnBoost', attr: 'water', rate: 0.15, turns: 1 }
-      ]
+      desc: '1ターンの間、水ドロップが少し落ちやすくなる。',
+      effects: [ { type: 'orbSpawnBoost', attr: 'water', rate: 0.15, turns: 1 } ]
     },
     leaderSkill: {
       name: 'ウォーターコンボ・超',
-      desc: '水ドロップの2コンボ以上で攻撃2.1倍、受けるダメージ20%軽減。\nSPの上限が5アップ（最大15）。',
+      desc: '水ドロップの2コンボ以上で攻撃2倍、受けるダメージ10%軽減。\nSPの上限が5アップ（最大15）。',
       effects: [
-        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 2.1, reduce: 0.2 },
+        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 2.1, reduce: 0.15 },
         { type: 'spCapUp', value: 5 }
       ]
     },
@@ -6845,25 +6848,30 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '氷鋒斧踏',
-      desc: '水ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.4倍。\nバランスタイプのHP1.2倍。',
+      desc: '水ドロップ/闇ドロップをちょうど5個つなげて消す度に攻撃1.3倍。\nバランスタイプのHP1.2倍。',
       effects: [
-        { type: 'atk', condition: 'connectEach', attr: 'water', count: 5, value: 1.4, exponential: true, exact: true },
-        { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.4, exponential: true, exact: true },
-        { type: 'hp', condition: 'type', attr: 'バランス', value: 1.2 },
-        { type: 'eggDropUp', value: 10 }
+        { type: 'atk', condition: 'connectEach', attr: 'water', count: 5, value: 1.2, exponential: true, exact: true },
+        { type: 'atk', condition: 'connectEach', attr: 'dark', count: 5, value: 1.1, exponential: true, exact: true },
+        { type: 'hp', condition: 'type', attr: 'バランス', value: 1.2 }
       ]
     }
   },
   5046: {
     id: 5046,
     name: 'ティリア',
-    rarity: 4,
+    rarity: 1,
     attr: 'light',
-    type: 'たいりょく',
+    type: 'かいふく',
     maxLevel: 50,
     baseExp: 10000,
-    stats: { hp: { min: 1200, max: 4500 }, atk: { min: 250, max: 1500 }, rec: { min: 25, max: 100 } },
-    skill: { name: '護りの力・光', sp: 8, desc: '1ターンの間、ダメージを無効化。', effects: [ { type: 'dmgReductionBuff', turns: 1, value: 1 } ] },
+    stats: { hp: { min: 1000, max: 2500 }, atk: { min: 500, max: 2000 }, rec: { min: 50, max: 300 } },
+    skill: {
+      name: '護りの力・光',
+      sp: 5,
+      desc: '1ターンの間、ダメージを無効化。',
+      condition: { type: 'orbBoost', attr: 'heal' },
+      effects: [ { type: 'dmgReductionBuff', turns: 1, value: 1 } ]
+    },
     leaderSkill: {
       name: '護りの力・祝',
       desc: '光属性のHP1.7倍。\nスキル使用時、攻撃1.3倍。',
@@ -6887,18 +6895,10 @@ const MONSTER_DATA = {
     skill: {
       name: '閃光の加護',
       sp: 3,
-      desc: '1ターンの間、ダメージを10%軽減。\n1ターンの間、操作時間が2秒延長。',
-      effects: [ { type: 'dmgReductionBuff', turns: 1, value: 0.1 }, { type: 'moveTimeBuff', turns: 1, seconds: 2, mult: 1 } ]
+      desc: '1ターンの間、ダメージを10%軽減。\n1ターンの間、操作時間が1秒延長。',
+      effects: [ { type: 'dmgReductionBuff', turns: 1, value: 0.1 }, { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 } ]
     },
-    leaderSkill: {
-      name: '聖誓・光明賛歌',
-      desc: 'スキル使用時、攻撃1.8倍。',
-      effects: [
-        { type: 'spCharge', size: 'small' },
-        { type: 'atk', condition: 'skillUsed', value: 1.8 },
-        { type: 'eggDropUp', value: 5 }
-      ]
-    }
+    leaderSkill: { name: '聖誓・光明賛歌', desc: 'スキル使用時、攻撃1.8倍。', effects: [ { type: 'atk', condition: 'skillUsed', value: 1.8 } ] }
   },
   5048: {
     id: 5048,
@@ -6912,8 +6912,8 @@ const MONSTER_DATA = {
     skill: {
       name: '共鳴する音色',
       sp: 2,
-      desc: '3ターンの間、光と闇ドロップが落ちやすくなる。',
-      effects: [ { type: 'orbSpawnBoost2', attr: 'light', rate: 0.2, attr2: 'dark', rate2: 0.2, turns: 3 } ]
+      desc: '4ターンの間、光と闇ドロップが少し落ちやすくなる。',
+      effects: [ { type: 'orbSpawnBoost2', attr: 'light', rate: 0.15, attr2: 'dark', rate2: 0.15, turns: 4 } ]
     },
     leaderSkill: {
       name: 'ノリノリセッション',
@@ -6942,29 +6942,20 @@ const MONSTER_DATA = {
     skill: {
       name: 'ファントムノーツ',
       sp: 2,
-      desc: 'HPが最大HPの20%減る。\n光と闇ドロップをランダムで5つずつ生成。',
-      cutin: true,
+      desc: 'HPが最大HPの20%減る。\n光と闇ドロップをランダムで4つずつ生成。',
       condition: { type: 'orbBoost', attr: 'dark' },
       effects: [
         { type: 'selfDamage', mode: 'percent', value: 0.2 },
-        { type: 'orbChangeRandom', attr: 'light', count: 5 },
-        { type: 'orbChangeRandom', attr: 'dark', count: 5 }
+        { type: 'orbChangeRandom', attr: 'light', count: 4 },
+        { type: 'orbChangeRandom', attr: 'dark', count: 4 }
       ]
     },
     leaderSkill: {
       name: '堕天使降臨',
       desc: '【落ちコンなし】\n光ドロップ/闇ドロップをちょうど4個つなげて消す度に攻撃1.4倍。',
       effects: [
-        {
-          type: 'atk',
-          condition: 'connectEach',
-          attr: 'light',
-          count: 4,
-          value: 1.45,
-          exponential: true,
-          exact: true
-        },
-        { type: 'atk', condition: 'connectEach', attr: 'dark', count: 4, value: 1.45, exponential: true, exact: true },
+        { type: 'atk', condition: 'connectEach', attr: 'light', count: 4, value: 1.4, exponential: true, exact: true },
+        { type: 'atk', condition: 'connectEach', attr: 'dark', count: 4, value: 1.4, exponential: true, exact: true },
         { type: 'noDrop', value: true },
         { type: 'eggDropUp', value: 15 }
       ]
@@ -6983,12 +6974,17 @@ const MONSTER_DATA = {
       name: '代わりによろしく★',
       sp: 2,
       desc: '1ターンの間、闇ドロップが落ちやすくなる。',
-      effects: [ { type: 'orbSpawnBoost', attr: 'dark', rate: 0.35, turns: 1 } ]
+      effects: [ { type: 'orbSpawnBoost', attr: 'dark', rate: 0.3, turns: 1 } ]
     },
     leaderSkill: {
       name: '流星のように★',
       desc: 'SPの上限が5アップ（最大15）。',
-      effects: [ { type: 'spCapUp', value: 5 }, { type: 'spCharge', size: 'medium' }, { type: 'eggDropUp', value: 5 } ]
+      effects: [
+        { type: 'spCapUp', value: 5 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'eggDropUp', value: 5 },
+        { type: 'allStat', attr: 'dark', value: 1.5 }
+      ]
     },
     evolutions: [
       { to: 5051, materials: [ { item: 'puzzle53', count: 1 }, { item: 'puzzle52', count: 2 } ] },
@@ -7010,16 +7006,16 @@ const MONSTER_DATA = {
       sp: 2,
       desc: 'HPを最大HPの75%回復。',
       cutin: true,
-      condition: { type: 'hpBelow', value: 3 },
+      condition: { type: 'hpBelow', value: 10 },
       effects: [ { type: 'heal', value: 0.75 } ]
     },
     leaderSkill: {
       name: '寝ない子だ～れだ★',
-      desc: 'HP5%以下で攻撃3倍、回復力2倍。',
+      desc: 'HP5%以下で攻撃2.2倍。',
       effects: [
         { type: 'eggDropUp', value: 20 },
         { type: 'expMult', value: 1.5 },
-        { type: 'atk', condition: 'hpBelow', threshold: 0.05, value: 3, recValue: 2 }
+        { type: 'atk', condition: 'hpBelow', threshold: 0.05, value: 2.2, recValue: 2 }
       ]
     }
   },
@@ -7038,7 +7034,7 @@ const MONSTER_DATA = {
       sp: 4,
       desc: '最上段横2列を火と水ドロップに変化。\n1ターンの間、敵単体の防御力を50%ダウン。',
       cutin: true,
-      condition: { type: 'orbBoost', attr: 'water' },
+      condition: { type: 'orbBoost', attr: 'fire' },
       effects: [
         { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'fire' },
         { type: 'orbChangeLine', dir: 'row', index: 1, count: 1, attr: 'water' },
@@ -7047,7 +7043,7 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '追魂の華',
-      desc: '【落ちコンなし】火と水ドロップを同時に6個以上つなげて消すと攻撃2.5倍、受けるダメージ20%軽減、1コンボ加算。',
+      desc: '【落ちコンなし】火と水ドロップを同時に6個以上つなげて消すと攻撃2.5倍、受けるダメージ10%軽減、1コンボ加算。',
       effects: [
         {
           type: 'atk',
@@ -7057,7 +7053,7 @@ const MONSTER_DATA = {
           value: 2.5,
           attr2: 'water',
           comboAdd: 1,
-          reduce: 0.2
+          reduce: 0.1
         },
         { type: 'noDrop', value: true },
         { type: 'spCharge', size: 'small' }
@@ -7136,20 +7132,21 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '義・理・善',
-      desc: 'かいふくタイプとバランスタイプの攻撃1.3倍。',
+      desc: 'かいふくタイプとバランスタイプの攻撃1.5倍。',
       effects: [
-        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.3 },
-        { type: 'atk', condition: 'type', attr: 'バランス', value: 1.3 },
+        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.5 },
+        { type: 'atk', condition: 'type', attr: 'バランス', value: 1.5 },
         { type: 'spCharge', size: 'medium' },
         { type: 'eggDropUp', value: 10 },
-        { type: 'coinMult', value: 1.5 }
+        { type: 'expMult', value: 2 },
+        { type: 'moveTimeAdd', value: 1 }
       ]
     }
   },
   5055: {
     id: 5055,
     name: 'ティリア(チア)',
-    rarity: 5,
+    rarity: 1,
     attr: 'light',
     sub: 'water',
     type: 'かいふく',
@@ -7159,12 +7156,13 @@ const MONSTER_DATA = {
     skill: {
       name: 'ブライトアップ',
       sp: 4,
-      desc: '1ターンの間、回復力が1.5倍。\n火ドロップを光ドロップに変化。木ドロップを回復ドロップに変化。',
+      desc: '1ターンの間、回復力が1.5倍。火ドロップを光ドロップに変化。\n10ターンの間、自分の攻撃力が1.5倍。',
       cutin: true,
+      condition: { type: 'orbBoost', attr: 'heal' },
       effects: [
         { type: 'recMult', turns: 1, value: 1.5 },
         { type: 'orbConvert', from: 'fire', to: 'light' },
-        { type: 'orbConvert', from: 'wood', to: 'heal' }
+        { type: 'selfAtkBuff', value: 1.5, turns: 10 }
       ]
     },
     leaderSkill: {
@@ -7174,14 +7172,14 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'combo', count: 7, value: 2 },
         { type: 'allStat', condition: 'type', attr: 'かいふく', value: 1.1 },
         { type: 'spCharge', size: 'medium' },
-        { type: 'eggDropUp', value: 3 }
+        { type: 'eggDropUp', value: 10 }
       ]
     }
   },
   5056: {
     id: 5056,
     name: 'キャラメル(アナザー)',
-    rarity: 5,
+    rarity: 1,
     attr: 'light',
     sub: 'dark',
     type: 'かいふく',
@@ -7191,10 +7189,9 @@ const MONSTER_DATA = {
     skill: {
       name: '星ノ塔の音',
       sp: 2,
-      desc: '回復ドロップをランダムで4つ生成。\n2ターンの間、ダメージを10%軽減。',
-      cutin: true,
+      desc: '回復ドロップをランダムで3つ生成。\n1ターンの間、ダメージを10%軽減。',
       condition: { type: 'orbBoost', attr: 'dark' },
-      effects: [ { type: 'orbChangeRandom', attr: 'heal', count: 4 }, { type: 'dmgReductionBuff', turns: 2, value: 0.1 } ]
+      effects: [ { type: 'orbChangeRandom', attr: 'heal', count: 3 }, { type: 'dmgReductionBuff', turns: 1, value: 0.1 } ]
     },
     leaderSkill: {
       name: '悪魔のステージ',
@@ -7222,7 +7219,8 @@ const MONSTER_DATA = {
         },
         { type: 'noDrop', value: true },
         { type: 'spCharge', size: 'medium' },
-        { type: 'chipDropUp', value: 15 }
+        { type: 'eggDropUp', value: 10 },
+        { type: 'chipDropUp', value: 10 }
       ]
     }
   },
@@ -7238,15 +7236,18 @@ const MONSTER_DATA = {
     skill: {
       name: 'プリチーエンハンス',
       sp: 2,
-      desc: '10ターンの間、自分の攻撃力が1.5倍。\n5ターンの間、回復ドロップが少し落ちやすくなる。',
+      desc: '10ターンの間、自分の攻撃力が1.5倍。\n10ターンの間、回復ドロップが少し落ちやすくなる。',
       cutin: true,
-      effects: [ { type: 'selfAtkBuff', value: 1.5, turns: 10 }, { type: 'orbSpawnBoost', attr: 'heal', rate: 0.1, turns: 5 } ]
+      effects: [
+        { type: 'selfAtkBuff', value: 1.5, turns: 10 },
+        { type: 'orbSpawnBoost', attr: 'heal', rate: 0.1, turns: 10 }
+      ]
     },
     leaderSkill: {
       name: 'プリチーなベスティナ',
-      desc: 'チームの総レア度が8以下の場合、かいふくタイプの攻撃力が3倍。\nL字消しをすると受けるダメージ15%軽減。',
+      desc: 'チームの総レア度が8以下の場合、かいふくタイプの攻撃力が2.6倍。\nL字消しをすると受けるダメージ15%軽減。',
       effects: [
-        { type: 'rarity', condition: 'totalBelow', threshold: 8, atk: true, value: 3, monType: 'かいふく' },
+        { type: 'rarity', condition: 'totalBelow', threshold: 8, atk: true, value: 2.8, monType: 'かいふく' },
         { type: 'atk', condition: 'lShapes', value: 1, reduce: 0.15 },
         { type: 'eggDropUp', value: 15 },
         { type: 'spCharge', size: 'medium' }
@@ -7270,14 +7271,14 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'アイシクルデリバリー',
-      desc: '水ドロップをちょうど4個つなげて消す度に攻撃1.6倍、受けるダメージ9%軽減。',
+      desc: '水ドロップをちょうど4個つなげて消す度に攻撃1.5倍、受けるダメージ9%軽減。',
       effects: [
         {
           type: 'atk',
           condition: 'connectEach',
           attr: 'water',
           count: 4,
-          value: 1.6,
+          value: 1.5,
           exponential: true,
           exact: true,
           reduce: 0.09
@@ -7306,13 +7307,13 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'スプラッシュシュート',
-      desc: '火ドロップ/水ドロップを消す度に攻撃1.1倍。\nHP50%以下で攻撃1.5倍、受けるダメージ25%軽減。',
+      desc: '火ドロップか水ドロップを消す度に攻撃1.1倍。\nHP50%以下で受けるダメージ25%軽減。',
       effects: [
         { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.1 },
         { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.1 },
         { type: 'eggDropUp', value: 10 },
-        { type: 'spCharge', size: 'small' },
-        { type: 'atk', condition: 'hpBelow', threshold: 0.5, value: 1.5, reduce: 0.25 }
+        { type: 'spCharge', size: 'medium' },
+        { type: 'atk', condition: 'hpBelow', threshold: 0.5, value: 1, reduce: 0.25 }
       ]
     }
   },
@@ -7334,11 +7335,7 @@ const MONSTER_DATA = {
         { type: 'atkBuff', monType: '神秘', value: 0.001, turns: 99 }
       ]
     },
-    leaderSkill: {
-      name: '凪の誘い',
-      desc: 'リーダー/フレンドの時、タマゴとチップドロップ率が上昇。',
-      effects: [ { type: 'eggDropUp', value: 5 }, { type: 'atk', value: 0.75 }, { type: 'chipDropUp', value: 5 } ]
-    },
+    leaderSkill: { name: '凪の誘い', desc: 'リーダー/フレンドの時、タマゴとチップドロップ率が上昇。', effects: [ { type: 'atk', value: 0.75 } ] },
     evolutions: [ { to: 5061, materials: [ { item: 'puzzle33', count: 3 } ] } ]
   },
   5061: {
@@ -7387,9 +7384,9 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '令嬢戦術：爆花',
-      desc: 'チームのレア度が全員同じ場合、攻撃力とHPが1.5倍。\n木ドロップ/闇ドロップのL字消しする度に攻撃1.6倍、受けるダメージ5%軽減。',
+      desc: 'チームのレア度が全員同じ場合、攻撃力とHPが1.2倍。\n木ドロップ/闇ドロップのL字消しする度に攻撃1.6倍、受けるダメージ5%軽減。',
       effects: [
-        { type: 'rarity', condition: 'allSame', atk: true, value: 1.5, hp: true },
+        { type: 'rarity', condition: 'allSame', atk: true, value: 1.3, hp: true },
         { type: 'atk', condition: 'lShapes', shapeAttr: 'wood', value: 1.6, exponential: true, reduce: 0.05 },
         { type: 'atk', condition: 'lShapes', shapeAttr: 'dark', value: 1.6, exponential: true, reduce: 0.05 },
         { type: 'eggDropUp', value: 15 },
@@ -7421,9 +7418,9 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '悪魔のような天使',
-      desc: 'チームの総レア度が8以下の場合、かいふくタイプの攻撃力が3倍。\nかいふくタイプのHP1.3倍。',
+      desc: 'チームの総レア度が8以下の場合、かいふくタイプの攻撃力が2.8倍。\nかいふくタイプのHP1.3倍。',
       effects: [
-        { type: 'rarity', condition: 'totalBelow', threshold: 8, atk: true, value: 3, monType: 'かいふく' },
+        { type: 'rarity', condition: 'totalBelow', threshold: 8, atk: true, value: 2.8, monType: 'かいふく' },
         { type: 'eggDropUp', value: 15 },
         { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.3 }
       ]
@@ -7451,9 +7448,9 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'アルティメットバーン',
-      desc: '火ドロップを消す度に攻撃1.4倍、受けるダメージ3%軽減。',
+      desc: '火ドロップを消す度に攻撃1.15倍、受けるダメージ3%軽減。',
       effects: [
-        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.4, reduce: 0.03 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1.2, reduce: 0.03 },
         { type: 'eggDropUp', value: 10 },
         { type: 'expMult', value: 2 }
       ]
@@ -7482,9 +7479,9 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '魔女の微笑み',
-      desc: 'HP1%以下で攻撃3倍、受けるダメージ30%軽減。',
+      desc: 'HP1で攻撃2.5倍。',
       effects: [
-        { type: 'atk', condition: 'hpBelow', threshold: 0.01, value: 3, reduce: 0.3 },
+        { type: 'atk', condition: 'hpBelow', threshold: 0.01, value: 2.5 },
         { type: 'spCharge', size: 'medium' },
         { type: 'atk', condition: 'combo', count: 7, value: 1, recValue: 2 },
         { type: 'eggDropUp', value: 10 }
@@ -7500,7 +7497,7 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 400, max: 3200 }, atk: { min: 400, max: 2000 }, rec: { min: 20, max: 100 } },
+    stats: { hp: { min: 400, max: 3200 }, atk: { min: 400, max: 2000 }, rec: { min: 0, max: 0 } },
     skill: {
       name: '尻尾砥ぎ',
       sp: 4,
