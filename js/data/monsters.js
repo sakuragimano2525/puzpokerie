@@ -7379,7 +7379,7 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 600, max: 4000 }, atk: { min: 6000, max: 8000 }, rec: { min: 100, max: 300 } },
+    stats: { hp: { min: 600, max: 4200 }, atk: { min: 6000, max: 8000 }, rec: { min: 100, max: 300 } },
     skill: {
       name: 'キャンバス拡張',
       sp: 2,
