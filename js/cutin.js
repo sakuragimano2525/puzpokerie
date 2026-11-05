@@ -488,7 +488,7 @@
         const s = document.createElement('span'); s.className = 'cutin-ch';
         s.textContent = c; nameEl.appendChild(s); return s;
       });
-      strip.append(hit, nameEl);   // hit（白い光）は文字の下
+      strip.append(nameEl);   // 文字の下の白い光(hit)は「霧」に見えるのでやめた
       content.append(strip);
 
       root.appendChild(stage);
@@ -507,13 +507,14 @@
         const glow = (rs.getPropertyValue('--c-tglow') || rs.getPropertyValue('--c-glow') || '#ff8a3d').trim();
         const tlight = (rs.getPropertyValue('--c-tlight') || rs.getPropertyValue('--c-light') || '#ffe0b0').trim();
         const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
-        const pad = Math.ceil(fs * .45);
+        const pad = Math.ceil(fs * .2);
         const font = `900 ${fs}px ${cs.fontFamily}`;
+        const GAP = fs * .12;   // 文字と文字のあいだ
         chEls.forEach((el, i) => {
           const ch = chars[i];
-          const w = el.offsetWidth;
+          const w = Math.max(1, el.offsetWidth - fs * .1);   // CSSの字間(.1em)ぶんを除いた文字の幅
           el.textContent = '';
-          el.style.cssText += `;position:relative;display:inline-block;width:${w}px;height:${fs}px;margin-right:${(fs * .03).toFixed(2)}px;`;
+          el.style.cssText += `;position:relative;display:inline-block;width:${w}px;height:${fs}px;margin-right:${GAP.toFixed(2)}px;letter-spacing:0;`;
           if (ch.trim() === '') return;
           const cv = document.createElement('canvas');
           cv.width = Math.ceil((w + pad * 2) * dpr); cv.height = Math.ceil((fs + pad * 2) * dpr);
@@ -522,15 +523,10 @@
           g.scale(dpr, dpr);
           g.font = font; g.textBaseline = 'middle'; g.textAlign = 'center'; g.lineJoin = 'round';
           const x = pad + w / 2, y = pad + fs * .52;
-          g.lineWidth = fs * .24;
+          // 黒い太フチ（光・霧は付けない）
+          g.lineWidth = fs * .2;
           g.strokeStyle = '#000';
-          // 光（属性色）：2回重ねる
-          g.shadowColor = glow;
-          g.shadowBlur = fs * .5 * dpr; g.strokeText(ch, x, y);
-          g.shadowBlur = fs * .22 * dpr; g.strokeText(ch, x, y);
-          // 黒フチ
-          g.shadowColor = 'transparent'; g.shadowBlur = 0;
-          g.strokeText(ch, x, y + fs * .05);
+          g.strokeText(ch, x, y + fs * .04);
           g.strokeText(ch, x, y);
           // 白い文字（下側だけほんのり属性色）
           const gr = g.createLinearGradient(0, pad, 0, pad + fs);
@@ -641,7 +637,6 @@
         if (an) an.onfinish = () => { try { c.style.transform = 'skewX(-11deg)'; c.style.opacity = '1'; an.cancel(); } catch (e) {} };
       });
       const landAt = TEXT_AT + 280 * .58;
-      A(hit, [{ opacity: 0 }, { opacity: .9, offset: .2 }, { opacity: 0 }], { duration: 380, delay: landAt });
       setTimeout(() => { if (!done && typeof battleShake === 'function') { try { battleShake(10); } catch (e) {} } }, landAt);
       // 最後の文字が入った瞬間にもう一度、帯が少し膨らむ
       A(strip, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(1.08)', offset: .35 }, { transform: 'scaleY(1)' }],

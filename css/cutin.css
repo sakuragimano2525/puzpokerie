@@ -82,14 +82,14 @@
     linear-gradient(180deg, var(--c-main) 0%, var(--c-deep) 100%);
   box-shadow:0 -2px 0 #000, 0 2px 0 #000, 0 7px 14px rgba(0,0,0,.55);
 }
-.cutin-hit {
+.cutin-hit { display:none;
   position:absolute; left:0; right:0; top:0; bottom:0; opacity:0; pointer-events:none;
   background:radial-gradient(ellipse at 50% 50%, #fff 0%, var(--c-light) 25%, transparent 70%);
 }
 .cutin-name {
   position:relative; z-index:1; display:inline-block; white-space:nowrap; line-height:1; font-weight:900;
   font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Noto Sans JP','Noto Sans CJK JP','Zen Maru Gothic',sans-serif;
-  letter-spacing:.03em;
+  letter-spacing:.1em;
   -webkit-font-smoothing:antialiased; text-rendering:geometricPrecision;
 }
 /* 1文字ずつ：js/cutin.js が canvas に「黒い太フチ＋光＋白い文字」を描いて入れる（動かすのはこの入れ物） */
