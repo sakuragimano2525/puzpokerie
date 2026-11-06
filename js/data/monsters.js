@@ -5355,18 +5355,23 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 5000,
-    stats: { hp: { min: 220, max: 3400 }, atk: { min: 880, max: 2600 }, rec: { min: -77, max: -717 } },
+    baseExp: 50000,
+    stats: { hp: { min: 717, max: 3200 }, atk: { min: 717, max: 3200 }, rec: { min: -717, max: -717 } },
     skill: {
       name: 'デスウイング',
-      sp: 7,
-      desc: 'HPが1になる。\n全ドロップを闇ドロップにする。',
-      effects: [ { type: 'selfDamage', mode: 'toOne', value: 0.5 }, { type: 'orbChangeRandom', attr: 'dark', count: 30 } ]
+      sp: 4,
+      desc: 'HPが1になる。\nロックを解除し、ドロップを闇ドロップに変化。',
+      condition: { type: 'hpBelow', value: 5 },
+      effects: [
+        { type: 'selfDamage', mode: 'toOne', value: 0.5 },
+        { type: 'orbUnlock', target: 'all' },
+        { type: 'orbChangeMulti', orb_dark: true }
+      ]
     },
     leaderSkill: {
       name: '破壊',
-      desc: 'HP5%以下で攻撃3.5倍。',
-      effects: [ { type: 'atk', condition: 'hpBelow', threshold: 0.05, value: 3.5 } ]
+      desc: 'HP1で攻撃2.8倍。',
+      effects: [ { type: 'atk', condition: 'hpBelow', threshold: 0.01, value: 2.8 } ]
     }
   },
   718: {
@@ -7707,6 +7712,95 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'remainingOrbs', threshold: 6, value: 2.2, reduce: 0.05 },
         { type: 'moveTimeAdd', value: 1 },
         { type: 'eggDropUp', value: 15 }
+      ]
+    }
+  },
+  5072: {
+    id: 5072,
+    name: 'ヒメ（鯉のぼり）',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'water',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 35500,
+    stats: { hp: { min: 500, max: 3750 }, atk: { min: 400, max: 1450 }, rec: { min: 150, max: 300 } },
+    skill: {
+      name: '気功修練B',
+      sp: 3,
+      desc: '1ターンの間、火と水属性の攻撃が1.5倍。',
+      cutin: true,
+      condition: { type: 'orbBoost', attr: 'water' },
+      effects: [
+        { type: 'atkBuff', value: 1.5, turns: 1, attr: 'fire' },
+        { type: 'atkBuff', attr: 'water', value: 1.5, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'エネルギー保存B',
+      desc: '火ドロップを消す度に受けるダメージ8%軽減。\n水ドロップを消す度に攻撃1.1倍。',
+      effects: [
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.1 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1, reduce: 0.08 }
+      ]
+    }
+  },
+  5073: {
+    id: 5073,
+    name: 'ユメ（契約)',
+    rarity: 5,
+    attr: 'water',
+    sub: 'wood',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 30000,
+    stats: { hp: { min: 2000, max: 4000 }, atk: { min: 1500, max: 2100 }, rec: { min: 200, max: 400 } },
+    skill: {
+      name: '私に任せて！',
+      sp: 3,
+      desc: '99ターンの間、水ドロップがほんの少し落ちやすくなる。\n敵全体の行動を1ターン遅らせる。',
+      cutin: true,
+      effects: [
+        { type: 'orbSpawnBoost', attr: 'water', rate: 0.2, turns: 99 },
+        { type: 'enemyDelay', target: 'all', turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '禍福倚伏B',
+      desc: '水属性とかいふくタイプの攻撃1.5倍。',
+      effects: [
+        { type: 'coinMult', value: 2 },
+        { type: 'chipDropUp', value: 20 },
+        { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.5 },
+        { type: 'atk', attr: 'water', value: 1.5 }
+      ]
+    }
+  },
+  5074: {
+    id: 5074,
+    name: 'ユメ(水着)',
+    rarity: 5,
+    attr: 'water',
+    sub: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 30000,
+    stats: { hp: { min: 2000, max: 3000 }, atk: { min: 2000, max: 3000 }, rec: { min: 150, max: 300 } },
+    skill: {
+      name: '私に任せて！B',
+      sp: 3,
+      desc: '6ターンの間、ダメージを20%軽減。',
+      cutin: true,
+      condition: { type: 'orbBoost', attr: 'water' },
+      effects: [ { type: 'dmgReductionBuff', turns: 6, value: 0.2 }, { type: 'bindRecover', turns: 3 } ]
+    },
+    leaderSkill: {
+      name: '禍福倚伏C',
+      desc: 'こうげきタイプの攻撃1.8倍。',
+      effects: [
+        { type: 'eggDropUp', value: 20 },
+        { type: 'chipDropUp', value: 20 },
+        { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.8 }
       ]
     }
   }

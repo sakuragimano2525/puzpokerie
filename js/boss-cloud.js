@@ -27,6 +27,8 @@ const BOSS_CLOUD_STAGES = {
   '14-boss': 'dungeon14.png',
   // ★ 最終ボス（ミュウツー）：ハナダの洞窟の切り替え → 背景 dungeon15-1.png ／ 紫の波動の LAST BOSS バナー ／ ミュウツー登場演出
   '15-boss': { bg: 'dungeon15-1.png', banner: 'last', entrance: 'mewtwo', transition: 'cave', via: 'dungeon15.png' },
+  // ★ イベルタル降臨：ボス戦の背景が kalosy.png に変わる（登場演出は下の BOSS_INTRO_STAGES の 'yveltal'）
+  'denky-boss': { bg: 'kalosy.png' },
 };
 
 const BOSS_CLOUD_TIMING = {
@@ -56,6 +58,7 @@ const BOSS_CAVE_TIMING = {
 //     'thunder' … サンダー：暗い雲 → 稲妻が3本おちて、3本目の直撃で姿があらわれる
 //     'freezer' … フリーザー：冷気 → 氷の柱と氷塊に閉じこめられ、ひび割れて砕け散る
 //     'fire'    … ファイヤー：足もとから炎 → 炎が集まって爆発し、翼をひろげる
+//     'yveltal' … イベルタル：暗闇に命の光が吸い寄せられ、鼓動 → 空間にひび → デスウィングの翼がひろがって姿があらわれる
 //
 //   ◆ 増やすとき：  'ダンジョンキー': 'thunder' / 'freezer' / 'fire'  を1行足すだけ。
 //   ◆ 長さ・BGMのタイミングは、下の INTROS の ms / bgmAt（ミリ秒）。
@@ -65,6 +68,7 @@ const BOSS_INTRO_STAGES = {
   '11-boss': 'thunder',   // サンダー
   '12-boss': 'freezer',   // フリーザー
   '13-boss': 'fire',      // ファイヤー
+  'denky-boss': 'yveltal', // イベルタル（背景は BOSS_CLOUD_STAGES で kalosy.png になる）
 };
 
 // ============================================================
@@ -1861,6 +1865,260 @@ const BossCloud = (() => {
     setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
   }
 
+  // ── イベルタル（denky-boss）：死の化身 ────────────────────────────
+  //   血のような暗闇 → ふちから「命の光」（赤い粒）が渦をまいてボスへ吸いこまれ、鼓動がだんだん速くなる
+  //   → 空間に赤いひびが走る → 爆ぜる瞬間、紫黒の羽根が舞い、デスウィングの赤い光の翼がひろがって姿があらわれる
+  const YV_BEATS = [.26, .46, .63, .775, .89];   // 鼓動のタイミング（姿があらわれる瞬間＝bgmAt を 1 としたときの割合）
+
+  // 黒い羽根（先がとがり、ふちが赤く光る）
+  let _yvFeather = null;
+  function yvFeatherSprite() {
+    if (_yvFeather) return _yvFeather;
+    const c = document.createElement('canvas');
+    c.width = 28; c.height = 84;
+    const x = c.getContext('2d');
+    x.beginPath();
+    x.moveTo(14, 0); x.bezierCurveTo(28, 22, 25, 58, 14, 83); x.bezierCurveTo(3, 58, 0, 22, 14, 0);
+    x.closePath();
+    const gr = x.createLinearGradient(0, 0, 0, 84);
+    gr.addColorStop(0, '#2a0812'); gr.addColorStop(1, '#08020a');
+    x.fillStyle = gr; x.fill();
+    x.strokeStyle = 'rgba(255,64,88,.95)'; x.lineWidth = 1.6; x.stroke();
+    x.strokeStyle = 'rgba(255,120,132,.5)'; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(14, 6); x.lineTo(14, 78); x.stroke();
+    return (_yvFeather = c);
+  }
+
+  // 光の刃（デスウィングの翼の1枚。付け根から先へ、とがりながら明るくなる）
+  let _yvBlade = null;
+  function yvBladeSprite() {
+    if (_yvBlade) return _yvBlade;
+    const c = document.createElement('canvas');
+    c.width = 32; c.height = 256;
+    const x = c.getContext('2d');
+    x.beginPath();
+    x.moveTo(5, 0); x.quadraticCurveTo(3, 150, 16, 255); x.quadraticCurveTo(29, 150, 27, 0);
+    x.closePath();
+    const gr = x.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, 'rgba(255,60,84,.35)'); gr.addColorStop(.5, 'rgba(255,50,76,.8)'); gr.addColorStop(1, 'rgba(255,210,214,.95)');
+    x.fillStyle = gr; x.fill();
+    x.strokeStyle = 'rgba(255,226,229,.65)'; x.lineWidth = 1.4;
+    x.beginPath(); x.moveTo(16, 24); x.lineTo(16, 250); x.stroke();
+    return (_yvBlade = c);
+  }
+
+  function yveltalFx(img) {
+    const st = introStage(img, ATTR_DPR); if (!st) return;
+    const IN = INTROS.yveltal, T = IN.ms, RV = IN.bgmAt, M = qMeter();
+    const { ctx, dpr, W, H, cx, cy, base } = st;
+    const bw = Math.max(st.rect.w, base * .8), bh = Math.max(st.rect.h, base);
+    const crimS = softSprite(255, 40, 62, .3), darkS = softSprite(10, 2, 14, .5), violS = softSprite(96, 34, 150, .35),
+          hotS = softSprite(255, 190, 196, .2), moteS = softSprite(255, 70, 84, .25), inkS = softSprite(8, 1, 12, .45);
+    const featherS = yvFeatherSprite(), bladeS = yvBladeSprite();
+    const beats = YV_BEATS.map(k => k * RV);
+    const R_MAX = Math.max(W, H) * .85;
+
+    // 地をはう紫黒の霧
+    const mist = [];
+    for (let i = 0; i < 7; i++) mist.push({ x: rand(-.1, 1.1) * W, y: Math.min(H, st.rect.bottom) - rand(0, .22) * bh, s: rand(.6, 1) * W * 1.1, ph: rand(0, 6), v: rand(.0004, .0009) });
+    // 空間のひび（ボスの中心から、ふちへ向かって走る。途中で枝わかれ）
+    const cracks = [], NC = 11;
+    for (let i = 0; i < NC; i++) {
+      const a = i / NC * TAU + rand(-.22, .22), r0 = base * .22, r1 = Math.max(W, H) * rand(.5, .85);
+      const main = jag(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0 * .9, cx + Math.cos(a) * r1, cy + Math.sin(a) * r1, 9, 16);
+      const forks = [];
+      for (let b = 0; b < 2; b++) {
+        const si = 2 + ((Math.random() * 4) | 0), p = main[si], ba = a + rand(.5, 1) * (Math.random() < .5 ? -1 : 1), bl = r1 * rand(.18, .34);
+        forks.push({ at: si / main.length, pts: jag(p[0], p[1], p[0] + Math.cos(ba) * bl, p[1] + Math.sin(ba) * bl, 4, 9) });
+      }
+      cracks.push({ main, forks, t0: RV * .4 + i * RV * .035, dur: RV * .26 });
+    }
+    const lives = [], feathers = [], inks = [], motes = [];
+    let accL = 0, absorbed = 0, burst = false;
+
+    introSE('dark', 250);
+    introSE('dark', RV * .62);
+    introSE('dark', RV);
+    introSE('skillk', RV);
+    beats.forEach((b, i) => introShake(b, 2 + i * 1.3, 300));   // 鼓動のたびに、画面がかすかにゆれる
+    introShake(RV, 15, 900);
+
+    introRun(st, T, (t, dt) => {
+      M.tick(dt);
+      const q = M.q(), fade = 1 - sstep(t, T - 700, T - 120), pre = t < RV;
+      let bk = 0;                                                           // 鼓動の強さ（ドクン、で1にはね、すっと引く）
+      for (const b of beats) if (t >= b) bk += Math.exp(-(t - b) / 130);
+      bk = Math.min(1.2, bk) * (1 - sstep(t, RV - 80, RV + 40));
+      const d = sstep(t, 0, 700) * (1 - sstep(t, RV + 150, T - 350));      // 暗さ（爆ぜたあと、すっと晴れる）
+
+      // ① 血のような暗闇（中心はやや赤く、ふちほど黒い）＋ 地をはう霧
+      const gd = ctx.createRadialGradient(cx, cy, base * .4, cx, cy, R_MAX);
+      gd.addColorStop(0, `rgba(80,4,20,${(.16 + .16 * bk) * d})`);
+      gd.addColorStop(.5, `rgba(18,1,8,${.7 * d})`);
+      gd.addColorStop(1, `rgba(2,0,4,${.97 * d})`);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gd;
+      ctx.fillRect(0, 0, W, H);
+      for (const m of mist) blob(ctx, darkS, m.x + Math.sin(t * m.v + m.ph) * 34, m.y, m.s, .34 * d * fade);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const m of mist) blob(ctx, violS, m.x + Math.sin(t * m.v + m.ph) * 34, m.y - 10, m.s * .8, .1 * d * fade);
+
+      // ② 命の光：画面のふちから赤い粒が渦をまき、ボスへ吸いこまれていく
+      if (pre && t < RV - 200) {
+        accL += (30 + 170 * sstep(t, 250, RV * .7)) * q * dt;
+        while (accL >= 1 && lives.length < 200) {
+          accL--;
+          const ang = rand(0, TAU), R0 = Math.max(W, H) * rand(.45, .85), x0 = cx + Math.cos(ang) * R0, y0 = cy + Math.sin(ang) * R0 * .85;
+          lives.push({ ang, R: R0, w: rand(1.1, 2.4), s: rand(5, 11), age: 0, x: x0, y: y0, tx: x0, ty: y0 });
+        }
+      }
+      for (let i = lives.length - 1; i >= 0; i--) {
+        const p = lives[i];
+        p.age += dt;
+        p.ang += p.w * dt * (.6 + 1.4 * (1 - Math.min(1, p.R / R_MAX)));   // 近づくほど速く渦をまく
+        p.R -= (p.R * 1.25 + base * .35) * dt;
+        if (p.R < base * .17) { lives.splice(i, 1); absorbed++; continue; }
+        p.x = cx + Math.cos(p.ang) * p.R; p.y = cy + Math.sin(p.ang) * p.R * .85;
+        const k = 1 - Math.exp(-9 * dt);
+        p.tx += (p.x - p.tx) * k; p.ty += (p.y - p.ty) * k;
+      }
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (const p of lives) {
+        const a = Math.min(1, p.age / .25) * fade;
+        ctx.globalAlpha = 1;
+        strokePts(ctx, [[[p.tx, p.ty], [p.x, p.y]]], 1.8 + p.s * .12, `rgba(255,64,84,${.5 * a})`);
+        blob(ctx, moteS, p.x, p.y, p.s * 2.2, .85 * a);
+      }
+
+      // ③ ボスの中心に力がたまり、鼓動に合わせて赤く脈打つ
+      const core = pre ? sstep(t, 600, RV) : 0, ab = Math.min(1, absorbed / 70);
+      if (core > .01) blob(ctx, crimS, cx, cy, base * (1.2 + .5 * ab + .22 * bk) * core, (.32 + .25 * ab + .2 * bk) * core);
+      beats.forEach((b, i) => {
+        const u = (t - b) / 560;
+        if (u <= 0 || u >= 1) return;
+        const a = Math.pow(1 - u, 1.7) * (.28 + i * .05) * fade, ring = circlePts(cx, cy, lerp(base * .35, base * (1.15 + i * .08), 1 - (1 - u) * (1 - u)), 44);
+        ctx.globalAlpha = 1;
+        strokePts(ctx, [ring], 7, `rgba(200,10,40,${a * .3})`);
+        strokePts(ctx, [ring], 2, `rgba(255,70,90,${a})`);
+      });
+
+      // ④ 空間のひび（黒い裂け目のふちが、赤く光る）。爆ぜる瞬間に白く光って、消える
+      const ca = (pre ? 1 : 1 - sstep(t, RV + 40, RV + 480)) * fade;
+      if (ca > .01) {
+        const all = [];
+        cracks.forEach(c => {
+          const g = sstep(t, c.t0, c.t0 + c.dur);
+          if (g <= .01) return;
+          all.push(partial(c.main, g));
+          c.forks.forEach(f => { const fg = ramp(g, f.at, 1); if (fg > 0) all.push(partial(f.pts, fg)); });
+        });
+        if (all.length) {
+          const fl = .75 + .25 * Math.sin(t * .03);
+          ctx.globalAlpha = 1;
+          ctx.globalCompositeOperation = 'source-over';
+          strokePts(ctx, all, 7, `rgba(0,0,0,${.5 * ca})`);
+          ctx.globalCompositeOperation = 'lighter';
+          strokePts(ctx, all, 11, `rgba(255,30,50,${.11 * ca})`);
+          strokePts(ctx, all, 3.4, `rgba(255,56,76,${(.55 + .2 * fl) * ca})`);
+          strokePts(ctx, all, 1.2, `rgba(255,205,210,${.85 * ca})`);
+          if (!pre) strokePts(ctx, all, 5, `rgba(255,232,232,${.9 * Math.exp(-(t - RV) / 120) * ca})`);
+        }
+      }
+
+      // ⑤ 爆ぜる：黒い羽根が舞い、黒い靄と赤い火の粉が立ちのぼる
+      if (!burst && t >= RV) {
+        burst = true;
+        lives.length = 0;
+        for (let i = 0; i < M.n(34); i++) {
+          const side = Math.random() < .5 ? 1 : -1, a0 = rand(-1.15, .2), a = side > 0 ? a0 : Math.PI - a0, sp = rand(220, 640);   // 左右・上向きに、翼のようにひろがる
+          feathers.push({ x: cx + Math.cos(a) * base * rand(.1, .3), y: cy + Math.sin(a) * base * .2, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, age: 0, life: rand(1.4, 2.4), h: rand(34, 66), ph: rand(0, 6), spin: rand(-2.5, 2.5) });
+        }
+        for (let i = 0; i < M.n(12); i++) { const a = rand(0, TAU), sp = rand(140, 300), r0 = base * rand(.42, .6); inks.push({ x: cx + Math.cos(a) * r0, y: cy + Math.sin(a) * r0 * .8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .6 - rand(20, 100), age: 0, life: rand(.9, 1.5), s0: rand(80, 140) }); }   // 靄はボスの輪郭の外へ出し、顔をおおわない
+        for (let i = 0; i < M.n(40); i++) { const a = rand(0, TAU), sp = rand(80, 420); motes.push({ x: cx + rand(-.3, .3) * bw, y: cy + rand(-.3, .4) * bh, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .7 - rand(40, 200), age: 0, life: rand(1, 1.9), s: rand(10, 24), ph: rand(0, 6) }); }
+      }
+      if (burst) {
+        ctx.globalCompositeOperation = 'source-over';
+        for (let i = inks.length - 1; i >= 0; i--) {
+          const p = inks[i];
+          p.age += dt;
+          if (p.age >= p.life) { inks.splice(i, 1); continue; }
+          const a = p.age / p.life;
+          p.vx *= Math.exp(-1.4 * dt); p.vy *= Math.exp(-1.2 * dt);
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          blob(ctx, inkS, p.x, p.y, p.s0 * (1 + .9 * a), .44 * Math.pow(1 - a, 1.2) * fade);
+        }
+        for (let i = feathers.length - 1; i >= 0; i--) {
+          const p = feathers[i];
+          p.age += dt;
+          if (p.age >= p.life) { feathers.splice(i, 1); continue; }
+          const a = p.age / p.life;
+          p.vx *= Math.exp(-1.6 * dt); p.vy = p.vy * Math.exp(-1.6 * dt) + 90 * dt;   // 勢いが弱まって、ひらひら落ちる
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          const dir = Math.atan2(p.vy, p.vx) + Math.PI / 2 + Math.sin(p.age * 6 + p.ph) * .45 + p.spin * p.age * .3;
+          xf(ctx, dpr, featherS, p.x, p.y, p.h * .34, p.h, dir, Math.min(1, p.age / .18) * (1 - Math.pow(a, 2.5)) * .95 * fade, 1, .5);
+        }
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = motes.length - 1; i >= 0; i--) {
+          const p = motes[i];
+          p.age += dt;
+          if (p.age >= p.life) { motes.splice(i, 1); continue; }
+          p.vx *= Math.exp(-1.5 * dt); p.vy = p.vy * Math.exp(-1.2 * dt) - 24 * dt;
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          const a = p.age / p.life, tw = .6 + .4 * Math.sin(t * .015 + p.ph * 6);
+          blob(ctx, moteS, p.x, p.y, p.s * (.7 + .6 * a), .8 * tw * (1 - a * a) * fade);
+        }
+      }
+
+      // ⑥ デスウィング：赤い光の翼が左右にひろがり、まばゆい横の閃光がはしる
+      ctx.globalCompositeOperation = 'lighter';
+      const wu = t - RV;
+      if (wu > -40 && wu < 900) {
+        const open = easeOutBack(ramp(wu, 0, 420)), al = ramp(wu, 0, 70) * (1 - sstep(wu, 420, 900)) * fade, NB = 7;
+        for (let s = -1; s <= 1; s += 2) {
+          for (let k = 0; k < NB; k++) {
+            const kk = k / (NB - 1), th = lerp(-1.45, lerp(-1.25, .22, kk), open), dir = s > 0 ? th : Math.PI - th;   // 閉じた翼（真上）→ ひろげた翼
+            const r0 = base * .14;   // 付け根を中心から少し外へ
+            xf(ctx, dpr, bladeS, cx + s * bw * .08 + Math.cos(dir) * r0, cy - bh * .04 + Math.sin(dir) * r0, 34 - kk * 10, W * lerp(.5, .78, kk) * sstep(wu, 0, 300), dir - Math.PI / 2, .6 * al, 1, 0);
+          }
+        }
+      }
+      if (wu > 0 && wu < 600) {
+        const k = wu / 600, a = Math.pow(1 - k, 1.6), L = W * .62 * Math.min(1, k * 3);
+        blobXY(ctx, hotS, cx, cy, W * (.6 + 1.1 * k), base * .09 * (1 - .5 * k) + 6, .9 * a * fade);
+        ctx.globalAlpha = 1;
+        strokePts(ctx, [[[cx - L, cy], [cx + L, cy]]], 2.4 * (1 - k) + .8, `rgba(255,235,238,${.9 * a})`);
+        blob(ctx, crimS, cx, cy, base * 1.7, .3 * Math.exp(-wu / 260));
+      }
+      attrFlash(ctx, W, H, cx, cy, base, hotS, '255,120,134', t, RV, .8);
+      attrRing(ctx, cx, cy, base, W, t, RV, 760, '170,10,40', '255,150,160', .55);
+      attrRing(ctx, cx, cy, base * .5, W, t - 150, RV, 680, '110,30,170', '215,170,255', .35);
+      attrRing(ctx, cx, cy, base * .35, W, t - 300, RV, 600, '170,10,40', '255,190,196', .3);
+    });
+    setTimeout(() => { try { st.ov.remove(); } catch (e) {} }, T + 700);
+  }
+
+  // イベルタルの敵画像のアニメ：黒いシルエットがうかび、鼓動のたびに赤く脈打ち → 白く光って姿があらわれる
+  function yveltalFrames(T, RV) {
+    const rgb = '255,40,60', fr = [], beats = YV_BEATS.map(k => k * RV);
+    const f = (ms, op, b, s, g, a, sc) => fr.push(introFrame(rgb, Math.min(1, Math.max(0, ms / T)), op, b, s, g, a, sc));
+    const bump = ms => { let v = 0; beats.forEach(b => { if (ms >= b) v += Math.exp(-(ms - b) / 120); }); return Math.min(1.3, v); };
+    const t0 = RV * .12, t1 = RV - 120, at = [];
+    for (let ms = t0 + 40; ms < t1; ms += 60) at.push(ms);
+    beats.forEach(b => at.push(b - 2, b + 30));
+    f(0, 0, 0, 0, 0, 0, .93);
+    f(t0, 0, 0, 0, 0, 0, .93);
+    at.filter(ms => ms > t0 && ms < t1).sort((a, b) => a - b).forEach(ms => {
+      const k = sstep(ms, t0, t1), bp = bump(ms);
+      f(ms, .55 + .4 * k, 0, 0, 10 + 20 * k + 20 * bp, Math.min(1, .6 + .4 * k + .3 * bp), .95 + .03 * k + .025 * bp);
+    });
+    f(RV, 1, 6, .1, 64, 1, 1.13);
+    f(RV + (T - RV) * .16, 1, 2.5, .5, 42, 1, 1.05);
+    f(RV + (T - RV) * .5, 1, 1.3, .9, 26, .8, 1.01);
+    f(T, 1, 1, 1, 0, 0, 1);
+    return fr;
+  }
+
   // 敵画像のアニメ（シルエット → 閃光 → 姿）。属性ごとに、色と最初のシルエットの明るさだけ変える
   function attrFrames(rgb, T, RV, o) {
     const r = RV / T, f = (k, op, b, s, g, a, sc) => introFrame(rgb, k, op, b, s, g, a, sc);
@@ -1932,7 +2190,9 @@ const BossCloud = (() => {
     attrWater: { ms: 2900, bgmAt: 1650, easing: 'linear', fx: attrWaterFx, frames: attrFrames('80,175,255',  2900, 1650, { b: .45, s: .7 }) },    // 水：青く沈んだ姿 → しぶきとともにあらわれる
     attrWood:  { ms: 2700, bgmAt: 1500, easing: 'linear', fx: attrWoodFx,  frames: attrFrames('130,235,120', 2700, 1500, { b: .6,  s: .9 }) },    // 風：葉の渦ごしに見える姿
     attrLight: { ms: 2700, bgmAt: 1500, easing: 'linear', fx: attrLightFx, frames: attrFrames('255,236,150', 2700, 1500, { b: 2.0, s: .3 }) },    // 光：白く輝くシルエット → 閃光
-    attrDark:  { ms: 2900, bgmAt: 1650, easing: 'linear', fx: attrDarkFx,  frames: attrFrames('175,80,255',  2900, 1650, { b: .12, s: 0 }) }     // 闇：真っ黒な影 → 紫の闇がはじける
+    attrDark:  { ms: 2900, bgmAt: 1650, easing: 'linear', fx: attrDarkFx,  frames: attrFrames('175,80,255',  2900, 1650, { b: .12, s: 0 }) },    // 闇：真っ黒な影 → 紫の闇がはじける
+    // イベルタル（denky-boss）：命の光が吸い寄せられ、鼓動 → 空間のひび → デスウィングで爆ぜる。ms を変えたら frames の数字（ms と bgmAt）も同じ値に
+    yveltal:   { ms: 3800, bgmAt: 2400, easing: 'linear', fx: yveltalFx,   frames: yveltalFrames(3800, 2400) }
   });
   const ATTR_INTRO_KEY = { fire: 'attrFire', water: 'attrWater', wood: 'attrWood', light: 'attrLight', dark: 'attrDark' };
   // 属性別のボス登場演出。専用の演出があるダンジョン（BOSS_CLOUD_STAGES／BOSS_INTRO_STAGES）と、skip したダンジョンでは null
