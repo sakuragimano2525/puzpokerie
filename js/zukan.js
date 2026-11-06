@@ -513,7 +513,7 @@
     $('zukan-open-btn').addEventListener('click', open);
     $('zukan-back').addEventListener('click', close);
     lsFilter = LSSearch.mount({
-      key: 'zukan', host: $('zukan-screen'),
+      key: 'zukan', host: $('zukan-screen'), skill: true,   // skill: true … 同じボタンのシートに「スキル」タブ（js/sk-search.js）
       before: $('zukan-sort-btn'), after: $('zukan-hint'),
       candidates: () => allIds().filter(id => statusOf(id) > 0).map(id => MONSTER_DATA[id]),   // 見たことあるモンスターだけ
       onChange: () => { $('zukan-box').scrollTop = 0; render(); }

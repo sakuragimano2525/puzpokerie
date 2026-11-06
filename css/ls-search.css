@@ -106,3 +106,43 @@
   #iku-sort-btn .ic { display: none; }
   #iku-sort-btn { padding: 0 10px; }
 }
+
+/* ============================================================
+   スキル検索（js/sk-search.js）
+   ボタンは増やさず、リダスキ検索のシートの中に「リダスキ / スキル」のタブを出す
+   ============================================================ */
+/* ── 見出しのタブ ── */
+.lss-tabs { flex: 1; min-width: 0; display: flex; gap: 6px; }
+.lss-tab {
+  appearance: none; -webkit-appearance: none; flex: 0 1 auto; min-width: 0; min-height: 36px; padding: 0 12px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap;
+  font: 900 0.8rem/1 var(--ff); letter-spacing: 0.03em; color: var(--ink); background: var(--paper);
+  border: 2px solid var(--ink); border-radius: 12px; box-shadow: 0 3px 0 var(--ink);
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.lss-tab:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.lss-tab.on { background: var(--sun); transform: translateY(2px); box-shadow: 0 1px 0 var(--ink), inset 0 0 0 2px #fff; }
+.lss-tab-n { display: none; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; align-items: center; justify-content: center; font: 400 0.6rem/1 var(--ff-num); color: #fff; background: var(--coral); border-radius: 999px; }
+.lss-tab-n:not(:empty) { display: inline-flex; }
+
+/* ── 画面の上のタグ：スキル検索の分は水色（リダスキは黄色）で見分ける ── */
+.lss-tag.sk { background: var(--water-t); }
+
+/* ── 折りたたみの見出し（ひらくと、その中のボタンが出る。選んだ数が右に出る） ── */
+.sk-sec-t { appearance: none; -webkit-appearance: none; align-self: stretch; width: 100%; display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 4px 12px; border: 0; border-radius: 12px; text-align: left; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.sk-sec-tt { flex: 1; min-width: 0; }
+.sk-sec-n { min-width: 19px; height: 19px; padding: 0 5px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font: 400 0.64rem/1 var(--ff-num); color: var(--ink); background: var(--sun); border-radius: 999px; }
+.sk-sec-n:empty { display: none; }
+.sk-sec-ch { flex-shrink: 0; width: 8px; height: 8px; margin: 0 3px 3px 0; border-right: 2.5px solid #fff; border-bottom: 2.5px solid #fff; transform: rotate(-45deg); transition: transform 0.15s; }
+.sk-sec.open .sk-sec-ch { margin-bottom: 4px; transform: rotate(45deg); }
+.sk-sec-body { display: none; flex-direction: column; gap: 11px; }
+.sk-sec.open .sk-sec-body { display: flex; }
+
+/* ── 「すべて／どれか」の切りかえ ── */
+.lss-row-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lss-row-h .lss-row-l { flex: 1; min-width: 0; }
+.lss-mode { flex-shrink: 0; display: inline-flex; overflow: hidden; background: var(--paper); border: 2px solid var(--ink); border-radius: 999px; box-shadow: 0 2px 0 var(--ink); }
+.lss-mode-b { appearance: none; -webkit-appearance: none; min-height: 26px; padding: 0 11px; font: 900 0.68rem/1 var(--ff); color: var(--ink-2); background: transparent; border: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.lss-mode-b + .lss-mode-b { border-left: 2px solid var(--ink); }
+.lss-mode-b.on { color: var(--ink); background: var(--sun); }

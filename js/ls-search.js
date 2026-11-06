@@ -19,9 +19,15 @@
 //       条件「十字消し」＋ 属性「水」をON    → 水属性が強化される十字消し
 //
 //   使い方（js/game.js / js/zukan.js から）:
-//     const ls = LSSearch.mount({ key, host, before, after, candidates: () => [mon,...], onChange: () => 再描画 });
+//     const ls = LSSearch.mount({ key, host, before, after, candidates: () => [mon,...], onChange: () => 再描画, skill: true });
 //     ls.match(mon) … 条件に合うか   ls.active() … 絞り込み中か   ls.reset() … 解除
 //     ls.attachLabel(card, mon) … 絞り込み中、カードの下に倍率（×2 など）を出す
+//
+//   【スキル検索（skill: true のとき）】 js/sk-search.js
+//     ボタンは増やさない（増やすと1列の行が2列に折り返してしまうので）。同じボタンのシートの上に
+//     「リダスキ / スキル」のタブができて、「スキル」タブでモンスターのスキルを絞り込める。
+//     リダスキとスキルの条件は「かつ」（両方に当てはまるモンスターだけ）。ボタンの数字もタグも、両方ぶん。
+//     skill を付けない画面（育成の合成・進化など）は、いままでどおりリダスキだけ。
 // ============================================================
 (function (global) {
   'use strict';
@@ -183,6 +189,7 @@
   const groupOf = tag => { const g = tag.split(':')[0]; return g === 'num' ? 'cnd' : g; };
   const newState = () => ({ q: '', on: new Set(), minMult: 0, minReduce: 0 });
   const isActive = st => !!(st.q || st.on.size || st.minMult || st.minReduce);
+  const lsCount = st => st.on.size + (st.minMult ? 1 : 0) + (st.minReduce ? 1 : 0) + (st.q ? 1 : 0);   // 選んでいる条件の数
 
   function matchInfo(st, info) {
     if (!isActive(st)) return true;
@@ -326,13 +333,15 @@
 
   function mount(opts) {
     const st = newState();
-    const ctl = { state: st, host: opts.host, opts };
+    const SK = (opts.skill && global.SKSearch) ? global.SKSearch : null;   // スキル検索（無ければリダスキだけ）
+    const sst = SK ? SK.newState() : null;
+    const ctl = { state: st, skillState: sst, SK, host: opts.host, opts, tab: 'ls' };
 
-    // ボタン
+    // ボタン（スキル検索があっても、ボタンは1つのまま。文字だけ「スキル」になる）
     const btn = h('button', 'te-sort-btn btn btn-sm lss-btn');
     btn.type = 'button';
-    btn.setAttribute('aria-label', 'リーダースキルで絞り込む');
-    btn.innerHTML = FUNNEL + '<span class="lss-btn-t">リダスキ</span><b class="lss-badge"></b>';
+    btn.setAttribute('aria-label', SK ? 'スキルで絞り込む' : 'リーダースキルで絞り込む');
+    btn.innerHTML = FUNNEL + '<span class="lss-btn-t">' + (SK ? 'スキル' : 'リダスキ') + '</span><b class="lss-badge"></b>';
     if (opts.before && opts.before.parentNode) opts.before.parentNode.insertBefore(btn, opts.before);
     btn.addEventListener('click', () => openSheet(ctl));
 
@@ -342,15 +351,15 @@
     if (opts.after && opts.after.parentNode) opts.after.parentNode.insertBefore(bar, opts.after.nextSibling);
 
     function refreshUI() {
-      const n = st.on.size + (st.minMult ? 1 : 0) + (st.minReduce ? 1 : 0) + (st.q ? 1 : 0);
+      const n = lsCount(st) + (SK ? SK.count(sst) : 0);
       btn.classList.toggle('on', n > 0);
       btn.querySelector('.lss-badge').textContent = n > 0 ? String(n) : '';
       bar.hidden = n === 0;
       bar.innerHTML = '';
       if (!n) return;
       const lab = catalog().labels;
-      const tag = (text, onX) => {
-        const t = h('button', 'lss-tag');
+      const tag = (text, onX, cls) => {
+        const t = h('button', 'lss-tag' + (cls ? ' ' + cls : ''));
         t.type = 'button';
         t.append(document.createTextNode(text));
         t.append(h('span', 'lss-tag-x', '×'));
@@ -361,6 +370,7 @@
       st.on.forEach(id => tag(lab.get(id) || id, () => st.on.delete(id)));
       if (st.minMult) tag('倍率' + fmtN(st.minMult) + '倍以上', () => { st.minMult = 0; });
       if (st.minReduce) tag('軽減' + pct(st.minReduce) + '%以上', () => { st.minReduce = 0; });
+      if (SK) SK.tagList(sst).forEach(t => tag(t.text, t.remove, 'sk'));   // スキル検索のタグは色を変えて区別する
       const clr = h('button', 'lss-clear', '全部解除');
       clr.type = 'button';
       clr.addEventListener('click', () => { ctl.reset(); if (opts.onChange) opts.onChange(); });
@@ -368,14 +378,16 @@
     }
 
     ctl.refreshUI = refreshUI;
-    ctl.active = () => isActive(st);
-    ctl.match = mon => matchInfo(st, infoOf(mon));
-    ctl.reset = () => { st.q = ''; st.on.clear(); st.minMult = 0; st.minReduce = 0; refreshUI(); };
+    ctl.active = () => isActive(st) || !!(SK && SK.isActive(sst));
+    ctl.match = mon => matchInfo(st, infoOf(mon)) && (!SK || SK.match(sst, SK.infoOf(mon)));
+    ctl.reset = () => { st.q = ''; st.on.clear(); st.minMult = 0; st.minReduce = 0; if (SK) SK.reset(sst); refreshUI(); };
     ctl.attachLabel = (card, mon) => {
-      if (!isActive(st)) return false;
-      const i = infoOf(mon);
-      if (!i) return false;
-      const t = i.maxMult > 1 ? '×' + fmtN(i.maxMult) : (i.maxReduce > 0 ? '軽減' + pct(i.maxReduce) + '%' : '');
+      let t = '';
+      if (isActive(st)) {                                  // リダスキで絞り込み中 → 倍率（いままでどおり）
+        const i = infoOf(mon);
+        if (i) t = i.maxMult > 1 ? '×' + fmtN(i.maxMult) : (i.maxReduce > 0 ? '軽減' + pct(i.maxReduce) + '%' : '');
+      }
+      if (!t && SK && SK.isActive(sst)) t = SK.headLabel(sst, SK.infoOf(mon));   // スキルで絞り込み中 → 必要SP（強さで絞っていればその数字）
       if (!t) return false;
       const el = h('div', 'sort-val', t);
       const n = t.length;
@@ -390,21 +402,44 @@
   function closeSheet(host) { host.querySelectorAll(':scope > .lss-sheet').forEach(s => s.remove()); }
 
   function openSheet(ctl) {
-    const host = ctl.host, st = ctl.state, opts = ctl.opts;
+    const host = ctl.host, st = ctl.state, sst = ctl.skillState, SK = ctl.SK, opts = ctl.opts;
     closeSheet(host);
     const cat = catalog();
-    const cands = (opts.candidates() || []).map(mon => infoOf(mon)).filter(Boolean);
+    const mons = opts.candidates() || [];
+    const cands = mons.map(mon => infoOf(mon)).filter(Boolean);                  // リーダースキルの情報（ボタンの数字を出す用）
+    const skInfos = SK ? mons.map(mon => SK.infoOf(mon)).filter(Boolean) : [];   // スキルの情報
     const cnt = {};
     cands.forEach(i => i.tags.forEach(t => { cnt[t] = (cnt[t] || 0) + 1; }));
-    const chipEls = [];      // {el, def, kind}
+    const chipEls = [];      // {el, def, kind}（リダスキのタブのボタン）
+    const cur = () => (ctl.tab === 'sk' && SK) ? sst : st;    // いま開いているタブの条件
+    let view = null;         // いま開いているタブの中身 { update() }
 
     const sheet = h('div', 'lss-sheet');
     const card = h('div', 'lss-card');
     sheet.appendChild(card);
 
-    // 見出し
+    // 見出し（スキル検索があるときは、タイトルの代わりに「リダスキ / スキル」のタブ）
     const head = h('div', 'lss-head');
-    head.appendChild(h('div', 'lss-title', 'リーダースキル検索'));
+    let tabLs = null, tabSk = null;
+    if (SK) {
+      const tabs = h('div', 'lss-tabs');
+      tabs.setAttribute('role', 'tablist');
+      const mkTab = (name, text) => {
+        const b = h('button', 'lss-tab');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.append(h('span', 'lss-tab-t', text), h('b', 'lss-tab-n'));
+        b.addEventListener('click', () => { if (ctl.tab !== name) showTab(name); });
+        tabs.appendChild(b);
+        return b;
+      };
+      tabLs = mkTab('ls', 'リダスキ');
+      tabSk = mkTab('sk', 'スキル');
+      head.appendChild(tabs);
+    } else {
+      ctl.tab = 'ls';
+      head.appendChild(h('div', 'lss-title', 'リーダースキル検索'));
+    }
     const rst = h('button', 'lss-reset', 'リセット');
     rst.type = 'button';
     head.appendChild(rst);
@@ -414,8 +449,6 @@
     const qw = h('div', 'lss-q');
     const qi = h('input');
     qi.type = 'text';
-    qi.placeholder = 'キーワード（例: 十字　軽減　つなげ）';
-    qi.value = st.q;
     qi.setAttribute('enterkeyhint', 'search');
     qi.autocomplete = 'off';
     const qx = h('button', 'lss-q-x', '×');
@@ -426,69 +459,6 @@
     const body = h('div', 'lss-body');
     card.appendChild(body);
 
-    // ボタンを作る
-    function mkChip(def, kind) {
-      const b = h('button', 'lss-chip');
-      b.type = 'button';
-      b.dataset.tag = def.id || '';
-      if (def.attr && ATTR_IMG[def.attr]) {
-        const im = h('img', 'lss-chip-ic'); im.alt = ''; im.draggable = false; im.src = ATTR_IMG[def.attr];
-        im.onerror = () => im.remove();
-        b.appendChild(im);
-      } else if (def.icon) {
-        const im = h('img', 'lss-chip-ic'); im.alt = ''; im.draggable = false; im.src = def.icon;
-        im.onerror = () => im.remove();
-        b.appendChild(im);
-      }
-      b.appendChild(h('span', 'lss-chip-l', def.label));
-      const c = h('small', 'lss-chip-n');
-      b.appendChild(c);
-      chipEls.push({ el: b, def, kind, cEl: c });
-      b.addEventListener('click', () => {
-        if (kind === 'mult') st.minMult = st.minMult === def.v ? 0 : def.v;
-        else if (kind === 'red') st.minReduce = st.minReduce === def.v ? 0 : def.v;
-        else {
-          if (st.on.has(def.id)) st.on.delete(def.id);
-          else {
-            st.on.add(def.id);
-            if (def.parent) st.on.delete(def.parent);                 // 数字を選んだら「すべて」は外す
-            if (def.kids) def.kids.forEach(k => st.on.delete(k));     // 「すべて」を選んだら数字は外す
-          }
-        }
-        update();
-      });
-      return b;
-    }
-    const section = (title) => { const s = h('section', 'lss-sec'); s.appendChild(h('div', 'lss-sec-t', title)); body.appendChild(s); return s; };
-    const row = (parent, label, chips, kind) => {
-      const r = h('div', 'lss-row');
-      if (label) r.appendChild(h('div', 'lss-row-l', label));
-      const w = h('div', 'lss-chips');
-      chips.forEach(c => w.appendChild(mkChip(c, kind || 'tag')));
-      r.appendChild(w);
-      parent.appendChild(r);
-    };
-
-    cat.sections.forEach(sec => {
-      if (sec.id === 'cnd') {
-        const s = section('発動条件');
-        if (sec.basic.length) row(s, '', sec.basic);
-        sec.rows.forEach(r => row(s, r.rowLabel, r.chips));
-      } else if (sec.id === 'val') {
-        if (!sec.mults.length && !sec.reds.length) return;
-        const s = section('強さ（○以上）');
-        if (sec.mults.length) row(s, '倍率', sec.mults.map(v => ({ id: 'm' + v, v, label: fmtN(v) + '倍〜' })), 'mult');
-        if (sec.reds.length) row(s, 'ダメージ軽減', sec.reds.map(v => ({ id: 'r' + v, v: v / 100, label: v + '%〜' })), 'red');
-      } else {
-        if (!sec.chips.length && !(sec.chips2 && sec.chips2.length)) return;
-        const s = section(sec.title);
-        if (sec.chips.length) row(s, sec.id === 'tgt' ? '属性' : '', sec.chips);
-        if (sec.chips2 && sec.chips2.length) row(s, 'タイプ', sec.chips2);
-      }
-    });
-    const hint = h('p', 'lss-hint', '同じ項目の中は「どれか」、別の項目どうしは「全部」に当てはまるモンスターが出ます。ボタンの数字は、この画面のモンスターのうち当てはまる体数です。');
-    body.appendChild(hint);
-
     // 下：決定
     const foot = h('div', 'lss-foot');
     const go = h('button', 'btn btn-primary lss-go');
@@ -496,35 +466,131 @@
     foot.appendChild(go);
     card.appendChild(foot);
 
-    function update() {
-      const matched = cands.filter(i => matchInfo(st, i)).length;
-      chipEls.forEach(({ el, def, kind, cEl }) => {
-        let on, n;
-        if (kind === 'mult') { on = st.minMult === def.v; n = cands.filter(i => i.maxMult >= def.v - 1e-9).length; }
-        else if (kind === 'red') { on = st.minReduce === def.v; n = cands.filter(i => i.maxReduce >= def.v - 1e-9).length; }
-        else { on = st.on.has(def.id); n = cnt[def.id] || 0; }
-        el.classList.toggle('on', on);
-        el.classList.toggle('zero', n === 0 && !on);
-        el.setAttribute('aria-pressed', on ? 'true' : 'false');
-        cEl.textContent = String(n);
+    // ── 「リダスキ」タブの中身（ボタンを作る） ──
+    function buildLeaderView() {
+      chipEls.length = 0;
+      function mkChip(def, kind) {
+        const b = h('button', 'lss-chip');
+        b.type = 'button';
+        b.dataset.tag = def.id || '';
+        if (def.attr && ATTR_IMG[def.attr]) {
+          const im = h('img', 'lss-chip-ic'); im.alt = ''; im.draggable = false; im.src = ATTR_IMG[def.attr];
+          im.onerror = () => im.remove();
+          b.appendChild(im);
+        } else if (def.icon) {
+          const im = h('img', 'lss-chip-ic'); im.alt = ''; im.draggable = false; im.src = def.icon;
+          im.onerror = () => im.remove();
+          b.appendChild(im);
+        }
+        b.appendChild(h('span', 'lss-chip-l', def.label));
+        const c = h('small', 'lss-chip-n');
+        b.appendChild(c);
+        chipEls.push({ el: b, def, kind, cEl: c });
+        b.addEventListener('click', () => {
+          if (kind === 'mult') st.minMult = st.minMult === def.v ? 0 : def.v;
+          else if (kind === 'red') st.minReduce = st.minReduce === def.v ? 0 : def.v;
+          else {
+            if (st.on.has(def.id)) st.on.delete(def.id);
+            else {
+              st.on.add(def.id);
+              if (def.parent) st.on.delete(def.parent);                 // 数字を選んだら「すべて」は外す
+              if (def.kids) def.kids.forEach(k => st.on.delete(k));     // 「すべて」を選んだら数字は外す
+            }
+          }
+          update();
+        });
+        return b;
+      }
+      const section = (title) => { const s = h('section', 'lss-sec'); s.appendChild(h('div', 'lss-sec-t', title)); body.appendChild(s); return s; };
+      const row = (parent, label, chips, kind) => {
+        const r = h('div', 'lss-row');
+        if (label) r.appendChild(h('div', 'lss-row-l', label));
+        const w = h('div', 'lss-chips');
+        chips.forEach(c => w.appendChild(mkChip(c, kind || 'tag')));
+        r.appendChild(w);
+        parent.appendChild(r);
+      };
+
+      cat.sections.forEach(sec => {
+        if (sec.id === 'cnd') {
+          const s = section('発動条件');
+          if (sec.basic.length) row(s, '', sec.basic);
+          sec.rows.forEach(r => row(s, r.rowLabel, r.chips));
+        } else if (sec.id === 'val') {
+          if (!sec.mults.length && !sec.reds.length) return;
+          const s = section('強さ（○以上）');
+          if (sec.mults.length) row(s, '倍率', sec.mults.map(v => ({ id: 'm' + v, v, label: fmtN(v) + '倍〜' })), 'mult');
+          if (sec.reds.length) row(s, 'ダメージ軽減', sec.reds.map(v => ({ id: 'r' + v, v: v / 100, label: v + '%〜' })), 'red');
+        } else {
+          if (!sec.chips.length && !(sec.chips2 && sec.chips2.length)) return;
+          const s = section(sec.title);
+          if (sec.chips.length) row(s, sec.id === 'tgt' ? '属性' : '', sec.chips);
+          if (sec.chips2 && sec.chips2.length) row(s, 'タイプ', sec.chips2);
+        }
       });
-      qx.style.display = st.q ? '' : 'none';
-      go.textContent = isActive(st) ? (matched ? `${matched}体を表示` : '該当なし（閉じる）') : '閉じる';
-      go.classList.toggle('none', isActive(st) && !matched);
+      body.appendChild(h('p', 'lss-hint', '同じ項目の中は「どれか」、別の項目どうしは「全部」に当てはまるモンスターが出ます。ボタンの数字は、この画面のモンスターのうち当てはまる体数です。'));
+
+      return {
+        update() {
+          chipEls.forEach(({ el, def, kind, cEl }) => {
+            let on, n;
+            if (kind === 'mult') { on = st.minMult === def.v; n = cands.filter(i => i.maxMult >= def.v - 1e-9).length; }
+            else if (kind === 'red') { on = st.minReduce === def.v; n = cands.filter(i => i.maxReduce >= def.v - 1e-9).length; }
+            else { on = st.on.has(def.id); n = cnt[def.id] || 0; }
+            el.classList.toggle('on', on);
+            el.classList.toggle('zero', n === 0 && !on);
+            el.setAttribute('aria-pressed', on ? 'true' : 'false');
+            cEl.textContent = String(n);
+          });
+        }
+      };
     }
+
+    // 下のボタン・タブの数字・キーワード欄の「×」（どのタブでも共通）
+    function footer() {
+      const act = ctl.active();
+      const matched = act ? mons.filter(m => ctl.match(m)).length : 0;
+      qx.style.display = cur().q ? '' : 'none';
+      go.textContent = act ? (matched ? `${matched}体を表示` : '該当なし（閉じる）') : '閉じる';
+      go.classList.toggle('none', act && !matched);
+      if (SK) {
+        [[tabLs, lsCount(st)], [tabSk, SK.count(sst)]].forEach(([b, n]) => { b.querySelector('.lss-tab-n').textContent = n ? String(n) : ''; });
+      }
+    }
+    function update() { if (view) view.update(); footer(); }
+
+    function showTab(name) {
+      ctl.tab = (name === 'sk' && SK) ? 'sk' : 'ls';
+      body.textContent = '';
+      body.scrollTop = 0;
+      qi.value = cur().q;
+      qi.placeholder = (ctl.tab === 'sk') ? SK.placeholder : 'キーワード（例: 十字　軽減　つなげ）';
+      if (SK) {
+        [[tabLs, 'ls'], [tabSk, 'sk']].forEach(([b, n]) => { const on = ctl.tab === n; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      }
+      view = (ctl.tab === 'sk') ? SK.buildView(body, sst, skInfos, footer) : buildLeaderView();
+      update();
+    }
+
     function close() {
       closeSheet(host);
       ctl.refreshUI();
       if (opts.onChange) opts.onChange();
     }
-    qi.addEventListener('input', () => { st.q = qi.value.trim(); update(); });
+    qi.addEventListener('input', () => { cur().q = qi.value.trim(); update(); });
     qi.addEventListener('keydown', e => { if (e.key === 'Enter') qi.blur(); });
-    qx.addEventListener('click', () => { qi.value = ''; st.q = ''; update(); });
-    rst.addEventListener('click', () => { st.q = ''; qi.value = ''; st.on.clear(); st.minMult = 0; st.minReduce = 0; update(); });
+    qx.addEventListener('click', () => { qi.value = ''; cur().q = ''; update(); });
+    // 「リセット」は、いま開いているタブの条件だけ消す（もう片方のタブの条件は残る。全部消すのは画面の「全部解除」）
+    rst.addEventListener('click', () => {
+      if (ctl.tab === 'sk') SK.reset(sst);
+      else { st.q = ''; st.on.clear(); st.minMult = 0; st.minReduce = 0; }
+      qi.value = '';
+      update();
+    });
     go.addEventListener('click', close);
     sheet.addEventListener('click', e => { if (e.target === sheet) close(); });
     host.appendChild(sheet);
-    update();
+    showTab(SK ? ctl.tab : 'ls');     // 前に開いていたタブから始める
   }
 
   global.LSSearch = {

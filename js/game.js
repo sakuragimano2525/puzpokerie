@@ -6612,7 +6612,7 @@ document.getElementById('te-swap-btn').addEventListener('click', () => { teSetSw
 document.getElementById('te-fav-btn').addEventListener('click', () => { teSetFavMode(!teFavMode); renderTeamEdit(); });
 document.getElementById('te-sort-label').textContent = BoxSort.buttonLabel(teSort);
 teLS = LSSearch.mount({
-  key: 'te', host: document.getElementById('team-edit'),
+  key: 'te', host: document.getElementById('team-edit'), skill: true,   // skill: true … 同じボタンのシートに「スキル」タブ（js/sk-search.js）
   before: document.getElementById('te-sort-btn'), after: document.getElementById('te-tools'),
   candidates: () => box.map(e => MONSTER_DATA[e.monsterId]).filter(Boolean),
   onChange: () => { const wrap = document.getElementById('te-box-wrap'); if (wrap) wrap.scrollTop = 0; renderTeMonsterGrid(); }

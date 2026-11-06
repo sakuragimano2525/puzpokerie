@@ -1177,7 +1177,10 @@ const MONSTER_DATA = {
       desc: 'たいりょくタイプの攻撃1.5倍。',
       effects: [ { type: 'atk', condition: 'type', attr: 'たいりょく', value: 1.5 } ]
     },
-    evolutions: [ { to: 62, materials: [ { item: 'puzzle23', count: 1 }, { item: 'puzzle2', count: 2 } ] } ]
+    evolutions: [
+      { to: 62, materials: [ { item: 'puzzle23', count: 1 }, { item: 'puzzle2', count: 2 } ] },
+      { to: 186, materials: [ { item: 'puzzle32', count: 2 }, { item: 'puzzle23', count: 1 } ] }
+    ]
   },
   62: {
     id: 62,
@@ -1187,7 +1190,7 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 500,
-    stats: { hp: { min: 690, max: 4620 }, atk: { min: 210, max: 1400 }, rec: { min: 40, max: 105 } },
+    stats: { hp: { min: 690, max: 4630 }, atk: { min: 210, max: 1400 }, rec: { min: 40, max: 105 } },
     skill: {
       name: 'ガードブレイク',
       sp: 2,
@@ -2210,9 +2213,10 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 50,
     baseExp: 15000,
-    stats: { hp: { min: 600, max: 6000 }, atk: { min: 1, max: 100 }, rec: { min: 5, max: 50 } },
+    stats: { hp: { min: 600, max: 5500 }, atk: { min: 1, max: 25 }, rec: { min: 5, max: 25 } },
     skill: { name: 'タマゴうみ', sp: 5, desc: 'HPを最大HPの70%回復。', effects: [ { type: 'heal', value: 0.7 } ] },
-    leaderSkill: { name: 'ハピハピハッピー', desc: 'リーダー/フレンドの時、チップドロップ率が1.2倍。', effects: [ { type: 'chipDropUp', value: 10 } ] }
+    leaderSkill: { name: 'ハピハピハッピー', desc: 'リーダー/フレンドの時、チップドロップ率が1.2倍。', effects: [ { type: 'chipDropUp', value: 10 } ] },
+    evolutions: [ { to: 242, materials: [ { item: 'puzzle43', count: 1 } ] } ]
   },
   114: {
     id: 114,
@@ -2754,15 +2758,16 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'fire',
     type: 'バランス',
-    maxLevel: 99,
+    maxLevel: 25,
     baseExp: 3000,
-    stats: { hp: { min: 400, max: 2680 }, atk: { min: 230, max: 1560 }, rec: { min: 49, max: 140 } },
+    stats: { hp: { min: 400, max: 2000 }, atk: { min: 230, max: 1000 }, rec: { min: 49, max: 100 } },
     skill: { name: 'フューチャー', sp: 7, desc: '12秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 12 } ] },
     leaderSkill: {
       name: 'L・CPU',
       desc: 'L字消しする度に攻撃1.2倍。',
       effects: [ { type: 'atk', condition: 'lShapes', value: 1.25, exponential: true } ]
-    }
+    },
+    evolutions: [ { to: 233, materials: [ { item: 'spuzzle_12', count: 4 } ] } ]
   },
   138: {
     id: 138,
@@ -2871,7 +2876,7 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 1000,
-    stats: { hp: { min: 780, max: 5200 }, atk: { min: 220, max: 1150 }, rec: { min: 0, max: 10 } },
+    stats: { hp: { min: 780, max: 5100 }, atk: { min: 220, max: 1250 }, rec: { min: 0, max: 10 } },
     skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: {
       name: 'じきゅうりょく',
@@ -3434,10 +3439,26 @@ const MONSTER_DATA = {
     id: 186,
     name: 'ニョロトノ',
     rarity: 3,
+    attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
-    stats: { hp: { min: 665, max: 4385 }, atk: { min: 200, max: 1465 }, rec: { min: 40, max: 110 } }
+    baseExp: 10000,
+    stats: { hp: { min: 665, max: 4085 }, atk: { min: 200, max: 1005 }, rec: { min: 40, max: 110 } },
+    skill: {
+      name: 'あめふらし',
+      sp: 4,
+      desc: '99ターンの間、水ドロップが少し落ちやすくなる。',
+      effects: [ { type: 'orbSpawnBoost', attr: 'water', rate: 0.1, turns: 99 } ]
+    },
+    leaderSkill: {
+      name: '水のアミュレット',
+      desc: '水属性の全パラメータが1.2倍。',
+      effects: [
+        { type: 'hp', attr: 'water', value: 1.2 },
+        { type: 'atk', attr: 'water', value: 1.2 },
+        { type: 'rec', attr: 'water', value: 1.2 }
+      ]
+    }
   },
   187: {
     id: 187,
@@ -3536,7 +3557,7 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 1000,
-    stats: { hp: { min: 695, max: 4645 }, atk: { min: 220, max: 1500 }, rec: { min: 35, max: 100 } }
+    stats: { hp: { min: 695, max: 4630 }, atk: { min: 220, max: 1400 }, rec: { min: 35, max: 105 } }
   },
   198: {
     id: 198,
@@ -3650,7 +3671,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'たいりょく',
     baseExp: 10000,
-    stats: { hp: { min: 1000, max: 5100 }, atk: { min: 200, max: 1300 }, rec: { min: 0, max: 10 } },
+    stats: { hp: { min: 1000, max: 5100 }, atk: { min: 200, max: 1250 }, rec: { min: 0, max: 10 } },
     skill: {
       name: 'ステルスロック+',
       sp: 2,
@@ -3958,10 +3979,17 @@ const MONSTER_DATA = {
     id: 233,
     name: 'ポリゴン2',
     rarity: 3,
+    attr: 'fire',
     type: 'バランス',
-    maxLevel: 99,
-    baseExp: 500,
-    stats: { hp: { min: 525, max: 3485 }, atk: { min: 220, max: 1500 }, rec: { min: 70, max: 220 } }
+    maxLevel: 50,
+    baseExp: 7500,
+    stats: { hp: { min: 525, max: 2500 }, atk: { min: 220, max: 1500 }, rec: { min: 70, max: 200 } },
+    skill: { name: 'フューチャー', sp: 7, desc: '12秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 12 } ] },
+    leaderSkill: {
+      name: 'LL・CPU',
+      desc: 'L字消しする度に攻撃1.3倍。',
+      effects: [ { type: 'atk', condition: 'lShapes', value: 1.3, exponential: true } ]
+    }
   },
   234: {
     id: 234,
@@ -4070,20 +4098,30 @@ const MONSTER_DATA = {
   242: {
     id: 242,
     name: 'ハピナス',
-    rarity: 4,
+    rarity: 5,
+    attr: 'light',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 1000,
-    stats: { hp: { min: 485, max: 3130 }, atk: { min: 180, max: 1300 }, rec: { min: 180, max: 495 } }
+    baseExp: 75000,
+    stats: { hp: { min: 485, max: 7000 }, atk: { min: 180, max: 50 }, rec: { min: 180, max: 50 } },
+    skill: { name: 'タマゴうみ', sp: 5, desc: 'HPを最大HPの70%回復。', effects: [ { type: 'heal', value: 0.7 } ] },
+    leaderSkill: {
+      name: 'ハッピーハッピーハッピー',
+      desc: 'リーダー/フレンドの時、チップドロップ率が1.3倍、経験値は1.2倍。',
+      effects: [ { type: 'chipDropUp', value: 15 }, { type: 'expMult', value: 1.1 } ]
+    }
   },
   243: {
     id: 243,
     name: 'ライコウ',
     rarity: 5,
+    attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 3000,
-    stats: { hp: { min: 450, max: 3025 }, atk: { min: 310, max: 2290 }, rec: { min: 26, max: 77 } }
+    stats: { hp: { min: 450, max: 3025 }, atk: { min: 310, max: 2290 }, rec: { min: 26, max: 77 } },
+    skill: { name: '', sp: 1, desc: '', effects: [] },
+    leaderSkill: { name: '', desc: '', effects: [] }
   },
   244: {
     id: 244,
@@ -4124,11 +4162,26 @@ const MONSTER_DATA = {
   248: {
     id: 248,
     name: 'バンギラス',
-    rarity: 4,
+    rarity: 5,
+    attr: 'wood',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 1000,
-    stats: { hp: { min: 460, max: 3040 }, atk: { min: 310, max: 2135 }, rec: { min: 30, max: 95 } }
+    baseExp: 25000,
+    stats: { hp: { min: 460, max: 3070 }, atk: { min: 440, max: 2300 }, rec: { min: 0, max: 30 } },
+    skill: {
+      name: 'ストーンエッジ',
+      sp: 6,
+      desc: '最左縦2列を木ドロップに変化。',
+      effects: [
+        { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'wood' },
+        { type: 'orbChangeLine', dir: 'col', index: 1, count: 1, attr: 'wood' }
+      ]
+    },
+    leaderSkill: {
+      name: 'マウンテンスイング',
+      desc: '木ドロップを5個以上つなげて消す度に攻撃1.5倍。',
+      effects: [ { type: 'atk', condition: 'connectEach', attr: 'wood', count: 5, value: 1.5, exponential: true } ]
+    }
   },
   249: {
     id: 249,
@@ -7571,6 +7624,89 @@ const MONSTER_DATA = {
       effects: [
         { type: 'moveTimeFixed', value: 2500 },
         { type: 'atk', condition: 'combo', count: 5, value: 1.9, reduce: 0.05 }
+      ]
+    }
+  },
+  5069: {
+    id: 5069,
+    name: 'ゴア・マガラ',
+    rarity: 5,
+    attr: 'dark',
+    sub: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 30000,
+    stats: { hp: { min: 600, max: 3200 }, atk: { min: 1200, max: 2800 }, rec: { min: -250, max: -250 } },
+    skill: {
+      name: '狂竜ブレス',
+      sp: 2,
+      desc: '4ターンの間、毒ドロップが落ちてくるようになる。',
+      cutin: true,
+      effects: [ { type: 'orbSpawnBoost', attr: 'poison', rate: 0.15, turns: 4 } ]
+    },
+    leaderSkill: {
+      name: '黒蝕竜',
+      desc: '毒を5個以上つなげて消すと攻撃2倍、受けるダメージ25%軽減。',
+      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'poison', count: 5, value: 2, reduce: 0.25 } ]
+    }
+  },
+  5070: {
+    id: 5070,
+    name: 'ブラキディオス',
+    rarity: 5,
+    attr: 'light',
+    sub: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 40000,
+    stats: { hp: { min: 800, max: 2800 }, atk: { min: 800, max: 2800 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: '粘菌大爆発',
+      sp: 6,
+      desc: '敵単体に攻撃力×40倍の火属性攻撃。\n最上段と最下段の横1列をお邪魔ドロップに変化。',
+      cutin: true,
+      effects: [
+        { type: 'damageSelfAtkMult', value: 40, attr: 'fire', target: 'single' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'ojama' },
+        { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'ojama' }
+      ]
+    },
+    leaderSkill: {
+      name: '傷砕のパンチファイター',
+      desc: 'お邪魔ドロップの2コンボ以上で攻撃2.4倍、受けるダメージ10%軽減。',
+      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'ojama', count: 2, value: 2.4, reduce: 0.1 } ]
+    }
+  },
+  5071: {
+    id: 5071,
+    name: 'ネルギガンテ',
+    rarity: 5,
+    attr: 'dark',
+    sub: 'wood',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 50000,
+    stats: { hp: { min: 800, max: 3800 }, atk: { min: 500, max: 2000 }, rec: { min: 25, max: 50 } },
+    skill: {
+      name: '突進かち上げ',
+      sp: 3,
+      desc: '左端縦1列を闇ドロップ、右端縦1列を回復ドロップに変化。\n1ターンの間、敵単体の防御を無視する。',
+      cutin: true,
+      condition: { type: 'orbBoost', attr: 'dark' },
+      effects: [
+        { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'dark' },
+        { type: 'orbChangeLine', dir: 'col', index: 4, count: 1, attr: 'heal' },
+        { type: 'defenseDown', target: 'single', value: 1, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '滅尽龍',
+      desc: '闇属性のHP1.2倍。\n残りドロップ5個以下で攻撃2.2倍、受けるダメージ5%軽減。',
+      effects: [
+        { type: 'hp', attr: 'dark', value: 1.2 },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 6, value: 2.2, reduce: 0.05 },
+        { type: 'moveTimeAdd', value: 1 },
+        { type: 'eggDropUp', value: 15 }
       ]
     }
   }

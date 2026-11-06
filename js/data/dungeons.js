@@ -166,7 +166,9 @@ const DUNGEON_BGM = {
   "stellac-boss": {"field":"b11.mp3","boss":"boss8.mp3"},
   "monhan-1": {"field":"b10.mp3","boss":"dino.mp3"},
   "monhan-2": {"field":"b10.mp3","boss":"zin.mp3"},
-  "monhan-3": {"field":"b10.mp3","boss":"baru.mp3"}
+  "monhan-3": {"field":"b10.mp3","boss":"baru.mp3"},
+  "monhan-4": {"field":"b10.mp3","boss":"goa.mp3"},
+  "monhan-5": {"field":"b10.mp3","boss":"bura.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -41712,5 +41714,656 @@ const DUNGEON_DATA = {
         ]
       }
     ]
+  },
+  "monhan-4": {
+    "bgImg": "stadium.png",
+    "bgm": "b10.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "ゴア・マガラ",
+            "img": "mp5069.png",
+            "attr": "dark",
+            "hp": 2100000,
+            "atk": 1900,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 60000,
+            "coin": 500,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.5
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "かみつき",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.1
+                  }
+                ]
+              },
+              {
+                "name": "ブレス",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "random_to",
+                    "to": "poison",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              },
+              {
+                "name": "なぎはらいブレス",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.3
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "spawn",
+                    "to": "poison",
+                    "count": 5,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              },
+              {
+                "name": "両翼腕叩きつけ",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.5,
+                    "turn": 3
+                  }
+                ]
+              },
+              {
+                "name": "鱗粉",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "orb_boost",
+                    "attr": "poison",
+                    "rate": 15,
+                    "attr2": "none",
+                    "rate2": 15,
+                    "turn": 99
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.5,
+              "count": 1
+            },
+            "subAttr": "dark",
+            "actionMode": "sequence"
+          }
+        ]
+      }
+    ],
+    "intrusion": {
+      "rate": 10,
+      "bgm": "neru.mp3",
+      "monsters": [
+        {
+          "name": "ネルギガンテ",
+          "img": "mp5071.png",
+          "attr": "dark",
+          "hp": 3500000,
+          "atk": 2700,
+          "def": 0,
+          "turnInterval": 1,
+          "size": "XL",
+          "exp": 25000,
+          "coin": 250,
+          "monsterDrop": {
+            "enabled": true,
+            "rate": 1
+          },
+          "drops": [],
+          "actions": [
+            {
+              "name": "かみつき",
+              "condition": "normal",
+              "weight": 40,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1.1
+                }
+              ],
+              "hpAbove": 41
+            },
+            {
+              "name": "咆哮",
+              "condition": "normal",
+              "weight": 20,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1
+                },
+                {
+                  "type": "bind",
+                  "target": "random",
+                  "countMin": 1,
+                  "countMax": 1,
+                  "turnMin": 1,
+                  "turnMax": 2
+                },
+                {
+                  "type": "board_change",
+                  "pattern": "col",
+                  "to": "wood",
+                  "pos": "random",
+                  "lines": 1,
+                  "counts.fire": 1,
+                  "counts.water": 1,
+                  "counts.wood": 1,
+                  "counts.light": 1,
+                  "counts.dark": 1,
+                  "counts.heal": 1,
+                  "counts.poison": 1,
+                  "counts.ojama": 1,
+                  "orb_fire": "",
+                  "orb_water": "",
+                  "orb_wood": "",
+                  "orb_light": "",
+                  "orb_dark": "",
+                  "orb_heal": "",
+                  "orb_poison": "",
+                  "orb_ojama": ""
+                }
+              ],
+              "hpAbove": 41
+            },
+            {
+              "name": "頭突き",
+              "condition": "normal",
+              "weight": 40,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1
+                },
+                {
+                  "type": "board_change",
+                  "pattern": "spawn",
+                  "to": "ojama",
+                  "count": 5,
+                  "counts.fire": 1,
+                  "counts.water": 1,
+                  "counts.wood": 1,
+                  "counts.light": 1,
+                  "counts.dark": 1,
+                  "counts.heal": 1,
+                  "counts.poison": 1,
+                  "counts.ojama": 1,
+                  "orb_fire": "",
+                  "orb_water": "",
+                  "orb_wood": "",
+                  "orb_light": "",
+                  "orb_dark": "",
+                  "orb_heal": "",
+                  "orb_poison": "",
+                  "orb_ojama": ""
+                }
+              ],
+              "hpAbove": 41
+            },
+            {
+              "name": "滅尽掌",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1
+                },
+                {
+                  "type": "heal_self",
+                  "rate": 0.05
+                }
+              ],
+              "hpBelow": 40
+            },
+            {
+              "name": "破棘滅尽旋",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1.2
+                }
+              ],
+              "hpBelow": 40
+            },
+            {
+              "name": "⚠️破滅の衝動",
+              "condition": "hp<=50%",
+              "once": true,
+              "skills": [
+                {
+                  "type": "attack_buff",
+                  "rate": 2,
+                  "turn": -1
+                }
+              ]
+            }
+          ],
+          "isBoss": false,
+          "subAttr": "wood",
+          "bgm": "neru.mp3",
+          "replaceBoss": true
+        }
+      ]
+    }
+  },
+  "monhan-5": {
+    "bgImg": "dungeon13.png",
+    "bgm": "b10.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "ブラキディオス",
+            "img": "mp5070.png",
+            "attr": "light",
+            "hp": 3000000,
+            "atk": 2200,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 80000,
+            "coin": 1000,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.5
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "突進",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "粘菌大塗布頭突き",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "random_to",
+                    "to": "ojama",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              },
+              {
+                "name": "唾液を塗っている",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.5,
+                    "turn": 2
+                  }
+                ]
+              },
+              {
+                "name": "粘菌大爆発",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.2
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "multi",
+                    "to": "water",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": true,
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": true,
+                    "orb_dark": false,
+                    "orb_heal": true,
+                    "orb_poison": true,
+                    "orb_ojama": true
+                  }
+                ]
+              },
+              {
+                "name": "飛びかかり攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "spawn",
+                    "to": "fire",
+                    "count": 5,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              },
+              {
+                "name": "いかり",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.2,
+                    "turn": 5
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.75,
+              "count": 1
+            },
+            "subAttr": "fire",
+            "actionMode": "sequence"
+          }
+        ]
+      }
+    ],
+    "intrusion": {
+      "rate": 10,
+      "bgm": "neru.mp3",
+      "monsters": [
+        {
+          "name": "ネルギガンテ",
+          "img": "mp5071.png",
+          "attr": "dark",
+          "hp": 3500000,
+          "atk": 2700,
+          "def": 0,
+          "turnInterval": 1,
+          "size": "XL",
+          "exp": 25000,
+          "coin": 250,
+          "monsterDrop": {
+            "enabled": true,
+            "rate": 1
+          },
+          "drops": [],
+          "actions": [
+            {
+              "name": "かみつき",
+              "condition": "normal",
+              "weight": 40,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1.1
+                }
+              ],
+              "hpAbove": 41
+            },
+            {
+              "name": "咆哮",
+              "condition": "normal",
+              "weight": 20,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1
+                },
+                {
+                  "type": "bind",
+                  "target": "random",
+                  "countMin": 1,
+                  "countMax": 1,
+                  "turnMin": 1,
+                  "turnMax": 2
+                },
+                {
+                  "type": "board_change",
+                  "pattern": "col",
+                  "to": "wood",
+                  "pos": "random",
+                  "lines": 1,
+                  "counts.fire": 1,
+                  "counts.water": 1,
+                  "counts.wood": 1,
+                  "counts.light": 1,
+                  "counts.dark": 1,
+                  "counts.heal": 1,
+                  "counts.poison": 1,
+                  "counts.ojama": 1,
+                  "orb_fire": "",
+                  "orb_water": "",
+                  "orb_wood": "",
+                  "orb_light": "",
+                  "orb_dark": "",
+                  "orb_heal": "",
+                  "orb_poison": "",
+                  "orb_ojama": ""
+                }
+              ],
+              "hpAbove": 41
+            },
+            {
+              "name": "頭突き",
+              "condition": "normal",
+              "weight": 40,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1
+                },
+                {
+                  "type": "board_change",
+                  "pattern": "spawn",
+                  "to": "ojama",
+                  "count": 5,
+                  "counts.fire": 1,
+                  "counts.water": 1,
+                  "counts.wood": 1,
+                  "counts.light": 1,
+                  "counts.dark": 1,
+                  "counts.heal": 1,
+                  "counts.poison": 1,
+                  "counts.ojama": 1,
+                  "orb_fire": "",
+                  "orb_water": "",
+                  "orb_wood": "",
+                  "orb_light": "",
+                  "orb_dark": "",
+                  "orb_heal": "",
+                  "orb_poison": "",
+                  "orb_ojama": ""
+                }
+              ],
+              "hpAbove": 41
+            },
+            {
+              "name": "滅尽掌",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1
+                },
+                {
+                  "type": "heal_self",
+                  "rate": 0.05
+                }
+              ],
+              "hpBelow": 40
+            },
+            {
+              "name": "破棘滅尽旋",
+              "condition": "normal",
+              "weight": 50,
+              "once": false,
+              "skills": [
+                {
+                  "type": "damage_mult",
+                  "value": 1.2
+                }
+              ],
+              "hpBelow": 40
+            },
+            {
+              "name": "⚠️破滅の衝動",
+              "condition": "hp<=50%",
+              "once": true,
+              "skills": [
+                {
+                  "type": "attack_buff",
+                  "rate": 2,
+                  "turn": -1
+                }
+              ]
+            }
+          ],
+          "isBoss": false,
+          "subAttr": "wood",
+          "bgm": "neru.mp3",
+          "replaceBoss": true
+        }
+      ]
+    }
   }
 };
