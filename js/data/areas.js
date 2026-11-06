@@ -103,6 +103,8 @@ stellac: { both: true, name: 'ステラソラコラボ3', desc: 'コラボキャ
 
     Astral: { both: true, name: 'アストラルパーティー', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL.png', hue: 200,stageNames: { boss: 'アストラルパーティー'} , stageLevels: { boss: '超級' }},
 Astralb: { both: true, name: 'アストラルパーティー2', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL2.png', hue: 200,stageNames: { boss: 'アストラルパーティー2'} , stageLevels: { boss: '超級' }},
+Astralc: { both: true, name: 'アストラルパーティー3', desc: 'コラボキャラがドロップするチャンス！', bg: 'dungeon17.png', hue: 200,stageNames: { boss: '幽魂路地'} , stageLevels: { boss: '超級' }},
+
 monhan: { both: true, name: 'モンスターハンター', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'VS.ディノバルド',2: 'VS.ジンオウガ',3: 'VS.バルファルク',4: 'VS.ゴア・マガラ',5: 'VS.ブラキディオス'} , stageLevels: { 1: '上級', 2: '上級',3: '上級',4: '超級',5: '超級'}},
 
 

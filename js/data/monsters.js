@@ -7465,20 +7465,19 @@ const MONSTER_DATA = {
     skill: {
       name: '破滅',
       sp: 3,
-      desc: 'HPが1になる。1ターンの間、かいふくタイプの攻撃が1.5倍、自分の攻撃力が2倍。',
+      desc: 'HPが1になる。\n1ターンの間、かいふくタイプの攻撃が1.5倍。',
       cutin: true,
       condition: { type: 'orbCount', attr: 'dark', value: 5 },
       effects: [
         { type: 'selfDamage', mode: 'toOne', value: 0.2 },
-        { type: 'atkBuff', monType: 'かいふく', value: 1.5, turns: 1 },
-        { type: 'selfAtkBuff', value: 2, turns: 1 }
+        { type: 'atkBuff', monType: 'かいふく', value: 1.5, turns: 1 }
       ]
     },
     leaderSkill: {
       name: '悪魔のような天使',
-      desc: 'チームの総レア度が8以下の場合、かいふくタイプの攻撃力が2.8倍。\nかいふくタイプのHP1.3倍。',
+      desc: 'チームの総レア度が6以下の場合、かいふくタイプの攻撃力が2.6倍。\nかいふくタイプのHP1.3倍。',
       effects: [
-        { type: 'rarity', condition: 'totalBelow', threshold: 8, atk: true, value: 2.8, monType: 'かいふく' },
+        { type: 'rarity', condition: 'totalBelow', threshold: 6, atk: true, value: 2.6, monType: 'かいふく' },
         { type: 'eggDropUp', value: 15 },
         { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.3 }
       ]
@@ -7778,7 +7777,7 @@ const MONSTER_DATA = {
   },
   5074: {
     id: 5074,
-    name: 'ユメ(水着)',
+    name: 'ユメ (水着)',
     rarity: 5,
     attr: 'water',
     sub: 'water',
@@ -7795,12 +7794,199 @@ const MONSTER_DATA = {
       effects: [ { type: 'dmgReductionBuff', turns: 6, value: 0.2 }, { type: 'bindRecover', turns: 3 } ]
     },
     leaderSkill: {
-      name: '禍福倚伏C',
-      desc: 'こうげきタイプの攻撃1.8倍。',
+      name: '禍福倚伏',
+      desc: '水ドロップを消す度に攻撃1.15倍、受けるダメージ9%軽減。',
       effects: [
         { type: 'eggDropUp', value: 20 },
         { type: 'chipDropUp', value: 20 },
-        { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.8 }
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.16, reduce: 0.09 }
+      ]
+    }
+  },
+  5075: {
+    id: 5075,
+    name: 'さるのびっくり箱',
+    rarity: 1,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 5000,
+    stats: { hp: { min: 50, max: 2400 }, atk: { min: 50, max: 1900 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'びっくりストライク',
+      sp: 2,
+      desc: '木ドロップをランダムで3つ生成。',
+      condition: { type: 'orbBoost', attr: 'wood' },
+      effects: [ { type: 'orbChangeRandom', attr: 'wood', count: 3, message: '☠️ 毒ドロップ生成！' } ]
+    },
+    leaderSkill: { name: 'なし', desc: '', effects: [] }
+  },
+  5076: {
+    id: 5076,
+    name: 'さるの助手君',
+    rarity: 2,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 7500,
+    stats: { hp: { min: 50, max: 2000 }, atk: { min: 50, max: 2200 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: '名医助手君',
+      sp: 2,
+      desc: 'HPを最大HPの40%回復。',
+      condition: { type: 'orbBoost', attr: 'wood' },
+      effects: [ { type: 'heal', value: 0.4 } ]
+    },
+    leaderSkill: {
+      name: 'よちよちのお飴ちゃん',
+      desc: 'こうげきタイプの全パラメータが1.2倍。',
+      effects: [ { type: 'allStat', condition: 'type', attr: 'こうげき', value: 1.2 } ]
+    }
+  },
+  5077: {
+    id: 5077,
+    name: 'ゴリフランケンちゃん',
+    rarity: 3,
+    attr: 'dark',
+    type: 'こうげき',
+    baseExp: 10000,
+    stats: { hp: { min: 100, max: 1600 }, atk: { min: 100, max: 2900 }, rec: { min: 0, max: 50 } },
+    skill: {
+      name: '不穏な改造パワー',
+      sp: 2,
+      desc: '1ターンの間、自分の攻撃力が2倍。',
+      condition: { type: 'orbBoost', attr: 'wood' },
+      effects: [ { type: 'selfAtkBuff', value: 2, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'パワー系',
+      desc: 'こうげきタイプの攻撃1.6倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.6 } ]
+    }
+  },
+  5078: {
+    id: 5078,
+    name: '人工生命ー天崩',
+    rarity: 3,
+    attr: 'water',
+    type: 'たいりょく',
+    maxLevel: 75,
+    baseExp: 7500,
+    stats: { hp: { min: 50, max: 3500 }, atk: { min: 50, max: 1500 }, rec: { min: 0, max: 100 } },
+    skill: { name: 'スタープラチナ・ザ・ワールド', sp: 3, desc: '4秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 4 } ] },
+    leaderSkill: { name: 'つまり、自己防衛', desc: '受けるダメージ20%軽減。', effects: [ { type: 'dmgReduction', value: 0.2 } ] }
+  },
+  5079: {
+    id: 5079,
+    name: '人工生命ー厄兆',
+    rarity: 3,
+    attr: 'fire',
+    type: 'たいりょく',
+    maxLevel: 75,
+    baseExp: 7500,
+    stats: { hp: { min: 50, max: 3500 }, atk: { min: 50, max: 1500 }, rec: { min: 0, max: 100 } },
+    skill: {
+      name: 'つまーり、自己防衛。',
+      sp: 4,
+      desc: '2ターンの間、敵単体の防御力を80%ダウン。',
+      effects: [ { type: 'defenseDown', target: 'single', value: 0.8, turns: 2, message: '💥 防御力ダウン！' } ]
+    },
+    leaderSkill: {
+      name: 'つまーり、自己防衛。',
+      desc: '【落ちコンなし】火と闇ドロップを同時に5個以上つなげて消すと攻撃2倍。\n残りドロップ3個以下で攻撃1.5倍、受けるダメージ5%軽減。',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 5, value: 2, attr2: 'dark' },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 1.5, reduce: 0.1 },
+        { type: 'noDrop', value: true }
+      ]
+    }
+  },
+  5080: {
+    id: 5080,
+    name: '人工生命ー混乱',
+    rarity: 3,
+    attr: 'fire',
+    type: 'たいりょく',
+    maxLevel: 75,
+    baseExp: 7500,
+    stats: { hp: { min: 50, max: 3000 }, atk: { min: 50, max: 1500 }, rec: { min: 0, max: 300 } },
+    skill: {
+      name: '連鎖反応',
+      sp: 1,
+      desc: '火ドロップ目覚めの効果がさらに上がり、ターンが延長する。',
+      condition: { type: 'orbBoost', attr: 'fire' },
+      effects: [ { type: 'orbSpawnBoost', attr: 'fire', rate: 0.2, turns: 99 } ]
+    },
+    leaderSkill: {
+      name: 'つまーーーり、自己防衛。',
+      desc: '【落ちコンなし】火と闇ドロップを同時に9個以上つなげて消すと攻撃2倍。\n残りドロップ3個以下で攻撃1.8倍、受けるダメージ25%軽減。',
+      effects: [
+        { type: 'atk', condition: 'orbConnect', attr: 'fire', count: 9, value: 2, attr2: 'dark' },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 1.8, reduce: 0.25 },
+        { type: 'noDrop', value: true }
+      ]
+    }
+  },
+  5081: {
+    id: 5081,
+    name: 'マサオシュタイン',
+    rarity: 5,
+    attr: 'wood',
+    sub: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 20000,
+    stats: { hp: { min: 50, max: 2600 }, atk: { min: 50, max: 1600 }, rec: { min: 0, max: 400 } },
+    skill: {
+      name: '身体改造',
+      sp: 1,
+      desc: '99ターンの間、自分の攻撃力が1.5倍。\nランダムで改造モンスターへ変身。',
+      cutin: true,
+      condition: { type: 'orbBoost', attr: 'wood' },
+      effects: [
+        { type: 'selfAtkBuff', value: 1.75, turns: 99 },
+        { type: 'transformRandom', ids: [ 5075, 5076, 5077, 5078, 5079, 5080 ] },
+        { type: 'attrChange', attr: 'wood', turns: 99 }
+      ]
+    },
+    leaderSkill: {
+      name: '深層改造',
+      desc: 'チームのレア度が全員同じ場合、木属性の攻撃力が3倍。\nかいふくタイプのHPと回復力が1.2倍。',
+      effects: [
+        { type: 'rarity', condition: 'allSame', atk: true, value: 3, monType: 'かいふく', attr: 'wood' },
+        { type: 'rarity', condition: 'allDiff', hp: true, value: 1.2, rec: true, monType: 'かいふく', attr: 'wood' }
+      ]
+    }
+  },
+  5082: {
+    id: 5082,
+    name: 'ルル（チア）',
+    rarity: 1,
+    attr: 'none',
+    sub: 'wood',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 50000,
+    stats: { hp: { min: 150, max: 3100 }, atk: { min: 3000, max: 8800 }, rec: { min: 350, max: 650 } },
+    skill: {
+      name: 'エールスライム',
+      sp: 2,
+      desc: '99ターンの間、木と闇ドロップが少し落ちやすくなる。\nHPを最大HPの10%回復。',
+      cutin: true,
+      effects: [
+        { type: 'orbSpawnBoost2', attr: 'wood', rate: 0.1, attr2: 'dark', rate2: 0.1, turns: 99 },
+        { type: 'heal', value: 0.2 }
+      ]
+    },
+    leaderSkill: {
+      name: '粘着スライム',
+      desc: '木属性/かいふくタイプの攻撃2倍。\n木属性でかいふくタイプのHP1.5倍。',
+      effects: [
+        { type: 'eggDropUp', value: 15 },
+        { type: 'expMult', value: 2 },
+        { type: 'atk', attr: 'wood', value: 2 },
+        { type: 'atk', condition: 'type', attr: 'かいふく', value: 2 },
+        { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.5 }
       ]
     }
   }

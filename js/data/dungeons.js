@@ -169,7 +169,8 @@ const DUNGEON_BGM = {
   "monhan-3": {"field":"b10.mp3","boss":"baru.mp3"},
   "monhan-4": {"field":"b10.mp3","boss":"goa.mp3"},
   "monhan-5": {"field":"b10.mp3","boss":"bura.mp3"},
-  "denky-boss": {"field":"b4.mp3","boss":"kalos.mp3"}
+  "denky-boss": {"field":"b4.mp3","boss":"kalos.mp3"},
+  "Astralc-boss": {"field":"ASTRALb.mp3","boss":"ASTRALboss.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -42646,5 +42647,543 @@ const DUNGEON_DATA = {
         }
       ]
     }
+  },
+  "Astralc-boss": {
+    "bgImg": "dungeon17.png",
+    "bgm": "ASTRALb.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "さるのびっくり箱",
+            "img": "mp5075.png",
+            "attr": "wood",
+            "hp": 60000,
+            "atk": 1700,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "S",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.1
+            },
+            "drops": [
+              {
+                "item": "puzzle32",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          },
+          {
+            "name": "さるのびっくり箱",
+            "img": "mp5075.png",
+            "attr": "wood",
+            "hp": 60000,
+            "atk": 1700,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "S",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.1
+            },
+            "drops": [
+              {
+                "item": "puzzle32",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          },
+          {
+            "name": "さるのびっくり箱",
+            "img": "mp5075.png",
+            "attr": "wood",
+            "hp": 60000,
+            "atk": 1700,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "S",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.1
+            },
+            "drops": [
+              {
+                "item": "puzzle32",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ゴリフランケンちゃん",
+            "img": "mp5077.png",
+            "attr": "dark",
+            "hp": 300000,
+            "atk": 5200,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "L",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.15
+            },
+            "drops": [
+              {
+                "item": "puzzle52",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ],
+                "hpAbove": 51
+              },
+              {
+                "name": "ウホッ！",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "damage_ratio",
+                    "basis": "current",
+                    "rate": 99
+                  },
+                  {
+                    "type": "rec_down",
+                    "value": 0,
+                    "turn": 1
+                  }
+                ]
+              },
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.3
+                  }
+                ],
+                "hpBelow": 50
+              }
+            ],
+            "isBoss": false,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.1,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "さるの助手君",
+            "img": "mp5076.png",
+            "attr": "wood",
+            "hp": 400000,
+            "atk": 3700,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "M",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.15
+            },
+            "drops": [
+              {
+                "item": "puzzle32",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.15,
+              "count": 1
+            }
+          },
+          {
+            "name": "さるの助手君",
+            "img": "mp5076.png",
+            "attr": "wood",
+            "hp": 400000,
+            "atk": 3700,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "M",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.15
+            },
+            "drops": [
+              {
+                "item": "puzzle32",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.15,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "人工生命ー天崩",
+            "img": "mp5078.png",
+            "attr": "water",
+            "hp": 650000,
+            "atk": 9900,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "L",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.2
+            },
+            "drops": [
+              {
+                "item": "puzzle22",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "防衛機能",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "board_change",
+                    "pattern": "multi",
+                    "to": "water",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": true,
+                    "orb_water": true,
+                    "orb_wood": false,
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              }
+            ],
+            "isBoss": false,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.15,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "人工生命ー厄兆",
+            "img": "mp5079.png",
+            "attr": "fire",
+            "hp": 600000,
+            "atk": 4300,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "L",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.2
+            },
+            "drops": [
+              {
+                "item": "puzzle12",
+                "rate": 0.15,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.1,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "人工生命ー混乱",
+            "img": "mp5080.png",
+            "attr": "fire",
+            "hp": 600000,
+            "atk": 5300,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "L",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.2
+            },
+            "drops": [
+              {
+                "item": "puzzle12",
+                "rate": 0.1,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "先制攻撃",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "board_change",
+                    "pattern": "multi",
+                    "to": "water",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": true,
+                    "orb_wood": true,
+                    "orb_light": false,
+                    "orb_dark": "",
+                    "orb_heal": true,
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.1,
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "マサオシュタイン",
+            "img": "mp5081.png",
+            "attr": "wood",
+            "hp": 250000,
+            "atk": 3000,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 80000,
+            "coin": 1000,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.5
+            },
+            "drops": [
+              {
+                "item": "puzzle33",
+                "rate": 0.2,
+                "count": 1
+              }
+            ],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "ofudaDrop": {
+              "enabled": true,
+              "item": "ohuda1",
+              "rate": 0.33,
+              "count": 1
+            }
+          }
+        ]
+      }
+    ]
   }
 };
