@@ -41680,26 +41680,20 @@ const DUNGEON_DATA = {
                     "orb_ojama": "",
                     "counts": {
                       "fire": 6,
-                      "water": 6,
                       "wood": 6,
                       "light": 6,
-                      "dark": 6
+                      "dark": 6,
+                      "heal": 6
                     }
                   },
                   {
                     "type": "move_fix",
-                    "seconds": 9,
+                    "seconds": 8,
                     "turn": 1
                   },
                   {
                     "type": "skill_seal",
                     "turn": 1
-                  },
-                  {
-                    "type": "bind",
-                    "target": "all",
-                    "turnMin": 1,
-                    "turnMax": 1
                   }
                 ]
               }

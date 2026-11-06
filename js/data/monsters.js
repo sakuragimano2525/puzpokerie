@@ -7786,7 +7786,7 @@ const MONSTER_DATA = {
     baseExp: 30000,
     stats: { hp: { min: 2000, max: 3000 }, atk: { min: 2000, max: 3000 }, rec: { min: 150, max: 300 } },
     skill: {
-      name: '私に任せて！B',
+      name: '大丈夫、きっと！',
       sp: 3,
       desc: '6ターンの間、ダメージを20%軽減。',
       cutin: true,
