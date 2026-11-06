@@ -42659,7 +42659,7 @@ const DUNGEON_DATA = {
             "img": "mp5075.png",
             "attr": "wood",
             "hp": 60000,
-            "atk": 1700,
+            "atk": 1900,
             "def": 0,
             "turnInterval": 1,
             "size": "S",
@@ -42852,7 +42852,7 @@ const DUNGEON_DATA = {
             "img": "mp5076.png",
             "attr": "wood",
             "hp": 400000,
-            "atk": 3700,
+            "atk": 5000,
             "def": 0,
             "turnInterval": 2,
             "size": "M",
@@ -43050,7 +43050,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": true,
+            "isBoss": false,
             "ofudaDrop": {
               "enabled": true,
               "item": "ohuda1",
@@ -43126,7 +43126,7 @@ const DUNGEON_DATA = {
                 ]
               }
             ],
-            "isBoss": true,
+            "isBoss": false,
             "ofudaDrop": {
               "enabled": true,
               "item": "ohuda1",
