@@ -7765,13 +7765,16 @@ const MONSTER_DATA = {
       ]
     },
     leaderSkill: {
-      name: '禍福倚伏B',
+      name: '禍福倚伏！',
       desc: '水属性とかいふくタイプの攻撃1.5倍。',
       effects: [
         { type: 'coinMult', value: 2 },
         { type: 'chipDropUp', value: 20 },
         { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.5 },
-        { type: 'atk', attr: 'water', value: 1.5 }
+        { type: 'atk', attr: 'water', value: 1.5 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'atk', attr: 'wood', value: 1.5 },
+        { type: 'dmgReduction', value: 0.01 }
       ]
     }
   },
@@ -7799,7 +7802,8 @@ const MONSTER_DATA = {
       effects: [
         { type: 'eggDropUp', value: 20 },
         { type: 'chipDropUp', value: 20 },
-        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.16, reduce: 0.09 }
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.16, reduce: 0.09 },
+        { type: 'spCharge', size: 'small' }
       ]
     }
   },
@@ -7986,7 +7990,8 @@ const MONSTER_DATA = {
         { type: 'expMult', value: 2 },
         { type: 'atk', attr: 'wood', value: 2 },
         { type: 'atk', condition: 'type', attr: 'かいふく', value: 2 },
-        { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.5 }
+        { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.5 },
+        { type: 'spCharge', size: 'medium' }
       ]
     }
   }
