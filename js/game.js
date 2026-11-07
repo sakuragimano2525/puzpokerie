@@ -844,12 +844,12 @@ function pickBindTargets(sk) {
 }
 // 割合ダメージの量（現在HP基準 or 最大HP基準）
 //   hpNow … 「現在HP基準」のときの基準HP（省略=今のHP）。行動の最初のHPを渡すと、同じ行動内の他のダメージに左右されない
-//   ダメージ軽減は「割合の%から軽減率の%を引く」形で効く（例：50%割合 − 軽減16% ＝ 34%割合）
+//   ダメージ軽減は本家式で「割合 × (1−軽減) × (1−軽減)…」と掛け算で効く（例：400% × 0.25 × 0.25 ＝ 25%割合）
 //   enemy … 軽減の条件（敵の属性など）の判定に使う攻撃元の敵
 function calcRatioDamage(sk, hpNow, enemy) {
   if (hpNow === undefined) hpNow = playerCurrentHP;
-  const _red = Math.max(0, Math.min(1, 1 - playerDamageKeep(enemy)));   // いまの合計ダメージ軽減率（0〜1）
-  const rate = Math.max(0, Math.min(100, Number(sk.rate) || 0) - _red * 100) / 100;
+  const _keep = Math.max(0, Math.min(1, playerDamageKeep(enemy)));   // いまの合計ダメージ軽減の「通す割合」（0〜1）。例：75%軽減×75%軽減 = 0.25 × 0.25
+  const rate = Math.max(0, (Number(sk.rate) || 0) * _keep) / 100;   // 本家式：割合 × (1−軽減) × (1−軽減)…（例：400% × 0.25 × 0.25 = 25%）。100%超もOK
   const base = (sk.basis === 'max') ? playerMaxHP : hpNow;
   let amt = Math.floor(base * rate);
   if (sk.survive) amt = Math.min(amt, Math.max(0, hpNow - 1));   // HP1で耐える
@@ -863,7 +863,7 @@ function actionRatioCap(skills, hp0, enemy) {
   if (!rs.length) return null;
   return rs.reduce((sum, sk) => sum + calcRatioDamage(sk, hp0, enemy), 0);
 }
-// 割合ダメージ：ダメージ軽減（スキル＋リーダースキル）の率ぶん、割合の%を引いたうえで直接HPを減らす
+// 割合ダメージ：ダメージ軽減（スキル＋リーダースキル）を本家式（掛け算）で割合に掛けたうえで、直接HPを減らす
 function applyPlayerRatioDamage(sk, enemy) {
   let amt = calcRatioDamage(sk, _actionLossCap ? _actionLossCap.hp0 : undefined, enemy);
   if (_actionLossCap) {
@@ -1282,7 +1282,7 @@ function getRawPerHitDmg(enemy, action) {
 // ★ プレイヤーへのダメージ適用（軽減計算を一元化） ★
 // ============================================================
 // いまプレイヤーが受けるダメージの倍率（スキルのダメージ軽減 × リーダースキルの軽減。1.0 = 軽減なし）
-//   割合ダメージが「割合の%から軽減率の%を引く」計算に使う
+//   割合ダメージが「割合 × 軽減（掛け算）」の計算に使う
 function playerDamageKeep(enemy) {
   let keep = 1.0;
   if (buffDamageReduction && buffDamageReductionValue > 0) keep *= (1.0 - buffDamageReductionValue);
@@ -1647,9 +1647,10 @@ function stopDungeonBGM() {
 // ── バトル n/m の白い菱形バナー。ボス戦は Battle n/n → フリップして BOSS ＋ 赤い菱形の縁 ──
 async function showBattleBanner(now, max, isBoss, bannerKind) {
   const last = !!isBoss && bannerKind === 'last';   // ラスボス版：紫の波動 ＋ LAST BOSS 表記
+  const blue = !!isBoss && bannerKind === 'blue';   // ボスの変身版（js/enemy-transform.js）：青い波動で、Battle n/m を出さずにいきなり BOSS
   const ov = document.getElementById('dungeon-anim-overlay');
   ov.innerHTML = `
-    <div class="bn-wrap${last ? ' bn-last-wrap' : ''}">
+    <div class="bn-wrap${last ? ' bn-last-wrap' : ''}${blue ? ' bn-blue-wrap' : ''}">
       <div class="bn-ring fixed"></div>
       <div class="bn-ring r1"></div><div class="bn-ring r2"></div><div class="bn-ring r3"></div>
       <div class="bn-flip">
@@ -1667,14 +1668,14 @@ async function showBattleBanner(now, max, isBoss, bannerKind) {
       </div>
       <div class="bn-flash"></div>
     </div>`;
-  ov.className = 'bn-mode' + (isBoss ? ' bn-boss' : '') + (last ? ' bn-lastboss' : '');
+  ov.className = 'bn-mode' + (isBoss ? ' bn-boss' : '') + (last ? ' bn-lastboss' : '') + (blue ? ' bn-blueboss' : '');
   ov.style.display = 'flex';
-  playSE('bc');   // Battle 表示の効果音
+  if (!blue) playSE('bc');   // Battle 表示の効果音
   const wrap  = ov.querySelector('.bn-wrap');
   const flip  = ov.querySelector('.bn-flip');
   const flash = ov.querySelector('.bn-flash');
   if (isBoss) {
-    await sleep(550);                        // Battle n/n を見せてから
+    await sleep(blue ? 120 : 550);           // Battle n/n を見せてから（変身版はすぐ BOSS へ）
     flip.classList.add('bn-do-flip');        // くるっと回って BOSS へ
     playSE('bossk');
     await sleep(250);
@@ -1765,15 +1766,8 @@ function applyEnemyDualAttr(enemy, subAttr) {
   });
 }
 
-async function loadBattle(battleData, autoStart = true) {
-  if (window.Ryuseki) Ryuseki.reset();   // 前のバトルの宝箱の状態を消す
-  _defeatPending = [];
-  lockedEnemy = null;
-  enemyDefeatedHandled = false;
-  battleExpQueue = 0;
-  battleCoinQueue = 0;
-  if (window.Zukan && !battleData.chest) { try { Zukan.noteEnemies(battleData.enemies); } catch (err) {} }   // 図鑑：出会ったモンスターを記録（js/zukan.js）
-  enemyList = battleData.enemies.map(e => {
+// 敵データ（ダンジョンデータの1体ぶん）から、バトル中の敵オブジェクトを作る（loadBattle と、ボスの「変身」で共用）
+function buildEnemyFromDef(e) {
     const compiled = compileEnemyActions(e);
     const base = {
       ...compiled,
@@ -1792,7 +1786,17 @@ async function loadBattle(battleData, autoStart = true) {
     base._baseTurnInterval = base.turnInterval;
     applyEnemyDualAttr(base, e.subAttr);   // 副属性つき：HPが半分を切ったら副属性になる
     return base;
-  });
+}
+
+async function loadBattle(battleData, autoStart = true) {
+  if (window.Ryuseki) Ryuseki.reset();   // 前のバトルの宝箱の状態を消す
+  _defeatPending = [];
+  lockedEnemy = null;
+  enemyDefeatedHandled = false;
+  battleExpQueue = 0;
+  battleCoinQueue = 0;
+  if (window.Zukan && !battleData.chest) { try { Zukan.noteEnemies(battleData.enemies); } catch (err) {} }   // 図鑑：出会ったモンスターを記録（js/zukan.js）
+  enemyList = battleData.enemies.map(buildEnemyFromDef);
   buffMoveTimeShort = false;
   if (battleData.chest && window.Ryuseki) {   // 竜石の宝箱バトル：HPバーなし。宝箱・あと〇・ミッションを出す（js/ryuseki.js）
     Ryuseki.load(enemyList[0], currentDungeonKey);
@@ -3225,7 +3229,7 @@ function showEnemyHitEffect(x, y, enemy, hitIdx, totalHits, selectedAction, isPr
       for (const r of lsRes.dmgReduction) reduction *= (1.0 - r);
     }
   }
-  // 割合ダメージを含む行動：軽減は「割合の%から軽減率の%を引く」形で rawPerHit（calcRatioDamage）に反映済み。
+  // 割合ダメージを含む行動：軽減は「割合 × (1−軽減)…」の掛け算で rawPerHit（calcRatioDamage）に反映済み。
   // 合計が割合分ぴったりになるので、表示には軽減をもう一度かけない（効果音だけ軽減中の音にする）
   const _sks = (selectedAction && selectedAction.skills) || [];
   const _reducedNow = reduction < 1;
@@ -4012,6 +4016,8 @@ function enemyTakeDamage(enemy, dmg) {
   if (enemy._chest) return 0;   // 宝箱（竜石）はダメージを受けない
   const before = enemy.hp;
   enemy.hp = Math.max(0, before - dmg);
+  // ★変身（js/enemy-transform.js）★ 変身ボスは倒れず HP1 で踏みとどまる。ターンの攻撃が終わったあとに変身の演出を行う
+  if (enemy.hp <= 0 && before > 0 && enemy.transform && !enemy._tfDone) { enemy.hp = 1; enemy._tfPending = true; return before - 1; }
   const sg = enemy._superGut;
   if (sg && before > 0) {
     if (sg.keepHp != null) {
@@ -7194,6 +7200,8 @@ let _skillCondSig = '';
 function refreshSkillCondUI() {
   if (busy || isUsingSkill) return;
   if (!document.getElementById('party-grid')) return;
+  const _gameEl = document.getElementById('game');
+  if (!_gameEl || _gameEl.style.display !== 'flex') return;   // ダンジョン外（ホーム・パーティ編成など）では描き直さない＝「スキルが溜まった」音を鳴らさない
   let sig = '';
   for (const uid of partyUids) {
     if (uid === null || uid === undefined) { sig += '-'; continue; }
@@ -7887,9 +7895,11 @@ async function confirmSkill() {
   playSkillSound();
 
   if (window.MultiShare) MultiShare.fx('sk', { n: mon.skill.name, m: entry.monsterId });   // マルチ：スキル発動を相手の画面へ
-  // カットイン（モンスターエディターで ON にしたスキル）：画像は mp{ID}.png、効果音は {ID}.mp3（cutin.mp3 の代わり。無ければ cutin.mp3）
-  if (mon.skill.cutin === true && window.EnemyCutIn) {
-    try { await window.EnemyCutIn.show({ attr: mon.attr, sub: mon.sub, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (err) {}
+  // スキルカットイン（全モンスター共通。js/cutin.js の showSkill）
+  //   ID5000以降は新カットイン／画像は mp{ID}.png（無ければ通常の画像）
+  //   効果音：エディターで「オリジナル音声」にチェックしたモンスターは {ID}.mp3、それ以外は普通のカットイン音 cutin.mp3
+  if (window.EnemyCutIn && window.EnemyCutIn.showSkill) {
+    try { await window.EnemyCutIn.showSkill(mon); } catch (err) {}
   }
   if (mon.skill.effects && mon.skill.effects.length) {
     runSkillEffects(mon.skill.effects, entry, mon);
@@ -7907,6 +7917,7 @@ async function confirmSkill() {
   isUsingSkill = false;
 
   await runPendingTransforms();   // 「ランダム変身」の演出と入れ替え
+  if (window.EnemyTransform && EnemyTransform.has()) { try { await EnemyTransform.run(); } catch (err) {} }   // スキルで変身ボスのHPが0になった時の変身演出
 
   // スキルダメージで敵を全滅させた場合、演出を見せてから次のバトルへ自動進行する
   const allDead = enemyList.every(e => e.hp <= 0);
@@ -9635,6 +9646,8 @@ async function startGameFromHome() {
 
   partySp = 0;
   partyMemory = 0;
+  _liftedSkillUids = new Set();   // 前のダンジョンの「持ち上がり」状態を持ち越さない
+  _skillCondSig = '';
 
   const newPartyUids = currentTeam.map(uid => uid);
   for (let i = 0; i < 6; i++) {
@@ -10549,7 +10562,8 @@ function renderParty() {
     grid.appendChild(slot);
   }
   _liftedSkillUids = _nextLift;
-  if (_newlyReady) playSE('skills');   // スキルが溜まった効果音（画像が持ち上がる瞬間に鳴らす）
+  { const _gEl = document.getElementById('game');
+    if (_newlyReady && _gEl && _gEl.style.display === 'flex') playSE('skills'); }   // スキルが溜まった効果音（画像が持ち上がる瞬間に鳴らす）。ダンジョン外では鳴らさない
   updatePlayerHP();
   updateSpGaugeUI();
 }
@@ -11429,8 +11443,11 @@ async function _evaluateInner() {
   }
   updateEnemyUI();
 
+  // 変身ボスがHP0になっていたら、敵の行動の前に変身の演出（白く光って別のモンスターに）。変身したターンは敵の行動なし
+  let _tfDid = false;
+  if (window.EnemyTransform && EnemyTransform.has()) { if (window.DamageTotal) DamageTotal.clear(); _tfDid = await EnemyTransform.run(); if (_gameOverActive) return; }
   if (window.DamageTotal) DamageTotal.clear();   // 敵のターンに入るので、合計ダメージを消す
-  if (enemyList.some(e => e.hp > 0) && playerCurrentHP > 0 && !enemyDefeatedHandled) {
+  if (!_tfDid && enemyList.some(e => e.hp > 0) && playerCurrentHP > 0 && !enemyDefeatedHandled) {
     try { await doEnemyAttack(); } finally { enemyJudgeBoard = null; }
     if (_gameOverActive || (window.MultiShare && MultiShare.spectating)) return;   // ゲームオーバー演出中／観戦中は以降の処理をしない
     if (window.MultiShare) MultiShare.fxStatus();   // マルチ：敵の行動でかかった状態異常（攻撃力ダウン・スキル使用不可…）を相手の画面へ

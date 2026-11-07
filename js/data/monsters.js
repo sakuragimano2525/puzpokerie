@@ -3906,13 +3906,18 @@ const MONSTER_DATA = {
     id: 227,
     name: 'エアームド',
     rarity: 3,
-    attr: 'fire',
+    attr: 'light',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 675, max: 4470 }, atk: { min: 205, max: 1495 }, rec: { min: 40, max: 110 } },
-    skill: { name: '', sp: 1, desc: '', effects: [] },
-    leaderSkill: { name: '', desc: '', effects: [] }
+    skill: {
+      name: 'てっぺき',
+      sp: 4,
+      desc: '1ターンの間、ダメージを50%軽減。',
+      effects: [ { type: 'dmgReductionBuff', turns: 1, value: 0.5 } ]
+    },
+    leaderSkill: { name: '光のオーラ・大', desc: '光属性のHP1.7倍。', effects: [ { type: 'hp', attr: 'light', value: 1.7 } ] }
   },
   228: {
     id: 228,
@@ -7478,7 +7483,6 @@ const MONSTER_DATA = {
       desc: 'チームの総レア度が6以下の場合、かいふくタイプの攻撃力が2.6倍。\nかいふくタイプのHP1.3倍。',
       effects: [
         { type: 'rarity', condition: 'totalBelow', threshold: 6, atk: true, value: 2.6, monType: 'かいふく' },
-        { type: 'eggDropUp', value: 15 },
         { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.3 }
       ]
     }
@@ -7993,6 +7997,32 @@ const MONSTER_DATA = {
         { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.5 },
         { type: 'spCharge', size: 'medium' }
       ]
+    }
+  },
+  5083: {
+    id: 5083,
+    name: '猛り爆ぜるブラキディオス',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 40000,
+    stats: { hp: { min: 1500, max: 3600 }, atk: { min: 1500, max: 3000 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: '咆哮粘菌大爆発',
+      sp: 6,
+      desc: '敵単体に攻撃力×70倍の火属性攻撃。\n最上段と最下段の横1列をお邪魔ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', value: 90, attr: 'fire', target: 'single' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'ojama' },
+        { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'ojama' }
+      ]
+    },
+    leaderSkill: {
+      name: '粘菌落下爆発',
+      desc: 'お邪魔ドロップの2コンボ以上で攻撃2.5倍、1コンボ加算。',
+      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'ojama', count: 2, value: 2.5, comboAdd: 1 } ]
     }
   }
 };

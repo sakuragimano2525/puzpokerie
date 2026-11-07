@@ -1181,8 +1181,8 @@
     async sk(d) {
       try { playSkillSound(); showRemoteSkillToast(d || {}); } catch (_) {}
       const mon = d && d.m != null ? MONSTER_DATA[d.m] : null;
-      if (mon && mon.skill && mon.skill.cutin === true && window.EnemyCutIn) {
-        try { await window.EnemyCutIn.show({ attr: mon.attr, sub: mon.sub, img: `mp${mon.id}.png`, imgFallback: monsterImg(mon) }, mon.skill.name, { se: `${mon.id}.mp3`, face: true }); } catch (_) {}
+      if (mon && mon.skill && window.EnemyCutIn && window.EnemyCutIn.showSkill) {
+        try { await window.EnemyCutIn.showSkill(mon); } catch (_) {}
       }
     },
   };

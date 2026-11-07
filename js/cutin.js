@@ -246,7 +246,7 @@
   const _imgCache = {};
   function measureImg(im, url) {
     const nw = im.naturalWidth, nh = im.naturalHeight;
-    const r = { url, nw, nh, bx0: 0, by0: 0, bw: nw, bh: nh };
+    const r = { url, nw, nh, bx0: 0, by0: 0, bw: nw, bh: nh, im };
     try {
       const k = Math.min(1, 160 / Math.max(nw, nh));
       const cw = Math.max(1, Math.round(nw * k)), ch = Math.max(1, Math.round(nh * k));
@@ -297,6 +297,18 @@
     return { info, fx: clamp(fx, 0, 1), fy: clamp(fy, 0, 1), headH };
   }
 
+  // ── 新カットインにするか：モンスターID（画像 mp{ID}.png の数字。opts.id があればそちら）が NEW_STYLE_MIN_ID 以上 ──
+  const NEW_STYLE_MIN_ID = 5000;
+  const NEW_STYLE_MIN_MS = 3000;   // 新カットインの最低の長さ（ミリ秒。短いと感じたら数字を上げる）
+  function isNewStyle(enemy, opts) {
+    let id = opts && opts.id != null ? Number(opts.id) : NaN;
+    if (!isFinite(id)) {
+      const m = /(?:^|\/)mp(\d+)\.png/.exec((enemy && enemy.img) || '');
+      id = m ? Number(m[1]) : NaN;
+    }
+    return isFinite(id) && id >= NEW_STYLE_MIN_ID;
+  }
+
   // show(敵, 技名, { se:'5000.mp3', face:true, focus:{x,y} })
   //   se    … cutin.mp3 の代わりに鳴らす音（無ければ cutin.mp3）
   //   face  … true なら、縦長キャラは顔をアップにする（味方のスキル／変身用。敵の⚠️技は今までどおり）
@@ -304,6 +316,8 @@
   function show(enemy, rawName, opts) {
     const file = opts && opts.se;
     const wantFace = !!(opts && opts.face);
+    const ns = isNewStyle(enemy, opts);   // ID5000以降 → 新カットイン（js/cutin-v2.js）
+    const wantImg = wantFace || ns;
     const AF = window.AudioFast;
     if (AF && AF.IS_IOS && AF.loadCutBuf) {
       // iPhone：<audio> ではなく AudioBuffer で鳴らす（前半の繰り返し・音切れ対策）
@@ -311,18 +325,22 @@
       const pick = (file ? Promise.race([AF.loadCutBuf(file), wait(900)]) : Promise.resolve(null))
         .then(b => b ? { buf: b, gain: CUTIN_SE_GAIN, duck: true }
                      : Promise.race([AF.loadCutBuf('cutin.mp3'), wait(500)]).then(b2 => b2 ? { buf: b2, gain: 1, duck: false } : null));
-      return Promise.all([pick, wantFace ? prepareImg(enemy) : null]).then(r => {
-        const sb = r[0], face = r[1] ? faceLayout(r[1], opts.focus) : null;
-        if (sb) return _show(enemy, rawName, null, face, sb);
-        return prepareSE(file).then(c => _show(enemy, rawName, c, face, null));   // 読めなかった時は今までの方法
+      return Promise.all([pick, wantImg ? prepareImg(enemy) : null]).then(r => {
+        const sb = r[0], face = r[1] ? faceLayout(r[1], opts && opts.focus) : null;
+        const v2 = ns && r[1] ? { info: r[1], face } : null;
+        if (sb) return _show(enemy, rawName, null, face, sb, v2);
+        return prepareSE(file).then(c => _show(enemy, rawName, c, face, null, v2));   // 読めなかった時は今までの方法
       });
     }
-    if (!file && !wantFace) return _show(enemy, rawName, null, null);
-    return Promise.all([prepareSE(file), wantFace ? prepareImg(enemy) : null])
-      .then(r => _show(enemy, rawName, r[0], r[1] ? faceLayout(r[1], opts.focus) : null));
+    if (!file && !wantImg) return _show(enemy, rawName, null, null);
+    return Promise.all([prepareSE(file), wantImg ? prepareImg(enemy) : null])
+      .then(r => {
+        const face = r[1] ? faceLayout(r[1], opts && opts.focus) : null;
+        return _show(enemy, rawName, r[0], face, null, ns && r[1] ? { info: r[1], face } : null);
+      });
   }
 
-  function _show(enemy, rawName, customSE, face, seBuf) {
+  function _show(enemy, rawName, customSE, face, seBuf, v2) {
     return new Promise(resolve => {
       if (_active) { try { _active(); } catch (e) {} }
 
@@ -364,6 +382,18 @@
           const a = new Audio('cutin.mp3'); a.volume = 1; a.play().catch(() => {});
         }
       } catch (e) {}
+
+      // ── ID5000以降：新カットイン（js/cutin-v2.js）。読み込めていない時だけ、下の従来のカットインにする ──
+      if (v2 && window.CutInV2) {
+        const key = THEMES[enemy && enemy.attr] ? enemy.attr : (THEMES[enemy && enemy.sub] ? enemy.sub : 'fire');
+        const Tn = Math.max(T, NEW_STYLE_MIN_MS);   // 新カットインは余韻を長めに（効果音がもっと長ければそちらに合わせる）
+        const stop = window.CutInV2.run({
+          host, W, DH, T: Tn, IOS, theme: key, name, info: v2.info, face: v2.face,
+          shake: typeof battleShake === 'function' ? battleShake : null
+        }, () => { if (_active === stop) _active = null; resolve(); });
+        _active = stop;
+        return;
+      }
 
       // ── 大きさ：画面幅いっぱいの帯。高さは幅の約46％（縦に収まらない時は縮める）──
       const H = Math.round(Math.min(W * 0.46, DH * 0.78));
@@ -644,6 +674,26 @@
     });
   }
 
-  window.EnemyCutIn = { show, isCutin, cleanName, THEMES };
-  // 使い方（味方のスキル）：EnemyCutIn.show({ attr, img:'mp5000.png', imgFallback:'m5000.png' }, 'スキル名', { se:'5000.mp3', face:true })
+  // ── 味方のスキル発動カットイン（全モンスター共通）──
+  //   ・スキルを持つモンスターは、みんなカットインが出ます（スキル名が空の時だけ出さない）
+  //   ・ID 5000 以降 → 新しいカットイン（cutin-v2.js）／それ未満 → 従来のカットイン
+  //   ・画像は mp{ID}.png（無ければ通常の画像）
+  //   ・効果音：モンスターエディターの「オリジナル音声」にチェック（skill.cutin === true）のモンスターは {ID}.mp3
+  //             （{ID}.mp3 が無ければ cutin.mp3）。チェックが無いモンスターは、普通のカットイン音 cutin.mp3
+  //   ※ game.js（自分のスキル）と multi-share.js（マルチ相手のスキル）から呼ばれる
+  function showSkill(mon) {
+    try {
+      if (!mon || !mon.skill) return Promise.resolve();
+      const name = String(mon.skill.name == null ? '' : mon.skill.name).trim();
+      if (!name) return Promise.resolve();
+      const fb = typeof monsterImg === 'function' ? monsterImg(mon) : '';
+      const opts = { face: true, id: mon.id };
+      if (mon.skill.cutin === true) opts.se = mon.id + '.mp3';   // オリジナル音声あり
+      return show({ attr: mon.attr, sub: mon.sub, img: 'mp' + mon.id + '.png', imgFallback: fb }, name, opts);
+    } catch (e) { return Promise.resolve(); }
+  }
+
+  window.EnemyCutIn = { show, showSkill, isCutin, cleanName, THEMES };
+  // 使い方（味方のスキル）：EnemyCutIn.showSkill(MONSTER_DATA[id])
+  //   （細かく指定したい時）EnemyCutIn.show({ attr, img:'mp5000.png', imgFallback:'m5000.png' }, 'スキル名', { se:'5000.mp3', face:true, id:5000 })
 })();

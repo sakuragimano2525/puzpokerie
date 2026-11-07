@@ -152,7 +152,7 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
     <label class="wide">スキル名<input id="skName" value="スキル名"></label>
     <label class="wide">必要スキルポイント（SP）<input id="skSp" type="number" min="1" max="10" step="1" value="1"></label>
     <label class="wide">説明（ゲーム内表示用）<textarea id="skDesc"></textarea></label>
-    <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skCutin" type="checkbox" style="width:auto"> スキル発動時にカットインを出す</label>
+    <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skCutin" type="checkbox" style="width:auto"> カットインのオリジナル音声を使う（カットインは全モンスターで出ます）</label>
     <p class="small wide" id="skCutinHint" style="margin:0"></p>
     <label class="wide">発動条件（条件を満たしていないと、SPが溜まっていても使えません）
       <select id="skCondType">
@@ -1070,9 +1070,10 @@ function updateCondUI(){
 function updateCutinHint(){
   const h=$('skCutinHint'); if(!h) return;
   const id=$('monId').value||'?';
+  const style = Number(id) >= 5000 ? '新カットイン（ID5000以降）' : '通常カットイン';
   h.textContent = $('skCutin').checked
-    ? `カットイン画像：mp${id}.png ／ 効果音：${id}.mp3（スキル発動音 skillgo.mp3 のあとに鳴ります。${id}.mp3 が無ければ cutin.mp3）`
-    : '';
+    ? `${style} ／ 画像：mp${id}.png（無ければ通常の画像） ／ 効果音：オリジナル音声 ${id}.mp3（スキル発動音 skillgo.mp3 のあとに鳴ります。${id}.mp3 が無ければ cutin.mp3）`
+    : `${style} ／ 画像：mp${id}.png（無ければ通常の画像） ／ 効果音：普通のカットイン音 cutin.mp3`;
 }
 function update(){
   refreshTypeList();

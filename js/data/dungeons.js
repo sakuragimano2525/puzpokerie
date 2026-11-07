@@ -13,7 +13,7 @@
 //   ※ チップは敵の属性と同じ属性のものを設定すること。
 //   ※ 敵の先制行動は actions に condition:'battle_start' で入る（複数可。上から順に連続発動）。
 //   敵スキル（skills）の追加分:
-//     { type:'damage_ratio', basis:'current'|'max', rate:50, survive:true }   割合ダメージ（rate は%。ダメージ軽減率の%ぶん引かれる 例：50%−軽減16%＝34%）
+//     { type:'damage_ratio', basis:'current'|'max', rate:50, survive:true }   割合ダメージ（rate は%。100%を超える値もOK 例：500%。ダメージ軽減は掛け算で効く 例：400%×(1−0.75)×(1−0.75)＝25%）
 //     { type:'bind', target:'all', turnMin:2, turnMax:2 }                      全員を2ターンバインド
 //     { type:'bind', target:'attr', attr:'fire', turnMin:1, turnMax:3 }        火属性を1〜3ターンバインド
 //     { type:'bind', target:'random', countMin:1, countMax:3, turnMin:2, turnMax:2 }  ランダム1〜3体を2ターンバインド
@@ -170,7 +170,8 @@ const DUNGEON_BGM = {
   "monhan-4": {"field":"b10.mp3","boss":"goa.mp3"},
   "monhan-5": {"field":"b10.mp3","boss":"bura.mp3"},
   "denky-boss": {"field":"b4.mp3","boss":"kalos.mp3"},
-  "Astralc-boss": {"field":"ASTRALb.mp3","boss":"ASTRALboss.mp3"}
+  "Astralc-boss": {"field":"ASTRALb.mp3","boss":"ASTRALboss.mp3"},
+  "monhan-boss": {"field":"b10.mp3","boss":"bura.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -43174,6 +43175,368 @@ const DUNGEON_DATA = {
               "item": "ohuda1",
               "rate": 0.33,
               "count": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "monhan-boss": {
+    "bgImg": "dungeon13.png",
+    "bgm": "b10.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "ブラキディオス",
+            "img": "mp5070.png",
+            "attr": "light",
+            "hp": 500000,
+            "atk": 6200,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 80000,
+            "coin": 1000,
+            "monsterDrop": {
+              "enabled": false,
+              "rate": 0.5
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "突進",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "粘菌大塗布頭突き",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "random_to",
+                    "to": "ojama",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              },
+              {
+                "name": "唾液を塗っている",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.5,
+                    "turn": 2
+                  }
+                ]
+              },
+              {
+                "name": "粘菌大爆発",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.2
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "multi",
+                    "to": "water",
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": true,
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": true,
+                    "orb_dark": false,
+                    "orb_heal": true,
+                    "orb_poison": true,
+                    "orb_ojama": true
+                  }
+                ]
+              },
+              {
+                "name": "飛びかかり攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "spawn",
+                    "to": "fire",
+                    "count": 5,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              },
+              {
+                "name": "いかり",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.2,
+                    "turn": 5
+                  }
+                ]
+              }
+            ],
+            "isBoss": true,
+            "subAttr": "fire",
+            "actionMode": "sequence",
+            "transform": {
+              "name": "猛り爆ぜるブラキディオス",
+              "img": "mp5083.png",
+              "attr": "fire",
+              "hp": 2000000,
+              "atk": 8200,
+              "def": 0,
+              "turnInterval": 1,
+              "size": "XL",
+              "exp": 50000,
+              "coin": 2000,
+              "monsterDrop": {
+                "enabled": true,
+                "rate": 0.5
+              },
+              "drops": [],
+              "actions": [
+                {
+                  "name": "突進",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "damage_mult",
+                      "value": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "粘菌大塗布頭突き",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "damage_mult",
+                      "value": 1.1
+                    },
+                    {
+                      "type": "board_change",
+                      "pattern": "random_to",
+                      "to": "ojama",
+                      "counts.fire": 1,
+                      "counts.water": 1,
+                      "counts.wood": 1,
+                      "counts.light": 1,
+                      "counts.dark": 1,
+                      "counts.heal": 1,
+                      "counts.poison": 1,
+                      "counts.ojama": 1,
+                      "orb_fire": "",
+                      "orb_water": "",
+                      "orb_wood": "",
+                      "orb_light": "",
+                      "orb_dark": "",
+                      "orb_heal": "",
+                      "orb_poison": "",
+                      "orb_ojama": ""
+                    }
+                  ]
+                },
+                {
+                  "name": "唾液を塗っている",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "attack_buff",
+                      "rate": 1.3,
+                      "turn": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "粘菌大爆発",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "damage_mult",
+                      "value": 1.3
+                    },
+                    {
+                      "type": "board_change",
+                      "pattern": "multi",
+                      "to": "water",
+                      "counts.fire": 1,
+                      "counts.water": 1,
+                      "counts.wood": 1,
+                      "counts.light": 1,
+                      "counts.dark": 1,
+                      "counts.heal": 1,
+                      "counts.poison": 1,
+                      "counts.ojama": 1,
+                      "orb_fire": false,
+                      "orb_water": "",
+                      "orb_wood": "",
+                      "orb_light": true,
+                      "orb_dark": false,
+                      "orb_heal": true,
+                      "orb_poison": true,
+                      "orb_ojama": true
+                    }
+                  ]
+                },
+                {
+                  "name": "飛びかかり攻撃",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "damage_mult",
+                      "value": 1.5
+                    },
+                    {
+                      "type": "board_change",
+                      "pattern": "spawn",
+                      "to": "fire",
+                      "count": 5,
+                      "counts.fire": 1,
+                      "counts.water": 1,
+                      "counts.wood": 1,
+                      "counts.light": 1,
+                      "counts.dark": 1,
+                      "counts.heal": 1,
+                      "counts.poison": 1,
+                      "counts.ojama": 1,
+                      "orb_fire": "",
+                      "orb_water": "",
+                      "orb_wood": "",
+                      "orb_light": "",
+                      "orb_dark": "",
+                      "orb_heal": "",
+                      "orb_poison": "",
+                      "orb_ojama": ""
+                    }
+                  ]
+                },
+                {
+                  "name": "いかり",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "attack_buff",
+                      "rate": 2,
+                      "turn": -1
+                    }
+                  ]
+                },
+                {
+                  "name": "咆哮粘菌爆発",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "damage_ratio",
+                      "basis": "max",
+                      "rate": 200
+                    }
+                  ]
+                },
+                {
+                  "name": "超連続攻撃",
+                  "condition": "normal",
+                  "weight": 100,
+                  "once": false,
+                  "skills": [
+                    {
+                      "type": "damage",
+                      "value": 820,
+                      "repeat": 20
+                    }
+                  ]
+                }
+              ],
+              "ofudaDrop": {
+                "enabled": true,
+                "item": "ohuda1",
+                "rate": 0.5,
+                "count": 2
+              },
+              "actionMode": "alternate",
+              "bgm": "rbura.mp3",
+              "subAttr": "light"
             }
           }
         ]
