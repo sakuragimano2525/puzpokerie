@@ -6055,7 +6055,7 @@ const MONSTER_DATA = {
   768: {
     id: 768,
     name: 'グソクムシャ',
-    rarity: 4,
+    rarity: 3,
     attr: 'none',
     sub: 'wood',
     type: 'こうげき',
@@ -6072,7 +6072,7 @@ const MONSTER_DATA = {
     leaderSkill: {
       name: 'であいがしら',
       desc: 'チームのレア度が全員同じ場合、攻撃力が2倍。',
-      effects: [ { type: 'rarity', condition: 'allSame', atk: true, value: 2 } ]
+      effects: [ { type: 'rarity', condition: 'allSame', atk: true, value: 2 }, { type: 'hp', value: 0.5 } ]
     }
   },
   769: {
@@ -9214,10 +9214,10 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'ひと夏の大冒険',
-      desc: 'たいりょくタイプの全パラメータが1.2倍。\n4色以上同時に消すと攻撃2倍、受けるダメージ15%軽減。',
+      desc: '4色以上同時に消すと攻撃2倍、受けるダメージ15%軽減。',
       effects: [
-        { type: 'allStat', condition: 'type', attr: 'たいりょく', value: 1.2 },
-        { type: 'atk', condition: 'colorCount', count: 4, value: 2, reduce: 0.15 }
+        { type: 'atk', condition: 'colorCount', count: 4, value: 2, reduce: 0.15 },
+        { type: 'moveTimeAdd', value: -1 }
       ]
     }
   }
