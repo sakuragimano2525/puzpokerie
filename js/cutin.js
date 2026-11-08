@@ -305,7 +305,7 @@
   // ── 新カットインにするか：モンスターID（画像 mp{ID}.png の数字。opts.id があればそちら）が NEW_STYLE_MIN_ID 以上 ──
   const NEW_STYLE_MIN_ID = 5000;
   const NEW_STYLE_MIN_MS = 3000;   // 新カットインの最低の長さ（ミリ秒。短いと感じたら数字を上げる）
-  const NEW_STYLE_SKILL_MS = 2000; // 味方のスキル発動で、オリジナル音声なし（デフォルトの cutin.mp3）のときの最低の長さ（ミリ秒）。変身・敵の技・オリジナル音声ありは上の数字のまま
+  const NEW_STYLE_SKILL_MS = 2000; // 味方のスキル発動の新カットインの長さ（ミリ秒）。音声あり・なしに関係なく全キャラこの長さ。長くしたい時はこの数字を上げる。変身・敵の技は上の数字のまま
   const YUME_MIN_MS = 3600;        // ゆめかわふわカットイン（js/cutin-yume.js）の最低の長さ（ミリ秒）
   function isNewStyle(enemy, opts) {
     let id = opts && opts.id != null ? Number(opts.id) : NaN;
@@ -327,7 +327,8 @@
     const ym = !!(opts && opts.yume);     // エディターで「ゆめかわふわカットイン」にチェック → js/cutin-yume.js（ID5000以降の新カットインより優先）
     const wantImg = wantFace || ns || ym;
     const shortSkill = !!(opts && opts.skill) && !file;   // 味方のスキル発動 ＋ オリジナル音声なし → 新カットインを短め（NEW_STYLE_SKILL_MS）に
-    const mkV2 = (img, face) => (img && (ns || ym)) ? { info: img, face, yume: ym, label: opts && opts.label, shortSkill } : null;
+    const isSkill = !!(opts && opts.skill);   // 味方のスキル発動（音声あり・なしに関係なく、新カットインの長さを同じにするための目印）
+    const mkV2 = (img, face) => (img && (ns || ym)) ? { info: img, face, yume: ym, label: opts && opts.label, shortSkill, isSkill } : null;
     const AF = window.AudioFast;
     if (AF && AF.IS_IOS && AF.loadCutBuf) {
       // iPhone：<audio> ではなく AudioBuffer で鳴らす（前半の繰り返し・音切れ対策）
@@ -425,7 +426,10 @@
       // ── ID5000以降：新カットイン（js/cutin-v2.js）。読み込めていない時だけ、下の従来のカットインにする ──
       if (v2 && window.CutInV2) {
         const key = THEMES[enemy && enemy.attr] ? enemy.attr : (THEMES[enemy && enemy.sub] ? enemy.sub : 'fire');
-        const Tn = Math.max(T, v2.shortSkill ? NEW_STYLE_SKILL_MS : NEW_STYLE_MIN_MS);   // 新カットインは余韻を長めに（効果音がもっと長ければそちらに合わせる）
+        // ★ 味方のスキル発動は、オリジナル音声の長さに関係なく、ぜんぶ NEW_STYLE_SKILL_MS（ミスティと同じ長さ）にそろえる。
+        //    （以前は音声の長さに引っぱられて、コハク(正月)など一部のキャラだけ約1秒長くなっていた）
+        //    変身・敵の技は今までどおり（NEW_STYLE_MIN_MS か、効果音がもっと長ければそちら）
+        const Tn = v2.isSkill ? NEW_STYLE_SKILL_MS : Math.max(T, NEW_STYLE_MIN_MS);
         const stop = window.CutInV2.run({
           host, W, DH, T: Tn, IOS, theme: key, name, info: v2.info, face: v2.face,
           shake: typeof battleShake === 'function' ? battleShake : null
