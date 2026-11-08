@@ -34,6 +34,8 @@ const AREA_DATA = {
   13: { name: 'モモエ火山',       bg: 'dungeon13.png', hue: 150, color: '赤' },
   14: { name: 'ポケモンタワー',       bg: 'dungeon7.png', hue: 150, color: '白' },
   15: { name: 'ハナダの洞窟',       bg: 'dungeon15-1.png', hue: 150, color: '黒', hidden: true },   // 隠しエリア：前のエリア(14)のボスをクリアするまで、マップに存在すら出ない
+  16: { name: 'ウインドビーチ', bg: 'dungeon3.png', hue: 50,  color: '紫' },
+
 };
 
 // ============================================================
@@ -100,6 +102,7 @@ denky: {both: true, name: 'イベルタル降臨', desc: 'イベルタルがド�
     stella: { both: true, name: 'ステラソラコラボ', desc: 'クリアでアルカナエキスゲット！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム'} , stageLevels: { boss: '上級' }},
 stellab: { both: true, name: 'ステラソラコラボ2', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium3.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム2'} , stageLevels: { boss: '超級' }},
 stellac: { both: true, name: 'ステラソラコラボ3', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium3.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム3'} , stageLevels: { boss: '超級' }},
+riza: { both: true, name: 'ライザのアトリエコラボ', desc: 'コラボキャラがドロップするチャンス！', bg: 'riza.png', hue: 200,stageNames: { boss: 'ライザのアトリエ'} , stageLevels: { boss: '上級' }},
 
     Astral: { both: true, name: 'アストラルパーティー', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL.png', hue: 200,stageNames: { boss: 'アストラルパーティー'} , stageLevels: { boss: '超級' }},
 Astralb: { both: true, name: 'アストラルパーティー2', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL2.png', hue: 200,stageNames: { boss: 'アストラルパーティー2'} , stageLevels: { boss: '超級' }},

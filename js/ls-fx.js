@@ -10,6 +10,9 @@
 //     5つ以上つなげる … 属性色の魔法陣（星形）が開いて炸裂。個数が多いほど大きい  （kind: 'connect'）
 //     〇コンボ以上    … 集中線と衝撃波と火の粉の爆発（コンボが多いほど派手）      （kind: 'combo'）
 //     〇色以上        … 消した色の光が虹のプリズムになって広がる                  （kind: 'prism'）
+//     〇属性を消す度  … 消した属性ごとの「力の解放」。光が上へ昇り、魔法陣＋属性ごとの演出（kind: 'erase'）
+//                        火=炎 / 水=波紋としぶき / 木=葉の渦 / 光=光の柱 / 闇=渦が弾ける / 回復=光の＋
+//                        重ねて消すほど（opt.stack）大きく派手に。効いたリーダー／フレンド（opt.leaders=[0,5]）の枠も光る
 //
 //   ■ 軽く動くための作り（iPhone で落ちないように）
 //       ・描くのは盤面まわりだけの canvas 1枚（使い終わったら片付ける）。DOM の部品は増やさない
@@ -24,6 +27,7 @@
 //         geo   : { x0, y0, px, py, size, rows, cols }
 //                 x0,y0 … 左上マス(0,0)の中心の画面座標 / px,py … 1マスぶんの横・縦の間隔 / size … ドロップの大きさ
 //         opt   : { color:'#rrggbb', n:個数, power:1〜, light:true/false, colors:['#...', …]（prism） }
+//                 erase だけ：attr:'fire'… / stack:その属性を消した回数（1〜） / leaders:[0,5]（光らせるパーティ枠）
 //       LSFX.clear()  … 再生中の演出を全部止めて片付ける
 //
 //   ■ 調整したいとき（ここの数字）
@@ -110,6 +114,7 @@
     return !!g;
   }
   function release() {
+    lastFrameT = 0;
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
     if (cv) { cv.width = cv.height = 0; if (cv.parentNode) cv.parentNode.removeChild(cv); }
     cv = null; g = null; box.W = 0;
@@ -125,9 +130,12 @@
     [document.getElementById('game'), cv].forEach(el => { if (el && el.animate) { try { el.animate(kf, { duration: 230, easing: 'ease-out' }); } catch (e) {} } });
   }
 
+  let lastFrameT = 0;
   function frame(now) {
     raf = 0;
     if (!cv || !g) { live.length = 0; return; }
+    if (lastFrameT && window.FxPerf) { const d = now - lastFrameT; if (d > 0 && d < 500) window.FxPerf.report(d); }   // 端末が重いときは、数を減らす（js/fx-lite.js の FxPerf）
+    lastFrameT = now;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, cv.width, cv.height);
     g.setTransform(dpr, 0, 0, dpr, -box.L * dpr, -box.T * dpr);
@@ -704,7 +712,267 @@
     };
   }
 
-  const BUILD = { cross: buildCross, L: buildL, four: buildFour, connect: buildConnect, combo: buildCombo, prism: buildPrism };
+  // ============================================================
+  // ⑦ 〇属性を消す度に：消した属性の「力の解放」（リーダースキル発動）
+  //     共通：消したドロップから光が上（リーダー）へ昇る → 魔法陣が開く → 属性ごとの固有演出
+  //     重ねて消すほど（stack）大きく・派手になる。1回 約0.7秒、部品は少なめ（連続で消しても重くならない）
+  //       火＝炎が立ちのぼる / 水＝波紋としぶき / 木＝葉が渦を巻く / 光＝光の柱と十字 / 闇＝渦が収束して弾ける / 回復＝光の「＋」が昇る
+  //     最後に、効いたリーダー／フレンドのアイコンと文言の行が、属性色でふわっと光る
+  // ============================================================
+  // 魔法陣の輪（目盛りつき。sweep で描かれていく長さ）
+  function rune(g, x, y, r, rot, col, a, nTick, sweep) {
+    if (a <= 0.004 || r <= 2 || sweep <= 0.01) return;
+    const c1 = mixc(col, WHITE, 0.45);
+    g.beginPath(); g.arc(x, y, r, rot, rot + sweep);
+    g.strokeStyle = rgba(col, a * 0.28); g.lineWidth = 6; g.stroke();
+    g.strokeStyle = rgba(c1, a * 0.9); g.lineWidth = 1.6; g.stroke();
+    g.lineCap = 'round'; g.lineWidth = 1.3; g.beginPath();
+    for (let i = 0; i < nTick; i++) {
+      const f = i / nTick * TAU; if (f > sweep) break;
+      const an = rot + f, r1 = r * (i % 3 ? 1.07 : 1.17);
+      g.moveTo(x + Math.cos(an) * r * 0.9, y + Math.sin(an) * r * 0.9); g.lineTo(x + Math.cos(an) * r1, y + Math.sin(an) * r1);
+    }
+    g.strokeStyle = rgba(c1, a * 0.85); g.stroke();
+  }
+  // 楕円の光る輪（水面の波紋）
+  function ell(g, x, y, rx, ry, w, col, a) {
+    if (a <= 0.004 || rx <= 1) return;
+    g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU);
+    g.strokeStyle = rgba(col, a * 0.25); g.lineWidth = w * 3; g.stroke();
+    g.strokeStyle = rgba(mixc(col, WHITE, 0.55), a * 0.9); g.lineWidth = w; g.stroke();
+  }
+  // 炎のひとつ（根元 x,y から上へ。外側の赤→中の橙→芯の白）
+  function flame(g, x, y, w, h, sway, col, a) {
+    if (a <= 0.004 || h <= 2) return;
+    const K = [[1, col, 0.4], [0.62, mixc(col, [255, 200, 70], 0.65), 0.7], [0.3, [255, 250, 225], 0.95]];
+    for (let i = 0; i < 3; i++) {
+      const s = K[i][0], hh = h * (0.5 + 0.5 * s), ww = w * s;
+      // しずく型（根元は丸く、先はとがって揺れる）
+      g.beginPath(); g.moveTo(x, y + ww * 0.7);
+      g.bezierCurveTo(x - ww * 1.7, y + ww * 0.5, x - ww * 1.3, y - hh * 0.45, x + sway * s, y - hh);
+      g.bezierCurveTo(x + ww * 1.3, y - hh * 0.45, x + ww * 1.7, y + ww * 0.5, x, y + ww * 0.7);
+      g.closePath(); g.fillStyle = rgba(K[i][1], K[i][2] * a); g.fill();
+    }
+  }
+  // 葉っぱ（根元 x,y から rot の向きへ）
+  function leaf(g, x, y, len, wid, rot, col, a) {
+    if (a <= 0.004) return;
+    g.save(); g.translate(x, y); g.rotate(rot);
+    g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(len * 0.45, -wid, len, 0); g.quadraticCurveTo(len * 0.45, wid, 0, 0); g.closePath();
+    g.fillStyle = rgba(col, a * 0.75); g.fill();
+    g.beginPath(); g.moveTo(len * 0.06, 0); g.lineTo(len * 0.9, 0); g.strokeStyle = rgba(WHITE, a * 0.75); g.lineWidth = 1; g.stroke();
+    g.restore();
+  }
+  // 光の「＋」（回復）
+  function plus(g, x, y, s, col, a) {
+    if (a <= 0.004) return;
+    const c1 = mixc(col, WHITE, 0.5);
+    g.fillStyle = rgba(col, a * 0.3); g.fillRect(x - s * 1.5, y - s * 0.55, s * 3, s * 1.1); g.fillRect(x - s * 0.55, y - s * 1.5, s * 1.1, s * 3);
+    g.fillStyle = rgba(c1, a * 0.95); g.fillRect(x - s, y - s * 0.3, s * 2, s * 0.6); g.fillRect(x - s * 0.3, y - s, s * 0.6, s * 2);
+  }
+
+  // 効いたリーダー／フレンドの枠が、属性色でふわっと光る（DOM は小さな要素を最大4つ・opacity と transform だけ）
+  function pulseLeaders(slots, col, strong) {
+    try {
+      if (!slots || !slots.length) return;
+      const cL = rgba(mixc(col, WHITE, 0.55), 0.95), cG = rgba(col, strong ? 0.55 : 0.4);
+      const ps = document.querySelectorAll('#party-grid .party-slot');
+      slots.forEach(i => {
+        const host = [ps[i], document.getElementById('ls-row-' + (i === 0 ? 0 : 1))];
+        const mk = (el, css, kf, dur) => {
+          if (!el || !el.animate) return;
+          const d = document.createElement('div');
+          d.style.cssText = 'position:absolute;pointer-events:none;' + css;
+          el.appendChild(d);
+          const done = () => { if (d.parentNode) d.parentNode.removeChild(d); };
+          try { const an = d.animate(kf, { duration: dur, delay: 230, easing: 'ease-out', fill: 'both' }); an.onfinish = done; an.oncancel = done; } catch (e) { done(); }
+          setTimeout(done, dur + 600);
+        };
+        // ① パーティのアイコン：縁の光＋内側のにじみが、ぱっと開いて消える
+        mk(host[0], 'left:-2%;top:-2%;right:-2%;bottom:-2%;z-index:9;border-radius:7%;border:2px solid ' + cL + ';' +
+          'background:radial-gradient(circle,' + cG + ' 0%,' + rgba(col, 0) + ' 72%);',
+          [{ opacity: 0, transform: 'scale(.86)' }, { opacity: 1, transform: 'scale(1)', offset: 0.28 }, { opacity: 0, transform: 'scale(1.2)' }], 480);
+        // ② リーダースキルの文言の行：属性色の光が左から右へ走る
+        mk(host[1], 'left:0;top:0;bottom:0;width:100%;transform-origin:0 50%;border-radius:3px;' +
+          'background:linear-gradient(90deg,' + rgba(col, 0) + ' 0%,' + rgba(col, strong ? 0.5 : 0.36) + ' 72%,' + cL + ' 97%,' + rgba(col, 0) + ' 100%);',
+          [{ opacity: 0, transform: 'scaleX(.1)' }, { opacity: 1, transform: 'scaleX(.7)', offset: 0.4 }, { opacity: 0, transform: 'scaleX(1)' }], 520);
+      });
+    } catch (e) {}
+  }
+
+  function buildErase(cells, geo, o) {
+    const attr = String(o.attr || 'fire'), sz = geo.size;
+    const q = (function () { try { return window.FxPerf ? window.FxPerf.q() : 1; } catch (e) { return 1; } })();   // 端末が重いと 1 → 0.5 に下がる（js/fx-lite.js）
+    const light = !!o.light || q < 0.7;
+    const dens = DENS * q;
+    const col = parseHex(o.color || '#ffffff');
+    const stack = clamp(Math.floor(o.stack) || 1, 1, 6);
+    const pw = 1 + (stack - 1) * 0.1;                      // 重ねるほど大きく（最大1.5倍）
+    const n = o.n || cells.length;
+    const cxy = centroid(cells, geo), cx = cxy[0], cy = cxy[1];
+    const R = sz * (0.95 + Math.min(n, 8) * 0.03) * pw;
+    const hot = mixc(col, [255, 246, 220], 0.55);
+    const D = light ? 460 : 700;
+    const topEdge = geo.y0 - sz / 2 - Math.round(sz * 1.6) + 2;   // canvas の上端（ここで光が切れないように手前で消す）
+
+    // ── 共通①：消したドロップごとに、光がスッと上（リーダーのいる方）へ昇る（最大6個ぶん） ──
+    const step = Math.max(1, Math.ceil(cells.length / (light ? 3 : 6))), ups = [];
+    for (let i = 0; i < cells.length; i += step) {
+      const p = cellXY(geo, cells[i].r, cells[i].c), len = Math.min(sz * rnd(1.9, 2.7), p[1] - topEdge - sz * 0.2);
+      ups.push({ x: p[0], y: p[1], te: rnd(0, 110), len: Math.max(len, sz * 0.5), w: sz * rnd(0.05, 0.08) });
+    }
+    // ── 共通②：きらめく粒（属性色の火花） ──
+    const sparks = light ? [] : sparkBurst(cx, cy, Math.round((6 + stack * 2) * dens), 90, 200, R * 0.5, R * 1.3, 320, 520);
+
+    // ── 属性ごとの固有の部品 ──
+    let sig = null;
+    if (attr === 'fire') {
+      const nF = Math.round((light ? 3 : 5) + (pw - 1) * 6), fl = [];
+      for (let i = 0; i < nF; i++) {
+        const k = nF > 1 ? i / (nF - 1) - 0.5 : 0, ox = k * R * 1.6;
+        fl.push({ ox, te: 30 + Math.abs(i - (nF - 1) / 2) * 22 + rnd(0, 20), h: R * rnd(1.25, 1.8) * (1 - Math.abs(k) * 0.5), w: sz * rnd(0.14, 0.2), ph: rnd(0, TAU) });
+      }
+      const em = [];
+      for (let i = 0, N = light ? 0 : Math.round(10 * dens * pw); i < N; i++) em.push({ te: rnd(60, 260), x: cx + rnd(-R * 0.7, R * 0.7), y: cy + R * 0.2, vx: rnd(-R * 0.3, R * 0.3), rise: rnd(R * 0.9, R * 1.9), life: rnd(380, 580), r: rnd(1.6, 3.2) });
+      sig = function (g, t) {
+        for (const f of fl) {
+          const u = seg(t, f.te, f.te + 230), a = 1 - easeIn(seg(t, f.te + 220, f.te + 540));
+          if (u <= 0 || a <= 0.004) continue;
+          flame(g, cx + f.ox, cy + R * 0.38, f.w, f.h * easeOut(u) * (0.4 + 0.6 * a), Math.sin(t * 0.017 + f.ph) * f.w * 0.9 * u, col, a);
+        }
+        for (const e of em) {
+          const v = (t - e.te) / e.life; if (v <= 0 || v >= 1) continue;
+          glow(g, e.x + e.vx * easeOut(v), e.y - e.rise * easeOut(v), e.r * (3.2 - v * 1.6), hot, (1 - v) * 0.85);
+        }
+      };
+    } else if (attr === 'water') {
+      const dr = [];
+      for (let i = 0, N = light ? 4 : Math.round(9 * dens * pw); i < N; i++) {
+        const a = -Math.PI / 2 + rnd(-1.0, 1.0), d = R * rnd(0.9, 1.9);
+        dr.push({ te: rnd(30, 150), vx: Math.cos(a) * d * 0.8, vy: Math.sin(a) * d, life: rnd(420, 560), r: rnd(1.8, 3.2) });
+      }
+      sig = function (g, t) {
+        for (let k = 0; k < (light ? 2 : 3); k++) {   // 水面の波紋
+          const u = seg(t, k * 90, k * 90 + 520); if (u <= 0 || u >= 1) continue;
+          const rx = R * (0.3 + 1.5 * easeOut(u)); ell(g, cx, cy + R * 0.12, rx, rx * 0.42, 2.2 * (1 - u) + 0.7, col, (1 - u) * 0.95);
+        }
+        const j = easeOut(seg(t, 20, 170)) * (1 - easeIn(seg(t, 200, 460)));   // 水柱
+        if (j > 0.01) lens(g, cx, cy + R * 0.2, cx, cy - R * 1.5 * j, sz * 0.13 * j, col, 0.95);
+        for (const d of dr) {   // しぶき（放物線）
+          const v = (t - d.te) / d.life; if (v <= 0 || v >= 1) continue;
+          glow(g, cx + d.vx * v, cy + d.vy * v + R * 2.2 * v * v, d.r * 4.2 * (1 - v * 0.4), mixc(col, WHITE, 0.4), (1 - v * v));
+        }
+      };
+    } else if (attr === 'wood') {
+      const M = Math.round((light ? 5 : 8) + (pw - 1) * 8), lv = [];
+      for (let j = 0; j < M; j++) lv.push({ a0: j * TAU / M + rnd(-0.15, 0.15), te: 20 + j * 14, len: sz * rnd(0.46, 0.62), wid: sz * rnd(0.15, 0.21), c: j % 2 ? col : mixc(col, [255, 255, 160], 0.4) });
+      sig = function (g, t) {
+        glow(g, cx, cy, R * (0.5 + 0.6 * easeOut(seg(t, 0, 300))), col, (1 - seg(t, 80, 420)) * 0.55);
+        for (const l of lv) {
+          const u = seg(t, l.te, l.te + 520); if (u <= 0 || u >= 1) continue;
+          const ang = l.a0 + u * 1.7, d = R * (0.2 + 1.3 * easeOut(u)), a = Math.min(1, u * 7) * (1 - easeIn(seg(u, 0.5, 1)));
+          leaf(g, cx + Math.cos(ang) * d, cy + Math.sin(ang) * d, l.len * (1 - u * 0.25), l.wid, ang + Math.PI * 0.5 + 0.5 + u * 2.0, l.c, a);
+        }
+      };
+    } else if (attr === 'light') {
+      const tw = [];
+      for (let i = 0, N = light ? 0 : Math.round(6 * dens); i < N; i++) { const a = rnd(0, TAU), d = R * rnd(0.5, 1.6); tw.push({ x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d * 0.8, te: rnd(40, 260), life: rnd(240, 360), s: sz * rnd(0.16, 0.28) }); }
+      sig = function (g, t) {
+        const e = easeOut(seg(t, 0, 170)), fa = 1 - easeIn(seg(t, 180, 560));
+        if (fa > 0.004) {
+          lens(g, cx, cy - R * 2.5 * e, cx, cy + R * 0.9 * e, sz * 0.2 * fa, col, fa);        // 光の柱
+          lens(g, cx - R * 1.7 * e, cy, cx + R * 1.7 * e, cy, sz * 0.085 * fa, col, fa * 0.9); // 横の光（十字）
+          for (let i = 0, M = light ? 6 : 10; i < M; i++) {                                    // 放射の細い光
+            const a = i * TAU / M + 0.2, ux = Math.cos(a), uy = Math.sin(a), L2 = R * (i % 2 ? 1.2 : 1.7) * e;
+            blade(g, cx + ux * R * 0.3, cy + uy * R * 0.3, cx + ux * L2, cy + uy * L2, Math.min(e, easeIn(seg(t, 140, 420))), e, sz * 0.035, col, 0.85);
+          }
+        }
+        for (const s of tw) { const v = (t - s.te) / s.life; if (v > 0 && v < 1) flare(g, s.x, s.y, s.s * Math.sin(Math.PI * v), s.s * 0.12, Math.PI / 4, col, 0.95); }
+      };
+    } else if (attr === 'dark') {
+      const arms = light ? 2 : 3, sp = [];
+      for (let i = 0, M = light ? 5 : 8; i < M; i++) sp.push({ a: i * TAU / M + rnd(-0.2, 0.2), len: R * rnd(1.2, 1.9), hw: sz * rnd(0.05, 0.09) });
+      sig = function (g, t) {
+        const vig = (1 - seg(t, 220, 520)) * 0.38 * easeOut(seg(t, 0, 120));
+        if (vig > 0.01) {   // まわりが一瞬だけ暗くなる（深い闇に吸い込まれる感じ）
+          g.globalCompositeOperation = 'source-over';
+          const gr = g.createRadialGradient(cx, cy, 0, cx, cy, R * 1.9);
+          gr.addColorStop(0, 'rgba(8,0,22,' + vig.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(8,0,22,0)');
+          g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R * 1.9, 0, TAU); g.fill();
+          g.globalCompositeOperation = 'lighter';
+        }
+        const p = easeOut(seg(t, 0, 240)), va = 1 - easeIn(seg(t, 200, 300));
+        if (va > 0.004) {   // 渦が中心へ収束
+          for (let k = 0; k < arms; k++) {
+            const pts = [];
+            for (let i = 0; i <= 9; i++) { const s = Math.max(0, p - 0.55) + (i / 9) * Math.min(p, 0.55), r = R * 1.75 * (1 - s) + R * 0.08, an = k * TAU / arms - s * 5.4 + 1.2; pts.push([cx + Math.cos(an) * r, cy + Math.sin(an) * r]); }
+            polyline(g, pts, 2.2, col, va);
+          }
+        }
+        const b = seg(t, 230, 640);
+        if (b > 0) {   // 弾ける
+          const e = easeOut(seg(t, 230, 380)), fa = 1 - easeIn(seg(t, 330, 660));
+          glow(g, cx, cy, R * (0.6 + 1.1 * easeOut(b)), col, (1 - b) * 0.95);
+          ring(g, cx, cy, R * (0.3 + 1.5 * easeOut(b)), 3.6 * (1 - b) + 0.8, col, 1 - b);
+          for (const s of sp) { const ux = Math.cos(s.a), uy = Math.sin(s.a); lens(g, cx + ux * R * 0.25, cy + uy * R * 0.25, cx + ux * s.len * e, cy + uy * s.len * e, s.hw * fa, col, fa); }
+        }
+      };
+    } else if (attr === 'heal') {
+      const pl = [];
+      for (let i = 0, N = Math.round((light ? 3 : 6) + (pw - 1) * 6); i < N; i++) pl.push({ x: cx + rnd(-R * 0.95, R * 0.95), y: cy + rnd(-R * 0.2, R * 0.55), te: rnd(10, 220), life: rnd(420, 540), rise: R * rnd(1.1, 1.8), s: sz * rnd(0.11, 0.16), dr: rnd(-8, 8) });
+      sig = function (g, t) {
+        for (let k = 0; k < (light ? 1 : 2); k++) {
+          const u = seg(t, k * 130, k * 130 + 520); if (u <= 0 || u >= 1) continue;
+          ring(g, cx, cy, R * (0.25 + 1.25 * easeOut(u)), 3 * (1 - u) + 0.8, col, (1 - u) * 0.85, false);
+        }
+        glow(g, cx, cy, R * 1.1, col, (1 - seg(t, 60, 480)) * 0.5 * easeOut(seg(t, 0, 120)));
+        for (const p of pl) {
+          const v = (t - p.te) / p.life; if (v <= 0 || v >= 1) continue;
+          plus(g, p.x + p.dr * v, p.y - p.rise * easeOut(v), p.s * (0.7 + 0.5 * Math.sin(Math.PI * v)), col, Math.pow(Math.sin(Math.PI * v), 0.6));
+        }
+      };
+    } else {   // それ以外の属性：集中線と衝撃波
+      const rs = [];
+      for (let i = 0, M = light ? 6 : 12; i < M; i++) rs.push({ a: rnd(0, TAU), te: rnd(0, 70), len: R * rnd(1.0, 1.8), w: sz * rnd(0.03, 0.055) });
+      sig = function (g, t) {
+        for (const ry of rs) {
+          const ux = Math.cos(ry.a), uy = Math.sin(ry.a), hd = easeOut(seg(t, ry.te, ry.te + 210)), tl = easeIn(seg(t, ry.te + 50, ry.te + 430));
+          blade(g, cx + ux * R * 0.28, cy + uy * R * 0.28, cx + ux * ry.len, cy + uy * ry.len, Math.min(hd, tl), hd, ry.w, col, 0.9);
+        }
+      };
+    }
+
+    return {
+      dur: D,
+      draw(g, t) {
+        g.globalCompositeOperation = 'lighter';
+        // 発動の閃光（ドロップの光り＋中心の星）
+        const u0 = seg(t, 0, 260);
+        glow(g, cx, cy, R * (0.55 + 0.9 * easeOut(u0)), col, (1 - u0) * 0.9 * easeOut(seg(t, 0, 40)));
+        for (const p of ups) {
+          const k = seg(t, 0, 230);
+          if (k < 1) glow(g, p.x, p.y, sz * (0.45 + 0.4 * easeOut(k)), col, (1 - k) * 0.75);
+        }
+        // 魔法陣（回りながら開いて消える）。重ねるほど内側にもう1つ
+        const ra = 1 - easeIn(seg(t, 250, 600)), rr = R * (0.6 + 0.75 * easeOut(seg(t, 0, 320))), sw = easeOut(seg(t, 0, 210)) * TAU, rot = (attr === 'dark' ? -1 : 1) * t * 0.0042 - Math.PI / 2;
+        rune(g, cx, cy, rr, rot, col, ra, 24, sw);
+        if (!light && stack >= 3) rune(g, cx, cy, rr * 0.66, -rot * 1.3, col, ra * 0.85, 16, sw);
+        // 属性ごとの演出
+        if (sig) sig(g, t);
+        // 消したドロップから、光が上へ昇る
+        for (const p of ups) {
+          const hd = easeOut(seg(t, p.te, p.te + 250)), tl = easeIn(seg(t, p.te + 70, p.te + 430));
+          if (hd > 0 && tl < 1) blade(g, p.x, p.y, p.x, p.y - p.len, Math.min(hd, tl), hd, p.w, col, 0.95);
+        }
+        // 中心の星（スッと現れて消える）
+        const fl = Math.sin(Math.PI * Math.min(1, seg(t, 0, 260) * 1.1)) * (1 - seg(t, 0, 260) * 0.3);
+        if (fl > 0.02) flare(g, cx, cy, R * 1.05 * fl, sz * 0.07, Math.PI / 4, col, 0.95);
+        drawSparks(g, sparks, t, col);
+      }
+    };
+  }
+
+  const BUILD = { cross: buildCross, L: buildL, four: buildFour, connect: buildConnect, combo: buildCombo, prism: buildPrism, erase: buildErase };
 
   function play(kind, cells, geo, opt) {
     try {
@@ -719,6 +987,7 @@
       live.push(fx);
       while (live.length > MAX_LIVE) live.shift();
       if (!raf) raf = requestAnimationFrame(frame);
+      if (kind === 'erase' && opt.leaders && opt.leaders.length) pulseLeaders(opt.leaders, parseHex(opt.color), (opt.stack || 1) >= 3);
       return true;
     } catch (e) { return false; }
   }

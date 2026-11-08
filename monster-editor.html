@@ -61,6 +61,14 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
 
 [hidden]{display:none!important}
 .tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap;position:sticky;top:0;z-index:20;padding:8px 0;background:rgba(244,248,255,.94);backdrop-filter:blur(6px)}
+.stagebar{margin:0 0 12px}
+.stagetabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stagetabs .stg{background:#fff;color:#1d4ed8;border:1px solid var(--line);padding:7px 13px;border-radius:9px}
+.stagetabs .stg.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.stagetabs .stgadd{background:#eff6ff;color:#1d4ed8;border:1px dashed #93c5fd;padding:7px 13px;border-radius:9px}
+.stagetabs .stgadd:disabled{opacity:.4;cursor:not-allowed}
+.stagetabs .stgdel{background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:7px 13px;border-radius:9px;margin-left:auto}
+.sk-change{color:#2b8cff;font-weight:900}
 .tabbtn{background:#ffffff;color:#1d4ed8;border:1px solid var(--line);padding:11px 18px;border-radius:10px}
 .tabbtn.on{background:var(--accent);color:#ffffff;border-color:var(--accent)}
 .chip{display:inline-flex;align-items:center;gap:4px;margin:3px 6px 3px 0;padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:#eef4ff;color:var(--text);font-size:.8rem;cursor:pointer}
@@ -148,12 +156,19 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
 
 <section class="panel">
   <h2>アクティブスキル</h2>
+  <div class="stagebar">
+    <div id="stageTabs" class="stagetabs"></div>
+    <p class="small" style="margin:6px 0 0">🔄 <b>変化スキル</b>：「＋スキルを追加」で最大10個まで。ゆめかわカットイン・オリジナル音声もスキルごとに選べます（発動条件はスキル1だけ）。スキル1を使うとスキル2に、…最後まで使うとスキル1に戻ります。スキルごとに効果・説明・（必要なら）名前とSPを設定できます。説明の末尾の「スキルXに変化。」は、ゲーム内で<span class="sk-change">青文字</span>になります。</p>
+  </div>
   <div class="fields">
-    <label class="wide">スキル名<input id="skName" value="スキル名"></label>
-    <label class="wide">必要スキルポイント（SP）<input id="skSp" type="number" min="1" max="10" step="1" value="1"></label>
+    <label class="wide"><span id="skNameLbl">スキル名</span><input id="skName" value="スキル名"></label>
+    <label class="wide"><span id="skSpLbl">必要スキルポイント（SP）</span><input id="skSp" type="number" min="1" max="10" step="1" value="1"></label>
     <label class="wide">説明（ゲーム内表示用）<textarea id="skDesc"></textarea></label>
+    <div class="wide small" id="skDescPrev" style="margin:-4px 0 0"></div>
     <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skCutin" type="checkbox" style="width:auto"> カットインのオリジナル音声を使う（カットインは全モンスターで出ます）</label>
+    <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skYume" type="checkbox" style="width:auto"> 🎀 ゆめかわふわカットインにする（★の線が走って、タイトルカード → 上下に広がってモンスターが登場。背景色は属性で変わります）</label>
     <p class="small wide" id="skCutinHint" style="margin:0"></p>
+    <div class="wide" id="skBaseOnly"><div class="fields">
     <label class="wide">発動条件（条件を満たしていないと、SPが溜まっていても使えません）
       <select id="skCondType">
         <option value="">なし</option>
@@ -173,10 +188,11 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
     </label>
     <label id="skCondValWrap"><span id="skCondValLabel">X</span><input id="skCondVal" type="number" min="1" step="1" value="5"></label>
     <p class="small wide" id="skCondHint" style="margin:0"></p>
+    </div></div>
   </div>
   <div id="activeEffects"></div>
   <p class="small" id="skDup" style="color:#b45309"></p>
-  <div class="actions"><button class="add" data-add="active">＋ アクティブ効果を追加</button><button class="sub" id="autoSkDesc" type="button">効果から説明文を自動生成</button></div>
+  <div class="actions"><button class="add" data-add="active">＋ アクティブ効果を追加</button><button class="sub" id="autoSkDesc" type="button">効果から説明文を自動生成</button><button class="sub" id="fixChangeLines" type="button">全スキルの「スキルXに変化。」を整える</button></div>
   <p class="hint">必要SPはスキル発動時にパーティ共有SPから消費される量です（上限10）。</p>
   <div class="lib">
     <h3>登録済みスキルから選んで使い回す</h3>
@@ -303,7 +319,7 @@ function normalizeMonsterTypes(m){
   if(!m || typeof m !== 'object') return m;
   if(m.type) m.type = normType(m.type);
   const fix = list => (list||[]).forEach(e=>{ if(!e) return; if(e.condition==='type' && e.attr) e.attr = normType(e.attr); if(e.monType) e.monType = normType(e.monType); });
-  if(m.skill) fix(m.skill.effects);
+  if(m.skill){ fix(m.skill.effects); (m.skill.stages||[]).forEach(s=>s&&fix(s.effects)); }
   if(m.leaderSkill) fix(m.leaderSkill.effects);
   return m;
 }
@@ -498,6 +514,92 @@ let imgKeep = '';            // 既存モンスターに元から付いていた
 let extraKeys = {};          // エディターが知らないキー（そのまま保持）
 let activeEffects = [], leaderEffects = [], evolutions = [];
 
+// ---------- 変化スキル（スキル1〜10） ----------
+//   stages[0]=スキル1（skill 本体）、stages[1〜]=スキル2〜（skill.stages）。画面には「いま選んでいるスキル」だけ出す
+//   各 { name, sp, desc, effects:[{key,data}] }。スキル2以降の name / sp は空欄 = スキル1と同じ
+const MAX_STAGES = 10;
+let stages = [{name:'',sp:1,desc:'',effects:[]}];
+let curStage = 0;
+const CHANGE_RE = /スキル[0-9０-９]{1,2}に変化。?/g;
+function toActiveEff(e){
+  e=structuredClone(e);
+  if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; }
+  if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; }
+  return {key:matchTemplate(activeTemplates,e),data:e};
+}
+// 画面の入力を、いま選んでいるスキルへ保存
+function flushStage(){
+  const s = stages[curStage]; if(!s) return;
+  s.name = $('skName').value;
+  s.sp = $('skSp').value==='' ? (curStage===0?1:'') : Number($('skSp').value);
+  s.desc = $('skDesc').value;
+  s.effects = activeEffects;
+  s.cutin = $('skCutin').checked; s.yumekawa = $('skYume').checked;
+}
+// いま選んでいるスキルを画面に出す
+function loadStageToForm(){
+  const s = stages[curStage];
+  $('skName').value = s.name ?? '';
+  $('skSp').value = s.sp ?? '';
+  $('skDesc').value = s.desc ?? '';
+  activeEffects = s.effects;
+  const base = curStage===0;
+  $('skBaseOnly').style.display = base ? '' : 'none';   // 発動条件はスキル1だけ
+  $('skCutin').checked = s.cutin === true; $('skYume').checked = s.yumekawa === true;   // カットイン・音声はスキルごと
+  $('skNameLbl').textContent = base ? 'スキル名' : `スキル${curStage+1}の名前（空欄 = スキル1と同じ名前）`;
+  $('skSpLbl').textContent = base ? '必要スキルポイント（SP）' : `スキル${curStage+1}の必要SP（空欄 = スキル1と同じ）`;
+  renderEffects('active');
+}
+function loadSkillToForm(sk){
+  sk = sk||{};
+  writeSkillCond(sk.condition);
+  stages = [{name:sk.name??'',sp:sk.sp??1,desc:sk.desc??'',cutin:sk.cutin===true,yumekawa:sk.yumekawa===true,effects:normActiveEffs(sk.effects).map(toActiveEff)}]
+    .concat((Array.isArray(sk.stages)?sk.stages:[]).slice(0,MAX_STAGES-1).map(s=>({name:s.name??'',sp:s.sp??'',desc:s.desc??'',cutin:s.cutin===true,yumekawa:s.yumekawa===true,effects:normActiveEffs(s.effects).map(toActiveEff)})));
+  curStage = 0;
+  loadStageToForm();
+}
+function showStage(i){
+  if(i<0||i>=stages.length||i===curStage) return;
+  flushStage(); curStage=i; loadStageToForm(); renderStageTabs(); updateDescPreview();
+}
+// 説明の「スキルXに変化。」の行を、今のスキル数に合わせて作り直す（スキル1つだけなら消す）。最後のスキルは「スキル1に変化。」
+function applyChangeLines(){
+  stages.forEach((s,i)=>{
+    let d = String(s.desc||'').replace(CHANGE_RE,'').replace(/[ \t　]+\n/g,'\n').replace(/\n{2,}/g,'\n').replace(/^\n+|\n+$/g,'');
+    if(stages.length>1) d = (d?d+'\n':'')+`スキル${i+1<stages.length?i+2:1}に変化。`;
+    s.desc = d;
+  });
+}
+function addStage(){
+  if(stages.length>=MAX_STAGES) return;
+  flushStage();
+  stages.push({name:'',sp:'',desc:'',cutin:false,yumekawa:false,effects:[]});
+  applyChangeLines();
+  curStage = stages.length-1; loadStageToForm();
+  dirty=true; update();
+}
+function removeStage(){
+  if(curStage===0||stages.length<=1) return;
+  if(!confirm(`スキル${curStage+1}を削除しますか？（後ろのスキルの番号は繰り上がります）`)) return;
+  flushStage();
+  stages.splice(curStage,1);
+  applyChangeLines();
+  curStage = Math.min(curStage,stages.length-1); loadStageToForm();
+  dirty=true; update();
+}
+function renderStageTabs(){
+  const host=$('stageTabs'); if(!host) return;
+  host.innerHTML = stages.map((s,i)=>`<button type="button" class="stg${i===curStage?' on':''}" data-stage="${i}">スキル${i+1}</button>`).join('')
+    + `<button type="button" class="stgadd" data-stage-add="1"${stages.length>=MAX_STAGES?' disabled':''}>＋ スキルを追加（${stages.length}/${MAX_STAGES}）</button>`
+    + (curStage>0?`<button type="button" class="stgdel" data-stage-del="1">スキル${curStage+1}を削除</button>`:'');
+}
+// 説明の下に、ゲーム内の見え方（「スキルXに変化。」は青）を出す
+function updateDescPreview(){
+  const h=$('skDescPrev'); if(!h) return;
+  const t=$('skDesc').value;
+  h.innerHTML = t ? '表示：'+esc(t).replace(/\n/g,'<br>').replace(/スキル([0-9０-９]{1,2})に変化。?/g,m=>`<span class="sk-change">${m}</span>`) : '';
+}
+
 // ---------- 画面部品 ----------
 const attrOptions = ATTRS.filter(([v])=>v!=='ojama').map(([v,n])=>`<option value="${v}">${n}</option>`).join('');
 $('monAttr').innerHTML = attrOptions + '<option value="none">無（主属性なし）</option>';   // 無＝主属性なし。副属性だけで攻撃する
@@ -562,7 +664,11 @@ function buildMonster(){
   if($('monMaxLevel').value!=='') m.maxLevel = Math.max(1,Math.min(EXP_TABLE_LEN,Math.floor(num('monMaxLevel'))));
   m.baseExp = num('monBaseExp',100);
   m.stats = { hp:{min:num('hpMin'),max:num('hpMax')}, atk:{min:num('atkMin'),max:num('atkMax')}, rec:{min:num('recMin'),max:num('recMax')} };
-  m.skill = { name:$('skName').value, sp:Math.max(1,Math.floor(num('skSp',1))), desc:$('skDesc').value, ...($('skCutin').checked?{cutin:true}:{}), ...readSkillCond(), effects:activeEffects.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))))) };
+  flushStage();
+  const cleanActive = list=>list.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_')))));
+  const s0 = stages[0];
+  m.skill = { name:s0.name, sp:Math.max(1,Math.floor(Number(s0.sp)||1)), desc:s0.desc, ...(s0.cutin?{cutin:true}:{}), ...(s0.yumekawa?{yumekawa:true}:{}), ...readSkillCond(), effects:cleanActive(s0.effects) };
+  if(stages.length>1) m.skill.stages = stages.slice(1).map(s=>({ ...(s.name?{name:s.name}:{}), ...((s.sp!==''&&s.sp!=null&&Number(s.sp)>=1)?{sp:Math.floor(Number(s.sp))}:{}), ...(s.cutin?{cutin:true}:{}), ...(s.yumekawa?{yumekawa:true}:{}), desc:s.desc, effects:cleanActive(s.effects) }));
   m.leaderSkill = { name:$('lsName').value, desc:$('lsDesc').value, effects:leaderEffects.map(e=>cleanEff(e.data)) };
   const evos = evolutions.filter(e=>e.to!==''&&e.to!=null).map(e=>({to:Number(e.to),materials:e.materials.filter(x=>x.item).map(x=>({item:x.item,count:Number(x.count)||1}))}));
   if(evos.length) m.evolutions = evos;
@@ -585,19 +691,14 @@ function loadMonsterToForm(m){
   $('atkMin').value=g('atk','min'); $('atkMax').value=g('atk','max');
   $('recMin').value=g('rec','min'); $('recMax').value=g('rec','max');
   const sk = m.skill||{};
-  $('skName').value = sk.name ?? '';
-  $('skSp').value = sk.sp ?? 1;
-  $('skDesc').value = sk.desc ?? '';
-  $('skCutin').checked = sk.cutin === true;
-  writeSkillCond(sk.condition);
   const ls = m.leaderSkill||{};
   $('lsName').value = ls.name ?? ''; $('lsDesc').value = ls.desc ?? '';
   const toEff=(templates,e)=>{ e=templates===leaderTemplates?normLeaderEff(e):structuredClone(e); if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; } if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; } return {key:matchTemplate(templates,e),data:e}; };
-  activeEffects = normActiveEffs(sk.effects).map(e=>toEff(activeTemplates,e));
+  loadSkillToForm(sk);
   leaderEffects = (ls.effects||[]).map(e=>toEff(leaderTemplates,e));
   evolutions = (m.evolutions||[]).map(e=>({to:e.to,materials:(e.materials||[]).map(x=>({item:x.item,count:x.count}))}));
   extraKeys = Object.fromEntries(Object.entries(m).filter(([k])=>!KNOWN_KEYS.includes(k)));
-  renderEffects('active'); renderEffects('leader'); renderEvos();
+  renderEffects('leader'); renderEvos();
 }
 
 // ---------- JS シリアライザ（monsters.js と同じ見た目） ----------
@@ -943,13 +1044,8 @@ function renderSkillLib(){
 }
 $('skLibSearch').addEventListener('input',renderSkillLib);
 function applySkill(sk){
-  $('skName').value=sk.name??'';
-  $('skSp').value=sk.sp ?? 1;
-  $('skDesc').value=sk.desc??'';
-  $('skCutin').checked = sk.cutin === true;
-  writeSkillCond(sk.condition);
-  activeEffects=normActiveEffs(sk.effects).map(e=>({key:matchTemplate(activeTemplates,e),data:structuredClone(e)}));
-  renderEffects('active'); dirty=true; update();
+  loadSkillToForm(sk);
+  dirty=true; update();
 }
 
 // ---------- リーダースキルライブラリ・重複チェック ----------
@@ -1070,12 +1166,15 @@ function updateCondUI(){
 function updateCutinHint(){
   const h=$('skCutinHint'); if(!h) return;
   const id=$('monId').value||'?';
-  const style = Number(id) >= 5000 ? '新カットイン（ID5000以降）' : '通常カットイン';
+  const yume = $('skYume') && $('skYume').checked;
+  const style = yume ? '🎀 ゆめかわふわカットイン' : (Number(id) >= 5000 ? '新カットイン（ID5000以降）' : '通常カットイン');
   h.textContent = $('skCutin').checked
     ? `${style} ／ 画像：mp${id}.png（無ければ通常の画像） ／ 効果音：オリジナル音声 ${id}.mp3（スキル発動音 skillgo.mp3 のあとに鳴ります。${id}.mp3 が無ければ cutin.mp3）`
     : `${style} ／ 画像：mp${id}.png（無ければ通常の画像） ／ 効果音：普通のカットイン音 cutin.mp3`;
 }
 function update(){
+  renderStageTabs();
+  updateDescPreview();
   refreshTypeList();
   refreshIdNames();
   updateImgHint();
@@ -1173,6 +1272,9 @@ document.addEventListener('change', e=>{
 });
 document.addEventListener('click', e=>{
   const t=e.target.closest('button'); if(!t) return;
+  if(t.dataset.stage!==undefined){ showStage(+t.dataset.stage); return; }
+  if(t.dataset.stageAdd!==undefined){ addStage(); return; }
+  if(t.dataset.stageDel!==undefined){ removeStage(); return; }
   if(t.id==='imgReset'){ imgKeep=''; dirty=true; update(); return; }
   if(t.dataset.lslib!==undefined){ const x=lsLibCache[+t.dataset.lslib]; if(x){ applyLeader(structuredClone(x.ls)); say(`リーダースキル「${x.ls.name}」を適用しました。`); } return; }
   if(t.dataset.tpl!==undefined){ const src=db[t.dataset.tpl]; if(src) startFromTemplate(src); return; }
@@ -1187,7 +1289,8 @@ document.addEventListener('click', e=>{
   else if(t.dataset.matRemove!==undefined){ const [i,j]=t.dataset.matRemove.split(':').map(Number); evolutions[i].materials.splice(j,1); renderEvos(); dirty=true; update(); }
 });
 $('autoLsDesc').onclick=()=>{ $('lsDesc').value=describeLeader(leaderEffects.map(e=>e.data)); dirty=true; update(); };
-$('autoSkDesc').onclick=()=>{ $('skDesc').value=describeActive(activeEffects.map(e=>e.data)); dirty=true; update(); };
+$('autoSkDesc').onclick=()=>{ $('skDesc').value=describeActive(activeEffects.map(e=>e.data)); flushStage(); applyChangeLines(); loadStageToForm(); dirty=true; update(); };
+$('fixChangeLines').onclick=()=>{ flushStage(); applyChangeLines(); loadStageToForm(); dirty=true; update(); say('各スキルの説明の末尾を「スキルXに変化。」に整えました。'); };
 
 $('monSelect').onchange=()=>{
   commitCurrent();

@@ -1534,6 +1534,14 @@ body {
 #skill-hold-info .shi-name { font-size:15px; font-weight:700; color:#ffe27a; }
 #skill-hold-info .shi-sp   { font-size:12px; font-weight:700; padding:2px 8px; border-radius:999px; background:#3a46c8; white-space:nowrap; }
 #skill-hold-info .shi-desc { font-size:13px; line-height:1.5; color:#eef; white-space:pre-wrap; }
+/* 変化スキルの「次のスキル」カード（暗い背景用） */
+#skill-hold-info .sk-sl { margin-top:8px; }
+#skill-hold-info .sk-sl-item { padding:6px 9px 7px; background:rgba(255,255,255,.07); border:1.5px solid rgba(160,170,255,.45); border-radius:9px; color:#eef; font-size:13px; line-height:1.5; box-shadow:none; }
+#skill-hold-info .sk-sl-h { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:2px; font-size:12px; font-weight:700; }
+#skill-hold-info .sk-sl-no { padding:1px 8px; color:#fff; background:#3a46c8; border-radius:999px; }
+#skill-hold-info .sk-sl-name { color:#ffe27a; }
+#skill-hold-info .sk-sl-sp { margin-left:auto; padding:1px 8px; font-size:11px; color:#fff; background:rgba(58,70,200,.55); border:0; border-radius:999px; }
+#skill-hold-info .sk-sl-next { padding:1px 8px; font-size:11px; color:#fff; background:#ff5f4a; border-radius:999px; }
 #party-grid .party-slot { touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
 
 

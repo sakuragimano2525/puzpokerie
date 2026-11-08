@@ -80,6 +80,9 @@
     // 「ロック」の文字を lock.png に置き換える（「ブロック」など別の語は対象外）。読み込めない時は元の文字「ロック」に戻る
     s = s.replace(/(?<![ァ-ヶー])ロック(?![ァ-ヶー])/g, m => img('lock.png', 'ロック', 'sk-lock'));
 
+    // 「スキル2に変化。」→ 青文字（変化スキル。数字は半角・全角どちらでも）
+    s = s.replace(/スキル([0-9０-９]{1,2})に変化。?/g, m => `<span class="sk-change">${m}</span>`);
+
     // 退避した文字を戻す
     s = s.replace(/\u0001(\d+)\u0002/g, (m, i) => keep[+i]);
     return s;
@@ -114,10 +117,57 @@
     }
     return '';
   }
-  // スキルの説明を入れる。発動条件があれば、必ず先頭に青文字で出す
-  function setSkillDesc(el, skill, numHL) {
+  // ── 変化スキル（skill.stages）──
+  //   skill.stages = [ { name?, sp?, desc, effects:[…] }, … ]（スキル2〜スキル10。スキル1は skill 本体）
+  //   スキル1 → 2 → … → 最後まで使うと、またスキル1に戻る。説明の「スキルXに変化。」は青文字で出す
+  const stageNo = n => n + 2;   // stages[0] = スキル2
+  function skillStagesHTML(skill) {
+    const st = skill && Array.isArray(skill.stages) ? skill.stages : [];
+    if (!st.length) return '';
+    return st.map((s, i) => {
+      const nm = s.name && s.name !== skill.name ? '　' + esc(s.name) : '';
+      const sp = (typeof s.sp === 'number' && s.sp >= 1) ? s.sp : (skill.sp || 1);
+      return `<div class="sk-stage"><div class="sk-stage-h">スキル${stageNo(i)}${nm}　必要SP ${sp}</div>${skillTextHTML(s.desc || '')}</div>`;
+    }).join('');
+  }
+  // ── 変化スキルの「全段階の一覧」（スキル確認・変化スキル一覧ポップアップ用）──
+  //   skill は monsters.js の skill 本体（stages つき）。cur = 今のスキル番号（0=スキル1）。
+  //   cur を渡すと、その段階に「いま」の印と強調がつき、それ以外は少し薄く出る。cur を省略（-1）すると印なしの一覧。
+  //   発動条件はスキル1だけのものなので、スキル1の枠の中に出す。
+  //   only = [段階番号…] を渡すと、その段階だけを出す（長押し説明の「次のスキル」用）。tag を渡すと、その段階に「次」などのバッジをつける
+  function skillStageListHTML(skill, cur, only, tag) {
+    const st = skill && Array.isArray(skill.stages) ? skill.stages : [];
+    if (!st.length) return '';
+    const items = [{ name: skill.name, sp: skill.sp, desc: skill.desc, cond: skill.condition }]
+      .concat(st.map(s => ({ name: s.name || skill.name, sp: (typeof s.sp === 'number' && s.sp >= 1) ? s.sp : skill.sp, desc: s.desc, cond: null })));
+    const showName = items.some(x => x.name !== items[0].name);   // 全段階が同じ名前なら、名前は繰り返さない
+    const cI = (typeof cur === 'number' && cur >= 0) ? cur % items.length : -1;
+    const idxs = Array.isArray(only) ? only.filter(i => i >= 0 && i < items.length) : items.map((x, i) => i);
+    return `<div class="sk-sl${cI >= 0 ? ' has-cur' : ''}">` + idxs.map(i => {
+      const x = items[i];
+      const sp = (typeof x.sp === 'number' && x.sp >= 1) ? x.sp : 1;
+      const ct = skillCondText(x.cond);
+      return `<div class="sk-sl-item${i === cI ? ' is-cur' : ''}" data-stage="${i}">` +
+        `<div class="sk-sl-h"><span class="sk-sl-no">スキル${i + 1}</span>` +
+        (showName && x.name ? `<span class="sk-sl-name">${esc(x.name)}</span>` : '') +
+        `<span class="sk-sl-sp">必要SP ${sp}</span>` +
+        (i === cI ? '<span class="sk-sl-now">いま</span>' : '') +
+        (tag && i !== cI ? `<span class="sk-sl-next">${esc(tag)}</span>` : '') + `</div>` +
+        (ct ? `<span class="sk-cond">${skillTextHTML(ct)}</span>` : '') +
+        `<div class="sk-sl-desc">${skillTextHTML(x.desc || '')}</div></div>`;
+    }).join('') + `</div>`;
+  }
+
+  // スキルの説明を入れる。発動条件があれば、必ず先頭に青文字で出す。変化スキルなら、スキル1〜Xを順に並べる
+  //   opts.list = true      … 変化スキルは、全段階の一覧（skillStageListHTML）にする。opts.cur = 今のスキル番号
+  //   opts.noStages = true  … 変化スキルでも、スキル1だけを出す（段階の一覧は別のボタンで見せる画面用）
+  function setSkillDesc(el, skill, numHL, opts) {
     if (!el) return;
+    const o = opts || {};
+    if (o.list && skill && Array.isArray(skill.stages) && skill.stages.length) { el.innerHTML = skillStageListHTML(skill, o.cur); return; }
     setSkillText(el, skill && skill.desc, numHL);
+    const stages = o.noStages ? '' : skillStagesHTML(skill);
+    if (stages) el.innerHTML = `<div class="sk-stage-h">スキル1　必要SP ${(skill && skill.sp) || 1}</div>` + el.innerHTML + stages;
     const ct = skillCondText(skill && skill.condition);
     if (ct) el.innerHTML = `<span class="sk-cond">${skillTextHTML(ct)}</span>` + el.innerHTML;
   }
@@ -126,4 +176,6 @@
   window.setSkillDesc = setSkillDesc;
   window.skillTextHTML = skillTextHTML;
   window.setSkillText = setSkillText;
+  window.skillStagesHTML = skillStagesHTML;
+  window.skillStageListHTML = skillStageListHTML;
 })();

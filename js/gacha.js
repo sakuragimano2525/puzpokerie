@@ -8,8 +8,8 @@
 //                   → 外にころがり出て画面中央へ → タップで開く → 結果を表示
 //     ・「ラインナップ」… 出るモンスターの一覧を表示
 //     ・コインが足りないときは何も消費せず「ガチャコインが足りません」
-//     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（赤）⇔ 2ページ目（青）⇔ 3ページ目（緑）。
-//                2ページ目は GACHA_DATA.page2 の設定（アルカナエキス1つで1回、lineup・隠し条件 requires もページごと）
+//     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（エナ・虹がかった白）⇔ 2ページ目（ブルアカ・赤）⇔ 3ページ目（ステラソラ・青）⇔ 4ページ目（ブルアカ2・緑）。
+//                各ページの設定は GACHA_DATA.page1〜page4（coin・cost・lineup・隠し条件 requires・unlock もページごと）
 //
 //     ・「交換所」（右下）… ラインナップのモンスター3匹（GACHA_DATA.exchangeCost）をわたして、図鑑に登録ずみのラインナップの1匹と確定交換
 //
@@ -25,15 +25,16 @@
   var $ = function (id) { return document.getElementById(id); };
 
   var cfg = (typeof GACHA_DATA !== 'undefined' && GACHA_DATA) || { title: 'ガチャ', coin: 'fcoin', cost: 1, lineup: [] };
-  // ページごとの設定：1ページ目＝cfg 本体／2ページ目＝cfg.page2（coin・cost・lineup・requires。capsules は共通）
-  function pc() { return page === 1 ? cfg : (cfg['page' + page] || {}); }
+  // ページごとの設定：cfg.page1〜page4（coin・cost・lineup・requires・unlock。capsules・exchangeCost は共通）
+  function pc() { return cfg['page' + page] || {}; }
   function COIN() { return pc().coin || 'fcoin'; }
+  function isEna() { return COIN() === 'ena'; }   // 'ena' だけ特別：ホーム左上の所持エナを使う
   function COST() { return Math.max(1, Math.floor(Number(pc().cost)) || 1); }
   var SPIN_MS = 900;          // 「まわす」の動きの長さ（css/gacha.css の 0.9s と合わせる）
   var busy = false;
   var toastTimer = null;
   var seq = null, runId = 0;   // カプセル演出の進行状況（runId が変わったら古い演出は止まる）
-  var PAGES = 3, page = 1;      // いま見ているページ（1＝ブルアカガチャ／2＝ステラソラガチャ／3＝ブルアカガチャ2）
+  var PAGES = 4, page = 1;      // いま見ているページ（1＝エナガチャ／2＝ブルアカガチャ／3＝ステラソラガチャ／4＝ブルアカガチャ2）
   var customTitle = null;       // setTitle() で変えたタイトル（1ページ目用）
 
   // ── 設定の読み取り ───────────────────────────
@@ -60,9 +61,19 @@
   function lockNames(ids) {
     return ids.map(function (n) { return (typeof MONSTER_DATA !== 'undefined' && MONSTER_DATA[n] && MONSTER_DATA[n].name) || ('ID' + n); }).join('・');
   }
-  function coinCount() { return typeof getItemCount === 'function' ? getItemCount(COIN()) : 0; }
-  function coinName() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].name) || 'ガチャコイン'; }
-  function coinImg() { return (typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].img) || 'fcoin.png'; }
+  function coinCount() {
+    if (isEna()) return typeof gachaGetEna === 'function' ? gachaGetEna() : 0;
+    return typeof getItemCount === 'function' ? getItemCount(COIN()) : 0;
+  }
+  function payCoin() {   // コインをつかう（足りなければ false で何も減らさない）
+    if (isEna()) return typeof gachaConsumeEna === 'function' && gachaConsumeEna(COST());
+    return typeof consumeItem === 'function' && consumeItem(COIN(), COST());
+  }
+  function coinName() { return isEna() ? 'エナ' : ((typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].name) || 'ガチャコイン'); }
+  function coinImg() { return isEna() ? 'hcoin.png' : ((typeof ITEM_DATA !== 'undefined' && ITEM_DATA[COIN()] && ITEM_DATA[COIN()].img) || 'fcoin.png'); }
+  // チップ（アイテム）のラインナップ：items.js に無いIDは除く
+  function chipList() { return (pc().chips || []).filter(function (id) { return typeof ITEM_DATA !== 'undefined' && ITEM_DATA[id]; }); }
+  function capsuleList() { var l = pc().capsules || cfg.capsules; return (l && l.length) ? l : DEFAULT_CAPS; }
   function stars(n) { var s = ''; for (var i = 0; i < n; i++) s += '★'; return s; }
 
   // ── 表示の更新 ────────────────────────────────
@@ -72,12 +83,13 @@
     if (numEl) numEl.textContent = '×' + n.toLocaleString();
     if (chip) chip.classList.toggle('empty', n < COST());
     if (cost) cost.classList.toggle('short', n < COST());
+    var exb = $('gacha-ex-btn'); if (exb) exb.hidden = pc().exchange === false;   // exchange:false のページは交換所なし
     var lk = lockMissing().length > 0;
     screen.dataset.locked = lk ? '1' : '0';
     var sb = $('gacha-spin-btn'), stx = screen.querySelector('.gs-spin-txt');
     if (sb) sb.classList.toggle('locked', lk);
     if (stx) stx.textContent = lk ? 'ロック中' : 'まわす';
-    var ct = $('gacha-cost-txt'); if (ct) ct.textContent = coinName() + ' ×' + COST();
+    var ct = $('gacha-cost-txt'); if (ct) ct.textContent = coinName() + ' ×' + COST().toLocaleString();
     ['gacha-coin-img', 'gacha-cost-img'].forEach(function (id) { var im = $(id); if (im) { var src = coinImg(); if (im.getAttribute('src') !== src) im.setAttribute('src', src); } });
   }
 
@@ -147,8 +159,28 @@
       bindLongPress(cell, id, ids);
       grid.appendChild(cell);
     });
+    var chips = chipList();
+    if (chips.length) {   // モンスターのほかにチップも出るガチャ：見出しを付けて、チップも並べる
+      function head(txt) { var h = document.createElement('div'); h.className = 'gs-lu-sec'; h.textContent = txt; return h; }
+      if (ids.length) grid.insertBefore(head('モンスター'), grid.firstChild);
+      grid.appendChild(head('チップ'));
+      chips.forEach(function (cid) {
+        var it = ITEM_DATA[cid];
+        var cell = document.createElement('div'); cell.className = 'gs-lu-item';
+        var tile = document.createElement('div'); tile.className = 'gs-mon'; tile.dataset.attr = it.attr || 'fire';
+        var im = document.createElement('img'); im.alt = it.name; im.src = it.img || ('items/' + cid + '.png');
+        im.onerror = function () { im.style.visibility = 'hidden'; };
+        tile.appendChild(im);
+        var nm = document.createElement('span'); nm.className = 'gs-lu-name'; nm.textContent = it.name;
+        cell.appendChild(tile); cell.appendChild(nm);
+        grid.appendChild(cell);
+      });
+    }
     var sub = $('gacha-lineup-sub');
-    if (sub) sub.textContent = ids.length ? ('この ' + ids.length + ' 体のどれか1匹が出ます（' + coinName() + ' ×' + COST() + '）／長押しでLv1のステータス') : 'ラインナップは準備中です';
+    if (sub) sub.textContent = (ids.length || chips.length)
+      ? (chips.length ? ('モンスター ' + ids.length + ' 体・チップ ' + chips.length + ' 種（' + coinName() + ' ×' + COST().toLocaleString() + '）／モンスターは長押しでLv1のステータス')
+                      : ('この ' + ids.length + ' 体のどれか1匹が出ます（' + coinName() + ' ×' + COST().toLocaleString() + '）／長押しでLv1のステータス'))
+      : 'ラインナップは準備中です';
     $('gacha-lineup').hidden = false;
   }
   function closeLineup() { var m = $('gacha-lineup'); if (m) m.hidden = true; }
@@ -168,12 +200,27 @@
     $('gacha-result').hidden = false;
     try { if (typeof playSE === 'function') playSE('chip'); } catch (e) {}
   }
+  // チップが出たとき：モンスターと同じ結果カードに、チップの画像と名前を出す（NEW・★なし）
+  function showChipResult(itemId, count) {
+    var it = ITEM_DATA[itemId];
+    var hd = $('gacha-res-head'); if (hd) hd.textContent = 'GET！';
+    var tile = $('gacha-res-tile'), img = $('gacha-res-img');
+    tile.dataset.attr = it.attr || 'fire';
+    img.style.visibility = ''; img.alt = it.name;
+    img.src = it.img || ('items/' + itemId + '.png');
+    $('gacha-res-new').hidden = true;
+    $('gacha-res-stars').textContent = '';
+    $('gacha-res-name').textContent = it.name + ' ×1' + (count != null ? '（所持 ' + count + '）' : '');
+    $('gacha-result').querySelector('.gs-card').classList.remove('rare');
+    $('gacha-result').hidden = false;
+    try { if (typeof playSE === 'function') playSE('chip'); } catch (e) {}
+  }
   function closeResult() { var m = $('gacha-result'); if (m) m.hidden = true; }
 
   // ── 交換所（右下のボタン）──────────────────
   //   そのガチャのラインナップのモンスターを BOX から cost 匹わたすと、
   //   ラインナップのうち「図鑑に登録ずみ」の1匹を確定でもらえる。編成中のモンスターはわたせない。
-  //   cost は GACHA_DATA.exchangeCost（ページごとに page2/page3 の中でも指定できる。初期値 3）
+  //   cost は GACHA_DATA.exchangeCost（ページごとに pageN の中でも指定できる。初期値 3）
   var exTarget = null, exMats = [], exCells = {};
   function exCost() {
     var c = pc().exchangeCost; if (c == null) c = cfg.exchangeCost;
@@ -197,7 +244,7 @@
     return cell;
   }
   function openExchange() {
-    if (busy) return;
+    if (busy || pc().exchange === false) return;
     var miss = lockMissing();
     if (miss.length) { toast('ロック中：図鑑に ' + lockNames(miss) + ' を登録するとひらきます', 2600); return; }
     var need = exCost(), ids = lineup(), owned = exOwnedIds();
@@ -286,9 +333,9 @@
 
   // ── ページ切りかえ ───────────────────────────
   function pageTitle(n) {
-    if (n === 2) return (cfg.page2 && cfg.page2.title) || 'ステラソラガチャ';
-    if (n === 3) return (cfg.page3 && cfg.page3.title) || 'ブルアカガチャ2';
-    return customTitle || cfg.title || 'ガチャ';
+    var t = (cfg['page' + n] && cfg['page' + n].title) || '';
+    if (n === 1) return customTitle || t || cfg.title || 'エナガチャ';
+    return t || 'ガチャ';
   }
   // dir：1＝右へ進む（右からスッと出る）／-1＝左へ戻る／0＝動きなし
   function setPage(n, dir) {
@@ -359,8 +406,9 @@
   var E = 120;                                         // .gc-obj の箱の大きさ（css と同じ）
   var CAP_D = E * 34 / 48;                             // scale 1 のときのカプセルの直径(px)
 
-  function pickCapsule() {
-    var list = (cfg.capsules && cfg.capsules.length) ? cfg.capsules : DEFAULT_CAPS;
+  function pickCapsule(only) {   // only：この色のid だけから選ぶ（省略なら全部）
+    var list = capsuleList();
+    if (only) { var f = list.filter(function (c) { return only.indexOf(c.id) !== -1; }); if (f.length) list = f; }
     var total = 0;
     list.forEach(function (c) { total += Math.max(0, c.weight == null ? 1 : Number(c.weight) || 0); });
     if (total <= 0) return list[0];
@@ -562,28 +610,52 @@
     if (busy) return;
     var miss = lockMissing();
     if (miss.length) { toast('ロック中：図鑑に ' + lockNames(miss) + ' を登録するとひらきます', 2600); return; }
-    var pool = drawable();
-    if (!pool.length) { toast('ラインナップが空です'); return; }
+    var pool = drawable(), chips = chipList();
+    var mix = chips.length > 0;   // チップも出るガチャ：カプセルの色が先に決まり、色に合わせて「モンスター」か「チップ」が出る
+    if (!pool.length && !chips.length) { toast('ラインナップが空です'); return; }
     if (coinCount() < COST()) {
       toast(coinName() + 'が足りません');
       var chip = $('gacha-coin'); if (chip) { chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
       return;
     }
-    // 抽選・コイン消費・BOXへの追加は、演出の前に確定して保存（途中で閉じても結果は残る）
-    var id = pool[Math.floor(Math.random() * pool.length)];
-    if (typeof consumeItem !== 'function' || !consumeItem(COIN(), COST())) { toast(coinName() + 'が足りません'); refresh(); return; }
-    var got = (typeof grantMonsterToBox === 'function') ? grantMonsterToBox(id) : null;
-    if (!got) { toast('エラー：モンスターを追加できませんでした'); refresh(); return; }
+    var capsule, kind = 'mon', id;
+    if (mix) {
+      var mcaps = pc().monsterCapsules || [], ccaps = pc().chipCapsules || [];
+      var allow = [];   // 中身が空でないほうの色だけから選ぶ
+      capsuleList().forEach(function (c) {
+        var isChip = ccaps.indexOf(c.id) !== -1, isMon = !isChip && (mcaps.length ? mcaps.indexOf(c.id) !== -1 : true);
+        if ((isChip && chips.length) || (isMon && pool.length)) allow.push(c.id);
+      });
+      capsule = pickCapsule(allow.length ? allow : null);
+      kind = (ccaps.indexOf(capsule.id) !== -1) ? 'chip' : 'mon';
+      if (kind === 'chip' && !chips.length) kind = 'mon';
+      if (kind === 'mon' && !pool.length) kind = 'chip';
+    } else {
+      capsule = pickCapsule();
+    }
+    // 抽選・コイン消費・BOX（またはカバン）への追加は、演出の前に確定して保存（途中で閉じても結果は残る）
+    var got;
+    if (kind === 'chip') {
+      id = chips[Math.floor(Math.random() * chips.length)];
+      if (!payCoin()) { toast(coinName() + 'が足りません'); refresh(); return; }
+      got = (typeof gachaGrantItem === 'function') ? gachaGrantItem(id, 1) : null;
+      if (!got) { toast('エラー：チップを追加できませんでした'); refresh(); return; }
+    } else {
+      id = pool[Math.floor(Math.random() * pool.length)];
+      if (!payCoin()) { toast(coinName() + 'が足りません'); refresh(); return; }
+      got = (typeof grantMonsterToBox === 'function') ? grantMonsterToBox(id) : null;
+      if (!got) { toast('エラー：モンスターを追加できませんでした'); refresh(); return; }
+    }
     busy = true;
     refresh();
-    function finish() { busy = false; showResult(id, got.isNew); }
+    function finish() { busy = false; if (kind === 'chip') showChipResult(id, got.count); else showResult(id, got.isNew); }
     if (!FX_OK) {   // 動きを減らす設定などのとき：これまで通り、ゆらしてすぐ結果
       screen.classList.add('spinning');
       setTimeout(function () { screen.classList.remove('spinning'); finish(); }, SPIN_MS);
       return;
     }
     // カプセルの色は演出だけ（出るモンスターとは関係なし）。何かあってもガチャ自体は止めない
-    runSequence(pickCapsule(), finish).catch(function () { resetFx(); if (busy) finish(); });
+    runSequence(capsule, finish).catch(function () { resetFx(); if (busy) finish(); });
   }
 
   // ── ボタン ───────────────────────────────────

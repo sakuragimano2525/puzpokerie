@@ -19,19 +19,20 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap"></noscript>
-<link rel="stylesheet" href="css/style.css?v=20261105">
-<link rel="stylesheet" href="css/ui.css?v=20261105c">
-<link rel="stylesheet" href="css/battle-plus.css?v=20261105cond">
+<link rel="stylesheet" href="css/style.css?v=20261108sl2">
+<link rel="stylesheet" href="css/ui.css?v=20261108sl">
+<link rel="stylesheet" href="css/battle-plus.css?v=20261108stage">
 <link rel="stylesheet" href="css/landscape.css?v=20261105">
 <link rel="stylesheet" href="css/cutin.css?v=20261106e">
 <link rel="stylesheet" href="css/cutin-v2.css?v=20261107a">
+<link rel="stylesheet" href="css/cutin-yume.css?v=20261108a">
 <link rel="stylesheet" href="css/orb-spawn-fx.css?v=20261105">
 <link rel="stylesheet" href="css/zukan.css?v=20261105">
 <link rel="stylesheet" href="css/settings.css?v=20261105">
 <link rel="stylesheet" href="css/ls-search.css?v=20261106sk">
 <link rel="stylesheet" href="css/multi-turn.css?v=20261105c">
 <link rel="stylesheet" href="css/multi-online.css?v=20261105">
-<link rel="stylesheet" href="css/gacha.css?v=20261105">
+<link rel="stylesheet" href="css/gacha.css?v=20261108">
 <link rel="stylesheet" href="css/ryuseki.css?v=20261105">
 <link rel="stylesheet" href="css/bonus.css?v=20261105">
  <link rel="stylesheet" href="css/fire-frame.css?v=20261105b">
@@ -152,18 +153,19 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
   <div id="gacha-header">
     <div class="gs-title">
       <span class="gs-emblem"><svg class="ic"><use href="#i-gacha"/></svg></span>
-      <h1 id="gacha-title">ブルアカガチャ</h1>
+      <h1 id="gacha-title">エナガチャ</h1>
     </div>
     <!-- 持っているガチャコインの数 -->
     <div class="gs-coin" id="gacha-coin" aria-label="所持ガチャコイン"><img id="gacha-coin-img" src="fcoin.png" alt="ガチャコイン" onerror="this.style.visibility='hidden'"><b id="gacha-coin-num">×0</b></div>
   </div>
 
-  <!-- ページ表示：ガチャは左右に切りかえられる（1ページ目＝赤／2ページ目＝青／3ページ目＝緑） -->
+  <!-- ページ表示：ガチャは左右に切りかえられる（1ページ目＝エナ・虹がかった白／2ページ目＝ブルアカ・赤／3ページ目＝ステラソラ・青／4ページ目＝ブルアカ2・緑） -->
   <div class="gs-pager" id="gacha-pager" role="tablist" aria-label="ガチャのページ">
     <button class="gs-dot on" type="button" role="tab" aria-selected="true" aria-label="1ページ目" data-page="1"></button>
     <button class="gs-dot" type="button" role="tab" aria-selected="false" aria-label="2ページ目" data-page="2"></button>
     <button class="gs-dot" type="button" role="tab" aria-selected="false" aria-label="3ページ目" data-page="3"></button>
-    <span class="gs-pg-label" id="gacha-pg-label">1 / 3</span>
+    <button class="gs-dot" type="button" role="tab" aria-selected="false" aria-label="4ページ目" data-page="4"></button>
+    <span class="gs-pg-label" id="gacha-pg-label">1 / 4</span>
   </div>
 
   <div id="gacha-main">
@@ -175,6 +177,11 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
       <svg class="gs-machine" viewBox="0 0 240 316" role="img" aria-label="ガチャマシン">
         <defs>
           <linearGradient id="gm-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfe4ff"/></linearGradient>
+          <!-- エナガチャ（1ページ目）の本体：少しだけ薄い、虹がかった白（css/gacha.css の fill:url(#gm-rainbow)） -->
+          <linearGradient id="gm-rainbow" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffe3ee"/><stop offset=".22" stop-color="#fff2cf"/><stop offset=".44" stop-color="#e2f8e8"/>
+            <stop offset=".68" stop-color="#d9ebff"/><stop offset=".88" stop-color="#ebe0ff"/><stop offset="1" stop-color="#ffe3f1"/>
+          </linearGradient>
           <clipPath id="gm-dome"><circle cx="120" cy="96" r="76"/></clipPath>
           <clipPath id="gm-outlet"><rect x="136" y="224" width="54" height="48" rx="12"/></clipPath>
           <!-- カプセル1個：色は use の color で決める -->
@@ -439,6 +446,20 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
   </div>
 </div>
 
+<!-- ============================================================
+     変化スキル一覧ポップアップ（ステータス画面の「変化スキルを見る」ボタンから）
+     ============================================================ -->
+<div id="stage-list">
+  <div class="skill-popup sl-popup">
+    <div class="sp-title" id="sl-title">変化スキル</div>
+    <div class="sl-sub" id="sl-sub"></div>
+    <div class="sp-desc sp-desc-list" id="sl-body"></div>
+    <div class="sp-buttons sp-buttons-col">
+      <button class="sp-btn" id="sl-close" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- ダンジョン中メニュー（続ける / ドロップを見る / リタイア） -->
 <div id="quit-confirm">
   <div class="skill-popup" id="menu-popup">
@@ -517,6 +538,7 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
         <span id="md-skill-lv">スキルLv 1 / 7</span>
       </div>
       <p id="md-skill-desc">スキル説明</p>
+      <button id="md-stage-btn" type="button" style="display:none">🔄 変化スキルを見る</button>
     </div>
     <div id="md-ls-section">
       <div class="md-ls-head">
@@ -1012,10 +1034,10 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/data/exp.js?v=20261105"></script>
 <script defer src="js/data/mail.js?v=20261105"></script>
 <script defer src="js/data/items.js?v=20261105"></script>
-<script defer src="js/data/gacha.js?v=20261105"></script>
+<script defer src="js/data/gacha.js?v=20261108"></script>
 <!-- ゲーム本体 -->
 <script defer src="js/damage-number.js?v=20261105"></script>
-<script defer src="js/skill-text.js?v=20261105cond"></script>
+<script defer src="js/skill-text.js?v=20261108sl2"></script>
 <script defer src="js/box-sort.js?v=20261105"></script>
 <script defer src="js/sk-search.js?v=20261106sk"></script>
 <script defer src="js/ls-search.js?v=20261106sk"></script>
@@ -1026,7 +1048,7 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/multi-online.js?v=20261105"></script>
 <script defer src="js/enemy-autofit.js?v=20261105"></script>
 <script defer src="js/ryuseki.js?v=20261105"></script>
-<script defer src="js/game.js?v=20261107cutin"></script>
+<script defer src="js/game.js?v=20261108sl2"></script>
 <script defer src="js/audio-fast.js?v=20261106"></script>
 <!-- マルチ：2人で盤面・敵・バフ/デバフを共有（game.js の変数を使うので game.js のあと） -->
 <script defer src="js/multi-share.js?v=20261107cutin"></script>
@@ -1034,16 +1056,17 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/stat-fit.js?v=20261105"></script>
 <script defer src="js/evo-puzzle.js?v=20261105"></script>
 <script defer src="js/evo-scene.js?v=20261105"></script>
-<script defer src="js/zukan.js?v=20261106sk"></script>
-<script defer src="js/gacha.js?v=20261105"></script>
+<script defer src="js/zukan.js?v=20261108stage"></script>
+<script defer src="js/gacha.js?v=20261108"></script>
 <script defer src="js/bonus.js?v=20261105"></script>
 <script defer src="js/fx-lite.js?v=20261105"></script>
 <script defer src="js/allattack-fx.js?v=20261106"></script>
 <script defer src="js/enemy-attack-fx.js?v=20261105"></script>
 <script defer src="js/orb-spawn-fx.js?v=20261105"></script>
-<script defer src="js/ls-fx.js?v=20261105"></script>
+<script defer src="js/ls-fx.js?v=20261108erase"></script>
 <script defer src="js/cutin-v2.js?v=20261107a"></script>
-<script defer src="js/cutin.js?v=20261107b"></script>
+<script defer src="js/cutin-yume.js?v=20261108b"></script>
+<script defer src="js/cutin.js?v=20261108b2"></script>
 <script defer src="js/enemy-transform.js?v=20261107c"></script>
 <script defer src="js/landscape.js?v=20261105"></script>
  <script defer src="js/fire-frame.js?v=20261105b"></script>

@@ -5999,7 +5999,17 @@ function renderMonsterDetail() {
   document.getElementById('md-skill-turn').textContent = `必要SP ${requiredSp}`;
   const slvRow = document.getElementById('md-skill-lv-row');
   if (slvRow) slvRow.style.display = 'none';
-  setSkillDesc(document.getElementById('md-skill-desc'), skill);
+  // 変化スキル：説明にはスキル1だけを出し、全段階は「変化スキルを見る」ボタンで別に見せる
+  setSkillDesc(document.getElementById('md-skill-desc'), skill, false, { noStages: true });
+  {
+    const stBtn = document.getElementById('md-stage-btn');
+    const nSt = Array.isArray(skill.stages) ? skill.stages.length + 1 : 0;
+    if (stBtn) {
+      stBtn.style.display = nSt > 1 ? '' : 'none';
+      stBtn.textContent = `🔄 変化スキルを見る（全${nSt}段階）`;
+      stBtn.onclick = () => openStageList(mon, (!detailPreview && detailFromScreen === 'game') ? skillStageIndex(entry, mon) : -1);
+    }
+  }
   document.getElementById('md-hp').textContent = lvStats.hp.toLocaleString();
   document.getElementById('md-atk').textContent = lvStats.atk.toLocaleString();
   document.getElementById('md-rec').textContent = lvStats.rec.toLocaleString();
@@ -7146,9 +7156,34 @@ function getSpMemoryMax() {
 let partySp = 0;     // パーティ共有の現在SP
 let partyMemory = 0; // パーティ共有の現在メモリ（0〜4）
 
+// ── 変化スキル（skill.stages）──
+//   スキル1（skill 本体）→ スキル2（stages[0]）→ … → 最後まで使うとスキル1に戻る。ダンジョンに入るたびにスキル1から。
+//   スキル2以降は、名前・必要SP・説明・効果・カットイン設定（cutin / yumekawa）を持つ（名前・必要SPを書かなければスキル1と同じ。発動条件はスキル1だけ）
+let _skillStage = {};   // uid → 今のスキル番号（0=スキル1）
+function skillStageIndex(entry, mon) {
+  const sk = mon && mon.skill, st = sk && sk.stages;
+  if (!entry || !st || !st.length) return 0;
+  return (_skillStage[entry.uid] || 0) % (st.length + 1);
+}
+// 今使えるスキル（変化スキルでなければ mon.skill そのまま）
+function curSkill(entry, mon) {
+  const sk = mon && mon.skill;
+  const i = skillStageIndex(entry, mon);
+  if (!sk || !i) return sk;
+  const s = sk.stages[i - 1] || {};
+  const { stages, condition, cutin, yumekawa, ...base } = sk;   // カットイン／音声／ゆめかわは、スキルごとの設定だけを使う
+  return { ...base, ...(s.cutin === true ? { cutin: true } : {}), ...(s.yumekawa === true ? { yumekawa: true } : {}), name: s.name || sk.name, sp: (typeof s.sp === 'number' && s.sp >= 1) ? s.sp : sk.sp, desc: s.desc || '', effects: s.effects || [] };
+}
+function advanceSkillStage(entry, mon) {
+  const sk = mon && mon.skill, st = sk && sk.stages;
+  if (!entry || !st || !st.length) return;
+  _skillStage[entry.uid] = (skillStageIndex(entry, mon) + 1) % (st.length + 1);
+}
+
 // 必要SP（スキル発動に必要な最低SP。全モンスター共通で1に固定）
 function getRequiredSp(entry, mon) {
-  const sp = mon && mon.skill && mon.skill.sp;
+  const cs = curSkill(entry, mon);
+  const sp = cs && cs.sp;
   return (typeof sp === 'number' && sp >= 1) ? Math.min(getSpCap(), Math.floor(sp)) : SKILL_SP_COST;
 }
 
@@ -7206,7 +7241,7 @@ function refreshSkillCondUI() {
   for (const uid of partyUids) {
     if (uid === null || uid === undefined) { sig += '-'; continue; }
     const entry = box.find(b => b.uid === uid); const mon = entry && MONSTER_DATA[entry.monsterId];
-    sig += (mon && mon.skill && mon.skill.condition) ? (skillCondOk(mon.skill) ? '1' : '0') : '-';
+    { const cs = curSkill(entry, mon); sig += (cs && cs.condition) ? (skillCondOk(cs) ? '1' : '0') : '-'; }
   }
   if (sig === _skillCondSig) return;
   _skillCondSig = sig;
@@ -7222,7 +7257,7 @@ function countReadySkills() {
     if (!entry) continue;
     const mon = MONSTER_DATA[entry.monsterId];
     if (!mon) continue;
-    if (partySp >= getRequiredSp(entry, mon) && skillCondOk(mon.skill)) n++;
+    if (partySp >= getRequiredSp(entry, mon) && skillCondOk(curSkill(entry, mon))) n++;
   }
   return isSkillSealed() ? 0 : n;   // スキル使用不可の間は「使える」扱いにしない
 }
@@ -7263,19 +7298,53 @@ function openSkillConfirm(uid) {
   if (!mon || !mon.skill) return;   // スキル未設定のモンスターは発動できない
   const requiredSp = getRequiredSp(entry, mon);
   if (partySp < requiredSp) return;
-  if (!skillCondOk(mon.skill)) { showSkillMessage('条件を満たしていません：' + skillCondText(mon.skill.condition), 1600); return; }
+  const cs = curSkill(entry, mon);
+  if (!skillCondOk(cs)) { showSkillMessage('条件を満たしていません：' + skillCondText(cs.condition), 1600); return; }
 
   skillTargetUid = uid;
-  document.getElementById('sp-title').textContent = mon.skill.name;
-  setSkillDesc(document.getElementById('sp-desc'), mon.skill);
-  document.getElementById('sp-cooldown').textContent = `SP ${partySp} / ${getSpCap()}（消費${requiredSp}）`;
+  document.getElementById('sp-title').textContent = cs.name;
+  // 変化スキル：どの段階でも全段階を一覧で出し、「いま」の段階に印をつける（スキル1のときだけでなく、2以降も）
+  const descEl = document.getElementById('sp-desc');
+  const stageCount = Array.isArray(mon.skill.stages) ? mon.skill.stages.length + 1 : 0;
+  const stageNow = skillStageIndex(entry, mon);
+  descEl.classList.toggle('sp-desc-list', stageCount > 1);
+  if (stageCount > 1) setSkillDesc(descEl, mon.skill, false, { list: true, cur: stageNow });
+  else setSkillDesc(descEl, cs);
+  document.getElementById('sp-cooldown').textContent = (stageCount > 1 ? `スキル${stageNow + 1}/${stageCount}　` : '') + `SP ${partySp} / ${getSpCap()}（消費${requiredSp}）`;
   document.getElementById('skill-confirm').style.display = 'flex';
+  descEl.scrollTop = 0;
+  if (stageCount > 1) {   // 「いま」の段階が見える位置までスクロール
+    const curEl = descEl.querySelector('.sk-sl-item.is-cur');
+    if (curEl) descEl.scrollTop = Math.max(0, curEl.offsetTop - 6);
+  }
 }
 
 function closeSkillConfirm() {
   document.getElementById('skill-confirm').style.display = 'none';
   skillTargetUid = null;
 }
+
+// ── 変化スキル一覧ポップアップ（ステータス画面の「変化スキルを見る」）──
+//   cur = ダンジョン中に開いたときの「いま」の段階（0=スキル1）。ふだん（ホームなど）は -1 で、印なしの一覧
+function openStageList(mon, cur) {
+  const pop = document.getElementById('stage-list');
+  const body = document.getElementById('sl-body');
+  if (!pop || !body || !mon || !mon.skill) return;
+  document.getElementById('sl-title').textContent = '変化スキル';
+  document.getElementById('sl-sub').textContent = `${mon.name}　全${(mon.skill.stages || []).length + 1}段階`;
+  setSkillDesc(body, mon.skill, false, { list: true, cur: (typeof cur === 'number' ? cur : -1) });
+  pop.style.display = 'flex';
+  body.scrollTop = 0;
+  const curEl = body.querySelector('.sk-sl-item.is-cur');
+  if (curEl) body.scrollTop = Math.max(0, curEl.offsetTop - 6);
+}
+function closeStageList() { const pop = document.getElementById('stage-list'); if (pop) pop.style.display = 'none'; }
+(function setupStageList() {
+  const pop = document.getElementById('stage-list');
+  const btn = document.getElementById('sl-close');
+  if (btn) btn.addEventListener('click', closeStageList);
+  if (pop) pop.addEventListener('click', e => { if (e.target === pop) closeStageList(); });   // 外側タップでも閉じる
+})();
 
 function generateWoodReverseL() {
   const shape = [[0,0],[0,1],[0,2],[1,0],[2,0]];
@@ -7865,7 +7934,7 @@ async function runPendingTransforms() {
     renderBuffIcons();
     // 敵の⚠️技と同じカットイン（変身後の姿を大きく出す）
     // 画像は mp{id}.png（無ければ通常の画像）
-    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, sub: newMon.sub, img: `mp${newMon.id}.png`, imgFallback: monsterImg(newMon) }, newMon.name + 'に へんしん！', { face: true }); } catch (err) {}
+    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, sub: newMon.sub, img: `mp${newMon.id}.png`, imgFallback: monsterImg(newMon) }, newMon.name + 'に へんしん！', { face: true, id: newMon.id, yume: !!(newMon.skill && newMon.skill.yumekawa) }); } catch (err) {}
   }
 }
 
@@ -7886,7 +7955,8 @@ async function confirmSkill() {
   const mon = MONSTER_DATA[entry.monsterId];
   if (!mon || !mon.skill) return;
   const requiredSp = getRequiredSp(entry, mon);
-  if (partySp < requiredSp || isSkillSealed() || !skillCondOk(mon.skill)) { closeSkillConfirm(); return; }
+  const cs = curSkill(entry, mon);   // 変化スキルなら、今のスキル番号のもの
+  if (partySp < requiredSp || isSkillSealed() || !skillCondOk(cs)) { closeSkillConfirm(); return; }
 
   closeSkillConfirm();
   busy = true;
@@ -7894,16 +7964,17 @@ async function confirmSkill() {
   skillUsedThisTurn = true;
   playSkillSound();
 
-  if (window.MultiShare) MultiShare.fx('sk', { n: mon.skill.name, m: entry.monsterId });   // マルチ：スキル発動を相手の画面へ
+  if (window.MultiShare) MultiShare.fx('sk', { n: cs.name, m: entry.monsterId });   // マルチ：スキル発動を相手の画面へ
   // スキルカットイン（全モンスター共通。js/cutin.js の showSkill）
   //   ID5000以降は新カットイン／画像は mp{ID}.png（無ければ通常の画像）
   //   効果音：エディターで「オリジナル音声」にチェックしたモンスターは {ID}.mp3、それ以外は普通のカットイン音 cutin.mp3
   if (window.EnemyCutIn && window.EnemyCutIn.showSkill) {
-    try { await window.EnemyCutIn.showSkill(mon); } catch (err) {}
+    try { await window.EnemyCutIn.showSkill(cs === mon.skill ? mon : { ...mon, skill: cs }); } catch (err) {}
   }
-  if (mon.skill.effects && mon.skill.effects.length) {
-    runSkillEffects(mon.skill.effects, entry, mon);
+  if (cs.effects && cs.effects.length) {
+    runSkillEffects(cs.effects, entry, mon);
   }
+  advanceSkillStage(entry, mon);   // 変化スキル：次のスキル番号へ（最後まで使ったらスキル1に戻る）
   const orbSpawnFx = flushOrbSpawnFx();   // ドロップ生成・変換の演出を開始（盤面データはもう新しい。見た目は演出で入れ替わる）
   if (window.MultiShare) { MultiShare.fxGrid(); MultiShare.fx('en', { hp: enemyList.map(e => e.hp) }); MultiShare.fxStatus(); }   // スキルで変わった盤面・敵のHP・状態異常
 
@@ -8335,7 +8406,7 @@ function isLShape(cells) {
 //     ・〇個以上つなげて消し(orbConnect／2属性同時つなげ) ・ちょうど〇個消し(exactCount)
 // ============================================================
 const LS_SHAPE_CONDS = ['exact4', 'lShapes', 'cross', 'orbConnect', 'exactCount', 'connectEach', 'combo', 'attrCombos', 'fireCombos', 'darkCombos', 'healCombos',
-  'fourColors', 'colorCount', 'colorCountHeal', 'colorRamp'];   // 〇コンボ以上系・〇色以上系もここ
+  'fourColors', 'colorCount', 'colorCountHeal', 'colorRamp', 'eraseAttr'];   // 〇コンボ以上系・〇色以上系・〇属性を消す度もここ
 function lsShapeEffects() {
   return lsAllEffects().filter(e => e && LS_SHAPE_CONDS.includes(e.condition) && (e.type === 'atk' || e.type === 'dmgReduction'));
 }
@@ -8347,13 +8418,14 @@ const LS_COMBO_ATTR = { fireCombos: 'fire', darkCombos: 'dark', healCombos: 'hea
 //   返す要素：
 //     { kind:'cross'|'L'|'four'|'connect'|'combo', color, n, light, power } … 形・個数・コンボ系（同じ塊で複数満たしても、いちばん派手な1つだけ）
 //     { kind:'prism', colors:[…] }                                         … 〇色以上（条件が成立した、その1回だけ）
+//     { kind:'erase', attr, color, stack, leaders }                         … 〇属性を消す度（その属性の塊を消すたびに毎回。stack＝その属性を消した回数）
 //     { pending:true, need, pair }                                         … 2属性同時つなげで、相方がまだそろっていない塊
 //   演出の中身は js/ls-fx.js（LSFX）。
 function lsShapeMatch(effects, info) {
   const { color, cells, isCross, isL } = info;
   const n = cells.length;
   const RANK = { cross: 5, L: 4, four: 3, connect: 2, combo: 1 };   // 同じ塊で複数の条件を満たした時の優先（派手な順）
-  let shape = null, prism = null;
+  let shape = null, prism = null, erase = null;
   const pend = [];
   const offer = (d) => { if (!shape || RANK[d.kind] > RANK[shape.kind]) shape = d; };
   const attrCol = ATTR_FX_COLOR[color] || '#fff';
@@ -8398,6 +8470,9 @@ function lsShapeMatch(effects, info) {
         } else if (e.attr === color && n >= need) offer(byShape());
         break;
       }
+      case 'eraseAttr':   // 〇属性を消す度：その属性の塊を消すたびに毎回（重ねるほど派手に）
+        if (e.attr === color && !erase) erase = { kind: 'erase', attr: color, color: attrCol, n, stack: (info.attrCombos || {})[color] || 1, leaders: lsEraseSlots(color) };
+        break;
       case 'fourColors': case 'colorCount': case 'colorCountHeal': case 'colorRamp': {
         // 〇色以上：この塊を消して、条件が「成立した瞬間」に1回だけ（colorRamp は色が増えて倍率が上がる度）
         const prev = colorCondResult(e, { orbCounts: info.prevCounts }), now = colorCondResult(e, { orbCounts: info.nowCounts });
@@ -8411,8 +8486,21 @@ function lsShapeMatch(effects, info) {
   }
   const out = [];
   if (shape) out.push(shape);
+  if (erase) { if (shape) erase.light = true; out.push(erase); }   // 形の演出と同時に出る時は、軽い版にして重ならせない
   if (prism) out.push(prism);
   return out.concat(pend);
+}
+// 「〇属性を消す度」が効いているパーティ枠（0＝リーダー／5＝フレンド）。演出でその枠を光らせる
+function lsEraseSlots(attr) {
+  const out = [];
+  [0, 5].forEach(idx => {
+    if (partyUids.length <= idx || partyUids[idx] === null) return;
+    const en = box.find(b => b.uid === partyUids[idx]);
+    const m = en && MONSTER_DATA[en.monsterId];
+    const effs = m && m.leaderSkill && m.leaderSkill.effects;
+    if (Array.isArray(effs) && effs.some(x => x && x.condition === 'eraseAttr' && x.attr === attr)) out.push(idx);
+  });
+  return out;
 }
 // 消した塊の形から、演出の種類を選ぶ（2属性同時つなげで、あとから条件がそろった塊用）
 function lsHitForCells(cells, color) {
@@ -9646,6 +9734,7 @@ async function startGameFromHome() {
 
   partySp = 0;
   partyMemory = 0;
+  _skillStage = {};   // 変化スキルは、ダンジョンに入るたびにスキル1から
   _liftedSkillUids = new Set();   // 前のダンジョンの「持ち上がり」状態を持ち越さない
   _skillCondSig = '';
 
@@ -10396,12 +10485,20 @@ function showSkillHoldInfo(mon, entry) {
   let box = document.getElementById('skill-hold-info');
   if (!box) { box = document.createElement('div'); box.id = 'skill-hold-info'; dg.appendChild(box); }
   const need = getRequiredSp(entry, mon);
+  const cs = curSkill(entry, mon);
   box.innerHTML = '';
   const head = document.createElement('div'); head.className = 'shi-head';
-  const nm = document.createElement('span'); nm.className = 'shi-name'; nm.textContent = mon.skill.name || 'スキル';
+  const nm = document.createElement('span'); nm.className = 'shi-name'; nm.textContent = cs.name || 'スキル';
   const sp = document.createElement('span'); sp.className = 'shi-sp'; sp.textContent = `必要SP ${need}`;
   head.append(nm, sp);
-  const ds = document.createElement('div'); ds.className = 'shi-desc'; setSkillDesc(ds, mon.skill);
+  const ds = document.createElement('div'); ds.className = 'shi-desc';
+  // 変化スキル：「いまのスキル」と「次のスキル」だけを出す（スキル1のときも、全段階は並べない）
+  const stN = Array.isArray(mon.skill.stages) ? mon.skill.stages.length + 1 : 0;
+  if (stN > 1) {
+    const { stages: _st, ...curOnly } = cs;   // スキル1の cs は stages を持っているので外す（発動条件はスキル1の説明の先頭にそのまま出る）
+    setSkillDesc(ds, curOnly);
+    ds.insertAdjacentHTML('beforeend', skillStageListHTML(mon.skill, -1, [(skillStageIndex(entry, mon) + 1) % stN], '次'));
+  } else setSkillDesc(ds, cs);
   const who = document.createElement('div'); who.className = 'shi-who'; who.textContent = mon.name;
   box.append(who, head, ds);
   box.classList.add('on');
@@ -10498,7 +10595,7 @@ function renderParty() {
           }
 
           const requiredSp = getRequiredSp(entry, mon);
-          const isSpReady = partySp >= requiredSp && !isSkillSealed() && skillCondOk(mon.skill); // 共通SPで発動可能か（スキル使用不可の間は不可）
+          const isSpReady = partySp >= requiredSp && !isSkillSealed() && skillCondOk(curSkill(entry, mon)); // 共通SPで発動可能か（スキル使用不可の間は不可）
           // スキル使用不可中の印は、右のバフアイコン欄に出すので、各モンスターには付けない
 
           if (isSpReady) {
@@ -11725,6 +11822,22 @@ function grantMonsterToBox(monsterId) {
   box.push({ uid, monsterId, level: 1, exp: 0, sp: 0, memory: 0, plusHp: 0, plusAtk: 0, plusRec: 0 });
   saveGame();
   return { uid, isNew };
+}
+// ガチャ用：所持エナ（ホーム左上のエナ）の数／つかう（足りなければ false を返して何もしない）
+function gachaGetEna() { return playerCoin; }
+function gachaConsumeEna(n) {
+  n = Math.max(1, Math.floor(Number(n)) || 1);
+  if (playerCoin < n) return false;
+  addPlayerCoin(-n);
+  return true;
+}
+// ガチャ用：アイテム（チップなど）を n 個ふやして保存。返り値 { count = いまの所持数 }（アイテムが無ければ null）
+function gachaGrantItem(id, n) {
+  if (typeof ITEM_DATA === 'undefined' || !ITEM_DATA[id]) return null;
+  n = Math.max(1, Math.floor(Number(n)) || 1);
+  itemInventory[id] = getItemCount(id) + n;
+  saveGame();
+  return { count: itemInventory[id] };
 }
 // ガチャの交換所用（js/gacha.js から使う）
 //   gachaExchangeMaterials(lineupIds) … BOX の中の、ラインナップのモンスター一覧（{ uid, monsterId, level, plus, grown, inTeam }）

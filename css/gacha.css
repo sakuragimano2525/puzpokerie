@@ -119,31 +119,38 @@
   #gacha-toast { bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 
-/* ── ページ切りかえ（1ページ目＝赤／2ページ目＝青） ──────────────
+/* ── ページ切りかえ（1ページ目＝虹がかった白／2ページ目＝赤／3ページ目＝青／4ページ目＝緑） ──────────────
    左右の矢印・下のドット・左右スワイプ・キーボードの ←→ で切りかえ（js/gacha.js の setPage）
-   2ページ目は、マシン本体・左上のマークと PAGE 札を青にして、ひと目で分かるようにしています */
+   ページごとに、マシン本体・左上のマーク・PAGE 札の色を変えて、ひと目で分かるようにしています */
 .gs-machine .gm-body { transition: fill 0.25s; }
-#gacha-screen[data-page="2"] .gs-machine .gm-body { fill: #3d8bff; }
-#gacha-screen[data-page="2"] .gs-emblem { background: #2f7bff; }
-#gacha-screen[data-page="3"] .gs-machine .gm-body { fill: #2fb860; }
-#gacha-screen[data-page="3"] .gs-emblem { background: #22a553; }
+#gacha-screen[data-page="1"] .gs-machine .gm-body { fill: url(#gm-rainbow); }   /* エナガチャ：虹がかった白 */
+#gacha-screen[data-page="1"] .gs-emblem { background: linear-gradient(135deg, #ffd6e6, #fff0bd 35%, #d3f5df 62%, #cfe4ff 85%, #e4d7ff); }
+#gacha-screen[data-page="2"] .gs-machine .gm-body { fill: #ff5f4a; }   /* ブルアカガチャ：赤 */
+#gacha-screen[data-page="2"] .gs-emblem { background: var(--coral); }
+#gacha-screen[data-page="3"] .gs-machine .gm-body { fill: #3d8bff; }   /* ステラソラガチャ：青 */
+#gacha-screen[data-page="3"] .gs-emblem { background: #2f7bff; }
+#gacha-screen[data-page="4"] .gs-machine .gm-body { fill: #2fb860; }   /* ブルアカガチャ2：緑 */
+#gacha-screen[data-page="4"] .gs-emblem { background: #22a553; }
 
 .gs-pager { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 0 0; }
 .gs-pg-label {
   min-width: 52px; text-align: center; padding: 3px 10px 2px; font: 400 0.9rem/1.2 var(--ff-num); letter-spacing: 0.08em; color: var(--ink);
   background: var(--paper); border: 2.5px solid var(--ink); border-radius: 999px; box-shadow: 0 2px 0 var(--ink);
 }
-#gacha-screen[data-page="2"] .gs-pg-label { color: #fff; background: #2f7bff; }
-#gacha-screen[data-page="3"] .gs-pg-label { color: #fff; background: #22a553; }
+#gacha-screen[data-page="1"] .gs-pg-label { color: var(--ink); background: linear-gradient(90deg, #ffd6e6, #fff0bd, #d3f5df, #cfe4ff, #e4d7ff); }
+#gacha-screen[data-page="2"] .gs-pg-label { color: #fff; background: #ff5f4a; }
+#gacha-screen[data-page="3"] .gs-pg-label { color: #fff; background: #2f7bff; }
+#gacha-screen[data-page="4"] .gs-pg-label { color: #fff; background: #22a553; }
 .gs-dot {
   position: relative; width: 14px; height: 14px; padding: 0; box-sizing: border-box; border-radius: 50%; cursor: pointer;
   background: rgba(255, 255, 255, 0.85); border: 2.5px solid var(--ink); -webkit-tap-highlight-color: transparent;
   transition: transform 0.15s, background 0.15s;
 }
 .gs-dot::before { content: ''; position: absolute; inset: -12px; }   /* 指で押しやすいように、見た目より広くする */
-.gs-dot[data-page="1"].on { background: var(--coral); transform: scale(1.25); }
-.gs-dot[data-page="2"].on { background: #2f7bff; transform: scale(1.25); }
-.gs-dot[data-page="3"].on { background: #22a553; transform: scale(1.25); }
+.gs-dot[data-page="1"].on { background: linear-gradient(135deg, #ffd6e6, #fff0bd 35%, #d3f5df 62%, #cfe4ff 85%, #e4d7ff); transform: scale(1.25); }
+.gs-dot[data-page="2"].on { background: var(--coral); transform: scale(1.25); }
+.gs-dot[data-page="3"].on { background: #2f7bff; transform: scale(1.25); }
+.gs-dot[data-page="4"].on { background: #22a553; transform: scale(1.25); }
 
 /* マシンの左右の矢印 */
 .gs-machine-wrap { position: relative; }
@@ -160,13 +167,14 @@
 .gs-arrow:active { animation: none; transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 @keyframes gsNudgeR { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
 @keyframes gsNudgeL { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-4px); } }
-/* 2ページ目の「戻る」矢印は青、1ページ目の「進む」矢印は赤っぽくして、行き先の色を知らせる */
-.gs-arrow.next { background: #dbe9ff; }
-.gs-arrow.prev { background: #ffe1db; }
-#gacha-screen[data-page="1"] .gs-arrow.next { background: #dbe9ff; }   /* 1→2 は青 */
-#gacha-screen[data-page="2"] .gs-arrow.next { background: #d4f4de; }   /* 2→3 は緑 */
-#gacha-screen[data-page="2"] .gs-arrow.prev { background: #ffe1db; }   /* 2→1 は赤 */
-#gacha-screen[data-page="3"] .gs-arrow.prev { background: #dbe9ff; }   /* 3→2 は青 */
+/* 矢印は、行き先のページの色にして知らせる（1＝虹がかった白／2＝赤／3＝青／4＝緑） */
+.gs-arrow.next, .gs-arrow.prev { background: #ffe1db; }
+#gacha-screen[data-page="1"] .gs-arrow.next { background: #ffe1db; }   /* 1→2 は赤 */
+#gacha-screen[data-page="2"] .gs-arrow.prev { background: #f4eefe; }   /* 2→1 は虹がかった白 */
+#gacha-screen[data-page="2"] .gs-arrow.next { background: #dbe9ff; }   /* 2→3 は青 */
+#gacha-screen[data-page="3"] .gs-arrow.prev { background: #ffe1db; }   /* 3→2 は赤 */
+#gacha-screen[data-page="3"] .gs-arrow.next { background: #d4f4de; }   /* 3→4 は緑 */
+#gacha-screen[data-page="4"] .gs-arrow.prev { background: #dbe9ff; }   /* 4→3 は青 */
 
 /* 切りかえのときの、横からスッと出る動き */
 #gacha-machine-wrap.slide-from-right { animation: gsSlideR 0.3s cubic-bezier(0.2, 0.9, 0.3, 1); }
@@ -307,9 +315,10 @@
    ラインナップのモンスター N 匹をわたして、図鑑に登録ずみの1匹と確定交換（js/gacha.js の openExchange） */
 .gs-ex-btn { min-height: 46px; padding: 0 16px; gap: 6px; font-size: 0.95rem; }
 .gs-ex-btn .ic { width: 1.25em; height: 1.25em; stroke-width: 2.6; }
-#gacha-screen[data-page="2"] .gs-ex-btn { background: #dbe9ff; }
-#gacha-screen[data-page="3"] .gs-ex-btn { background: #d4f4de; }
-#gacha-screen[data-page="1"] .gs-ex-btn { background: #ffe9e4; }
+#gacha-screen[data-page="1"] .gs-ex-btn { background: #f4eefe; }
+#gacha-screen[data-page="2"] .gs-ex-btn { background: #ffe9e4; }
+#gacha-screen[data-page="3"] .gs-ex-btn { background: #dbe9ff; }
+#gacha-screen[data-page="4"] .gs-ex-btn { background: #d4f4de; }
 
 #gacha-exchange .gs-card { width: min(100%, 440px); }
 .gs-ex-sec { align-self: stretch; margin-top: 4px; padding: 4px 10px 3px; font: 900 0.85rem/1.3 var(--ff); letter-spacing: 0.04em; color: var(--ink); background: #fff3b8; border: 2px solid var(--ink); border-radius: 10px; }
@@ -334,3 +343,8 @@
   .gs-ex-btns { flex-direction: row; justify-content: center; bottom: -14px; margin: 4px -14px -14px; padding: 8px 14px 14px; }
   .gs-ex-btn { min-height: 40px; }
 }
+
+/* ── エナガチャ：チップも出る（ラインナップの見出し）／交換所なし ── */
+.gs-lu-sec { grid-column: 1 / -1; padding: 3px 10px 2px; font: 900 0.8rem/1.3 var(--ff); letter-spacing: 0.04em; color: var(--ink); background: #fff3b8; border: 2px solid var(--ink); border-radius: 10px; }
+.gs-lu-sec:not(:first-child) { margin-top: 4px; }
+.gs-ex-btn[hidden] { display: none; }

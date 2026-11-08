@@ -12,7 +12,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 25,
-    baseExp: 100,
+    baseExp: 5000,
     stats: { hp: { min: 151, max: 852 }, atk: { min: 102, max: 300 }, rec: { min: 29, max: 58 } },
     skill: {
       name: 'このは',
@@ -30,7 +30,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 50,
-    baseExp: 100,
+    baseExp: 10000,
     stats: { hp: { min: 251, max: 1052 }, atk: { min: 122, max: 390 }, rec: { min: 39, max: 88 } },
     skill: {
       name: 'このは',
@@ -48,7 +48,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 10000,
     stats: { hp: { min: 440, max: 2800 }, atk: { min: 170, max: 1150 }, rec: { min: 175, max: 500 } },
     skill: {
       name: 'リーフストーム',
@@ -69,7 +69,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 25,
-    baseExp: 100,
+    baseExp: 5000,
     stats: { hp: { min: 151, max: 852 }, atk: { min: 152, max: 380 }, rec: { min: 19, max: 38 } },
     skill: {
       name: 'ひのこ',
@@ -87,7 +87,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 50,
-    baseExp: 100,
+    baseExp: 10000,
     stats: { hp: { min: 360, max: 1052 }, atk: { min: 160, max: 980 }, rec: { min: 8, max: 28 } },
     skill: {
       name: 'ひのこ',
@@ -105,7 +105,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 2500,
+    baseExp: 10000,
     stats: { hp: { min: 480, max: 3200 }, atk: { min: 300, max: 1990 }, rec: { min: 53, max: 150 } },
     skill: {
       name: 'かえんほうしゃ',
@@ -130,7 +130,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 25,
-    baseExp: 100,
+    baseExp: 5000,
     stats: { hp: { min: 154, max: 876 }, atk: { min: 151, max: 365 }, rec: { min: 18, max: 75 } },
     skill: {
       name: 'みずてっぽう',
@@ -148,7 +148,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 50,
-    baseExp: 100,
+    baseExp: 10000,
     stats: { hp: { min: 300, max: 1350 }, atk: { min: 300, max: 600 }, rec: { min: 20, max: 80 } },
     skill: {
       name: 'みずてっぽう',
@@ -166,7 +166,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 10000,
     stats: { hp: { min: 470, max: 3130 }, atk: { min: 230, max: 1530 }, rec: { min: 68, max: 195 } },
     skill: {
       name: 'ハイドロポンプ',
@@ -187,7 +187,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 25,
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 46, max: 271 }, atk: { min: 105, max: 207 }, rec: { min: 25, max: 109 } },
     skill: { name: 'いやしのひかり', sp: 2, desc: 'HPを最大HPの20%回復。', effects: [ { type: 'heal', value: 0.2 } ] },
     leaderSkill: { name: 'いやし', desc: 'ドロップを消すと最大HPの20%回復。', effects: [ { type: 'hpRecovery', value: 0.15 } ] },
@@ -199,7 +199,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'wood',
     type: 'たいりょく',
-    baseExp: 4000,
+    baseExp: 1000,
     stats: { hp: { min: 299, max: 599 }, atk: { min: 75, max: 100 }, rec: { min: 35, max: 5 } },
     skill: {
       name: 'かたくなる',
@@ -221,7 +221,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 350, max: 2700 }, atk: { min: 190, max: 1100 }, rec: { min: 140, max: 400 } },
     skill: { name: 'ハートエンハンス', sp: 3, desc: '1ターンの間、回復力が1.5倍。', effects: [ { type: 'recMult', turns: 1, value: 1.5 } ] },
     leaderSkill: { name: '木のルーン・大', desc: '木属性の回復力2倍。', effects: [ { type: 'rec', attr: 'wood', value: 2 } ] }
@@ -232,7 +232,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'wood',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 50, max: 350 }, atk: { min: 130, max: 350 }, rec: { min: 0, max: 0 } },
     skill: {
       name: 'とつげき',
@@ -253,7 +253,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'wood',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 1000,
     stats: { hp: { min: 599, max: 999 }, atk: { min: 5, max: 50 }, rec: { min: 0, max: 5 } },
     skill: {
       name: 'かたくなる',
@@ -275,7 +275,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 3000,
+    baseExp: 5000,
     stats: { hp: { min: 410, max: 2750 }, atk: { min: 290, max: 1900 }, rec: { min: 28, max: 100 } },
     skill: {
       name: 'ドロップリフレッシュ',
@@ -306,7 +306,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 90, max: 285 }, atk: { min: 100, max: 210 }, rec: { min: 10, max: 30 } },
     skill: {
       name: 'かぜおこし',
@@ -327,7 +327,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'light',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 1000,
     stats: { hp: { min: 250, max: 750 }, atk: { min: 150, max: 300 }, rec: { min: 20, max: 40 } },
     skill: {
       name: 'かまいたち',
@@ -349,7 +349,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 490, max: 3250 }, atk: { min: 220, max: 1520 }, rec: { min: 46, max: 200 } },
     skill: {
       name: 'たつまき',
@@ -369,7 +369,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 242, max: 320 }, atk: { min: 118, max: 149 }, rec: { min: 3, max: 50 } },
     skill: { name: 'エコーボイス', sp: 2, desc: '1ターンの間、敵全体に攻撃。', effects: [ { type: 'allAttackBuff', turns: 1 } ] },
     leaderSkill: {
@@ -386,7 +386,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 530, max: 3500 }, atk: { min: 210, max: 1420 }, rec: { min: 77, max: 230 } },
     skill: { name: 'ひっさつまえば', sp: 3, desc: '左上に光を逆L字型に生成。', effects: [ { type: 'orbChangeReverseL', attr: 'light' } ] },
     leaderSkill: {
@@ -401,7 +401,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'fire',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 80, max: 280 }, atk: { min: 110, max: 240 }, rec: { min: 5, max: 20 } },
     skill: {
       name: 'つつく',
@@ -419,7 +419,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 100,
+    baseExp: 5000,
     stats: { hp: { min: 440, max: 2930 }, atk: { min: 290, max: 1900 }, rec: { min: 31, max: 90 } },
     skill: {
       name: 'ねっぷう',
@@ -442,7 +442,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 290, max: 406 }, atk: { min: 96, max: 233 }, rec: { min: 5, max: 15 } },
     skill: {
       name: 'どくどく',
@@ -460,7 +460,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 100,
+    baseExp: 5000,
     stats: { hp: { min: 430, max: 2900 }, atk: { min: 290, max: 1960 }, rec: { min: 42, max: 90 } },
     skill: {
       name: 'どくどく+',
@@ -480,7 +480,7 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'light',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 5000,
     stats: { hp: { min: 198, max: 320 }, atk: { min: 231, max: 331 }, rec: { min: 32, max: 32 } },
     skill: {
       name: 'ドロップチェンジ・光',
@@ -503,7 +503,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 100,
+    baseExp: 10000,
     stats: { hp: { min: 520, max: 3450 }, atk: { min: 250, max: 1650 }, rec: { min: 88, max: 250 } },
     skill: {
       name: 'ドロップチェンジ・光',
@@ -523,7 +523,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 178, max: 881 }, atk: { min: 146, max: 309 }, rec: { min: 8, max: 30 } },
     skill: {
       name: 'チェンジハート・光',
@@ -541,7 +541,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 590, max: 3900 }, atk: { min: 220, max: 1480 }, rec: { min: 81, max: 230 } },
     skill: {
       name: 'ダブルチェンジハート・光',
@@ -558,7 +558,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 500,
     stats: { hp: { min: 470, max: 1120 }, atk: { min: 140, max: 500 }, rec: { min: 18, max: 50 } },
     skill: {
       name: 'スリードロップ・水闇改',
@@ -580,7 +580,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 570, max: 2790 }, atk: { min: 150, max: 1000 }, rec: { min: 25, max: 70 } },
     skill: {
       name: 'スリードロップ・水闇改',
@@ -602,7 +602,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 690, max: 4630 }, atk: { min: 200, max: 1400 }, rec: { min: 37, max: 105 } },
     skill: {
       name: 'スリードロップ・水闇改',
@@ -623,7 +623,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 500,
     stats: { hp: { min: 270, max: 800 }, atk: { min: 200, max: 830 }, rec: { min: 11, max: 30 } },
     skill: {
       name: 'スリードロップ・水闇',
@@ -645,7 +645,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 330, max: 1600 }, atk: { min: 240, max: 1600 }, rec: { min: 14, max: 40 } },
     skill: {
       name: 'スリードロップ・水闇',
@@ -667,7 +667,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 420, max: 2750 }, atk: { min: 320, max: 1900 }, rec: { min: 19, max: 80 } },
     skill: {
       name: 'スリードロップ・水闇',
@@ -687,7 +687,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'かいふく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 180, max: 400 }, atk: { min: 60, max: 240 }, rec: { min: 25, max: 100 } },
     skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: {
@@ -704,7 +704,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 480, max: 3200 }, atk: { min: 170, max: 1100 }, rec: { min: 245, max: 700 } },
     skill: { name: 'スーパーキュアー', sp: 3, desc: 'バインドを5ターン回復。', effects: [ { type: 'bindRecover', turns: 5 } ] },
     leaderSkill: {
@@ -719,7 +719,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'fire',
     type: 'かいふく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 189, max: 426 }, atk: { min: 66, max: 123 }, rec: { min: 45, max: 82 } },
     skill: {
       name: 'ドロップチェンジ・火',
@@ -737,7 +737,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 310, max: 2800 }, atk: { min: 20, max: 800 }, rec: { min: 0, max: 500 } },
     skill: {
       name: 'ダブルチェンジハート・火',
@@ -757,7 +757,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 280, max: 600 }, atk: { min: 60, max: 240 }, rec: { min: 25, max: 40 } },
     skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: { name: '闇のオーラ', desc: '闇属性のHP1.2倍。', effects: [ { type: 'hp', attr: 'dark', value: 1.2 } ] },
@@ -770,7 +770,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 730, max: 4850 }, atk: { min: 170, max: 1100 }, rec: { min: 91, max: 260 } },
     skill: { name: 'スーパーキュアー', sp: 3, desc: 'バインドを5ターン回復。', effects: [ { type: 'bindRecover', turns: 5 } ] },
     leaderSkill: { name: '闇のオーラ・中', desc: '闇属性のHP1.5倍。', effects: [ { type: 'hp', attr: 'dark', value: 1.5 } ] }
@@ -781,7 +781,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'こうげき',
-    baseExp: 150,
+    baseExp: 500,
     stats: { hp: { min: 296, max: 666 }, atk: { min: 164, max: 344 }, rec: { min: 3, max: 20 } },
     skill: {
       name: 'かっくう',
@@ -803,7 +803,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 50,
-    baseExp: 3000,
+    baseExp: 5000,
     stats: { hp: { min: 500, max: 2800 }, atk: { min: 390, max: 2550 }, rec: { min: 5, max: 0 } },
     skill: {
       name: 'かっくう+',
@@ -827,7 +827,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'wood',
     type: 'かいふく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 89, max: 426 }, atk: { min: 66, max: 123 }, rec: { min: 15, max: 42 } },
     skill: {
       name: 'ドロップチェンジ・木',
@@ -844,7 +844,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'wood',
     type: 'かいふく',
-    baseExp: 100,
+    baseExp: 1000,
     stats: { hp: { min: 300, max: 750 }, atk: { min: 100, max: 200 }, rec: { min: 20, max: 60 } },
     skill: {
       name: 'ドロップチェンジ・木',
@@ -862,7 +862,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 420, max: 3200 }, atk: { min: 220, max: 1270 }, rec: { min: 158, max: 450 } },
     skill: { name: 'こうごうせい', sp: 3, desc: 'HPを最大HPの35%回復。', effects: [ { type: 'heal', value: 0.35 } ] },
     leaderSkill: { name: '木のオーラ・大', desc: '木属性のHP1.7倍。', effects: [ { type: 'hp', attr: 'wood', value: 1.7 } ] }
@@ -873,7 +873,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'wood',
     type: 'バランス',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 98, max: 426 }, atk: { min: 136, max: 420 }, rec: { min: 15, max: 35 } },
     skill: {
       name: 'キノコのほうし',
@@ -895,7 +895,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 550, max: 3650 }, atk: { min: 230, max: 1620 }, rec: { min: 133, max: 240 } },
     skill: {
       name: 'キノコのほうし+',
@@ -911,7 +911,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'バランス',
-    baseExp: 150,
+    baseExp: 500,
     stats: { hp: { min: 306, max: 466 }, atk: { min: 156, max: 253 }, rec: { min: 25, max: 50 } },
     skill: {
       name: 'チェンジハート・木',
@@ -936,7 +936,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 560, max: 3700 }, atk: { min: 210, max: 1420 }, rec: { min: 151, max: 330 } },
     skill: {
       name: 'ダブルチェンジハート・木',
@@ -959,7 +959,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 90, max: 206 }, atk: { min: 296, max: 404 }, rec: { min: 4, max: 10 } },
     skill: {
       name: 'あなをほる',
@@ -977,7 +977,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 380, max: 2450 }, atk: { min: 300, max: 2050 }, rec: { min: 14, max: 80 } },
     skill: {
       name: 'じしん',
@@ -993,7 +993,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 200, max: 450 }, atk: { min: 100, max: 250 }, rec: { min: 15, max: 55 } },
     skill: {
       name: 'シャインエンハンス',
@@ -1015,7 +1015,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 400, max: 2680 }, atk: { min: 200, max: 1420 }, rec: { min: 42, max: 200 } },
     skill: {
       name: 'シャインエンハンス・中',
@@ -1035,7 +1035,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'たいりょく',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 178, max: 881 }, atk: { min: 146, max: 309 }, rec: { min: 8, max: 30 } },
     skill: {
       name: 'ドわすれ',
@@ -1053,7 +1053,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 630, max: 4210 }, atk: { min: 210, max: 1550 }, rec: { min: 35, max: 80 } },
     skill: {
       name: 'ドわすれ',
@@ -1069,7 +1069,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'fire',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 120, max: 326 }, atk: { min: 154, max: 480 }, rec: { min: 20, max: 30 } },
     skill: {
       name: 'ファイアエンハンス',
@@ -1091,7 +1091,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 275, max: 3000 }, atk: { min: 300, max: 1900 }, rec: { min: 35, max: 100 } },
     skill: {
       name: 'ファイアエンハンス・中',
@@ -1111,7 +1111,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'fire',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 88, max: 386 }, atk: { min: 165, max: 420 }, rec: { min: 15, max: 35 } },
     skill: { name: 'いかく', sp: 4, desc: '敵全体の行動を1ターン遅らせる。', effects: [ { type: 'enemyDelay', target: 'all', turns: 1 } ] },
     leaderSkill: {
@@ -1128,7 +1128,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 10000,
     stats: { hp: { min: 520, max: 3470 }, atk: { min: 290, max: 1650 }, rec: { min: 53, max: 160 } },
     skill: { name: 'いかく+', sp: 6, desc: '敵全体の行動を2ターン遅らせる。', effects: [ { type: 'enemyDelay', target: 'all', turns: 2 } ] },
     leaderSkill: {
@@ -1143,7 +1143,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'たいりょく',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 188, max: 900 }, atk: { min: 126, max: 241 }, rec: { min: 18, max: 39 } },
     skill: {
       name: 'チェンジハート・水',
@@ -1164,7 +1164,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'water',
     type: 'たいりょく',
-    baseExp: 500,
+    baseExp: 1000,
     stats: { hp: { min: 400, max: 2000 }, atk: { min: 175, max: 1750 }, rec: { min: 17, max: 47 } },
     skill: {
       name: 'チェンジハート・水',
@@ -1189,7 +1189,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 690, max: 4630 }, atk: { min: 210, max: 1400 }, rec: { min: 40, max: 105 } },
     skill: {
       name: 'ガードブレイク',
@@ -1209,7 +1209,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 103, max: 320 }, atk: { min: 148, max: 228 }, rec: { min: 20, max: 44 } },
     skill: { name: 'ザ・ワールド', sp: 4, desc: '5秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 5 } ] },
     leaderSkill: { name: '闇のソウル', desc: '闇属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'dark', value: 1.2 } ] },
@@ -1221,7 +1221,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'dark',
     type: 'こうげき',
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 200, max: 300 }, atk: { min: 200, max: 600 }, rec: { min: 10, max: 50 } },
     skill: { name: 'ザ・ワールド', sp: 4, desc: '5秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 5 } ] },
     leaderSkill: { name: '暗闇のソウル', desc: '闇属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'dark', value: 1.5 } ] },
@@ -1234,7 +1234,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 750,
+    baseExp: 10000,
     stats: { hp: { min: 400, max: 2450 }, atk: { min: 310, max: 2080 }, rec: { min: 53, max: 80 } },
     skill: { name: 'チェンジ・ザ・ワールド', sp: 5, desc: '9秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 9 } ] },
     leaderSkill: { name: '暗夜のソウル', desc: '闇属性の攻撃1.8倍。', effects: [ { type: 'atk', attr: 'dark', value: 1.8 } ] }
@@ -1245,7 +1245,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'fire',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 220, max: 450 }, atk: { min: 194, max: 450 }, rec: { min: 0, max: 0 } },
     skill: {
       name: 'ガードクラッシュ',
@@ -1262,7 +1262,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'fire',
     type: 'こうげき',
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 250, max: 550 }, atk: { min: 250, max: 550 }, rec: { min: 0, max: 0 } },
     skill: {
       name: 'ガードクラッシュ',
@@ -1280,7 +1280,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 10000,
     stats: { hp: { min: 450, max: 2800 }, atk: { min: 390, max: 2550 }, rec: { min: 15, max: 0 } },
     skill: {
       name: 'シールドクラッシュ',
@@ -1300,7 +1300,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'wood',
     type: 'バランス',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 196, max: 350 }, atk: { min: 136, max: 160 }, rec: { min: 0, max: 42 } },
     skill: {
       name: 'メガドレイン',
@@ -1317,7 +1317,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'wood',
     type: 'バランス',
-    baseExp: 500,
+    baseExp: 1000,
     stats: { hp: { min: 420, max: 1700 }, atk: { min: 220, max: 1900 }, rec: { min: 10, max: 50 } },
     skill: {
       name: 'メガドレイン',
@@ -1339,7 +1339,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 470, max: 3160 }, atk: { min: 280, max: 1840 }, rec: { min: 46, max: 130 } },
     skill: {
       name: 'メガドレイン',
@@ -1359,7 +1359,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'たいりょく',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 198, max: 910 }, atk: { min: 126, max: 241 }, rec: { min: 8, max: 19 } },
     skill: {
       name: 'ドロップチェンジ・邪水',
@@ -1381,7 +1381,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 750,
+    baseExp: 5000,
     stats: { hp: { min: 640, max: 4250 }, atk: { min: 170, max: 1150 }, rec: { min: 133, max: 380 } },
     skill: {
       name: 'ジャミングスライド',
@@ -1408,7 +1408,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 300, max: 900 }, atk: { min: 80, max: 160 }, rec: { min: 5, max: 30 } },
     skill: {
       name: 'かたくなる',
@@ -1430,7 +1430,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 360, max: 2420 }, atk: { min: 180, max: 1220 }, rec: { min: 14, max: 40 } },
     skill: {
       name: 'かたくなる',
@@ -1452,7 +1452,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 630, max: 4210 }, atk: { min: 250, max: 1550 }, rec: { min: 28, max: 80 } },
     skill: {
       name: 'てっぺき',
@@ -1472,7 +1472,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'fire',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 173, max: 605 }, atk: { min: 180, max: 445 }, rec: { min: 27, max: 30 } },
     skill: {
       name: 'かえんぐるま',
@@ -1490,7 +1490,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 450, max: 3000 }, atk: { min: 150, max: 1700 }, rec: { min: 100, max: 200 } },
     skill: {
       name: 'れんごく',
@@ -1509,7 +1509,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'バランス',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 359, max: 759 }, atk: { min: 91, max: 191 }, rec: { min: 15, max: 45 } },
     skill: { name: 'なまける', sp: 3, desc: 'HPを最大HPの35%回復。', effects: [ { type: 'heal', value: 0.35 } ] },
     leaderSkill: { name: '水のルーン', desc: '水属性の回復力1.3倍。', effects: [ { type: 'rec', attr: 'water', value: 1.3 } ] },
@@ -1525,7 +1525,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 10000,
     stats: { hp: { min: 640, max: 4250 }, atk: { min: 200, max: 1330 }, rec: { min: 168, max: 280 } },
     skill: { name: 'なまけてやすむ', sp: 5, desc: 'HPを最大HPの50%回復。', effects: [ { type: 'heal', value: 0.5 } ] },
     leaderSkill: {
@@ -1544,7 +1544,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'こうげき',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 158, max: 681 }, atk: { min: 184, max: 329 }, rec: { min: 8, max: 20 } },
     skill: {
       name: 'ソニックブーム',
@@ -1566,7 +1566,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'こうげき',
     maxLevel: 75,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 300, max: 1800 }, atk: { min: 100, max: 1740 }, rec: { min: 0, max: 0 } },
     skill: {
       name: 'ソニックブーム+',
@@ -1591,7 +1591,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 290, max: 2930 }, atk: { min: 290, max: 1920 }, rec: { min: 16, max: 90 } },
     skill: {
       name: 'シャインクロス',
@@ -1615,7 +1615,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 500, max: 1500 }, atk: { min: 200, max: 600 }, rec: { min: 50, max: 150 } },
     skill: {
       name: 'ドロップチェンジ・光',
@@ -1637,7 +1637,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 380, max: 2510 }, atk: { min: 290, max: 1910 }, rec: { min: 40, max: 115 } },
     skill: { name: 'トリプルヘッド', sp: 3, desc: '3ターンの間、敵全体に攻撃。', effects: [ { type: 'allAttackBuff', turns: 3 } ] },
     leaderSkill: {
@@ -1655,7 +1655,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'water',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 1000,
     stats: { hp: { min: 154, max: 876 }, atk: { min: 151, max: 365 }, rec: { min: 18, max: 75 } },
     skill: {
       name: 'ウォーターエンハンス',
@@ -1677,7 +1677,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 520, max: 3470 }, atk: { min: 200, max: 1600 }, rec: { min: 63, max: 180 } },
     skill: {
       name: 'ウォーターエンハンス・中',
@@ -1697,7 +1697,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 266, max: 466 }, atk: { min: 96, max: 233 }, rec: { min: 5, max: 0 } },
     skill: {
       name: 'どくのきり',
@@ -1719,7 +1719,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 780, max: 4500 }, atk: { min: 230, max: 1810 }, rec: { min: 0, max: 40 } },
     skill: {
       name: 'どくのきり',
@@ -1739,7 +1739,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 227, max: 805 }, atk: { min: 80, max: 345 }, rec: { min: 27, max: 30 } },
     skill: {
       name: 'とげキャノン',
@@ -1761,7 +1761,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 680, max: 2680 }, atk: { min: 300, max: 2000 }, rec: { min: 12, max: 35 } },
     skill: {
       name: 'ドロップチェンジ・水',
@@ -1781,7 +1781,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'こうげき',
-    baseExp: 150,
+    baseExp: 500,
     stats: { hp: { min: 171, max: 471 }, atk: { min: 252, max: 572 }, rec: { min: 0, max: -300 } },
     skill: {
       name: 'ドロップチェンジ・闇',
@@ -1802,7 +1802,7 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'dark',
     type: 'こうげき',
-    baseExp: 50,
+    baseExp: 5000,
     stats: { hp: { min: 75, max: 1275 }, atk: { min: 125, max: 655 }, rec: { min: -500, max: -500 } },
     skill: {
       name: 'ドロップチェンジ・闇',
@@ -1824,7 +1824,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 10000,
     stats: { hp: { min: 330, max: 2800 }, atk: { min: 390, max: 2600 }, rec: { min: -50, max: -500 } },
     skill: {
       name: 'ドロップチェンジ・闇',
@@ -1844,7 +1844,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'light',
     type: 'たいりょく',
-    baseExp: 2500,
+    baseExp: 1000,
     stats: { hp: { min: 404, max: 1076 }, atk: { min: 75, max: 165 }, rec: { min: 5, max: 25 } },
     skill: { name: 'ステルスロック', sp: 2, desc: '全ドロップをロック。', effects: [ { type: 'orbLock', target: 'all' } ] },
     leaderSkill: {
@@ -1865,7 +1865,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'かいふく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 103, max: 320 }, atk: { min: 128, max: 198 }, rec: { min: 44, max: 74 } },
     skill: {
       name: 'チェンジハート・闇',
@@ -1883,7 +1883,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 5000,
     stats: { hp: { min: 460, max: 3100 }, atk: { min: 190, max: 1450 }, rec: { min: 245, max: 550 } },
     skill: {
       name: 'ダブルチェンジハート・闇',
@@ -1899,7 +1899,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'こうげき',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 97, max: 307 }, atk: { min: 211, max: 591 }, rec: { min: 0, max: 15 } },
     skill: {
       name: 'クラブハンマー',
@@ -1921,7 +1921,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 390, max: 2600 }, atk: { min: 310, max: 2050 }, rec: { min: 18, max: 50 } },
     skill: {
       name: 'アタックエンハンス・中',
@@ -1941,7 +1941,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'こうげき',
-    baseExp: 150,
+    baseExp: 500,
     stats: { hp: { min: 100, max: 350 }, atk: { min: 255, max: 380 }, rec: { min: 10, max: 22 } },
     skill: {
       name: 'せいでんき',
@@ -1963,7 +1963,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 410, max: 2750 }, atk: { min: 270, max: 1900 }, rec: { min: 21, max: 60 } },
     skill: {
       name: 'だいばくはつ',
@@ -1984,7 +1984,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 500,
     stats: { hp: { min: 380, max: 1010 }, atk: { min: 180, max: 1180 }, rec: { min: 30, max: 85 } },
     skill: {
       name: 'ウッドエンハンス',
@@ -2006,7 +2006,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 540, max: 3650 }, atk: { min: 320, max: 1620 }, rec: { min: 42, max: 240 } },
     skill: {
       name: 'ウッドエンハンス・中',
@@ -2026,7 +2026,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'light',
     type: 'かいふく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 80, max: 406 }, atk: { min: 66, max: 123 }, rec: { min: 20, max: 52 } },
     skill: {
       name: 'ホネブーメラン',
@@ -2048,7 +2048,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 350, max: 2340 }, atk: { min: 170, max: 1430 }, rec: { min: 140, max: 400 } },
     skill: {
       name: 'ホネブーメラン+',
@@ -2072,7 +2072,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 380,
+    baseExp: 5000,
     stats: { hp: { min: 410, max: 2750 }, atk: { min: 300, max: 1900 }, rec: { min: 28, max: 60 } },
     skill: {
       name: 'ファイアクロス',
@@ -2093,7 +2093,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 380,
+    baseExp: 5000,
     stats: { hp: { min: 590, max: 3900 }, atk: { min: 230, max: 1470 }, rec: { min: 46, max: 130 } },
     skill: {
       name: 'ストレート',
@@ -2116,7 +2116,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'fire',
     type: 'たいりょく',
-    baseExp: 250,
+    baseExp: 1000,
     stats: { hp: { min: 427, max: 1500 }, atk: { min: 225, max: 550 }, rec: { min: 8, max: 78 } },
     skill: { name: 'ベロでひきこむ', sp: 6, desc: '敵全体の行動を2ターン遅らせる。', effects: [ { type: 'enemyDelay', target: 'all', turns: 2 } ] },
     leaderSkill: { name: '火のオーラ・中', desc: '火属性のHP1.5倍。', effects: [ { type: 'hp', attr: 'fire', value: 1.5 } ] }
@@ -2127,7 +2127,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'dark',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 206, max: 366 }, atk: { min: 206, max: 333 }, rec: { min: 5, max: 0 } },
     skill: {
       name: 'ダークエンハンス',
@@ -2149,7 +2149,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 750,
+    baseExp: 5000,
     stats: { hp: { min: 470, max: 3150 }, atk: { min: 260, max: 1750 }, rec: { min: 53, max: 150 } },
     skill: {
       name: 'ダークエンハンス・中',
@@ -2169,7 +2169,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'light',
     type: 'こうげき',
-    baseExp: 100,
+    baseExp: 1000,
     stats: { hp: { min: 154, max: 876 }, atk: { min: 251, max: 465 }, rec: { min: 8, max: 25 } },
     skill: {
       name: 'つのでつく',
@@ -2191,7 +2191,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 510, max: 3400 }, atk: { min: 390, max: 2370 }, rec: { min: 12, max: 0 } },
     skill: {
       name: 'つのドリル',
@@ -2224,7 +2224,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'wood',
     type: 'たいりょく',
-    baseExp: 250,
+    baseExp: 1000,
     stats: { hp: { min: 450, max: 1750 }, atk: { min: 250, max: 750 }, rec: { min: 10, max: 100 } },
     skill: {
       name: 'チェンジハート・木',
@@ -2245,7 +2245,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 530, max: 3500 }, atk: { min: 220, max: 1420 }, rec: { min: 182, max: 230 } },
     skill: {
       name: 'リフレッシュ・ファイブ',
@@ -2271,7 +2271,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'たいりょく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 298, max: 598 }, atk: { min: 96, max: 196 }, rec: { min: 26, max: 36 } },
     skill: {
       name: 'みずてっぽう',
@@ -2289,7 +2289,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 50,
-    baseExp: 1500,
+    baseExp: 1000,
     stats: { hp: { min: 466, max: 2666 }, atk: { min: 100, max: 1100 }, rec: { min: 24, max: 74 } },
     skill: {
       name: 'てっぽうみず',
@@ -2306,7 +2306,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'かいふく',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 266, max: 566 }, atk: { min: 153, max: 213 }, rec: { min: 51, max: 81 } },
     skill: {
       name: 'チェンジハート・水',
@@ -2328,7 +2328,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 5000,
     stats: { hp: { min: 470, max: 3100 }, atk: { min: 220, max: 1450 }, rec: { min: 196, max: 550 } },
     skill: {
       name: 'ダブルチェンジハート・水',
@@ -2348,7 +2348,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 500,
     stats: { hp: { min: 344, max: 644 }, atk: { min: 182, max: 262 }, rec: { min: 34, max: 64 } },
     skill: {
       name: 'ガードブレイク',
@@ -2375,7 +2375,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 750,
+    baseExp: 10000,
     stats: { hp: { min: 510, max: 3400 }, atk: { min: 230, max: 1560 }, rec: { min: 100, max: 200 } },
     skill: {
       name: 'なぞのちから',
@@ -2400,7 +2400,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 490, max: 3250 }, atk: { min: 200, max: 1520 }, rec: { min: 189, max: 200 } },
     skill: {
       name: 'バリアー',
@@ -2425,7 +2425,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'こうげき',
     maxLevel: 50,
-    baseExp: 200,
+    baseExp: 5000,
     stats: { hp: { min: 354, max: 3032 }, atk: { min: 271, max: 1838 }, rec: { min: 25, max: 120 } },
     skill: {
       name: 'シザークロス',
@@ -2447,7 +2447,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'かいふく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 440, max: 3200 }, atk: { min: 210, max: 1270 }, rec: { min: 238, max: 450 } },
     skill: { name: 'ハートエンハンス', sp: 3, desc: '1ターンの間、回復力が1.5倍。', effects: [ { type: 'recMult', turns: 1, value: 1.5 } ] },
     leaderSkill: {
@@ -2462,7 +2462,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'light',
     type: 'バランス',
-    baseExp: 500,
+    baseExp: 1000,
     stats: { hp: { min: 310, max: 2200 }, atk: { min: 300, max: 1200 }, rec: { min: 40, max: 140 } },
     skill: {
       name: 'ルーレット・ワン',
@@ -2483,7 +2483,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 350, max: 2320 }, atk: { min: 310, max: 2080 }, rec: { min: 23, max: 75 } },
     skill: {
       name: 'かえんほうしゃ',
@@ -2521,7 +2521,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 200,
+    baseExp: 5000,
     stats: { hp: { min: 490, max: 3250 }, atk: { min: 280, max: 1850 }, rec: { min: 11, max: 30 } },
     skill: {
       name: 'とっしん',
@@ -2537,7 +2537,7 @@ const MONSTER_DATA = {
     rarity: 1,
     attr: 'water',
     type: 'バランス',
-    baseExp: 50,
+    baseExp: 500,
     stats: { hp: { min: 50, max: 100 }, atk: { min: 5, max: 25 }, rec: { min: 0, max: 5 } },
     skill: { name: 'はねる', sp: 1, desc: '敵単体に3の固定ダメージ。', effects: [ { type: 'damageAll', target: 'single', value: 3 } ] },
     leaderSkill: { name: 'せいめいりょく', desc: '全属性のHP1.1倍。', effects: [ { type: 'hp', value: 1.1 } ] },
@@ -2550,7 +2550,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 10000,
     stats: { hp: { min: 600, max: 3200 }, atk: { min: 300, max: 2200 }, rec: { min: 75, max: 150 } },
     skill: {
       name: 'たきのぼり',
@@ -2574,7 +2574,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 200,
+    baseExp: 5000,
     stats: { hp: { min: 710, max: 4750 }, atk: { min: 170, max: 1150 }, rec: { min: 151, max: 230 } },
     skill: {
       name: 'なみのり',
@@ -2671,7 +2671,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 50,
-    baseExp: 100,
+    baseExp: 5000,
     stats: { hp: { min: 200, max: 2000 }, atk: { min: 100, max: 1200 }, rec: { min: 20, max: 80 } },
     skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: { name: '光のルーン', desc: '光属性の回復力1.3倍。', effects: [ { type: 'rec', attr: 'light', value: 1.3 } ] },
@@ -2689,7 +2689,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 10000,
     stats: { hp: { min: 650, max: 3900 }, atk: { min: 200, max: 1480 }, rec: { min: 150, max: 230 } },
     skill: {
       name: 'ドロップチェンジ・水',
@@ -2710,7 +2710,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 1500,
+    baseExp: 10000,
     stats: { hp: { min: 500, max: 3000 }, atk: { min: 300, max: 1600 }, rec: { min: 100, max: 300 } },
     skill: {
       name: 'でんきショック',
@@ -2734,7 +2734,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 2500,
+    baseExp: 10000,
     stats: { hp: { min: 600, max: 3400 }, atk: { min: 400, max: 2370 }, rec: { min: 0, max: 0 } },
     skill: {
       name: 'ガードクラッシュ',
@@ -2759,7 +2759,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'バランス',
     maxLevel: 25,
-    baseExp: 3000,
+    baseExp: 1000,
     stats: { hp: { min: 400, max: 2000 }, atk: { min: 230, max: 1000 }, rec: { min: 49, max: 100 } },
     skill: { name: 'フューチャー', sp: 7, desc: '12秒間、時を止める。', effects: [ { type: 'timeStop', seconds: 12 } ] },
     leaderSkill: {
@@ -2776,7 +2776,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 330, max: 2170 }, atk: { min: 200, max: 1340 }, rec: { min: 25, max: 70 } },
     skill: {
       name: 'ドわすれ',
@@ -2798,7 +2798,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 570, max: 3790 }, atk: { min: 240, max: 1630 }, rec: { min: 31, max: 90 } },
     skill: {
       name: 'ドわすれ',
@@ -2819,7 +2819,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 300,
+    baseExp: 1000,
     stats: { hp: { min: 270, max: 1800 }, atk: { min: 260, max: 1740 }, rec: { min: 12, max: 20 } },
     skill: {
       name: 'ルーレット・ワンS',
@@ -2837,7 +2837,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 330, max: 2410 }, atk: { min: 350, max: 2470 }, rec: { min: 19, max: 75 } },
     skill: {
       name: 'ルーレット・ワンS',
@@ -2854,7 +2854,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 1250,
+    baseExp: 10000,
     stats: { hp: { min: 460, max: 3050 }, atk: { min: 290, max: 1950 }, rec: { min: 21, max: 60 } },
     skill: {
       name: 'げんしのほうこう',
@@ -2875,7 +2875,7 @@ const MONSTER_DATA = {
     attr: 'wood',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 1000,
+    baseExp: 10000,
     stats: { hp: { min: 780, max: 5100 }, atk: { min: 220, max: 1250 }, rec: { min: 0, max: 10 } },
     skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: {
@@ -2891,7 +2891,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: 'たいりょく',
     maxLevel: 99,
-    baseExp: 2000,
+    baseExp: 25000,
     stats: { hp: { min: 470, max: 3030 }, atk: { min: 300, max: 1200 }, rec: { min: 63, max: 400 } },
     skill: {
       name: 'ふぶき',
@@ -2918,7 +2918,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 2000,
+    baseExp: 25000,
     stats: { hp: { min: 470, max: 3150 }, atk: { min: 300, max: 1980 }, rec: { min: 63, max: 180 } },
     skill: {
       name: 'かみなり',
@@ -2945,7 +2945,7 @@ const MONSTER_DATA = {
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 2500,
+    baseExp: 25000,
     stats: { hp: { min: 450, max: 2410 }, atk: { min: 370, max: 2470 }, rec: { min: 23, max: 75 } },
     skill: {
       name: 'だいもんじ',
@@ -2971,7 +2971,7 @@ const MONSTER_DATA = {
     rarity: 2,
     attr: 'water',
     type: 'バランス',
-    baseExp: 100,
+    baseExp: 1000,
     stats: { hp: { min: 50, max: 250 }, atk: { min: 50, max: 250 }, rec: { min: 5, max: 50 } },
     skill: {
       name: 'りゅうのいかり',
@@ -3003,7 +3003,7 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'water',
     type: 'バランス',
-    baseExp: 200,
+    baseExp: 5000,
     stats: { hp: { min: 100, max: 500 }, atk: { min: 100, max: 500 }, rec: { min: 20, max: 100 } },
     skill: {
       name: 'りゅうのいかり',
@@ -3030,7 +3030,7 @@ const MONSTER_DATA = {
     attr: 'light',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 3000,
+    baseExp: 25000,
     stats: { hp: { min: 660, max: 4400 }, atk: { min: 260, max: 1700 }, rec: { min: 119, max: 340 } },
     skill: {
       name: 'りゅうのはどう',
@@ -3059,7 +3059,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
-    baseExp: 2500,
+    baseExp: 25000,
     stats: { hp: { min: 330, max: 3250 }, atk: { min: 220, max: 2200 }, rec: { min: 25, max: 0 } },
     skill: { name: 'ザ・ワールド', sp: 4, desc: '5秒間、時を止める。', cutin: true, effects: [ { type: 'timeStop', seconds: 5 } ] },
     leaderSkill: {
@@ -3075,7 +3075,7 @@ const MONSTER_DATA = {
     attr: 'dark',
     type: 'バランス',
     maxLevel: 99,
-    baseExp: 5000,
+    baseExp: 25000,
     stats: { hp: { min: 1500, max: 3000 }, atk: { min: 750, max: 1500 }, rec: { min: 50, max: 250 } },
     skill: {
       name: 'ミラクルメモリー',
@@ -5473,10 +5473,1079 @@ const MONSTER_DATA = {
       ]
     }
   },
+  722: {
+    id: 722,
+    name: 'モクロー',
+    rarity: 1,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 170, max: 380 }, atk: { min: 130, max: 280 }, rec: { min: 7, max: 12 } }
+  },
+  723: {
+    id: 723,
+    name: 'フクスロー',
+    rarity: 2,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 310, max: 1090 }, atk: { min: 220, max: 800 }, rec: { min: 15, max: 34 } }
+  },
+  724: {
+    id: 724,
+    name: 'ジュナイパー',
+    rarity: 4,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 490, max: 2930 }, atk: { min: 340, max: 2150 }, rec: { min: 31, max: 93 } }
+  },
+  725: {
+    id: 725,
+    name: 'ニャビー',
+    rarity: 1,
+    attr: 'fire',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 170, max: 370 }, atk: { min: 120, max: 270 }, rec: { min: 6, max: 11 } }
+  },
+  726: {
+    id: 726,
+    name: 'ニャヒート',
+    rarity: 2,
+    attr: 'fire',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 300, max: 1080 }, atk: { min: 220, max: 770 }, rec: { min: 14, max: 31 } }
+  },
+  727: {
+    id: 727,
+    name: 'ガオガエン',
+    rarity: 4,
+    attr: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 490, max: 2920 }, atk: { min: 330, max: 2080 }, rec: { min: 28, max: 83 } }
+  },
+  728: {
+    id: 728,
+    name: 'アシマリ',
+    rarity: 1,
+    attr: 'water',
+    type: 'かいふく',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 180, max: 390 }, atk: { min: 80, max: 170 }, rec: { min: 30, max: 54 } }
+  },
+  729: {
+    id: 729,
+    name: 'オシャマリ',
+    rarity: 2,
+    attr: 'water',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 320, max: 1140 }, atk: { min: 140, max: 490 }, rec: { min: 69, max: 157 } }
+  },
+  730: {
+    id: 730,
+    name: 'アシレーヌ',
+    rarity: 4,
+    attr: 'water',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 470, max: 3080 }, atk: { min: 200, max: 1320 }, rec: { min: 144, max: 424 } }
+  },
+  731: {
+    id: 731,
+    name: 'ツツケラ',
+    rarity: 1,
+    attr: 'none',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 6, max: 11 } },
+    skill: { name: 'エコーボイス', sp: 2, desc: '1ターンの間、敵全体に攻撃。', effects: [ { type: 'allAttackBuff', turns: 1 } ] },
+    leaderSkill: {
+      name: 'げんきいっぱい',
+      desc: 'HP満タン時、攻撃1.3倍。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 1, value: 1.3 } ]
+    },
+    evolutions: [ { to: 732, materials: [ { item: 'puzzle4', count: 3 } ] } ]
+  },
+  732: {
+    id: 732,
+    name: 'ケララッパ',
+    rarity: 2,
+    attr: 'none',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 290, max: 1030 }, atk: { min: 210, max: 760 }, rec: { min: 14, max: 31 } },
+    skill: { name: 'エコーボイス', sp: 2, desc: '1ターンの間、敵全体に攻撃。', effects: [ { type: 'allAttackBuff', turns: 1 } ] },
+    leaderSkill: {
+      name: 'ヘルスパワー',
+      desc: 'HP満タン時、攻撃1.7倍。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 1, value: 1.7 } ]
+    },
+    evolutions: [ { to: 733, materials: [ { item: 'puzzle32', count: 2 }, { item: 'spuzzle_12', count: 2 } ] } ]
+  },
+  733: {
+    id: 733,
+    name: 'ドデカバシ',
+    rarity: 3,
+    attr: 'none',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 470, max: 2780 }, atk: { min: 330, max: 2070 }, rec: { min: 28, max: 284 } },
+    skill: { name: 'いかく', sp: 4, desc: '敵全体の行動を1ターン遅らせる。', effects: [ { type: 'enemyDelay', target: 'all', turns: 1 } ] },
+    leaderSkill: {
+      name: 'シールドヘルスパワー',
+      desc: 'HP満タン時、攻撃1.7倍、受けるダメージ20%軽減。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 1, value: 1.7, reduce: 0.2 } ]
+    }
+  },
+  734: {
+    id: 734,
+    name: 'ヤングース',
+    rarity: 1,
+    attr: 'light',
+    type: 'バランス',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 200, max: 440 }, atk: { min: 90, max: 200 }, rec: { min: 14, max: 26 } },
+    skill: {
+      name: 'はりこみ',
+      sp: 2,
+      desc: '光ドロップをランダムで2つ生成。\n光ドロップをロック。',
+      effects: [ { type: 'orbChangeRandom', attr: 'light', count: 2 }, { type: 'orbLock', target: 'attrs', orb_light: true } ]
+    },
+    leaderSkill: { name: '光のソウル', desc: '光属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'light', value: 1.2 } ] },
+    evolutions: [ { to: 735, materials: [ { item: 'puzzle4', count: 3 }, { item: 'spuzzle_42', count: 3 } ] } ]
+  },
+  735: {
+    id: 735,
+    name: 'デカグース',
+    rarity: 3,
+    attr: 'light',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 510, max: 3410 }, atk: { min: 230, max: 1540 }, rec: { min: 70, max: 100 } },
+    skill: {
+      name: 'はりこみ',
+      sp: 2,
+      desc: '光ドロップをランダムで2つ生成。\n光ドロップをロック。',
+      effects: [ { type: 'orbChangeRandom', attr: 'light', count: 2 }, { type: 'orbLock', target: 'attrs', orb_light: true } ]
+    },
+    leaderSkill: { name: '閃光のソウル', desc: '光属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'light', value: 1.5 } ] }
+  },
+  736: {
+    id: 736,
+    name: 'アゴジムシ',
+    rarity: 1,
+    attr: 'wood',
+    type: 'バランス',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 190, max: 410 }, atk: { min: 90, max: 200 }, rec: { min: 15, max: 28 } }
+  },
+  737: {
+    id: 737,
+    name: 'デンヂムシ',
+    rarity: 2,
+    attr: 'wood',
+    type: 'バランス',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 330, max: 1190 }, atk: { min: 160, max: 570 }, rec: { min: 35, max: 80 } }
+  },
+  738: {
+    id: 738,
+    name: 'クワガノン',
+    rarity: 3,
+    attr: 'light',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 480, max: 3230 }, atk: { min: 230, max: 1540 }, rec: { min: 75, max: 215 } }
+  },
+  739: {
+    id: 739,
+    name: 'マケンカニ',
+    rarity: 1,
+    attr: 'water',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 170, max: 380 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } },
+    skill: {
+      name: 'アイスパンチ',
+      sp: 3,
+      desc: '水ドロップをランダムで4つ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'water', count: 4 } ]
+    },
+    leaderSkill: { name: 'ハイパーパンチ', desc: 'HP満タン時、攻撃1.7倍。', effects: [ { type: 'atk', condition: 'hpFull', value: 1.7 } ] },
+    evolutions: [ { to: 740, materials: [ { item: 'puzzle23', count: 1 }, { item: 'spuzzle_2', count: 1 } ] } ]
+  },
+  740: {
+    id: 740,
+    name: 'ケケンカニ',
+    rarity: 3,
+    attr: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 500, max: 3250 }, atk: { min: 330, max: 2050 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'アイスハンマー',
+      sp: 3,
+      desc: '水ドロップをランダムで5つ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'water', count: 5 } ]
+    },
+    leaderSkill: {
+      name: 'メガトンパンチ-B',
+      desc: 'HP満タン時、攻撃1.5倍。\n7コンボ以上で攻撃1.5倍。',
+      effects: [ { type: 'atk', condition: 'hpFull', value: 1.5 }, { type: 'atk', condition: 'combo', count: 7, value: 1.5 } ]
+    }
+  },
+  741: {
+    id: 741,
+    name: 'オドリドリ',
+    rarity: 3,
+    attr: 'fire',
+    sub: 'fire',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 490, max: 3310 }, atk: { min: 240, max: 1580 }, rec: { min: 67, max: 191 } }
+  },
+  742: {
+    id: 742,
+    name: 'アブリー',
+    rarity: 1,
+    attr: 'dark',
+    type: 'かいふく',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 180, max: 390 }, atk: { min: 70, max: 160 }, rec: { min: 30, max: 55 } }
+  },
+  743: {
+    id: 743,
+    name: 'アブリボン',
+    rarity: 3,
+    attr: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 460, max: 3020 }, atk: { min: 190, max: 1280 }, rec: { min: 146, max: 428 } }
+  },
+  744: {
+    id: 744,
+    name: 'イワンコ',
+    rarity: 1,
+    attr: 'light',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 6, max: 11 } }
+  },
+  745: {
+    id: 745,
+    name: 'ルガルガン',
+    rarity: 3,
+    attr: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 480, max: 2840 }, atk: { min: 320, max: 2010 }, rec: { min: 30, max: 89 } }
+  },
+  746: {
+    id: 746,
+    name: 'ヨワシ',
+    rarity: 2,
+    attr: 'water',
+    sub: 'water',
+    type: 'バランス',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 510, max: 3420 }, atk: { min: 230, max: 1550 }, rec: { min: 67, max: 192 } }
+  },
+  747: {
+    id: 747,
+    name: 'ヒドイデ',
+    rarity: 1,
+    attr: 'dark',
+    type: 'たいりょく',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 260, max: 560 }, atk: { min: 90, max: 190 }, rec: { min: 7, max: 12 } },
+    skill: {
+      name: 'どくのきり',
+      sp: 3,
+      desc: '毒ドロップをランダムで6つ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'poison', count: 6, message: '☠️ 毒ドロップ生成！' } ]
+    },
+    leaderSkill: {
+      name: 'めんえきどく',
+      desc: '毒ドロップを消すと受けるダメージ30%軽減。',
+      effects: [ { type: 'atk', condition: 'poison', value: 1, reduce: 0.3 } ]
+    },
+    evolutions: [ { to: 748, materials: [ { item: 'puzzle52', count: 2 }, { item: 'spuzzle_2', count: 2 } ] } ]
+  },
+  748: {
+    id: 748,
+    name: 'ドヒドイデ',
+    rarity: 3,
+    attr: 'dark',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 600, max: 4600 }, atk: { min: 200, max: 1000 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'トーチカ',
+      sp: 1,
+      desc: 'HPが最大HPの20%減る。\n毒ドロップをランダムで3つ生成。',
+      effects: [ { type: 'selfDamage', mode: 'percent', value: 0.2 }, { type: 'orbChangeRandom', attr: 'poison', count: 3 } ]
+    },
+    leaderSkill: {
+      name: 'もうどくのシールド',
+      desc: '毒ダメージを無効化。\n毒ドロップを消すと攻撃1.5倍。',
+      effects: [ { type: 'poisonImmune', value: true }, { type: 'atk', condition: 'poison', value: 1.5 } ]
+    }
+  },
+  749: {
+    id: 749,
+    name: 'ドロバンコ',
+    rarity: 1,
+    attr: 'fire',
+    type: 'たいりょく',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 270, max: 590 }, atk: { min: 80, max: 180 }, rec: { min: 7, max: 12 } }
+  },
+  750: {
+    id: 750,
+    name: 'バンバドロ',
+    rarity: 3,
+    attr: 'fire',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 690, max: 4640 }, atk: { min: 210, max: 1440 }, rec: { min: 34, max: 92 } }
+  },
+  751: {
+    id: 751,
+    name: 'シズクモ',
+    rarity: 1,
+    attr: 'water',
+    type: 'バランス',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 200, max: 440 }, atk: { min: 90, max: 190 }, rec: { min: 14, max: 25 } },
+    skill: {
+      name: 'バランスエンハンス・中',
+      sp: 2,
+      desc: '1ターンの間、バランスタイプの攻撃が1.2倍。',
+      effects: [ { type: 'atkBuff', value: 1.2, turns: 1, monType: 'バランス' } ]
+    },
+    leaderSkill: {
+      name: 'バランスのソウル',
+      desc: 'バランスタイプの攻撃1.5倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'バランス', value: 1.5 } ]
+    },
+    evolutions: [ { to: 752, materials: [ { item: 'puzzle23', count: 1 }, { item: 'puzzle33', count: 2 } ] } ]
+  },
+  752: {
+    id: 752,
+    name: 'オニシズクモ',
+    rarity: 3,
+    attr: 'water',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 520, max: 3480 }, atk: { min: 220, max: 1500 }, rec: { min: 69, max: 196 } },
+    skill: {
+      name: 'バランスエンハンス・中',
+      sp: 4,
+      desc: '1ターンの間、バランスタイプの攻撃が1.5倍。',
+      effects: [ { type: 'atkBuff', value: 1.5, turns: 1, monType: 'バランス' } ]
+    },
+    leaderSkill: {
+      name: 'すいほう',
+      desc: '水属性の攻撃2.2倍。',
+      effects: [ { type: 'moveTimeAdd', value: -1.5 }, { type: 'atk', attr: 'water', value: 2.2 } ]
+    }
+  },
+  753: {
+    id: 753,
+    name: 'カリキリ',
+    rarity: 1,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 160, max: 350 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+  },
+  754: {
+    id: 754,
+    name: 'ラランテス',
+    rarity: 3,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 460, max: 2750 }, atk: { min: 320, max: 2030 }, rec: { min: 31, max: 92 } }
+  },
+  755: {
+    id: 755,
+    name: 'ネマシュ',
+    rarity: 1,
+    attr: 'dark',
+    type: 'かいふく',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 190, max: 410 }, atk: { min: 70, max: 160 }, rec: { min: 29, max: 53 } }
+  },
+  756: {
+    id: 756,
+    name: 'マシェード',
+    rarity: 3,
+    attr: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 480, max: 3190 }, atk: { min: 190, max: 1290 }, rec: { min: 140, max: 410 } }
+  },
+  757: {
+    id: 757,
+    name: 'ヤトウモリ',
+    rarity: 1,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+  },
+  758: {
+    id: 758,
+    name: 'エンニュート',
+    rarity: 3,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 470, max: 2810 }, atk: { min: 320, max: 2030 }, rec: { min: 31, max: 93 } }
+  },
+  759: {
+    id: 759,
+    name: 'ヌイコグマ',
+    rarity: 1,
+    attr: 'none',
+    sub: 'fire',
+    type: 'たいりょく',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 270, max: 600 }, atk: { min: 90, max: 190 }, rec: { min: 6, max: 11 } }
+  },
+  760: {
+    id: 760,
+    name: 'キテルグマ',
+    rarity: 3,
+    attr: 'none',
+    sub: 'fire',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 700, max: 4660 }, atk: { min: 210, max: 1450 }, rec: { min: 31, max: 84 } }
+  },
+  761: {
+    id: 761,
+    name: 'アマカジ',
+    rarity: 1,
+    attr: 'wood',
+    type: 'バランス',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 200, max: 440 }, atk: { min: 90, max: 190 }, rec: { min: 14, max: 25 } }
+  },
+  762: {
+    id: 762,
+    name: 'アママイコ',
+    rarity: 2,
+    attr: 'wood',
+    type: 'バランス',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 360, max: 1270 }, atk: { min: 150, max: 550 }, rec: { min: 32, max: 73 } }
+  },
+  763: {
+    id: 763,
+    name: 'アマージョ',
+    rarity: 3,
+    attr: 'wood',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 510, max: 3430 }, atk: { min: 230, max: 1500 }, rec: { min: 69, max: 196 } }
+  },
+  764: {
+    id: 764,
+    name: 'キュワワー',
+    rarity: 3,
+    attr: 'none',
+    sub: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 450, max: 2980 }, atk: { min: 190, max: 1240 }, rec: { min: 159, max: 465 } }
+  },
+  765: {
+    id: 765,
+    name: 'ヤレユータン',
+    rarity: 3,
+    attr: 'none',
+    sub: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 460, max: 3040 }, atk: { min: 190, max: 1290 }, rec: { min: 155, max: 455 } }
+  },
+  766: {
+    id: 766,
+    name: 'ナゲツケサル',
+    rarity: 3,
+    attr: 'none',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 470, max: 2800 }, atk: { min: 320, max: 2020 }, rec: { min: 31, max: 94 } }
+  },
+  767: {
+    id: 767,
+    name: 'コソクムシ',
+    rarity: 1,
+    attr: 'none',
+    sub: 'dark',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 160, max: 350 }, atk: { min: 120, max: 250 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'ガサゴソの方が',
+      sp: 1,
+      desc: '敵単体に攻撃力×3倍の木属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', target: 'single', value: 3, attr: 'wood' } ]
+    },
+    leaderSkill: { name: '木のオーラ', desc: '木属性のHP1.2倍。', effects: [ { type: 'hp', attr: 'wood', value: 1.2 } ] },
+    evolutions: [ { to: 768, materials: [ { item: 'puzzle33', count: 3 }, { item: 'puzzle23', count: 1 } ] } ]
+  },
+  768: {
+    id: 768,
+    name: 'グソクムシャ',
+    rarity: 4,
+    attr: 'none',
+    sub: 'wood',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 500, max: 2768 }, atk: { min: 100, max: 2768 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'ききかいひ',
+      sp: 2,
+      desc: 'HPを最大HPの50%回復。',
+      condition: { type: 'hpBelow', value: 10 },
+      effects: [ { type: 'heal', value: 0.5 } ]
+    },
+    leaderSkill: {
+      name: 'であいがしら',
+      desc: 'チームのレア度が全員同じ場合、攻撃力が2倍。',
+      effects: [ { type: 'rarity', condition: 'allSame', atk: true, value: 2 } ]
+    }
+  },
+  769: {
+    id: 769,
+    name: 'スナバァ',
+    rarity: 1,
+    attr: 'light',
+    type: 'たいりょく',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 270, max: 590 }, atk: { min: 90, max: 200 }, rec: { min: 7, max: 12 } },
+    skill: {
+      name: 'ガードクラッシュ',
+      sp: 2,
+      desc: '1ターンの間、敵全体の防御力を75%ダウン。',
+      effects: [ { type: 'defenseDown', target: 'all', value: 0.75, turns: 1, message: '💥 防御力ダウン！' } ]
+    },
+    leaderSkill: { name: '光のルーン', desc: '光属性の回復力1.3倍。', effects: [ { type: 'rec', attr: 'light', value: 1.3 } ] },
+    evolutions: [ { to: 770, materials: [ { item: 'puzzle4', count: 3 }, { item: 'spuzzle_5', count: 3 } ] } ]
+  },
+  770: {
+    id: 770,
+    name: 'シロデスナ',
+    rarity: 3,
+    attr: 'light',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 690, max: 4580 }, atk: { min: 230, max: 1540 }, rec: { min: 34, max: 93 } },
+    skill: {
+      name: 'シールドクラッシュ',
+      sp: 3,
+      desc: '3ターンの間、敵全体の防御力を75%ダウン。',
+      effects: [ { type: 'defenseDown', target: 'all', value: 0.75, turns: 3, message: '💥 防御力ダウン！' } ]
+    },
+    leaderSkill: { name: '光のルーン・中', desc: '光属性の回復力1.7倍。', effects: [ { type: 'rec', attr: 'light', value: 1.7 } ] }
+  },
+  771: {
+    id: 771,
+    name: 'ナマコブシ',
+    rarity: 2,
+    attr: 'dark',
+    type: 'たいりょく',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 750, max: 5000 }, atk: { min: 50, max: 100 }, rec: { min: 0, max: 100 } },
+    skill: {
+      name: 'どくどく',
+      sp: 2,
+      desc: '毒ドロップをランダムで3つ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'poison', count: 3, message: '☠️ 毒ドロップ生成！' } ]
+    },
+    leaderSkill: { name: '暗闇のソウル', desc: '闇属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'dark', value: 1.5 } ] }
+  },
+  772: {
+    id: 772,
+    name: 'タイプ：ヌル',
+    rarity: 3,
+    attr: 'none',
+    sub: 'wood',
+    type: 'バランス',
+    maxLevel: 25,
+    baseExp: 5000,
+    stats: { hp: { min: 200, max: 430 }, atk: { min: 90, max: 200 }, rec: { min: 15, max: 27 } }
+  },
+  773: {
+    id: 773,
+    name: 'シルヴァディ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'light',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 510, max: 3440 }, atk: { min: 240, max: 1590 }, rec: { min: 75, max: 215 } }
+  },
+  774: {
+    id: 774,
+    name: 'メテノ',
+    rarity: 3,
+    attr: 'fire',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 510, max: 3390 }, atk: { min: 220, max: 1470 }, rec: { min: 71, max: 202 } }
+  },
+  775: {
+    id: 775,
+    name: 'ネッコアラ',
+    rarity: 3,
+    attr: 'none',
+    sub: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 490, max: 2920 }, atk: { min: 330, max: 2070 }, rec: { min: 28, max: 83 } }
+  },
+  776: {
+    id: 776,
+    name: 'バクガメス',
+    rarity: 3,
+    attr: 'fire',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 670, max: 4470 }, atk: { min: 210, max: 1450 }, rec: { min: 32, max: 88 } }
+  },
+  777: {
+    id: 777,
+    name: 'トゲデマル',
+    rarity: 3,
+    attr: 'none',
+    sub: 'light',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 500, max: 3370 }, atk: { min: 230, max: 1500 }, rec: { min: 74, max: 212 } }
+  },
+  778: {
+    id: 778,
+    name: 'ミミッキュ',
+    rarity: 3,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 500, max: 2960 }, atk: { min: 330, max: 2050 }, rec: { min: 29, max: 86 } }
+  },
+  779: {
+    id: 779,
+    name: 'ハギギシリ',
+    rarity: 3,
+    attr: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 500, max: 2960 }, atk: { min: 320, max: 2010 }, rec: { min: 29, max: 87 } },
+    skill: {
+      name: 'なみのり',
+      sp: 6,
+      desc: '最下段横2列を水ドロップに変化。',
+      effects: [
+        { type: 'orbChangeLine', dir: 'row', index: 3, count: 1, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'water' }
+      ]
+    },
+    leaderSkill: {
+      name: 'だいこうずい',
+      desc: '水を8個以上つなげて消すと攻撃2倍、1コンボ加算。',
+      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'water', count: 8, value: 2, comboAdd: 1 } ]
+    }
+  },
+  780: {
+    id: 780,
+    name: 'ジジーロン',
+    rarity: 3,
+    attr: 'none',
+    sub: 'light',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 500, max: 3320 }, atk: { min: 230, max: 1520 }, rec: { min: 71, max: 204 } }
+  },
+  781: {
+    id: 781,
+    name: 'ダダリン',
+    rarity: 3,
+    attr: 'wood',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 5000,
+    stats: { hp: { min: 470, max: 2780 }, atk: { min: 320, max: 2030 }, rec: { min: 30, max: 89 } }
+  },
+  782: {
+    id: 782,
+    name: 'ジャラコ',
+    rarity: 1,
+    attr: 'light',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 170, max: 370 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+  },
+  783: {
+    id: 783,
+    name: 'ジャランゴ',
+    rarity: 2,
+    attr: 'light',
+    type: 'こうげき',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 300, max: 1060 }, atk: { min: 210, max: 740 }, rec: { min: 15, max: 34 } }
+  },
+  784: {
+    id: 784,
+    name: 'ジャラランガ',
+    rarity: 4,
+    attr: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 480, max: 2880 }, atk: { min: 320, max: 2000 }, rec: { min: 30, max: 91 } }
+  },
+  785: {
+    id: 785,
+    name: 'カプ・コケコ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 490, max: 2890 }, atk: { min: 340, max: 2130 }, rec: { min: 30, max: 90 } }
+  },
+  786: {
+    id: 786,
+    name: 'カプ・テテフ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'fire',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 480, max: 3170 }, atk: { min: 190, max: 1270 }, rec: { min: 158, max: 465 } }
+  },
+  787: {
+    id: 787,
+    name: 'カプ・ブルル',
+    rarity: 5,
+    attr: 'none',
+    sub: 'wood',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 530, max: 3530 }, atk: { min: 240, max: 1590 }, rec: { min: 69, max: 197 } }
+  },
+  788: {
+    id: 788,
+    name: 'カプ・レヒレ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'dark',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 690, max: 4620 }, atk: { min: 220, max: 1510 }, rec: { min: 32, max: 86 } }
+  },
+  789: {
+    id: 789,
+    name: 'コスモッグ',
+    rarity: 1,
+    attr: 'none',
+    sub: 'dark',
+    type: 'バランス',
+    maxLevel: 25,
+    baseExp: 500,
+    stats: { hp: { min: 210, max: 450 }, atk: { min: 90, max: 190 }, rec: { min: 14, max: 25 } }
+  },
+  790: {
+    id: 790,
+    name: 'コスモウム',
+    rarity: 2,
+    attr: 'none',
+    sub: 'dark',
+    type: 'バランス',
+    maxLevel: 50,
+    baseExp: 1000,
+    stats: { hp: { min: 360, max: 1290 }, atk: { min: 150, max: 550 }, rec: { min: 32, max: 72 } }
+  },
+  791: {
+    id: 791,
+    name: 'ソルガレオ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 480, max: 2860 }, atk: { min: 350, max: 2220 }, rec: { min: 29, max: 87 } }
+  },
+  792: {
+    id: 792,
+    name: 'ルナアーラ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 490, max: 3260 }, atk: { min: 190, max: 1260 }, rec: { min: 158, max: 464 } },
+    skill: { name: '', sp: 1, desc: '', effects: [] },
+    leaderSkill: { name: '', desc: '', effects: [] }
+  },
+  793: {
+    id: 793,
+    name: 'ウツロイド',
+    rarity: 5,
+    attr: 'none',
+    sub: 'water',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 500, max: 2940 }, atk: { min: 350, max: 2230 }, rec: { min: 32, max: 95 } }
+  },
+  794: {
+    id: 794,
+    name: 'マッシブーン',
+    rarity: 5,
+    attr: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 490, max: 2930 }, atk: { min: 330, max: 2080 }, rec: { min: 31, max: 93 } }
+  },
+  795: {
+    id: 795,
+    name: 'フェローチェ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'wood',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 490, max: 2910 }, atk: { min: 330, max: 2100 }, rec: { min: 30, max: 90 } }
+  },
+  796: {
+    id: 796,
+    name: 'デンジュモク',
+    rarity: 5,
+    attr: 'none',
+    sub: 'light',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 510, max: 3450 }, atk: { min: 230, max: 1520 }, rec: { min: 77, max: 221 } }
+  },
+  797: {
+    id: 797,
+    name: 'テッカグヤ',
+    rarity: 5,
+    attr: 'wood',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 690, max: 4620 }, atk: { min: 230, max: 1580 }, rec: { min: 31, max: 86 } }
+  },
+  798: {
+    id: 798,
+    name: 'カミツルギ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 480, max: 2840 }, atk: { min: 340, max: 2120 }, rec: { min: 32, max: 97 } }
+  },
+  799: {
+    id: 799,
+    name: 'アクジキング',
+    rarity: 5,
+    attr: 'dark',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 720, max: 4800 }, atk: { min: 220, max: 1530 }, rec: { min: 35, max: 95 } }
+  },
+  800: {
+    id: 800,
+    name: 'ネクロズマ',
+    rarity: 5,
+    attr: 'dark',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 520, max: 3460 }, atk: { min: 240, max: 1600 }, rec: { min: 72, max: 205 } }
+  },
+  801: {
+    id: 801,
+    name: 'マギアナ',
+    rarity: 5,
+    attr: 'light',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 520, max: 3480 }, atk: { min: 230, max: 1560 }, rec: { min: 68, max: 193 } }
+  },
+  802: {
+    id: 802,
+    name: 'マーシャドー',
+    rarity: 5,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 490, max: 2890 }, atk: { min: 340, max: 2130 }, rec: { min: 32, max: 95 } }
+  },
+  803: {
+    id: 803,
+    name: 'ベベノム',
+    rarity: 3,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 25,
+    baseExp: 5000,
+    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+  },
+  804: {
+    id: 804,
+    name: 'アーゴヨン',
+    rarity: 5,
+    attr: 'dark',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 490, max: 2890 }, atk: { min: 330, max: 2100 }, rec: { min: 32, max: 95 } }
+  },
+  805: {
+    id: 805,
+    name: 'ツンデツンデ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'water',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 670, max: 4500 }, atk: { min: 230, max: 1600 }, rec: { min: 34, max: 94 } }
+  },
+  806: {
+    id: 806,
+    name: 'ズガドーン',
+    rarity: 5,
+    attr: 'none',
+    sub: 'fire',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 480, max: 2830 }, atk: { min: 350, max: 2180 }, rec: { min: 33, max: 99 } }
+  },
+  807: {
+    id: 807,
+    name: 'ゼラオラ',
+    rarity: 5,
+    attr: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 500, max: 2940 }, atk: { min: 330, max: 2070 }, rec: { min: 32, max: 95 } }
+  },
+  808: {
+    id: 808,
+    name: 'メルタン',
+    rarity: 3,
+    attr: 'fire',
+    type: 'たいりょく',
+    maxLevel: 25,
+    baseExp: 5000,
+    stats: { hp: { min: 270, max: 590 }, atk: { min: 90, max: 200 }, rec: { min: 6, max: 11 } }
+  },
+  809: {
+    id: 809,
+    name: 'メルメタル',
+    rarity: 5,
+    attr: 'fire',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 25000,
+    stats: { hp: { min: 720, max: 4790 }, atk: { min: 230, max: 1590 }, rec: { min: 33, max: 91 } }
+  },
   4004: {
     id: 4004,
     name: 'クシャムシャ',
-    rarity: 5,
+    rarity: 4,
     attr: 'fire',
     type: '神秘',
     maxLevel: 99,
@@ -5497,7 +6566,7 @@ const MONSTER_DATA = {
     leaderSkill: {
       name: '亡き者を従える武者',
       desc: 'チームの総レア度が16以下の場合、火属性の攻撃力が2倍。',
-      effects: [ { type: 'rarity', condition: 'totalBelow', threshold: 16, value: 2, atk: true, attr: 'fire' } ]
+      effects: [ { type: 'rarity', condition: 'totalBelow', threshold: 16, value: 1.9, atk: true, attr: 'fire' } ]
     }
   },
   4005: {
@@ -5932,7 +7001,7 @@ const MONSTER_DATA = {
   5012: {
     id: 5012,
     name: 'コハク',
-    rarity: 4,
+    rarity: 5,
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 50,
@@ -6605,7 +7674,7 @@ const MONSTER_DATA = {
   5034: {
     id: 5034,
     name: 'ボニー',
-    rarity: 1,
+    rarity: 4,
     attr: 'light',
     sub: 'fire',
     type: 'かいふく',
@@ -6638,7 +7707,7 @@ const MONSTER_DATA = {
   5035: {
     id: 5035,
     name: 'パッドマン',
-    rarity: 5,
+    rarity: 4,
     attr: 'dark',
     sub: 'fire',
     type: 'こうげき',
@@ -6657,7 +7726,7 @@ const MONSTER_DATA = {
   5036: {
     id: 5036,
     name: 'ミサキ',
-    rarity: 5,
+    rarity: 4,
     attr: 'fire',
     sub: 'wood',
     type: 'こうげき',
@@ -6806,7 +7875,7 @@ const MONSTER_DATA = {
   5042: {
     id: 5042,
     name: 'フユカ',
-    rarity: 4,
+    rarity: 5,
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 50,
@@ -7460,7 +8529,7 @@ const MONSTER_DATA = {
   5063: {
     id: 5063,
     name: 'ヴェルジュ(バニー)',
-    rarity: 1,
+    rarity: 2,
     attr: 'none',
     sub: 'dark',
     type: 'かいふく',
@@ -7552,7 +8621,7 @@ const MONSTER_DATA = {
   5066: {
     id: 5066,
     name: 'ディノバルド',
-    rarity: 5,
+    rarity: 4,
     attr: 'fire',
     sub: 'dark',
     type: 'こうげき',
@@ -7583,7 +8652,7 @@ const MONSTER_DATA = {
   5067: {
     id: 5067,
     name: 'ジンオウガ',
-    rarity: 5,
+    rarity: 4,
     attr: 'light',
     sub: 'wood',
     type: 'たいりょく',
@@ -7607,7 +8676,7 @@ const MONSTER_DATA = {
   5068: {
     id: 5068,
     name: 'バルファルク',
-    rarity: 5,
+    rarity: 4,
     attr: 'fire',
     sub: 'dark',
     type: 'こうげき',
@@ -7638,7 +8707,7 @@ const MONSTER_DATA = {
   5069: {
     id: 5069,
     name: 'ゴア・マガラ',
-    rarity: 5,
+    rarity: 4,
     attr: 'dark',
     sub: 'dark',
     type: 'こうげき',
@@ -7661,7 +8730,7 @@ const MONSTER_DATA = {
   5070: {
     id: 5070,
     name: 'ブラキディオス',
-    rarity: 5,
+    rarity: 4,
     attr: 'light',
     sub: 'fire',
     type: 'こうげき',
@@ -7688,7 +8757,7 @@ const MONSTER_DATA = {
   5071: {
     id: 5071,
     name: 'ネルギガンテ',
-    rarity: 5,
+    rarity: 4,
     attr: 'dark',
     sub: 'wood',
     type: 'たいりょく',
@@ -7750,7 +8819,7 @@ const MONSTER_DATA = {
   },
   5073: {
     id: 5073,
-    name: 'ユメ（契約)',
+    name: 'ユメ(契約)',
     rarity: 5,
     attr: 'water',
     sub: 'wood',
@@ -8011,10 +9080,10 @@ const MONSTER_DATA = {
     stats: { hp: { min: 1500, max: 3600 }, atk: { min: 1500, max: 3000 }, rec: { min: 0, max: 0 } },
     skill: {
       name: '咆哮粘菌大爆発',
-      sp: 6,
+      sp: 4,
       desc: '敵単体に攻撃力×70倍の火属性攻撃。\n最上段と最下段の横1列をお邪魔ドロップに変化。',
       effects: [
-        { type: 'damageSelfAtkMult', value: 90, attr: 'fire', target: 'single' },
+        { type: 'damageSelfAtkMult', value: 100, attr: 'fire', target: 'single' },
         { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'ojama' },
         { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'ojama' }
       ]
@@ -8023,6 +9092,133 @@ const MONSTER_DATA = {
       name: '粘菌落下爆発',
       desc: 'お邪魔ドロップの2コンボ以上で攻撃2.5倍、1コンボ加算。',
       effects: [ { type: 'atk', condition: 'attrCombos', attr: 'ojama', count: 2, value: 2.5, comboAdd: 1 } ]
+    }
+  },
+  5084: {
+    id: 5084,
+    name: '十時愛梨',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'fire',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 50000,
+    stats: { hp: { min: 120, max: 3800 }, atk: { min: 20, max: 800 }, rec: { min: 300, max: 700 } },
+    skill: {
+      name: 'あいされトッピング',
+      sp: 2,
+      desc: 'バインドを3ターン回復。\n回復ドロップをランダムで3つ生成。',
+      yumekawa: true,
+      effects: [ { type: 'bindRecover', turns: 3 }, { type: 'orbChangeRandom', attr: 'heal', count: 3 } ]
+    },
+    leaderSkill: {
+      name: 'ゴールは、プロデューサーさんのところかな',
+      desc: '火の2コンボ以上で攻撃2.2倍、受けるダメージ25%軽減。\nSPの上限が5アップ（最大15）。',
+      effects: [
+        { type: 'atk', condition: 'attrCombos', attr: 'fire', count: 2, value: 2.2, reduce: 0.25 },
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 2 },
+        { type: 'spCapUp', value: 5 },
+        { type: 'rarity', condition: 'allDiff', value: 0.01 }
+      ]
+    },
+    evolutions: [ { to: 5085, materials: [ { item: 'puzzle1', count: 5 }, { item: 'spuzzle_1', count: 5 } ] } ]
+  },
+  5085: {
+    id: 5085,
+    name: '十時愛梨（メリー・メニー）',
+    rarity: 5,
+    attr: 'fire',
+    sub: 'light',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 50000,
+    stats: { hp: { min: 120, max: 3600 }, atk: { min: 20, max: 1600 }, rec: { min: 300, max: 600 } },
+    skill: {
+      name: '私もプレゼントのひとつです',
+      sp: 3,
+      desc: 'ロックを解除し、火と回復ドロップをランダムで3つずつ生成。\n3ターンの間、自分の攻撃力が2倍。',
+      yumekawa: true,
+      effects: [
+        { type: 'orbUnlock', target: 'all' },
+        { type: 'orbChangeRandom', attr: 'fire', count: 3 },
+        { type: 'orbChangeRandom', attr: 'heal', count: 3 },
+        { type: 'selfAtkBuff', value: 2, turns: 3 }
+      ]
+    },
+    leaderSkill: {
+      name: '欲しがりさんのクリスマス',
+      desc: 'チームのレア度が全員同じ場合、HPが1.5倍。\n火ドロップの2コンボ以上で攻撃2倍。',
+      effects: [
+        { type: 'rarity', condition: 'allSame', hp: true, value: 1.5 },
+        { type: 'atk', condition: 'attrCombos', attr: 'fire', count: 2, value: 2, comboAdd: 1 },
+        { type: 'eggDropUp', value: 20 },
+        { type: 'coinMult', value: 2 },
+        { type: 'spCharge', size: 'medium' }
+      ]
+    }
+  },
+  5086: {
+    id: 5086,
+    name: 'ライザリン・シュタウト',
+    rarity: 5,
+    attr: 'none',
+    sub: 'light',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 1200, max: 4000 }, atk: { min: 2000, max: 4000 }, rec: { min: 25, max: 150 } },
+    skill: {
+      name: 'フラム',
+      sp: 2,
+      desc: '敵全体に攻撃力×10倍の火属性攻撃。\n水ドロップを火ドロップに変化。\nスキル2に変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 10, attr: 'fire' },
+        { type: 'orbConvert', from: 'water', to: 'fire' }
+      ],
+      stages: [
+        {
+          name: 'レヘルン',
+          sp: 2,
+          desc: '敵単体に攻撃力×10倍の水属性攻撃。\n1ターンの間、敵全体の防御力を50%ダウン。\nスキル3に変化。',
+          effects: [
+            { type: 'damageSelfAtkMult', target: 'single', value: 10, attr: 'water' },
+            { type: 'defenseDown', target: 'all', value: 0.5, turns: 1 }
+          ]
+        },
+        {
+          name: 'プラジグ',
+          sp: 2,
+          desc: '敵単体に攻撃力×15倍の光属性攻撃。\n敵単体の行動を1ターン遅らせる。\nスキル4に変化。',
+          effects: [
+            { type: 'damageSelfAtkMult', target: 'single', value: 15, attr: 'light' },
+            { type: 'enemyDelay', target: 'single', turns: 1 }
+          ]
+        },
+        {
+          name: 'ルフト',
+          sp: 2,
+          desc: '敵単体に攻撃力×20倍の木属性攻撃。\n1ターンの間、操作時間が1.5倍。\nスキル5に変化。',
+          effects: [
+            { type: 'damageSelfAtkMult', target: 'single', value: 20, attr: 'wood' },
+            { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 1.5 }
+          ]
+        },
+        {
+          name: 'エリキシル剤',
+          sp: 2,
+          desc: 'HPを最大HPの75%回復。\nバインドを全回復。\nスキル1に変化。',
+          effects: [ { type: 'heal', value: 0.75 }, { type: 'bindRecover', turns: 99 } ]
+        }
+      ]
+    },
+    leaderSkill: {
+      name: 'ひと夏の大冒険',
+      desc: 'たいりょくタイプの全パラメータが1.2倍。\n4色以上同時に消すと攻撃2倍、受けるダメージ15%軽減。',
+      effects: [
+        { type: 'allStat', condition: 'type', attr: 'たいりょく', value: 1.2 },
+        { type: 'atk', condition: 'colorCount', count: 4, value: 2, reduce: 0.15 }
+      ]
     }
   }
 };

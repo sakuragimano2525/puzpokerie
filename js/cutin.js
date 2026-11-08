@@ -24,6 +24,11 @@
 //       ずれるキャラは、下の FACE_FOCUS に「モンスターID: { x:顔の横位置, y:顔の縦位置 }」を足してください
 //       （x・y は画像全体を 0〜1 とした位置。例：画像の上から27％・左から59％なら { x:.59, y:.27 }）。
 //
+//   ■ ゆめかわふわカットイン（js/cutin-yume.js・css/cutin-yume.css）
+//       モンスターエディターの「ゆめかわふわカットインにする」にチェック（skill.yumekawa === true）したモンスターは、
+//       スキル発動・へんしんのカットインが、ID5000以降の新カットインや従来のカットインの代わりに「ゆめかわふわ」になります。
+//       show(…, { yume:true, label:'モンスター名' }) で直接呼ぶこともできます。（チェックなしが初期状態）
+//
 //   ※ game.js の後に読み込む。公開しているのは window.EnemyCutIn だけ：
 //       EnemyCutIn.isCutin(技名, 行動)  … ⚠️付き（または 行動.cutin === true）なら true
 //       EnemyCutIn.show(敵, 技名)       … カットインを出して、終わったら resolve する Promise
@@ -300,6 +305,8 @@
   // ── 新カットインにするか：モンスターID（画像 mp{ID}.png の数字。opts.id があればそちら）が NEW_STYLE_MIN_ID 以上 ──
   const NEW_STYLE_MIN_ID = 5000;
   const NEW_STYLE_MIN_MS = 3000;   // 新カットインの最低の長さ（ミリ秒。短いと感じたら数字を上げる）
+  const NEW_STYLE_SKILL_MS = 2000; // 味方のスキル発動で、オリジナル音声なし（デフォルトの cutin.mp3）のときの最低の長さ（ミリ秒）。変身・敵の技・オリジナル音声ありは上の数字のまま
+  const YUME_MIN_MS = 3600;        // ゆめかわふわカットイン（js/cutin-yume.js）の最低の長さ（ミリ秒）
   function isNewStyle(enemy, opts) {
     let id = opts && opts.id != null ? Number(opts.id) : NaN;
     if (!isFinite(id)) {
@@ -317,7 +324,10 @@
     const file = opts && opts.se;
     const wantFace = !!(opts && opts.face);
     const ns = isNewStyle(enemy, opts);   // ID5000以降 → 新カットイン（js/cutin-v2.js）
-    const wantImg = wantFace || ns;
+    const ym = !!(opts && opts.yume);     // エディターで「ゆめかわふわカットイン」にチェック → js/cutin-yume.js（ID5000以降の新カットインより優先）
+    const wantImg = wantFace || ns || ym;
+    const shortSkill = !!(opts && opts.skill) && !file;   // 味方のスキル発動 ＋ オリジナル音声なし → 新カットインを短め（NEW_STYLE_SKILL_MS）に
+    const mkV2 = (img, face) => (img && (ns || ym)) ? { info: img, face, yume: ym, label: opts && opts.label, shortSkill } : null;
     const AF = window.AudioFast;
     if (AF && AF.IS_IOS && AF.loadCutBuf) {
       // iPhone：<audio> ではなく AudioBuffer で鳴らす（前半の繰り返し・音切れ対策）
@@ -327,7 +337,7 @@
                      : Promise.race([AF.loadCutBuf('cutin.mp3'), wait(500)]).then(b2 => b2 ? { buf: b2, gain: 1, duck: false } : null));
       return Promise.all([pick, wantImg ? prepareImg(enemy) : null]).then(r => {
         const sb = r[0], face = r[1] ? faceLayout(r[1], opts && opts.focus) : null;
-        const v2 = ns && r[1] ? { info: r[1], face } : null;
+        const v2 = mkV2(r[1], face);
         if (sb) return _show(enemy, rawName, null, face, sb, v2);
         return prepareSE(file).then(c => _show(enemy, rawName, c, face, null, v2));   // 読めなかった時は今までの方法
       });
@@ -336,7 +346,7 @@
     return Promise.all([prepareSE(file), wantImg ? prepareImg(enemy) : null])
       .then(r => {
         const face = r[1] ? faceLayout(r[1], opts && opts.focus) : null;
-        return _show(enemy, rawName, r[0], face, null, ns && r[1] ? { info: r[1], face } : null);
+        return _show(enemy, rawName, r[0], face, null, mkV2(r[1], face));
       });
   }
 
@@ -383,10 +393,39 @@
         }
       } catch (e) {}
 
+      // ── ゆめかわふわカットイン（js/cutin-yume.js）。読み込めていない時は、下の新カットイン／従来のカットインにする ──
+      if (v2 && v2.yume && window.CutInYume) {
+        const key = THEMES[enemy && enemy.attr] ? enemy.attr : (THEMES[enemy && enemy.sub] ? enemy.sub : 'fire');
+        const Ty = Math.max(T, YUME_MIN_MS);
+        // 縦画面：敵エリア（#dungeon）の中だけでは盤面にはみ出せないので、画面全体（#game）に出す。
+        //   敵エリアの上端・下端と盤面の上端の位置（anchor）を渡して、2枚目の段の下端が、盤面の一番上に少しかかるようにする。
+        //   横画面（左に敵・右に盤面）は、従来どおり敵エリアの中に出す。
+        let yHost = host, yW = W, yDH = DH, anchor = null;
+        try {
+          const g = document.getElementById('game');
+          const land = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+          if (g && !land && g.contains(host)) {
+            const gr = g.getBoundingClientRect(), dr = host.getBoundingClientRect();
+            if (gr.width > 0 && gr.height > 0) {
+              yHost = g; yW = Math.round(gr.width); yDH = Math.round(gr.height);
+              const bwEl = document.getElementById('grid-wrap');   // 盤面
+              const bwr = bwEl ? bwEl.getBoundingClientRect() : null;
+              anchor = { top: dr.top - gr.top, bottom: dr.bottom - gr.top, board: bwr && bwr.height > 0 ? bwr.top - gr.top : null };
+            }
+          }
+        } catch (e) {}
+        const stopY = window.CutInYume.run({
+          host: yHost, W: yW, DH: yDH, anchor, T: Ty, IOS, theme: key, name, label: v2.label, info: v2.info, face: v2.face,
+          shake: typeof battleShake === 'function' ? battleShake : null
+        }, () => { if (_active === stopY) _active = null; resolve(); });
+        _active = stopY;
+        return;
+      }
+
       // ── ID5000以降：新カットイン（js/cutin-v2.js）。読み込めていない時だけ、下の従来のカットインにする ──
       if (v2 && window.CutInV2) {
         const key = THEMES[enemy && enemy.attr] ? enemy.attr : (THEMES[enemy && enemy.sub] ? enemy.sub : 'fire');
-        const Tn = Math.max(T, NEW_STYLE_MIN_MS);   // 新カットインは余韻を長めに（効果音がもっと長ければそちらに合わせる）
+        const Tn = Math.max(T, v2.shortSkill ? NEW_STYLE_SKILL_MS : NEW_STYLE_MIN_MS);   // 新カットインは余韻を長めに（効果音がもっと長ければそちらに合わせる）
         const stop = window.CutInV2.run({
           host, W, DH, T: Tn, IOS, theme: key, name, info: v2.info, face: v2.face,
           shake: typeof battleShake === 'function' ? battleShake : null
@@ -677,6 +716,7 @@
   // ── 味方のスキル発動カットイン（全モンスター共通）──
   //   ・スキルを持つモンスターは、みんなカットインが出ます（スキル名が空の時だけ出さない）
   //   ・ID 5000 以降 → 新しいカットイン（cutin-v2.js）／それ未満 → 従来のカットイン
+  //   ・エディターで「ゆめかわふわカットイン」にチェック（skill.yumekawa）→ ゆめかわふわカットイン（cutin-yume.js。上の2つより優先）
   //   ・画像は mp{ID}.png（無ければ通常の画像）
   //   ・効果音：モンスターエディターの「オリジナル音声」にチェック（skill.cutin === true）のモンスターは {ID}.mp3
   //             （{ID}.mp3 が無ければ cutin.mp3）。チェックが無いモンスターは、普通のカットイン音 cutin.mp3
@@ -687,8 +727,9 @@
       const name = String(mon.skill.name == null ? '' : mon.skill.name).trim();
       if (!name) return Promise.resolve();
       const fb = typeof monsterImg === 'function' ? monsterImg(mon) : '';
-      const opts = { face: true, id: mon.id };
+      const opts = { face: true, id: mon.id, skill: true };
       if (mon.skill.cutin === true) opts.se = mon.id + '.mp3';   // オリジナル音声あり
+      if (mon.skill.yumekawa === true) { opts.yume = true; opts.label = mon.name; }   // ゆめかわふわカットイン（モンスター名のリボンつき）
       return show({ attr: mon.attr, sub: mon.sub, img: 'mp' + mon.id + '.png', imgFallback: fb }, name, opts);
     } catch (e) { return Promise.resolve(); }
   }

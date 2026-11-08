@@ -391,7 +391,7 @@
       const sp = (typeof getRequiredSp === 'function') ? getRequiredSp({}, mon) : (sk.sp || 1);
       h.appendChild(el('span', 'zk-sec-chip', `必要SP ${sp}`));
       sec.appendChild(h);
-      { const p = el('p', 'zk-sec-desc'); setSkillText(p, sk.desc || ''); sec.appendChild(p); }
+      { const p = el('p', 'zk-sec-desc'); setSkillText(p, sk.desc || ''); if (window.skillStagesHTML && sk.stages && sk.stages.length) p.innerHTML = '<div class="sk-stage-h">スキル1</div>' + p.innerHTML + skillStagesHTML(sk); sec.appendChild(p); }
       body.appendChild(sec);
     }
     const ls = mon.leaderSkill;

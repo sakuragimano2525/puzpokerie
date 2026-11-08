@@ -1,0 +1,41 @@
+/* ============================================================
+   ゆめかわふわカットイン — js/cutin-yume.js が使う
+   ★の2本線が左→右に走る → タイトルカード → 上下に広がって、モンスター＋属性色のゆめかわ背景
+   動くものに filter / clip-path は使わない（iPhone で落ちにくくするため）
+   ============================================================ */
+.cvy-root { position:absolute; inset:0; z-index:70; pointer-events:none; overflow:hidden; }
+
+/* 画面をふわっとラベンダー色に暗くする（盤面は透けて見える） */
+.cvy-dim { position:absolute; inset:0; opacity:0;
+  background:radial-gradient(ellipse at 50% 50%, rgba(70,40,120,.28) 0%, rgba(40,20,80,.62) 100%); }
+
+/* 段（真ん中から上下へ開く窓の置き場） */
+.cvy-stage { position:absolute; left:0; width:100%; }
+.cvy-win { position:absolute; left:0; width:100%; overflow:hidden; background:#fff; }
+.cvy-win-in { position:absolute; left:0; width:100%; }
+
+/* 1枚目：タイトルカード */
+.cvy-card { position:absolute; left:0; display:block; }
+
+/* 2枚目：背景・流れるきらきら・キャラ・スキル名 */
+.cvy-stack { position:absolute; inset:0; opacity:0; }
+.cvy-back { position:absolute; left:0; top:0; display:block; }
+.cvy-drift { position:absolute; left:0; top:0; display:block; }
+.cvy-art { position:absolute; }
+.cvy-art > * { position:absolute; display:block; }
+.cvy-art > .cvy-mon { left:0; top:0; width:100%; height:100%; object-fit:contain; }
+.cvy-sticker { pointer-events:none; }
+
+/* 瞬くきらきら（4つ角の星。止まった SVG を背景にしただけ） */
+.cvy-tw { position:absolute; display:block; background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z' fill='white'/></svg>") center/100% 100% no-repeat; }
+
+.cvy-line { position:absolute; }
+.cvy-line-cv { position:absolute; left:0; top:0; display:block; }
+
+/* 枠の2本線＋星（窓の外側に重ねる） */
+.cvy-framelayer { position:absolute; left:0; width:100%; }
+.cvy-linebox { position:absolute; left:0; width:100%; height:0; }
+.cvy-frameline { position:absolute; display:block; }
+.cvy-frame-stars { position:absolute; display:block; }
+
+.cvy-flash { position:absolute; left:0; width:100%; opacity:0; }
