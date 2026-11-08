@@ -5649,7 +5649,11 @@ const MONSTER_DATA = {
       desc: '光ドロップをランダムで2つ生成。\n光ドロップをロック。',
       effects: [ { type: 'orbChangeRandom', attr: 'light', count: 2 }, { type: 'orbLock', target: 'attrs', orb_light: true } ]
     },
-    leaderSkill: { name: '閃光のソウル', desc: '光属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'light', value: 1.5 } ] }
+    leaderSkill: {
+      name: '閃光のソウル',
+      desc: '光属性の攻撃1.5倍。',
+      effects: [ { type: 'atk', attr: 'light', value: 1.5 }, { type: 'allStat', condition: 'type', attr: 'かいふく', value: 1.5 } ]
+    }
   },
   736: {
     id: 736,
@@ -5885,7 +5889,7 @@ const MONSTER_DATA = {
     leaderSkill: {
       name: 'すいほう',
       desc: '水属性の攻撃2.2倍。',
-      effects: [ { type: 'moveTimeAdd', value: -1.5 }, { type: 'atk', attr: 'water', value: 2.2 } ]
+      effects: [ { type: 'moveTimeAdd', value: -1 }, { type: 'atk', attr: 'water', value: 2.2 }, { type: 'rec', value: 0.25 } ]
     }
   },
   753: {
