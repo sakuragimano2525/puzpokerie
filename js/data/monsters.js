@@ -5555,7 +5555,18 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 170, max: 370 }, atk: { min: 120, max: 270 }, rec: { min: 6, max: 11 } }
+    stats: { hp: { min: 170, max: 370 }, atk: { min: 120, max: 270 }, rec: { min: 6, max: 11 } },
+    skill: {
+      name: 'ひとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力×1倍の火属性攻撃。\n最上段の横1列を火ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'fire' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'fire' }
+      ]
+    },
+    leaderSkill: { name: '火のソウル', desc: '火属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'fire', value: 1.2 } ] },
+    evolutions: [ { to: 726, materials: [ { item: 'puzzle13', count: 2 } ] } ]
   },
   726: {
     id: 726,
@@ -5565,7 +5576,18 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 50,
     baseExp: 1000,
-    stats: { hp: { min: 300, max: 1080 }, atk: { min: 220, max: 770 }, rec: { min: 14, max: 31 } }
+    stats: { hp: { min: 300, max: 1080 }, atk: { min: 220, max: 770 }, rec: { min: 14, max: 31 } },
+    skill: {
+      name: 'ひとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力×1倍の火属性攻撃。\n最上段の横1列を火ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'fire' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'fire' }
+      ]
+    },
+    leaderSkill: { name: '火炎のソウル', desc: '火属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'fire', value: 1.5 } ] },
+    evolutions: [ { to: 727, materials: [ { item: 'puzzle14', count: 2 } ] } ]
   },
   727: {
     id: 727,
@@ -5575,7 +5597,21 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 490, max: 2920 }, atk: { min: 330, max: 2080 }, rec: { min: 28, max: 83 } }
+    stats: { hp: { min: 490, max: 2920 }, atk: { min: 330, max: 2080 }, rec: { min: 28, max: 83 } },
+    skill: {
+      name: 'ひとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力×1倍の火属性攻撃。\n最上段の横1列を火ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'fire' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'fire' }
+      ]
+    },
+    leaderSkill: {
+      name: '業火のソウル',
+      desc: '火属性の攻撃1.8倍。',
+      effects: [ { type: 'atk', attr: 'fire', value: 1.8 }, { type: 'atk', condition: 'type', attr: 'こうげき', value: 0.75 } ]
+    }
   },
   728: {
     id: 728,
@@ -5585,7 +5621,18 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 180, max: 390 }, atk: { min: 80, max: 170 }, rec: { min: 30, max: 54 } }
+    stats: { hp: { min: 180, max: 390 }, atk: { min: 80, max: 170 }, rec: { min: 30, max: 54 } },
+    skill: {
+      name: 'みずとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力×1倍の水属性攻撃。\n最上段の横1列を水ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'water' }
+      ]
+    },
+    leaderSkill: { name: '水のルーン', desc: '水属性の回復力1.3倍。', effects: [ { type: 'rec', attr: 'water', value: 1.3 } ] },
+    evolutions: [ { to: 729, materials: [ { item: 'puzzle22', count: 4 } ] } ]
   },
   729: {
     id: 729,
@@ -5595,7 +5642,18 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 50,
     baseExp: 1000,
-    stats: { hp: { min: 320, max: 1140 }, atk: { min: 140, max: 490 }, rec: { min: 69, max: 157 } }
+    stats: { hp: { min: 320, max: 1140 }, atk: { min: 140, max: 490 }, rec: { min: 69, max: 157 } },
+    skill: {
+      name: 'みずとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力×1倍の水属性攻撃。\n最上段の横1列を水ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'water' }
+      ]
+    },
+    leaderSkill: { name: '水のルーン・中', desc: '水属性の回復力1.7倍。', effects: [ { type: 'rec', attr: 'water', value: 1.7 } ] },
+    evolutions: [ { to: 730, materials: [ { item: 'puzzle23', count: 2 } ] } ]
   },
   730: {
     id: 730,
@@ -5605,7 +5663,25 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 470, max: 3080 }, atk: { min: 200, max: 1320 }, rec: { min: 144, max: 424 } }
+    stats: { hp: { min: 470, max: 3080 }, atk: { min: 200, max: 1320 }, rec: { min: 144, max: 424 } },
+    skill: {
+      name: 'うたかたのアリア',
+      sp: 3,
+      desc: '敵全体に攻撃力×15倍の水属性攻撃。\n最上段の横1列を水ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 15, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'water' }
+      ]
+    },
+    leaderSkill: {
+      name: '水のアミュレット',
+      desc: '水属性の全パラメータが1.2倍。',
+      effects: [
+        { type: 'hp', attr: 'water', value: 1.3 },
+        { type: 'atk', attr: 'water', value: 1.3 },
+        { type: 'rec', attr: 'water', value: 1.3 }
+      ]
+    }
   },
   731: {
     id: 731,
@@ -5877,13 +5953,41 @@ const MONSTER_DATA = {
   746: {
     id: 746,
     name: 'ヨワシ',
-    rarity: 2,
+    rarity: 5,
     attr: 'water',
     sub: 'water',
     type: 'バランス',
     maxLevel: 50,
     baseExp: 1000,
-    stats: { hp: { min: 510, max: 3420 }, atk: { min: 230, max: 1550 }, rec: { min: 67, max: 192 } }
+    stats: { hp: { min: 50, max: 3000 }, atk: { min: 50, max: 2000 }, rec: { min: 50, max: 100 } },
+    skill: {
+      name: 'ねらいうち',
+      sp: 1,
+      desc: '敵全体に10,000の固定ダメージ。最上段の横1列を木ドロップに変化。\n1ターンの間、自分の攻撃力が1.5倍。\nスキル2に変化。',
+      condition: { type: 'orbBoost', attr: 'water' },
+      effects: [
+        { type: 'damageAll', value: 10000 },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' },
+        { type: 'selfAtkBuff', value: 1.5, turns: 1 }
+      ],
+      stages: [
+        {
+          name: 'ばくりゅうのうず',
+          sp: 10,
+          desc: 'ロックを解除し、全ドロップを水にする。\n1ターンの間、水属性の攻撃が3倍。\nスキル1に変化。',
+          effects: [
+            { type: 'orbUnlock', target: 'all' },
+            { type: 'orbChangeRandom', attr: 'water', count: 30 },
+            { type: 'atkBuff', attr: 'water', value: 3.5, turns: 1 }
+          ]
+        }
+      ]
+    },
+    leaderSkill: {
+      name: 'よわよわ〜',
+      desc: 'チームの総レア度が30以上の場合、全パラメータが1.6倍。',
+      effects: [ { type: 'rarity', condition: 'totalAbove', threshold: 30, value: 1.6, attr: 'water' } ]
+    }
   },
   747: {
     id: 747,
@@ -5943,7 +6047,7 @@ const MONSTER_DATA = {
       desc: 'たいりょくタイプの攻撃1.2倍。',
       effects: [ { type: 'atk', condition: 'type', attr: 'たいりょく', value: 1.2 } ]
     },
-    evolutions: [ { to: 750, materials: [ { item: 'puzzle_1', count: 10 } ] } ]
+    evolutions: [ { to: 750, materials: [ { item: 'spuzzle_1', count: 10 } ] } ]
   },
   750: {
     id: 750,
@@ -5957,7 +6061,7 @@ const MONSTER_DATA = {
     skill: { name: 'ステルスロック', sp: 2, desc: '全ドロップをロック。', effects: [ { type: 'orbLock', target: 'all' } ] },
     leaderSkill: {
       name: 'たいりょくのソウル',
-      desc: 'たいりょくタイプの攻撃1.2倍。',
+      desc: 'たいりょくタイプの攻撃1.5倍。',
       effects: [ { type: 'atk', condition: 'type', attr: 'たいりょく', value: 1.5 } ]
     }
   },
@@ -6101,8 +6205,18 @@ const MONSTER_DATA = {
     maxLevel: 25,
     baseExp: 500,
     stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } },
-    skill: { name: '', sp: 1, desc: '', effects: [] },
-    leaderSkill: { name: '', desc: '', effects: [] }
+    skill: {
+      name: 'どくどく+',
+      sp: 2,
+      desc: '毒ドロップをランダムで4つ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'poison', count: 4, message: '☠️ 毒ドロップ生成！' } ]
+    },
+    leaderSkill: {
+      name: 'どくのシールド',
+      desc: '毒ダメージを無効化。\n毒ドロップを消すと攻撃1.1倍。',
+      effects: [ { type: 'poisonImmune', value: true }, { type: 'atk', condition: 'poison', value: 1.1 } ]
+    },
+    evolutions: [ { to: 758, materials: [ { item: 'puzzle53', count: 2 }, { item: 'spuzzle_12', count: 5 } ] } ]
   },
   758: {
     id: 758,
@@ -6112,7 +6226,18 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 470, max: 2810 }, atk: { min: 320, max: 2030 }, rec: { min: 31, max: 93 } }
+    stats: { hp: { min: 470, max: 2810 }, atk: { min: 320, max: 2030 }, rec: { min: 31, max: 93 } },
+    skill: {
+      name: 'どくのきり',
+      sp: 3,
+      desc: '毒ドロップをランダムで6つ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'poison', count: 6, message: '☠️ 毒ドロップ生成！' } ]
+    },
+    leaderSkill: {
+      name: 'めんえきどく',
+      desc: '毒ドロップを消すと受けるダメージ30%軽減。',
+      effects: [ { type: 'atk', condition: 'poison', value: 1, reduce: 0.3 } ]
+    }
   },
   759: {
     id: 759,
@@ -6250,7 +6375,22 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 460, max: 3040 }, atk: { min: 190, max: 1290 }, rec: { min: 155, max: 455 } }
+    stats: { hp: { min: 460, max: 3040 }, atk: { min: 190, max: 990 }, rec: { min: 155, max: 455 } },
+    skill: {
+      name: 'ダークエンハンス',
+      sp: 2,
+      desc: '1ターンの間、闇属性の攻撃が1.2倍。',
+      effects: [ { type: 'atkBuff', attr: 'dark', value: 1.2, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: '木のアミュレット',
+      desc: '木属性の全パラメータが1.2倍。',
+      effects: [
+        { type: 'hp', attr: 'wood', value: 1.3 },
+        { type: 'atk', attr: 'wood', value: 1.3 },
+        { type: 'rec', attr: 'wood', value: 1.3 }
+      ]
+    }
   },
   766: {
     id: 766,
@@ -6261,7 +6401,13 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 470, max: 2800 }, atk: { min: 320, max: 2020 }, rec: { min: 31, max: 94 } }
+    stats: { hp: { min: 470, max: 2800 }, atk: { min: 320, max: 2020 }, rec: { min: 31, max: 94 } },
+    skill: { name: 'ハートエンハンス', sp: 3, desc: '1ターンの間、回復力が1.5倍。', effects: [ { type: 'recMult', turns: 1, value: 1.5 } ] },
+    leaderSkill: {
+      name: 'かいふくのソウル',
+      desc: 'かいふくタイプの攻撃1.5倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'かいふく', value: 1.5 } ]
+    }
   },
   767: {
     id: 767,
@@ -6366,7 +6512,26 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 25,
     baseExp: 5000,
-    stats: { hp: { min: 200, max: 430 }, atk: { min: 90, max: 200 }, rec: { min: 15, max: 27 } }
+    stats: { hp: { min: 200, max: 430 }, atk: { min: 90, max: 200 }, rec: { min: 15, max: 27 } },
+    skill: {
+      name: 'ミラクルメモリー',
+      sp: 1,
+      desc: '99ターンの間、自分の属性がランダムな属性に変化。',
+      effects: [ { type: 'attrChange', attr: 'random', turns: 99 } ]
+    },
+    leaderSkill: { name: 'オールエレメント-I', desc: '全属性の攻撃1.1倍。', effects: [ { type: 'atk', value: 1.1 } ] },
+    evolutions: [
+      {
+        to: 773,
+        materials: [
+          { item: 'puzzle1', count: 10 },
+          { item: 'puzzle2', count: 10 },
+          { item: 'puzzle3', count: 10 },
+          { item: 'puzzle4', count: 10 },
+          { item: 'puzzle5', count: 10 }
+        ]
+      }
+    ]
   },
   773: {
     id: 773,
@@ -6377,7 +6542,15 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 510, max: 3440 }, atk: { min: 240, max: 1590 }, rec: { min: 75, max: 215 } }
+    stats: { hp: { min: 510, max: 3440 }, atk: { min: 240, max: 1590 }, rec: { min: 75, max: 215 } },
+    skill: {
+      name: 'ミラクルメモリー',
+      sp: 1,
+      desc: '99ターンの間、自分の属性がランダムな属性に変化。',
+      cutin: true,
+      effects: [ { type: 'attrChange', attr: 'random', turns: 99 } ]
+    },
+    leaderSkill: { name: 'オールエレメント-II', desc: '全属性の攻撃1.2倍。', effects: [ { type: 'atk', value: 1.2 } ] }
   },
   774: {
     id: 774,
@@ -6387,7 +6560,14 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 510, max: 3390 }, atk: { min: 220, max: 1470 }, rec: { min: 71, max: 202 } }
+    stats: { hp: { min: 510, max: 3390 }, atk: { min: 220, max: 1470 }, rec: { min: 71, max: 202 } },
+    skill: {
+      name: 'ステルスロック+',
+      sp: 2,
+      desc: '全ドロップをロックし、1ターンの間、ダメージ10%軽減。',
+      effects: [ { type: 'orbLock', target: 'all' }, { type: 'dmgReductionBuff', turns: 1, value: 0.1 } ]
+    },
+    leaderSkill: { name: 'オールエレメント-II', desc: '全属性の攻撃1.2倍。', effects: [ { type: 'atk', value: 1.2 } ] }
   },
   775: {
     id: 775,
@@ -6416,7 +6596,14 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 670, max: 4470 }, atk: { min: 210, max: 1450 }, rec: { min: 32, max: 88 } }
+    stats: { hp: { min: 670, max: 4470 }, atk: { min: 210, max: 1450 }, rec: { min: 32, max: 88 } },
+    skill: {
+      name: 'とっしん',
+      sp: 3,
+      desc: '敵単体に攻撃力×10倍の火属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', value: 10, attr: 'fire', target: 'single' } ]
+    },
+    leaderSkill: { name: '火炎のソウル', desc: '火属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'fire', value: 1.5 } ] }
   },
   777: {
     id: 777,
@@ -6427,7 +6614,14 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 500, max: 3370 }, atk: { min: 230, max: 1500 }, rec: { min: 74, max: 212 } }
+    stats: { hp: { min: 500, max: 3370 }, atk: { min: 230, max: 1500 }, rec: { min: 74, max: 212 } },
+    skill: {
+      name: 'とっしん',
+      sp: 3,
+      desc: '敵単体に攻撃力×10倍の光属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', value: 10, attr: 'light', target: 'single' } ]
+    },
+    leaderSkill: { name: '閃光のソウル', desc: '光属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'light', value: 1.5 } ] }
   },
   778: {
     id: 778,
@@ -6575,7 +6769,14 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 490, max: 2890 }, atk: { min: 340, max: 2130 }, rec: { min: 30, max: 90 } }
+    stats: { hp: { min: 490, max: 1890 }, atk: { min: 340, max: 3130 }, rec: { min: 30, max: 90 } },
+    skill: {
+      name: 'でんきショック',
+      sp: 3,
+      desc: '最左の縦1列を光ドロップに変化。',
+      effects: [ { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'light' } ]
+    },
+    leaderSkill: { name: '光のオーラ・中', desc: '光属性のHP1.5倍。', effects: [ { type: 'hp', attr: 'light', value: 1.5 } ] }
   },
   786: {
     id: 786,
@@ -6586,7 +6787,19 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 480, max: 3170 }, atk: { min: 190, max: 1270 }, rec: { min: 158, max: 465 } }
+    stats: { hp: { min: 480, max: 3170 }, atk: { min: 1900, max: 6270 }, rec: { min: 158, max: 465 } },
+    skill: {
+      name: 'ふしぎなりんぷん',
+      sp: 4,
+      desc: 'HPを最大HPの50%回復。\n1ターンの間、ダメージを50%軽減。',
+      condition: { type: 'orbBoost', attr: 'fire' },
+      effects: [ { type: 'heal', value: 0.5 }, { type: 'dmgReductionBuff', turns: 1, value: 0.5 } ]
+    },
+    leaderSkill: {
+      name: 'アーカラ島の守り神',
+      desc: 'チームのレア度が全員5の場合、かいふくタイプのHPが2倍。',
+      effects: [ { type: 'rarity', condition: 'allSame', value: 2.1, hp: true, monType: 'かいふく' } ]
+    }
   },
   787: {
     id: 787,
@@ -6597,7 +6810,18 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 530, max: 3530 }, atk: { min: 240, max: 1590 }, rec: { min: 69, max: 197 } }
+    stats: { hp: { min: 30, max: 1230 }, atk: { min: 840, max: 4590 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'ジャミングウッド',
+      sp: 3,
+      desc: 'お邪魔と木ドロップをランダムで3つずつ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'ojama', count: 3 }, { type: 'orbChangeRandom', attr: 'wood', count: 3 } ]
+    },
+    leaderSkill: {
+      name: 'たいりょくのアミュレット',
+      desc: 'たいりょくタイプの全パラメータが1.2倍。',
+      effects: [ { type: 'allStat', condition: 'type', attr: 'たいりょく', value: 1 } ]
+    }
   },
   788: {
     id: 788,
@@ -6608,7 +6832,18 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 690, max: 4620 }, atk: { min: 220, max: 1510 }, rec: { min: 32, max: 86 } }
+    stats: { hp: { min: 690, max: 4620 }, atk: { min: 220, max: 1510 }, rec: { min: 32, max: 86 } },
+    skill: {
+      name: 'オールヒール',
+      sp: 8,
+      desc: 'HPとバインドを全回復する。',
+      effects: [ { type: 'heal', value: 1 }, { type: 'bindRecover', turns: 99 } ]
+    },
+    leaderSkill: {
+      name: 'ポニ島の守り神',
+      desc: 'HP1の時に攻撃1.5倍、受けるダメージ半減。',
+      effects: [ { type: 'atk', condition: 'hpBelow', threshold: 0.01, value: 1.5, reduce: 0.5, recValue: 2 } ]
+    }
   },
   789: {
     id: 789,

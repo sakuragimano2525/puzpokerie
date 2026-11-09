@@ -37,7 +37,7 @@ const AREA_DATA = {
   16: { name: 'ウインドビーチ', bg: 'dungeon3-3.png', hue: 50,  color: '紫' },
   17: { name: 'マオフォレスト', bg: 'dungeon2-3.png', hue: 50,  color: '黄' },
   18: { name: 'スイレーン草原', bg: 'dungeon1.png', hue: 50,  color: '緑' },
-
+  19: { name: 'リリーエ庭園', bg: 'dungeon18.png', hue: 50,  color: '青' },
 
 };
 
