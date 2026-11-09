@@ -5481,7 +5481,22 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 170, max: 380 }, atk: { min: 130, max: 280 }, rec: { min: 7, max: 12 } }
+    stats: { hp: { min: 170, max: 380 }, atk: { min: 130, max: 280 }, rec: { min: 7, max: 12 } },
+    skill: {
+      name: 'はっぱとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力の木属性攻撃。\n最上段の横1列を木ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'wood' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' }
+      ]
+    },
+    leaderSkill: {
+      name: 'フォース・カインド',
+      desc: '4コンボ以上で攻撃1.2倍。',
+      effects: [ { type: 'atk', condition: 'combo', count: 4, value: 1.2 } ]
+    },
+    evolutions: [ { to: 723, materials: [ { item: 'puzzle2', count: 5 }, { item: 'puzzle3', count: 5 } ] } ]
   },
   723: {
     id: 723,
@@ -5491,7 +5506,22 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 50,
     baseExp: 1000,
-    stats: { hp: { min: 310, max: 1090 }, atk: { min: 220, max: 800 }, rec: { min: 15, max: 34 } }
+    stats: { hp: { min: 310, max: 1090 }, atk: { min: 220, max: 800 }, rec: { min: 15, max: 34 } },
+    skill: {
+      name: 'はっぱとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力の木属性攻撃。\n最上段の横1列を木ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'wood' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' }
+      ]
+    },
+    leaderSkill: {
+      name: 'ファイブステップ',
+      desc: '5コンボ以上で攻撃1.3倍。',
+      effects: [ { type: 'atk', condition: 'combo', count: 5, value: 1.3 } ]
+    },
+    evolutions: [ { to: 724, materials: [ { item: 'puzzle54', count: 1 }, { item: 'puzzle3', count: 10 } ] } ]
   },
   724: {
     id: 724,
@@ -5501,7 +5531,21 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 490, max: 2930 }, atk: { min: 340, max: 2150 }, rec: { min: 31, max: 93 } }
+    stats: { hp: { min: 490, max: 2930 }, atk: { min: 340, max: 2150 }, rec: { min: 31, max: 93 } },
+    skill: {
+      name: 'はっぱとばし',
+      sp: 3,
+      desc: '敵全体に攻撃力の木属性攻撃。\n最上段の横1列を木ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 1, attr: 'wood' },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' }
+      ]
+    },
+    leaderSkill: {
+      name: '「星＆世界」のタロット',
+      desc: '7コンボ以上で攻撃2.4倍。',
+      effects: [ { type: 'atk', condition: 'combo', count: 7, value: 2.3 }, { type: 'hp', value: 0.5 } ]
+    }
   },
   725: {
     id: 725,
@@ -5813,7 +5857,10 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 6, max: 11 } }
+    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 6, max: 11 } },
+    skill: { name: 'ステルスロック', sp: 2, desc: '全ドロップをロック。', effects: [ { type: 'orbLock', target: 'all' } ] },
+    leaderSkill: { name: '光のソウル', desc: '光属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'light', value: 1.2 } ] },
+    evolutions: [ { to: 745, materials: [ { item: 'puzzle42', count: 6 } ] } ]
   },
   745: {
     id: 745,
@@ -5823,7 +5870,9 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 480, max: 2840 }, atk: { min: 320, max: 2010 }, rec: { min: 30, max: 89 } }
+    stats: { hp: { min: 480, max: 2840 }, atk: { min: 320, max: 2010 }, rec: { min: 30, max: 89 } },
+    skill: { name: 'ステルスロック', sp: 2, desc: '全ドロップをロック。', effects: [ { type: 'orbLock', target: 'all' } ] },
+    leaderSkill: { name: '閃光のソウル', desc: '光属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'light', value: 1.5 } ] }
   },
   746: {
     id: 746,
@@ -5887,7 +5936,14 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 270, max: 590 }, atk: { min: 80, max: 180 }, rec: { min: 7, max: 12 } }
+    stats: { hp: { min: 270, max: 590 }, atk: { min: 80, max: 180 }, rec: { min: 7, max: 12 } },
+    skill: { name: 'ステルスロック', sp: 2, desc: '全ドロップをロック。', effects: [ { type: 'orbLock', target: 'all' } ] },
+    leaderSkill: {
+      name: 'たいりょくのソウル・小',
+      desc: 'たいりょくタイプの攻撃1.2倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'たいりょく', value: 1.2 } ]
+    },
+    evolutions: [ { to: 750, materials: [ { item: 'puzzle_1', count: 10 } ] } ]
   },
   750: {
     id: 750,
@@ -5897,7 +5953,13 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 690, max: 4640 }, atk: { min: 210, max: 1440 }, rec: { min: 34, max: 92 } }
+    stats: { hp: { min: 690, max: 4640 }, atk: { min: 210, max: 1440 }, rec: { min: 34, max: 92 } },
+    skill: { name: 'ステルスロック', sp: 2, desc: '全ドロップをロック。', effects: [ { type: 'orbLock', target: 'all' } ] },
+    leaderSkill: {
+      name: 'たいりょくのソウル',
+      desc: 'たいりょくタイプの攻撃1.2倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'たいりょく', value: 1.5 } ]
+    }
   },
   751: {
     id: 751,
@@ -6038,7 +6100,9 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } },
+    skill: { name: '', sp: 1, desc: '', effects: [] },
+    leaderSkill: { name: '', desc: '', effects: [] }
   },
   758: {
     id: 758,
@@ -6059,7 +6123,19 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 270, max: 600 }, atk: { min: 90, max: 190 }, rec: { min: 6, max: 11 } }
+    stats: { hp: { min: 270, max: 600 }, atk: { min: 90, max: 190 }, rec: { min: 6, max: 11 } },
+    skill: {
+      name: 'とつげき',
+      sp: 1,
+      desc: '敵単体に攻撃力×3倍の木属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', target: 'single', value: 3, attr: 'wood' } ]
+    },
+    leaderSkill: {
+      name: 'かいふくのオーラ',
+      desc: 'かいふくタイプのHP1.2倍。',
+      effects: [ { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.2 } ]
+    },
+    evolutions: [ { to: 760, materials: [ { item: 'puzzle1', count: 12 } ] } ]
   },
   760: {
     id: 760,
@@ -6070,7 +6146,18 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 700, max: 4660 }, atk: { min: 210, max: 1450 }, rec: { min: 31, max: 84 } }
+    stats: { hp: { min: 700, max: 4660 }, atk: { min: 210, max: 1450 }, rec: { min: 31, max: 84 } },
+    skill: {
+      name: 'とつげき',
+      sp: 1,
+      desc: '敵単体に攻撃力×3倍の木属性攻撃。',
+      effects: [ { type: 'damageSelfAtkMult', target: 'single', value: 3, attr: 'wood' } ]
+    },
+    leaderSkill: {
+      name: 'たいりょくのオーラ・中',
+      desc: 'たいりょくタイプのHP1.7倍。',
+      effects: [ { type: 'hp', condition: 'type', attr: 'たいりょく', value: 1.7 } ]
+    }
   },
   761: {
     id: 761,
@@ -6146,7 +6233,13 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 450, max: 2980 }, atk: { min: 190, max: 1240 }, rec: { min: 159, max: 465 } }
+    stats: { hp: { min: 450, max: 2980 }, atk: { min: 190, max: 1240 }, rec: { min: 159, max: 465 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'バランスのオーラ・中',
+      desc: 'バランスタイプのHP1.7倍。',
+      effects: [ { type: 'hp', condition: 'type', attr: 'バランス', value: 1.7 } ]
+    }
   },
   765: {
     id: 765,
@@ -6344,7 +6437,21 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 500, max: 2960 }, atk: { min: 330, max: 2050 }, rec: { min: 29, max: 86 } }
+    stats: { hp: { min: 500, max: 2960 }, atk: { min: 330, max: 2050 }, rec: { min: 29, max: 86 } },
+    skill: {
+      name: 'どくどく',
+      sp: 2,
+      desc: '毒ドロップをランダムで3つ生成。',
+      effects: [ { type: 'orbChangeRandom', attr: 'poison', count: 3, message: '☠️ 毒ドロップ生成！' } ]
+    },
+    leaderSkill: {
+      name: 'どくぼうそう',
+      desc: '【落ちコンなし】毒を6個以上つなげて消すと攻撃1.8倍。',
+      effects: [
+        { type: 'noDrop', value: true },
+        { type: 'atk', condition: 'orbConnect', attr: 'poison', count: 6, value: 1.8 }
+      ]
+    }
   },
   779: {
     id: 779,
@@ -6396,7 +6503,18 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 470, max: 2780 }, atk: { min: 320, max: 2030 }, rec: { min: 30, max: 89 } }
+    stats: { hp: { min: 470, max: 2780 }, atk: { min: 320, max: 2030 }, rec: { min: 30, max: 89 } },
+    skill: {
+      name: 'グリーンイエロー',
+      sp: 4,
+      desc: '最上段横2列を木と光ドロップに変化。',
+      condition: { type: 'battleBefore', value: 3 },
+      effects: [
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' },
+        { type: 'orbChangeLine', dir: 'row', index: 1, count: 1, attr: 'light' }
+      ]
+    },
+    leaderSkill: { name: '大滝のソウル', desc: '水属性の攻撃1.8倍。', effects: [ { type: 'atk', attr: 'water', value: 1.8 } ] }
   },
   782: {
     id: 782,
@@ -6406,7 +6524,14 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 170, max: 370 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+    stats: { hp: { min: 170, max: 370 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'ハーフアップ',
+      desc: 'HP50%以上で攻撃1.3倍。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.5, value: 1.3 } ]
+    },
+    evolutions: [ { to: 783, materials: [ { item: 'puzzle42', count: 10 } ] } ]
   },
   783: {
     id: 783,
@@ -6416,7 +6541,14 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 50,
     baseExp: 1000,
-    stats: { hp: { min: 300, max: 1060 }, atk: { min: 210, max: 740 }, rec: { min: 15, max: 34 } }
+    stats: { hp: { min: 300, max: 1060 }, atk: { min: 210, max: 740 }, rec: { min: 15, max: 34 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'ハーフアップ',
+      desc: 'HP50%以上で攻撃1.3倍。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.5, value: 1.3 } ]
+    },
+    evolutions: [ { to: 784, materials: [ { item: 'puzzle44', count: 1 } ] } ]
   },
   784: {
     id: 784,
@@ -6426,7 +6558,13 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 480, max: 2880 }, atk: { min: 320, max: 2000 }, rec: { min: 30, max: 91 } }
+    stats: { hp: { min: 480, max: 2880 }, atk: { min: 320, max: 2000 }, rec: { min: 30, max: 91 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'スーパーハーフアップ',
+      desc: 'HP50%以上で攻撃1.7倍、受けるダメージ3%軽減。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.5, value: 1.7, reduce: 0.03 } ]
+    }
   },
   785: {
     id: 785,
