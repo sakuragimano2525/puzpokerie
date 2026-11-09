@@ -47,7 +47,7 @@ const GACHA_DATA = {
     exchange: false,
     monsterCapsules: ['red', 'gold'],
     chipCapsules: ['gray', 'blue'],
-    lineup: [5084, 126, 124, 114, 125, 122],
+    lineup: [5084, 5087, 126, 124, 114, 125, 122],
     chips: [
       'puzzle1', 'puzzle2', 'puzzle3', 'puzzle4', 'puzzle5',
       'puzzle12', 'puzzle22', 'puzzle32', 'puzzle42', 'puzzle52',

@@ -35,6 +35,8 @@ const AREA_DATA = {
   14: { name: 'ポケモンタワー',       bg: 'dungeon7.png', hue: 150, color: '白' },
   15: { name: 'ハナダの洞窟',       bg: 'dungeon15-1.png', hue: 150, color: '黒', hidden: true },   // 隠しエリア：前のエリア(14)のボスをクリアするまで、マップに存在すら出ない
   16: { name: 'ウインドビーチ', bg: 'dungeon3-3.png', hue: 50,  color: '紫' },
+  17: { name: 'マオフォレスト', bg: 'dungeon2-3.png', hue: 50,  color: '黄' },
+
 
 };
 

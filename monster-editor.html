@@ -26,6 +26,10 @@ textarea{min-height:72px;resize:vertical}
 .effect-top{display:flex;gap:8px;align-items:center}
 .effect-top select{margin:0;flex:1}
 .effect .fields{margin-top:10px}
+.rand-ev{margin-top:8px}
+.rand-opt{margin:10px 0;padding:10px;border:1px dashed #7aa2e3;border-radius:10px;background:#f7faff}
+.rand-opt .effect{background:#eef4ff}
+.rand-preview{color:#1e40af}
 .small{font-size:.78rem;color:var(--muted);margin:6px 0 0}
 button{border:0;border-radius:8px;padding:9px 13px;background:var(--accent);color:#ffffff;font-weight:800;cursor:pointer}
 button:hover{filter:brightness(1.1)}
@@ -350,9 +354,13 @@ const activeTemplates = {
   damageAttrAtkMult:{label:'○属性の攻撃力×倍率の属性ダメージ',data:{type:'damageAttrAtkMult',target:'all',value:10,srcAttr:'fire',attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('srcAttr','参照する味方の属性（その属性の攻撃力合計）'),attrF('attr','攻撃の属性')]},
   damagePartyAtkMult:{label:'味方全員の攻撃力合計×倍率',data:{type:'damagePartyAtkMult',target:'all',value:10,attr:'fire'},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','倍率'),attrF('attr','攻撃の属性')]},
   atkBuff:{label:'攻撃エンハンス',data:{type:'atkBuff',attr:'water',monType:'',value:1.5,turns:1},fields:[['attr','属性（指定なし=全属性）','attrAny'],typeF('monType','タイプ（空欄=指定なし）'),numF('value','攻撃倍率'),numF('turns','ターン数')]},
-  selfAtkBuff:{label:'自己エンハンス（自分の攻撃力を○ターン○倍）',data:{type:'selfAtkBuff',value:2,turns:1},fields:[numF('value','攻撃倍率（自分だけ）'),numF('turns','ターン数')]},
+  selfAtkBuff:{label:'自己エンハンス（自分／隣／リーダー等の攻撃力を○ターン○倍）',data:{type:'selfAtkBuff',target:'self',value:2,turns:1},fields:[['target','かける相手','select','self:自分|leader:リーダー（自分以外）|friend:フレンド（自分以外）|leaderFriend:リーダーとフレンド（自分以外）|left:左隣|right:右隣|adjacent:両隣（左右）|subs:サブ4匹全員（自分以外）'],['includeSelf','自分も一緒にかける（「自分と両隣」など。「自分」を選んだ時は不要）','bool'],numF('value','攻撃倍率（その相手だけ）'),numF('turns','ターン数')]},
   noFallBuff:{label:'○ターンの間、落ちコンなし',data:{type:'noFallBuff',turns:3},fields:[numF('turns','ターン数')]},
-  attrChange:{label:'自分の属性を○ターン○属性に変化',data:{type:'attrChange',attr:'fire',turns:3},fields:[['attr','変化先の属性（副属性は消えて単属性になる）','select','fire:火|water:水|wood:木|light:光|dark:闇|random:ランダム（今の属性以外から1つ）'],numF('turns','ターン数')]},
+  attrChange:{label:'属性を○ターン○属性に変化（自分／隣／リーダー等）',data:{type:'attrChange',target:'self',attr:'fire',turns:3},fields:[['target','かける相手','select','self:自分|leader:リーダー（自分以外）|friend:フレンド（自分以外）|leaderFriend:リーダーとフレンド（自分以外）|left:左隣|right:右隣|adjacent:両隣（左右）|subs:サブ4匹全員（自分以外）'],['includeSelf','自分も一緒にかける（「自分と両隣」など。「自分」を選んだ時は不要）','bool'],['attr','変化先の属性（副属性は消えて単属性になる）','select','fire:火|water:水|wood:木|light:光|dark:闇|random:ランダム（今の属性以外から1つ）'],numF('turns','ターン数')]},
+  randomEvent:{label:'何かが起こる（下のパターンからランダムで1つ）',data:{type:'randomEvent',options:[
+    {desc:'',effects:[{key:'selfAtkBuff',data:{type:'selfAtkBuff',target:'adjacent',includeSelf:true,value:1.5,turns:7}}]},
+    {desc:'',effects:[{key:'selfAtkBuff',data:{type:'selfAtkBuff',target:'adjacent',includeSelf:true,value:2,turns:7}}]},
+    {desc:'',effects:[{key:'recMult',data:{type:'recMult',turns:7,value:2}}]}]},fields:[]},
   defenseDown:{label:'敵の防御力を○ターン○%ダウン',data:{type:'defenseDown',target:'all',value:0.5,turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダウン率（50%=0.5）'),numF('turns','ターン数')]},
   selfDamage:{label:'【自傷系】HPを減らす',data:{type:'selfDamage',mode:'percent',value:0.2},fields:[['mode','種類','select','percent:最大HPの○%減少|toOne:HPが1になる'],numF('value','減少割合（20%=0.2。「HPが1になる」の時は無視）')]},
   heal:{label:'最大HP割合を回復',data:{type:'heal',value:0.2},fields:[numF('value','割合（20%=0.2）')]},
@@ -523,6 +531,10 @@ let curStage = 0;
 const CHANGE_RE = /スキル[0-9０-９]{1,2}に変化。?/g;
 function toActiveEff(e){
   e=structuredClone(e);
+  if(e.type==='randomEvent'){   // 各パターンの中身も {key,data} の形にして持つ（保存する時に元の形へ戻す）
+    e.options=(Array.isArray(e.options)?e.options:[]).map(o=>({desc:'',effects:normActiveEffs(Array.isArray(o)?o:((o&&o.effects)||[])).map(toActiveEff)}));
+    return {key:'randomEvent',data:e};
+  }
   if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; }
   if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; }
   return {key:matchTemplate(activeTemplates,e),data:e};
@@ -613,10 +625,10 @@ function allTypes(){
 }
 function refreshTypeList(){ $('typeList').innerHTML = allTypes().map(t=>`<option value="${esc(t)}">`).join(''); }
 
-function fieldHtml(kind, i, f, data){
+function fieldHtml(kind, i, f, data, extra=''){
   const [key,label,type,choices]=f;
   const val = key==='$json' ? JSON.stringify(data,null,2) : data[key];
-  const at = `data-kind="${kind}" data-i="${i}" data-field="${key}"`;
+  const at = `data-kind="${kind}" data-i="${i}" data-field="${key}"${extra?' '+extra:''}`;
   if(type==='attr') return `<label>${label}<select ${at}>${ATTRS.map(([v,n])=>`<option value="${v}"${val===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
   if(type==='attrAny') return `<label>${label}<select ${at}><option value=""${!val?' selected':''}>指定なし</option>${ATTRS.map(([v,n])=>`<option value="${v}"${val===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
   if(type==='type') return `<label>${label}<input ${at} list="typeList" value="${esc(val??'')}"></label>`;
@@ -626,12 +638,40 @@ function fieldHtml(kind, i, f, data){
   if(type==='json') return `<label class="wide">${label}<textarea ${at}>${esc(val)}</textarea></label>`;
   return `<label>${label}<input type="number" step="any" ${at} value="${esc(val??'')}"></label>`;
 }
+// 「何かが起こる」の編集欄：パターンごとに効果を入れる（スキルを使うと、パターンのうち1つが同じ確率で選ばれる）
+function randomEventBody(i,e){
+  const opts=e.data.options||(e.data.options=[]);
+  const subTpls=Object.entries(activeTemplates).filter(([k])=>k!=='randomEvent');
+  return `<div class="rand-ev"><p class="small">スキルを使うと、下のパターンのうち1つが同じ確率でランダムに起こります（他のモンスターのスキルを使うわけではありません）。スキル説明には「何かが起こる」と出ます。</p>`
+  +opts.map((o,j)=>`<div class="rand-opt"><div class="effect-top"><b>パターン${j+1}</b><span style="flex:1"></span>
+      <button class="remove" type="button" data-opt-del="${i}:${j}">このパターンを削除</button></div>`
+    +o.effects.map((x,k)=>{
+      const t=activeTemplates[x.key]; const ex=`data-opt="${j}" data-sub="${k}"`;
+      const fields=t.fields.map(f=>fieldHtml('active',i,f,x.data,ex)).join('');
+      return `<div class="effect"><div class="effect-top">
+        <select data-kind="active" data-i="${i}" ${ex} data-role="subkind">${subTpls.map(([kk,v])=>`<option value="${kk}"${kk===x.key?' selected':''}>${v.label}</option>`).join('')}</select>
+        <button class="remove" type="button" data-sub-del="${i}:${j}:${k}">削除</button></div>${fields?`<div class="fields">${fields}</div>`:''}</div>`;
+    }).join('')
+    +`<button class="add" type="button" data-sub-add="${i}:${j}">＋ このパターンに効果を追加</button>
+      <p class="small rand-preview">${esc(randOptText(o))}</p></div>`).join('')
+  +`<button class="add" type="button" data-opt-add="${i}">＋ パターンを追加</button></div>`;
+}
+const randOptText=o=>{ const t=describeActive((o.effects||[]).map(x=>cleanOne(x.data))).replace(/。\n/g,'、').replace(/。$/,''); return t?('ゲーム内メッセージ：'+t):'（効果がありません）'; };
+function refreshRandPreview(el){ const box=el.closest('.rand-opt'); if(!box) return; const o=getList('active')[+el.dataset.i].data.options[+el.dataset.opt]; const p=box.querySelector('.rand-preview'); if(p) p.textContent=randOptText(o); }
+// 保存用：{key,data} で持っている中身を、ゲームが読む元の形（空欄は除く）に戻す
+function cleanOne(d){
+  if(d&&d.type==='randomEvent') return {type:'randomEvent',options:(d.options||[]).map(o=>{ const effects=(o.effects||[]).map(x=>cleanOne(x.data)); const desc=describeActive(effects).replace(/。\n/g,'、').replace(/。$/,''); return {...(desc?{desc}:{}),effects}; })};
+  return Object.fromEntries(Object.entries(d).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))));
+}
 function renderEffects(kind){
   const list = getList(kind);
   const templates = kind==='active'?activeTemplates:leaderTemplates;
   const host = $({active:'activeEffects',leader:'leaderEffects',bulk:'blEffects'}[kind]);
   host.innerHTML = list.map((e,i)=>{
     const t = templates[e.key];
+    if(e.key==='randomEvent'&&kind==='active') return `<div class="effect"><div class="effect-top">
+      <select data-kind="${kind}" data-i="${i}" data-role="kind">${Object.entries(templates).map(([k,v])=>`<option value="${k}"${k===e.key?' selected':''}>${v.label}</option>`).join('')}</select>
+      <button class="remove" type="button" data-kind="${kind}" data-i="${i}" data-role="remove">削除</button></div>${randomEventBody(i,e)}</div>`;
     const fields = t.fields.map(f=>fieldHtml(kind,i,f,e.data)).join('');
     return `<div class="effect"><div class="effect-top">
       <select data-kind="${kind}" data-i="${i}" data-role="kind">${Object.entries(templates).map(([k,v])=>`<option value="${k}"${k===e.key?' selected':''}>${v.label}</option>`).join('')}</select>
@@ -665,7 +705,7 @@ function buildMonster(){
   m.baseExp = num('monBaseExp',100);
   m.stats = { hp:{min:num('hpMin'),max:num('hpMax')}, atk:{min:num('atkMin'),max:num('atkMax')}, rec:{min:num('recMin'),max:num('recMax')} };
   flushStage();
-  const cleanActive = list=>list.map(e=>Object.fromEntries(Object.entries(e.data).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_')))));
+  const cleanActive = list=>list.map(e=>cleanOne(e.data));
   const s0 = stages[0];
   m.skill = { name:s0.name, sp:Math.max(1,Math.floor(Number(s0.sp)||1)), desc:s0.desc, ...(s0.cutin?{cutin:true}:{}), ...(s0.yumekawa?{yumekawa:true}:{}), ...readSkillCond(), effects:cleanActive(s0.effects) };
   if(stages.length>1) m.skill.stages = stages.slice(1).map(s=>({ ...(s.name?{name:s.name}:{}), ...((s.sp!==''&&s.sp!=null&&Number(s.sp)>=1)?{sp:Math.floor(Number(s.sp))}:{}), ...(s.cutin?{cutin:true}:{}), ...(s.yumekawa?{yumekawa:true}:{}), desc:s.desc, effects:cleanActive(s.effects) }));
@@ -860,6 +900,9 @@ function lockTargetText(e){
   const ks=LOCK_KEYS.filter(k=>e['orb_'+k]); if(!ks.length) ks.push('fire');
   return joinNames(ks.map(k=>ATTR_NAME[k]))+'ドロップ';
 }
+// 自己エンハンス／属性変化の「かける相手」の言い方（self・未指定は『自分』）
+const SKILL_TARGET_TEXT={self:'自分',leader:'リーダー',friend:'フレンド',leaderFriend:'リーダーとフレンド',left:'左隣',right:'右隣',adjacent:'両隣',subs:'サブ全員'};
+const targetText=e=>{ const b=SKILL_TARGET_TEXT[e.target]||'自分'; return (e.includeSelf&&e.target&&e.target!=='self')?'自分と'+b:b; };
 function describeActiveOne(e0){
   const out=[];
   for(const e of [e0]){
@@ -868,8 +911,9 @@ function describeActiveOne(e0){
       case 'damageAll': case 'damageSingle': out.push(`敵${(e.target==='single'||e.type==='damageSingle')?'単体':'全体'}に${Number(e.value).toLocaleString()}の固定ダメージ`); break;
       case 'atkBuff': out.push(`${e.turns||1}ターンの間、${e.monType?e.monType+'タイプ':(e.attr?ATTR_NAME[e.attr]+'属性':'全属性')}の攻撃が${fmt(e.value)}倍`); break;
       case 'noFallBuff': out.push(`${e.turns||1}ターンの間、落ちコンなし`); break;
-      case 'selfAtkBuff': out.push(`${e.turns||1}ターンの間、自分の攻撃力が${fmt(e.value)}倍`); break;
-      case 'attrChange': out.push(`${e.turns||1}ターンの間、自分の属性が${ATTR_NAME[e.attr]?ATTR_NAME[e.attr]+'属性':'ランダムな属性'}に変化`); break;
+      case 'randomEvent': out.push('何かが起こる'); break;
+      case 'selfAtkBuff': out.push(`${e.turns||1}ターンの間、${targetText(e)}の攻撃力が${fmt(e.value)}倍`); break;
+      case 'attrChange': out.push(`${e.turns||1}ターンの間、${targetText(e)}の属性が${ATTR_NAME[e.attr]?ATTR_NAME[e.attr]+'属性':'ランダムな属性'}に変化`); break;
       case 'defenseDown': out.push(`${e.turns||1}ターンの間、敵${e.target==='single'?'単体':'全体'}の防御力を${pct(e.value)}ダウン`); break;
       case 'damageSelfAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に攻撃力×${fmt(e.value)}倍の${a}属性攻撃`); break;
       case 'damageAttrAtkMult': out.push(`敵${e.target==='single'?'単体':'全体'}に${ATTR_NAME[e.srcAttr]||''}属性の攻撃力×${fmt(e.value)}倍の${a}属性攻撃`); break;
@@ -979,6 +1023,10 @@ function describeActive(effs){
       if(hasNext) carry=t; else out.push(t);
       i++; continue;
     }
+    if(e.type==='randomEvent'){   // 「7ターンの間、回復力が3倍、さらに何か起こる」のように、前の効果の文につなげる
+      if(carry) push('何かが起こる'); else if(out.length) out[out.length-1]+='、さらに何か起こる'; else out.push('何かが起こる');
+      i++; continue;
+    }
     const f=FAM[e.type];
     if(f){ let j=i; while(j<arr.length&&FAM[arr[j].type]===f) j++; describeGroup(f,arr.slice(i,j)).forEach(push); i=j; continue; }
     const t=describeActiveOne(e); if(t) push(t); i++;
@@ -1027,7 +1075,7 @@ function cmpKey(a,b){
   return 0;
 }
 // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','selfAtkBuff','attrChange','noFallBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','selfAtkBuff','attrChange','randomEvent','noFallBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
 function skillSortKey(sk){
   const e = (sk.effects||[])[0] || {};
   const i = SK_TYPE_ORDER.indexOf(e.type);
@@ -1247,13 +1295,15 @@ document.addEventListener('input', e=>{
   if(t.closest('#tabLeader') && t.dataset.kind!=='bulk') return;       // リーダースキル一括編集は専用の処理
   if(t.dataset.field){
     const list=getList(t.dataset.kind);
-    const eff=list[+t.dataset.i]; const key=t.dataset.field;
+    let eff=list[+t.dataset.i]; const key=t.dataset.field;
+    if(t.dataset.sub!==undefined) eff=eff.data.options[+t.dataset.opt].effects[+t.dataset.sub];   // 「何かが起こる」のパターンの中の効果
     if(key==='$json'){ try{ eff.data=JSON.parse(t.value); t.style.borderColor=''; }catch{ t.style.borderColor='var(--bad)'; return; } }
     else if(t.type==='checkbox'){ if(t.checked) eff.data[key]=true; else delete eff.data[key]; }
     else if(t.dataset.idlist){ eff.data[key]=t.value.split(/[,、，\s]+/).filter(x=>x!=='').map(Number).filter(n=>Number.isInteger(n)&&n>0); }
     else if(t.type==='number'){ eff.data[key]=t.value===''?0:Number(t.value); }
     else if(key==='attr2'&&t.value===''){ delete eff.data[key]; }
     else eff.data[key]=t.value;
+    if(t.dataset.sub!==undefined) refreshRandPreview(t);
   } else if(t.dataset.evo!==undefined){
     const ev=evolutions[+t.dataset.evo];
     if(t.dataset.mat!==undefined) ev.materials[+t.dataset.mat][t.dataset.f]=t.dataset.f==='count'?Number(t.value):t.value;
@@ -1268,6 +1318,10 @@ document.addEventListener('change', e=>{
     const kind=t.dataset.kind; const list=getList(kind); const tpl=kind==='active'?activeTemplates:leaderTemplates;
     list[+t.dataset.i]={key:t.value,data:structuredClone(tpl[t.value].data)};
     renderEffects(kind); if(kind==='bulk'){ blEffChanged(); return; } dirty=true; update();
+  } else if(t.dataset.role==='subkind'){   // 「何かが起こる」のパターンの中の効果の種類を変える
+    const o=getList('active')[+t.dataset.i].data.options[+t.dataset.opt];
+    o.effects[+t.dataset.sub]={key:t.value,data:structuredClone(activeTemplates[t.value].data)};
+    renderEffects('active'); dirty=true; update();
   } else if(t.dataset.field && t.type==='checkbox'){ /* input で処理済み */ }
 });
 document.addEventListener('click', e=>{
@@ -1280,6 +1334,10 @@ document.addEventListener('click', e=>{
   if(t.dataset.tpl!==undefined){ const src=db[t.dataset.tpl]; if(src) startFromTemplate(src); return; }
   if(t.id==='dupMon'){ const cur=buildMonster(); if(!Number.isFinite(cur.id)||cur.id<=0){ say('モンスターIDを正しく入力してください。',true); return; } startFromTemplate(cur); return; }
   if(t.dataset.lib!==undefined){ const x=skLibCache[+t.dataset.lib]; if(x) applySkill(structuredClone(x.skill)); say(`スキル「${x.skill.name}」を適用しました。`); return; }
+  if(t.dataset.optAdd!==undefined){ getList('active')[+t.dataset.optAdd].data.options.push({desc:'',effects:[{key:'selfAtkBuff',data:structuredClone(activeTemplates.selfAtkBuff.data)}]}); renderEffects('active'); dirty=true; update(); return; }
+  if(t.dataset.optDel!==undefined){ const [i,j]=t.dataset.optDel.split(':').map(Number); getList('active')[i].data.options.splice(j,1); renderEffects('active'); dirty=true; update(); return; }
+  if(t.dataset.subAdd!==undefined){ const [i,j]=t.dataset.subAdd.split(':').map(Number); getList('active')[i].data.options[j].effects.push({key:'selfAtkBuff',data:structuredClone(activeTemplates.selfAtkBuff.data)}); renderEffects('active'); dirty=true; update(); return; }
+  if(t.dataset.subDel!==undefined){ const [i,j,k]=t.dataset.subDel.split(':').map(Number); getList('active')[i].data.options[j].effects.splice(k,1); renderEffects('active'); dirty=true; update(); return; }
   if(t.dataset.add){ const kind=t.dataset.add; const tpl=kind==='active'?activeTemplates:leaderTemplates; const key=Object.keys(tpl)[0];
     getList(kind).push({key,data:structuredClone(tpl[key].data)}); renderEffects(kind); if(kind==='bulk'){ blEffChanged(); return; } dirty=true; update(); }
   else if(t.dataset.role==='remove'){ getList(t.dataset.kind).splice(+t.dataset.i,1); renderEffects(t.dataset.kind); if(t.dataset.kind==='bulk'){ blEffChanged(); return; } dirty=true; update(); }
@@ -1289,7 +1347,7 @@ document.addEventListener('click', e=>{
   else if(t.dataset.matRemove!==undefined){ const [i,j]=t.dataset.matRemove.split(':').map(Number); evolutions[i].materials.splice(j,1); renderEvos(); dirty=true; update(); }
 });
 $('autoLsDesc').onclick=()=>{ $('lsDesc').value=describeLeader(leaderEffects.map(e=>e.data)); dirty=true; update(); };
-$('autoSkDesc').onclick=()=>{ $('skDesc').value=describeActive(activeEffects.map(e=>e.data)); flushStage(); applyChangeLines(); loadStageToForm(); dirty=true; update(); };
+$('autoSkDesc').onclick=()=>{ $('skDesc').value=describeActive(activeEffects.map(e=>cleanOne(e.data))); flushStage(); applyChangeLines(); loadStageToForm(); dirty=true; update(); };
 $('fixChangeLines').onclick=()=>{ flushStage(); applyChangeLines(); loadStageToForm(); dirty=true; update(); say('各スキルの説明の末尾を「スキルXに変化。」に整えました。'); };
 
 $('monSelect').onchange=()=>{

@@ -151,7 +151,7 @@
           } else if (v < 1) add('e:atkDown');   // 「攻撃が激減」など（デメリット）
           break;
         case 'selfAtkBuff':
-          if (v > 1) { add('e:atkUp'); add('bt:self'); mx('buffMult', v); mx('turns', turnsOf(e)); }
+          if (v > 1) { add('e:atkUp'); add(e.target && e.target !== 'self' ? 'bt:others' : 'bt:self'); mx('buffMult', v); mx('turns', turnsOf(e)); }   // target 指定あり＝自分以外（リーダー／隣／サブ全員など）
           else if (v < 1) add('e:atkDown');
           break;
         case 'dmgReductionBuff': add('e:reduce'); mx('reduce', clamp01(v > 1 ? v / 100 : v)); mx('turns', turnsOf(e)); break;
@@ -212,6 +212,7 @@
         case 'selfDamage': add('e:selfDmg'); break;
         case 'attrChange': add('e:attrCh'); mx('turns', turnsOf(e)); break;
         case 'transformRandom': add('e:trans'); break;
+        case 'randomEvent': add('e:randEv'); break;   // 「何かが起こる」（中身のパターンはランダムで決まるので、中身の種類は拾わない）
         case 'note': break;   // 演出だけ（ゲームには影響しない）
         default: add('e:other'); break;
       }
@@ -341,7 +342,7 @@
       row('ドロップのしかけ', [T('e:lock', 'ロック'), T('e:unlock', 'ロック解除'), T('e:fall', '落ちやすくする', 'ドロップが落ちやすくなる'), T('e:noFall', '落ちコンなし'), T('e:roulette', 'ルーレット')]),
       row('味方を強くする', [T('e:atkUp', '攻撃力アップ'), T('e:reduce', 'ダメージ軽減'), T('e:recUp', '回復力アップ'), T('e:heal', 'HP回復'), T('e:bind', 'バインド回復'), T('e:allAtk', '全体攻撃'), T('e:time', '操作時間アップ'), T('e:stop', '時間停止'), T('e:sp', 'SPを増やす')]),
       row('敵を弱らせる', [T('e:delay', '行動を遅らせる'), T('e:defDown', '防御ダウン', '敵の防御ダウン')]),
-      row('そのほか', [T('e:attrCh', '属性が変わる', '自分の属性が変わる'), T('e:trans', 'へんしん'), T('e:other', 'その他')]),
+      row('そのほか', [T('e:attrCh', '属性が変わる', '属性が変わる（自分・仲間）'), T('e:randEv', '何かが起こる', 'ランダムで何かが起こる'), T('e:trans', 'へんしん'), T('e:other', 'その他')]),
       row('デメリット', [T('e:selfDmg', 'HPが減る', 'デメリット:HPが減る'), T('e:atkDown', '攻撃ダウン', 'デメリット:攻撃ダウン'), T('e:recDown', '回復力ダウン', 'デメリット:回復力ダウン'), T('e:timeDown', '操作時間ダウン', 'デメリット:操作時間ダウン')])
     ]);
 
@@ -381,10 +382,10 @@
     ]);
 
     // ── 味方の強化・回復 ──
-    const types = [...all].filter(t => t.startsWith('bt:')).map(t => t.slice(3)).filter(t => t !== 'all' && t !== 'self' && !ATTR_ORDER.includes(t));
+    const types = [...all].filter(t => t.startsWith('bt:')).map(t => t.slice(3)).filter(t => t !== 'all' && t !== 'self' && t !== 'others' && !ATTR_ORDER.includes(t));
     types.sort((a, b) => { const ia = TYPE_ORDER.indexOf(a), ib = TYPE_ORDER.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
     section('buff', '味方の強化・回復', () => [
-      row('攻撃力アップの対象', [T('bt:all', '全属性', '全属性の攻撃力アップ')].concat(orbChips('bt', a => a + 'の攻撃力アップ', ['fire', 'water', 'wood', 'light', 'dark']), [T('bt:self', '自分だけ', '自分の攻撃力アップ')])),
+      row('攻撃力アップの対象', [T('bt:all', '全属性', '全属性の攻撃力アップ')].concat(orbChips('bt', a => a + 'の攻撃力アップ', ['fire', 'water', 'wood', 'light', 'dark']), [T('bt:self', '自分だけ', '自分の攻撃力アップ'), T('bt:others', '仲間に', '仲間（リーダー・隣・サブなど）の攻撃力アップ')])),
       row('', types.map(t => chip('bt:' + t, t, { full: t + 'タイプの攻撃力アップ', icon: TYPE_ICON[t] }))),
       row('攻撃力アップの倍率 ○倍以上', metricChips('buffMult')),
       row('ダメージ軽減 ○%以上', metricChips('reduce')),

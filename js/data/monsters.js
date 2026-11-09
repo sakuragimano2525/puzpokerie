@@ -5663,7 +5663,15 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 190, max: 410 }, atk: { min: 90, max: 200 }, rec: { min: 15, max: 28 } }
+    stats: { hp: { min: 190, max: 410 }, atk: { min: 90, max: 200 }, rec: { min: 15, max: 28 } },
+    skill: {
+      name: 'でんきショック',
+      sp: 3,
+      desc: '最左の縦1列を光ドロップに変化。',
+      effects: [ { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'light' } ]
+    },
+    leaderSkill: { name: '木のソウル', desc: '木属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'wood', value: 1.2 } ] },
+    evolutions: [ { to: 737, materials: [ { item: 'puzzle32', count: 3 } ] } ]
   },
   737: {
     id: 737,
@@ -5673,7 +5681,15 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 50,
     baseExp: 1000,
-    stats: { hp: { min: 330, max: 1190 }, atk: { min: 160, max: 570 }, rec: { min: 35, max: 80 } }
+    stats: { hp: { min: 330, max: 1190 }, atk: { min: 160, max: 570 }, rec: { min: 35, max: 80 } },
+    skill: {
+      name: 'でんきショック',
+      sp: 3,
+      desc: '最左の縦1列を光ドロップに変化。',
+      effects: [ { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'light' } ]
+    },
+    leaderSkill: { name: '木霊のソウル', desc: '木属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'wood', value: 1.5 } ] },
+    evolutions: [ { to: 738, materials: [ { item: 'spuzzle_42', count: 8 } ] } ]
   },
   738: {
     id: 738,
@@ -5683,7 +5699,14 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 480, max: 3230 }, atk: { min: 230, max: 1540 }, rec: { min: 75, max: 215 } }
+    stats: { hp: { min: 500, max: 3230 }, atk: { min: 225, max: 1670 }, rec: { min: 25, max: 50 } },
+    skill: {
+      name: 'でんきショック',
+      sp: 3,
+      desc: '最左の縦1列を光ドロップに変化。',
+      effects: [ { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'light' } ]
+    },
+    leaderSkill: { name: '新緑のソウル', desc: '木属性の攻撃1.8倍。', effects: [ { type: 'atk', attr: 'wood', value: 1.8 } ] }
   },
   739: {
     id: 739,
@@ -5726,14 +5749,28 @@ const MONSTER_DATA = {
   },
   741: {
     id: 741,
-    name: 'オドリドリ',
+    name: 'オドリドリ(めらめら)',
     rarity: 3,
     attr: 'fire',
     sub: 'fire',
     type: 'バランス',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 490, max: 3310 }, atk: { min: 240, max: 1580 }, rec: { min: 67, max: 191 } }
+    stats: { hp: { min: 490, max: 3310 }, atk: { min: 240, max: 1580 }, rec: { min: 67, max: 191 } },
+    skill: {
+      name: 'ストレート',
+      sp: 4,
+      desc: '敵単体に攻撃力×7倍の火属性攻撃。\n最左の縦1列を火ドロップに変化。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'single', value: 7, attr: 'fire' },
+        { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'fire' }
+      ]
+    },
+    leaderSkill: {
+      name: 'バランスのソウル',
+      desc: 'バランスタイプの攻撃1.5倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'バランス', value: 1.5 } ]
+    }
   },
   742: {
     id: 742,
@@ -5743,7 +5780,14 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 180, max: 390 }, atk: { min: 70, max: 160 }, rec: { min: 30, max: 55 } }
+    stats: { hp: { min: 180, max: 390 }, atk: { min: 70, max: 160 }, rec: { min: 30, max: 55 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'かいふくのルーン',
+      desc: 'かいふくタイプの回復力1.3倍。',
+      effects: [ { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.3 } ]
+    },
+    evolutions: [ { to: 743, materials: [ { item: 'spuzzle_52', count: 8 } ] } ]
   },
   743: {
     id: 743,
@@ -5753,7 +5797,13 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 460, max: 3020 }, atk: { min: 190, max: 1280 }, rec: { min: 146, max: 428 } }
+    stats: { hp: { min: 460, max: 3020 }, atk: { min: 190, max: 600 }, rec: { min: 146, max: 480 } },
+    skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
+    leaderSkill: {
+      name: 'かいふくのルーン・中',
+      desc: 'かいふくタイプの回復力1.7倍。',
+      effects: [ { type: 'rec', condition: 'type', attr: 'かいふく', value: 1.7 } ]
+    }
   },
   744: {
     id: 744,
@@ -5900,7 +5950,25 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 160, max: 350 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+    stats: { hp: { min: 160, max: 350 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } },
+    skill: {
+      name: 'はなきりまい',
+      sp: 2,
+      desc: '敵全体に1,000の固定ダメージ。\n最上段の横1列を木ドロップに変化。',
+      condition: { type: 'orbBoost', attr: 'wood' },
+      effects: [ { type: 'damageAll', value: 1000 }, { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' } ]
+    },
+    leaderSkill: {
+      name: 'こうげきのソウル・小',
+      desc: 'こうげきタイプの攻撃1.2倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.2 } ]
+    },
+    evolutions: [
+      {
+        to: 754,
+        materials: [ { item: 'puzzle33', count: 1 }, { item: 'puzzle3', count: 2 }, { item: 'spuzzle_3', count: 2 } ]
+      }
+    ]
   },
   754: {
     id: 754,
@@ -5910,7 +5978,23 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 460, max: 2750 }, atk: { min: 320, max: 2030 }, rec: { min: 31, max: 92 } }
+    stats: { hp: { min: 960, max: 2750 }, atk: { min: 620, max: 2030 }, rec: { min: 131, max: 292 } },
+    skill: {
+      name: 'はなきりまい+',
+      sp: 2,
+      desc: '敵全体に1,000の固定ダメージ、最上段の横1列を木ドロップに変化。\n1ターンの間、自分の攻撃力が1.2倍。',
+      condition: { type: 'orbBoost', attr: 'wood' },
+      effects: [
+        { type: 'damageAll', value: 1000 },
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'wood' },
+        { type: 'selfAtkBuff', value: 1.2, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'こうげきのソウル・大',
+      desc: 'こうげきタイプの攻撃1.8倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: 'こうげき', value: 1.8 } ]
+    }
   },
   755: {
     id: 755,
@@ -5920,7 +6004,14 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 190, max: 410 }, atk: { min: 70, max: 160 }, rec: { min: 29, max: 53 } }
+    stats: { hp: { min: 190, max: 410 }, atk: { min: 70, max: 160 }, rec: { min: 29, max: 53 } },
+    skill: {
+      name: 'ドロップチェンジ・木',
+      sp: 3,
+      desc: '水ドロップを木ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'water', to: 'wood' } ]
+    },
+    leaderSkill: { name: '闇のソウル', desc: '闇属性の攻撃1.2倍。', effects: [ { type: 'atk', attr: 'dark', value: 1.2 } ] }
   },
   756: {
     id: 756,
@@ -5930,7 +6021,14 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 480, max: 3190 }, atk: { min: 190, max: 1290 }, rec: { min: 140, max: 410 } }
+    stats: { hp: { min: 480, max: 3190 }, atk: { min: 190, max: 1290 }, rec: { min: 140, max: 410 } },
+    skill: {
+      name: 'ドロップチェンジ・木',
+      sp: 3,
+      desc: '水ドロップを木ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'water', to: 'wood' } ]
+    },
+    leaderSkill: { name: '暗闇のソウル', desc: '闇属性の攻撃1.5倍。', effects: [ { type: 'atk', attr: 'dark', value: 1.5 } ] }
   },
   757: {
     id: 757,
@@ -5982,7 +6080,19 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 25,
     baseExp: 500,
-    stats: { hp: { min: 200, max: 440 }, atk: { min: 90, max: 190 }, rec: { min: 14, max: 25 } }
+    stats: { hp: { min: 200, max: 440 }, atk: { min: 90, max: 190 }, rec: { min: 14, max: 25 } },
+    skill: {
+      name: 'かじつ',
+      sp: 2,
+      desc: '木ドロップをランダムで2つ生成。\n回復ドロップをロック。',
+      effects: [ { type: 'orbChangeRandom', attr: 'wood', count: 2 }, { type: 'orbLock', target: 'attrs', orb_wood: true } ]
+    },
+    leaderSkill: {
+      name: 'かいふくのオーラ',
+      desc: 'かいふくタイプのHP1.2倍。',
+      effects: [ { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.2 } ]
+    },
+    evolutions: [ { to: 762, materials: [ { item: 'spuzzle_3', count: 8 } ] } ]
   },
   762: {
     id: 762,
@@ -5992,7 +6102,19 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 50,
     baseExp: 1000,
-    stats: { hp: { min: 360, max: 1270 }, atk: { min: 150, max: 550 }, rec: { min: 32, max: 73 } }
+    stats: { hp: { min: 360, max: 1270 }, atk: { min: 150, max: 550 }, rec: { min: 32, max: 73 } },
+    skill: {
+      name: 'かじつ',
+      sp: 2,
+      desc: '木ドロップをランダムで2つ生成。\n回復ドロップをロック。',
+      effects: [ { type: 'orbChangeRandom', attr: 'wood', count: 2 }, { type: 'orbLock', target: 'attrs', orb_wood: true } ]
+    },
+    leaderSkill: {
+      name: 'かいふくのオーラ',
+      desc: 'かいふくタイプのHP1.2倍。',
+      effects: [ { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.2 } ]
+    },
+    evolutions: [ { to: 763, materials: [ { item: 'puzzle33', count: 5 } ] } ]
   },
   763: {
     id: 763,
@@ -6002,7 +6124,18 @@ const MONSTER_DATA = {
     type: 'バランス',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 510, max: 3430 }, atk: { min: 230, max: 1500 }, rec: { min: 69, max: 196 } }
+    stats: { hp: { min: 510, max: 3430 }, atk: { min: 230, max: 1500 }, rec: { min: 69, max: 196 } },
+    skill: {
+      name: 'かじつ',
+      sp: 2,
+      desc: '木ドロップをランダムで2つ生成。\n回復ドロップをロック。',
+      effects: [ { type: 'orbChangeRandom', attr: 'wood', count: 2 }, { type: 'orbLock', target: 'attrs', orb_wood: true } ]
+    },
+    leaderSkill: {
+      name: 'かいふくのオーラ・中',
+      desc: 'かいふくタイプのHP1.7倍。',
+      effects: [ { type: 'hp', condition: 'type', attr: 'かいふく', value: 1.7 } ]
+    }
   },
   764: {
     id: 764,
@@ -6172,7 +6305,15 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 490, max: 2920 }, atk: { min: 330, max: 2070 }, rec: { min: 28, max: 83 } }
+    stats: { hp: { min: 490, max: 2920 }, atk: { min: 2500, max: 6600 }, rec: { min: 28, max: 180 } },
+    skill: {
+      name: 'ウォーターエンハンス・大',
+      sp: 4,
+      desc: '1ターンの間、水属性の攻撃が2倍。',
+      condition: { type: 'orbCount', attr: 'heal', value: 8 },
+      effects: [ { type: 'atkBuff', attr: 'water', value: 2, turns: 1 } ]
+    },
+    leaderSkill: { name: '水のルーン・中', desc: '水属性の回復力1.7倍。', effects: [ { type: 'rec', attr: 'water', value: 1.7 } ] }
   },
   776: {
     id: 776,
@@ -6235,10 +6376,17 @@ const MONSTER_DATA = {
     rarity: 3,
     attr: 'none',
     sub: 'light',
-    type: 'バランス',
+    type: '神秘',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 500, max: 3320 }, atk: { min: 230, max: 1520 }, rec: { min: 71, max: 204 } }
+    stats: { hp: { min: 500, max: 3400 }, atk: { min: 230, max: 1500 }, rec: { min: 0, max: 50 } },
+    skill: {
+      name: 'ドロップチェンジ・闇',
+      sp: 3,
+      desc: '光ドロップを闇ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'light', to: 'dark' } ]
+    },
+    leaderSkill: { name: '火のルーン', desc: '火属性の回復力1.3倍。', effects: [ { type: 'rec', attr: 'fire', value: 1.3 } ] }
   },
   781: {
     id: 781,
@@ -7995,7 +8143,7 @@ const MONSTER_DATA = {
   5046: {
     id: 5046,
     name: 'ティリア',
-    rarity: 1,
+    rarity: 5,
     attr: 'light',
     type: 'かいふく',
     maxLevel: 50,
@@ -8005,7 +8153,7 @@ const MONSTER_DATA = {
       name: '護りの力・光',
       sp: 5,
       desc: '1ターンの間、ダメージを無効化。',
-      condition: { type: 'orbBoost', attr: 'heal' },
+      condition: { type: 'orbBoost', attr: 'light' },
       effects: [ { type: 'dmgReductionBuff', turns: 1, value: 1 } ]
     },
     leaderSkill: {
@@ -8031,8 +8179,11 @@ const MONSTER_DATA = {
     skill: {
       name: '閃光の加護',
       sp: 3,
-      desc: '1ターンの間、ダメージを10%軽減。\n1ターンの間、操作時間が1秒延長。',
-      effects: [ { type: 'dmgReductionBuff', turns: 1, value: 0.1 }, { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 } ]
+      desc: '1ターンの間、ダメージを10%軽減。\n20ターンの間、光ドロップが少し落ちやすくなる。',
+      effects: [
+        { type: 'dmgReductionBuff', turns: 1, value: 0.1 },
+        { type: 'orbSpawnBoost', attr: 'light', rate: 0.15, turns: 20 }
+      ]
     },
     leaderSkill: { name: '聖誓・光明賛歌', desc: 'スキル使用時、攻撃1.8倍。', effects: [ { type: 'atk', condition: 'skillUsed', value: 1.8 } ] }
   },
@@ -8282,7 +8433,7 @@ const MONSTER_DATA = {
   5055: {
     id: 5055,
     name: 'ティリア(チア)',
-    rarity: 1,
+    rarity: 5,
     attr: 'light',
     sub: 'water',
     type: 'かいふく',
@@ -8291,14 +8442,13 @@ const MONSTER_DATA = {
     stats: { hp: { min: 800, max: 3100 }, atk: { min: 200, max: 1300 }, rec: { min: 200, max: 600 } },
     skill: {
       name: 'ブライトアップ',
-      sp: 4,
-      desc: '1ターンの間、回復力が1.5倍。火ドロップを光ドロップに変化。\n10ターンの間、自分の攻撃力が1.5倍。',
-      cutin: true,
-      condition: { type: 'orbBoost', attr: 'heal' },
+      sp: 3,
+      desc: '火ドロップを光ドロップに変化。10ターンの間、自分の攻撃力が1.5倍。\nバインドを10ターン回復。',
+      condition: { type: 'orbBoost', attr: 'light' },
       effects: [
-        { type: 'recMult', turns: 1, value: 1.5 },
         { type: 'orbConvert', from: 'fire', to: 'light' },
-        { type: 'selfAtkBuff', value: 1.5, turns: 10 }
+        { type: 'selfAtkBuff', value: 2, turns: 10 },
+        { type: 'bindRecover', turns: 10 }
       ]
     },
     leaderSkill: {
@@ -9222,6 +9372,109 @@ const MONSTER_DATA = {
       effects: [
         { type: 'atk', condition: 'colorCount', count: 4, value: 2, reduce: 0.15 },
         { type: 'moveTimeAdd', value: -1 }
+      ]
+    }
+  },
+  5087: {
+    id: 5087,
+    name: 'イヴ・サンタクロース',
+    rarity: 5,
+    attr: 'light',
+    sub: 'dark',
+    type: 'たいりょく',
+    maxLevel: 50,
+    baseExp: 50000,
+    stats: { hp: { min: 800, max: 4500 }, atk: { min: 200, max: 1900 }, rec: { min: 0, max: 200 } },
+    skill: {
+      name: 'プレゼントの準備もバッチリ！',
+      sp: 3,
+      desc: '闇ドロップを光ドロップ、火ドロップを回復ドロップに変化。\n1ターンの間、ルーレットを1つ生成し操作時間2秒延長。',
+      yumekawa: true,
+      condition: { type: 'orbBoost', attr: 'light' },
+      effects: [
+        { type: 'orbConvert', from: 'dark', to: 'light' },
+        { type: 'orbConvert', from: 'fire', to: 'heal' },
+        { type: 'orbConvert', from: 'poison', to: 'light' },
+        { type: 'roulette', turns: 1, count: 1, sec: '1' },
+        { type: 'moveTimeBuff', turns: 1, seconds: 3, mult: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '毎日がプレゼント！',
+      desc: '【チームのレア度が全員別の場合発動/落ちコンなし】光ドロップの2コンボ以上で攻撃2倍、受けるダメージ20%軽減。\n残りドロップ4個以下で攻撃と回復力1.2倍。',
+      effects: [
+        { type: 'atk', condition: 'attrCombos', attr: 'light', count: 2, value: 2.3, reduce: 0.2 },
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 2 },
+        { type: 'noDrop', value: true },
+        { type: 'rarity', condition: 'allDiff', value: 0.0001 },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 1.2, recValue: 1.2 }
+      ]
+    },
+    evolutions: [ { to: 5088, materials: [ { item: 'puzzle43', count: 1 }, { item: 'spuzzle_5', count: 1 } ] } ]
+  },
+  5088: {
+    id: 5088,
+    name: 'イヴ・サンタクロース(神様！絶対だよ)',
+    rarity: 5,
+    attr: 'light',
+    sub: 'light',
+    type: 'たいりょく',
+    maxLevel: 99,
+    baseExp: 50000,
+    stats: { hp: { min: 700, max: 5000 }, atk: { min: 300, max: 1600 }, rec: { min: 0, max: 200 } },
+    skill: {
+      name: '届くまで歌い続けます〜！',
+      sp: 3,
+      desc: 'ロックを解除し、光と回復ドロップをランダムで3つずつ生成。\n1ターンの間、回復力が2倍。',
+      yumekawa: true,
+      condition: { type: 'orbBoost', attr: 'light' },
+      effects: [
+        { type: 'orbUnlock', target: 'all' },
+        { type: 'orbChangeRandom', attr: 'light', count: 3 },
+        { type: 'orbChangeRandom', attr: 'heal', count: 3 },
+        { type: 'recMult', turns: 1, value: 2 },
+        {
+          type: 'randomEvent',
+          options: [
+            {
+              desc: '3ターンの間、自分と両隣の攻撃力が1.5倍、20ターンの間、光と回復ドロップが少し落ちやすくなる、バインドを99ターン回復',
+              effects: [
+                { type: 'selfAtkBuff', target: 'adjacent', includeSelf: true, value: 1.5, turns: 3 },
+                { type: 'orbSpawnBoost2', attr: 'light', rate: 0.15, attr2: 'heal', rate2: 0.15, turns: 20 },
+                { type: 'bindRecover', turns: 99 }
+              ]
+            },
+            {
+              desc: '3ターンの間、両隣の攻撃力が2倍、5ターンの間、光と回復ドロップが落ちやすくなる、敵全体の行動を1ターン遅らせる',
+              effects: [
+                { type: 'selfAtkBuff', target: 'adjacent', value: 2, turns: 3 },
+                { type: 'orbSpawnBoost2', attr: 'light', rate: 0.2, attr2: 'heal', rate2: 0.2, turns: 5 },
+                { type: 'enemyDelay', target: 'all', turns: 1 }
+              ]
+            },
+            {
+              desc: '7ターンの間、サブ全員の属性が光属性に変化、5ターンの間、光と回復ドロップが少し落ちやすくなる、12秒間、時を止める',
+              effects: [
+                { type: 'attrChange', target: 'subs', attr: 'light', turns: 7 },
+                { type: 'orbSpawnBoost2', attr: 'light', rate: 0.1, attr2: 'heal', rate2: 0.1, turns: 5 },
+                { type: 'timeStop', seconds: 12 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    leaderSkill: {
+      name: 'スペシャルの応援歌',
+      desc: '光ドロップの2コンボ以上で攻撃1.5倍、受けるダメージ15%軽減。\n残りドロップ4個以下で攻撃と回復力2倍。',
+      effects: [
+        { type: 'atk', condition: 'attrCombos', attr: 'light', count: 2, value: 2, reduce: 0.15 },
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 2 },
+        { type: 'rarity', condition: 'allDiff', value: 0.0001 },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 2, recValue: 2 },
+        { type: 'spCharge', size: 'medium' }
       ]
     }
   }

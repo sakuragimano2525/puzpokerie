@@ -97,6 +97,7 @@ function teamRarityOk(eff, uids) {
 //     ・リーダースキル（○属性の攻撃力○倍など）は「元の属性」で判定するので、変化しても倍率は途切れない
 //   変化の状態は box のデータには書かず、uid をキーにした attrShifts にだけ持つ（セーブには入らない）。
 //   スキル側の書き方：{ type:'attrChange', attr:'fire', turns:3 }  attr は fire/water/wood/light/dark/random
+//   target を足すと自分以外にも掛けられる：{ type:'attrChange', attr:'fire', turns:3, target:'adjacent' }（対象の種類は下の skillTargetEntries を参照）
 // ============================================================
 // ============================================================
 // ★ 味方スキル「○ターンの間、落ちコンなし」 ★
@@ -105,6 +106,48 @@ function teamRarityOk(eff, uids) {
 // ============================================================
 let buffNoFall = null;   // { turns }
 const ATTR_SHIFT_LIST = ['fire', 'water', 'wood', 'light', 'dark'];
+// ============================================================
+// ★ 属性変化・自己エンハンスの「対象」指定 ★
+//   スキル側の書き方：{ type:'selfAtkBuff', value:2, turns:1, target:'right' }（target を書かない／'self' なら従来どおり自分だけ）
+//   target の種類（ふつうは「スキルを使ったモンスター自身」は含まない。パーティ欄は 0=リーダー / 1〜4=サブ / 5=フレンド）
+//   includeSelf:true を足すと自分も一緒に掛かる（例：{ target:'adjacent', includeSelf:true } ＝ 自分と両隣）
+//     leader：リーダー / friend：フレンド / leaderFriend：リーダーとフレンド
+//     left：左隣 / right：右隣 / adjacent：両隣（左右）/ subs：サブ4匹全員（1〜4番目）
+//   対象の枠にモンスターがいない（空き・端の外）時は、その枠は飛ばす。
+// ============================================================
+const SKILL_TARGET_NAME = { self: '自分', leader: 'リーダー', friend: 'フレンド', leaderFriend: 'リーダーとフレンド', left: '左隣', right: '右隣', adjacent: '両隣', subs: 'サブ全員' };
+function skillTargetEntries(ent, target, includeSelf) {
+  const t = SKILL_TARGET_NAME[target] ? target : 'self';
+  if (t === 'self') return ent ? [ent] : [];
+  const myIdx = ent ? partyUids.indexOf(ent.uid) : -1;
+  let idxs = [];
+  switch (t) {
+    case 'leader':       idxs = [0]; break;
+    case 'friend':       idxs = [5]; break;
+    case 'leaderFriend': idxs = [0, 5]; break;
+    case 'left':         idxs = myIdx >= 0 ? [myIdx - 1] : []; break;
+    case 'right':        idxs = myIdx >= 0 ? [myIdx + 1] : []; break;
+    case 'adjacent':     idxs = myIdx >= 0 ? [myIdx - 1, myIdx + 1] : []; break;
+    case 'subs':         idxs = [1, 2, 3, 4]; break;
+  }
+  const out = [];
+  if (includeSelf && ent && MONSTER_DATA[ent.monsterId]) out.push(ent);   // 「自分と両隣」など：自分も入れる
+  for (const i of idxs) {
+    if (i < 0 || i >= partyUids.length || i === myIdx) continue;   // 自分自身はここでは数えない（上で入れた分だけ）
+    const u = partyUids[i];
+    if (u === null || u === undefined) continue;
+    const e = box.find(b => b.uid === u);
+    if (e && MONSTER_DATA[e.monsterId]) out.push(e);
+  }
+  return out;
+}
+function skillTargetLabel(target, ents, selfName, includeSelf) {   // 「リーダーとフレンド」「右隣のピカチュウ」「自分と両隣」など、メッセージ用の呼び名
+  const t = SKILL_TARGET_NAME[target] ? target : 'self';
+  if (t === 'self') return selfName;
+  let name = SKILL_TARGET_NAME[t];
+  if (!includeSelf && (t === 'left' || t === 'right') && ents.length === 1) name = `${SKILL_TARGET_NAME[t]}の${MONSTER_DATA[ents[0].monsterId].name}`;
+  return includeSelf ? `自分と${name}` : name;
+}
 let attrShifts = {};   // uid → { attr, turns }
 function clearAttrShifts() { attrShifts = {}; }
 // 属性変化中の表示：モンスター画像の真ん中に「属性アイコン(1.png など) ＋ 残りターン数」（自分のパーティも、マルチで見る相手のパーティも同じ見た目）
@@ -120,6 +163,7 @@ function attrShiftOf(uid) { const s = attrShifts[uid]; return (s && s.turns > 0)
 // ★ 自己エンハンス（○ターンの間、自分の攻撃力が○倍） ★
 //   属性エンハンス(atkBuffs)とは別に、スキルを使ったモンスター本人だけにかかる。
 //   スキル側の書き方：{ type:'selfAtkBuff', value:2, turns:1 }
+//   target を足すと自分以外にも掛けられる：{ type:'selfAtkBuff', value:2, turns:1, target:'right' }（右隣の攻撃力が2倍）
 //   表示：モンスター画像の真ん中に赤い矢印＋残りターン（例：⬆3）
 // ============================================================
 let selfAtkBuffs = {};   // uid → { value, turns }
@@ -7532,16 +7576,17 @@ function runSkillEffect(eff, context) {
       if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
-    case 'selfAtkBuff': { // 自分（スキルを使ったモンスター）の攻撃力を ○ターン ○倍（属性エンハンスとは別枠）
+    case 'selfAtkBuff': { // 自分（target を指定すれば リーダー/フレンド/左隣/右隣/両隣/サブ全員）の攻撃力を ○ターン ○倍（属性エンハンスとは別枠）
       const ent = context && context.entry;
       const base = ent && MONSTER_DATA[ent.monsterId];
       if (!base) break;
       const turns = Math.max(1, Math.floor(Number(eff.turns) || 1));
       const value = Number(eff.value) || 1;
-      selfAtkBuffs[ent.uid] = { value, turns };   // すでに掛かっていれば新しい倍率・ターン数で上書き
+      const tgts = skillTargetEntries(ent, eff.target, eff.includeSelf);
+      for (const te of tgts) selfAtkBuffs[te.uid] = { value, turns };   // すでに掛かっていれば新しい倍率・ターン数で上書き
       if (typeof renderParty === 'function' && document.getElementById('party-grid')) { try { renderParty(); } catch (err) {} }
       if (window.MultiShare) { try { MultiShare.fxStatus(); } catch (e) {} }
-      showSkillMessage(eff.message || `⬆ ${turns}ターンの間、${base.name}の攻撃力が${value}倍！`, 1400);
+      if (tgts.length) showSkillMessage(eff.message || `⬆ ${turns}ターンの間、${skillTargetLabel(eff.target, tgts, base.name, eff.includeSelf)}の攻撃力が${value}倍！`, 1400);
       break;
     }
     case 'defenseDown': { // 敵の防御力を ○ターンの間 ○% ダウン（target:'single' なら先頭の敵のみ、それ以外は敵全体）
@@ -7864,21 +7909,34 @@ function runSkillEffect(eff, context) {
       showSkillMessage(eff.message || `⬇ ${t}ターンの間、落ちコンなし！`, 1200);
       break;
     }
-    case 'attrChange': { // ○ターンの間、自分（スキルを使ったモンスター）の属性が○属性に変化。副属性は消えて単属性になる
+    case 'attrChange': { // ○ターンの間、自分（target を指定すれば リーダー/フレンド/左隣/右隣/両隣/サブ全員）の属性が○属性に変化。副属性は消えて単属性になる
       const ent = context && context.entry;
       const base = ent && MONSTER_DATA[ent.monsterId];
       if (!base) break;
       const turns = Math.max(1, Math.floor(Number(eff.turns) || 1));
-      let to = eff.attr;
-      if (!ATTR_SHIFT_LIST.includes(to)) {   // ランダム：今の主属性（変化中ならその属性）以外の5属性から1つ選ぶ
-        const nowSh = attrShiftOf(ent.uid);
-        const cur = nowSh ? nowSh.attr : base.attr;
-        const pool = ATTR_SHIFT_LIST.filter(a => a !== cur);
-        to = pool[Math.floor(Math.random() * pool.length)];
+      const tgts = skillTargetEntries(ent, eff.target, eff.includeSelf);
+      const toList = [];
+      for (const te of tgts) {
+        const tb = MONSTER_DATA[te.monsterId];
+        let to = eff.attr;
+        if (!ATTR_SHIFT_LIST.includes(to)) {   // ランダム：今の主属性（変化中ならその属性）以外の5属性から1つ選ぶ（対象ごとに別々に選ぶ）
+          const nowSh = attrShiftOf(te.uid);
+          const cur = nowSh ? nowSh.attr : tb.attr;
+          const pool = ATTR_SHIFT_LIST.filter(a => a !== cur);
+          to = pool[Math.floor(Math.random() * pool.length)];
+        }
+        attrShifts[te.uid] = { attr: to, turns };   // すでに変化中なら、新しい属性・ターン数で上書き
+        toList.push(to);
       }
-      attrShifts[ent.uid] = { attr: to, turns };   // すでに変化中なら、新しい属性・ターン数で上書き
+      if (!tgts.length) break;
+      if (typeof renderParty === 'function' && document.getElementById('party-grid')) { try { renderParty(); } catch (err) {} }   // 他のモンスターに掛けた時も枠をすぐ出す
       if (window.MultiShare) { try { MultiShare.fxStatus(); } catch (e) {} }   // マルチ：属性変化を、その瞬間に相手の画面へ
-      showSkillMessage(eff.message || `✨ ${turns}ターンの間、${base.name}が${ATTR_NAME_JP[to] || to}属性に変化！`, 1400);
+      const sameTo = toList.every(a => a === toList[0]);
+      showSkillMessage(eff.message || `✨ ${turns}ターンの間、${skillTargetLabel(eff.target, tgts, base.name, eff.includeSelf)}が${sameTo ? (ATTR_NAME_JP[toList[0]] || toList[0]) + '属性' : '別々の属性'}に変化！`, 1400);
+      break;
+    }
+    case 'eventMessage': {   // 「何かが起こる」で選ばれた効果の内容を知らせる
+      if (eff.message) showSkillMessage(eff.message, 1800);
       break;
     }
     case 'note': {
@@ -7938,7 +7996,33 @@ async function runPendingTransforms() {
   }
 }
 
+// ============================================================
+// ★ 「何かが起こる」（スキルの効果のうち どれか1つがランダムで起こる） ★
+//   スキル側の書き方：
+//     { type:'randomEvent', options:[
+//         { desc:'7ターンの間、自分と両隣の攻撃力が1.5倍', effects:[ { type:'selfAtkBuff', value:1.5, turns:7, target:'adjacent', includeSelf:true } ] },
+//         { desc:'7ターンの間、回復力が2倍',               effects:[ { type:'recMult', value:2, turns:7 } ] } ] }
+//   options のうち1つを同じ確率で選び、その effects を、この効果の場所に差し込んで実行する（他のモンスターのスキルを使うわけではない）。
+//   desc（空なら「何かが起こった！」）は、選ばれた効果を実行したあとにメッセージで出す。
+//   options の中身は effects の配列だけでもよい。
+// ============================================================
+function expandRandomEvents(effects) {
+  const out = [];
+  for (const e of (effects || [])) {
+    if (!e) continue;
+    if (e.type !== 'randomEvent') { out.push(e); continue; }
+    const opts = (Array.isArray(e.options) ? e.options : []).filter(o => o && (Array.isArray(o) ? o : o.effects || []).length);
+    if (!opts.length) continue;
+    const o = opts[Math.floor(Math.random() * opts.length)];
+    const list = Array.isArray(o) ? o : (o.effects || []);
+    out.push(...expandRandomEvents(list));
+    out.push({ type: 'eventMessage', message: (!Array.isArray(o) && o.desc) ? `✨ ${o.desc}！` : '✨ 何かが起こった！' });
+  }
+  return out;
+}
+
 function runSkillEffects(effects, entry, mon) {
+  effects = expandRandomEvents(effects);   // 「何かが起こる」を、選ばれた効果に置き換える（ドロップ生成の下準備より前に）
   _dropcPlayed = false;
   _skillUsedCells = new Set();
   _skillSpawnAttrs = new Set((effects || []).filter(e => e && e.type === 'orbChangeRandom' && e.attr).map(e => e.attr));
