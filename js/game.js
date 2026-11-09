@@ -105,6 +105,13 @@ function teamRarityOk(eff, uids) {
 //   スキル側の書き方：{ type:'noFallBuff', turns:3 }
 // ============================================================
 let buffNoFall = null;   // { turns }
+// ============================================================
+// ★ 味方スキル「○ターンの間、属性吸収を無効化」 ★
+//   バフ中は、敵の属性吸収（attr_absorb）が効かなくなる＝吸収される属性で攻撃しても、ふつうにダメージが入る。
+//   （敵側の吸収アイコンはそのまま残り、バフが切れると吸収がまた効く。敵の属性吸収のターンはバフ中も進む）
+//   スキル側の書き方：{ type:'absorbVoid', turns:3 }   アイコンは zkm.png
+// ============================================================
+let buffAbsorbVoid = null;   // { turns }
 const ATTR_SHIFT_LIST = ['fire', 'water', 'wood', 'light', 'dark'];
 // ============================================================
 // ★ 属性変化・自己エンハンスの「対象」指定 ★
@@ -884,7 +891,13 @@ function pickBindTargets(sk) {
     const n = Math.min(list.length, rollIntRange(cMin, cMax));
     list = list.slice().sort(() => Math.random() - 0.5).slice(0, n).sort((a, b) => a.i - b.i);
   }
-  return list.map(t => ({ ...t, turns: rollIntRange(tMin, tMax) }));
+  return list.map(t => ({ ...t, turns: rollIntRange(tMin, tMax), immune: isBindImmune(t.u) }));   // immune=true は隠し効果「バインド無効」（弾は飛ぶが、かからない）
+}
+// 隠し効果「バインド無効」：モンスターデータに bindImmune: true があるモンスターは、バインドがかからない（モンスターエディターで設定）
+function isBindImmune(uid) {
+  const entry = box.find(b => b.uid === uid);
+  const mon = entry && MONSTER_DATA[entry.monsterId];
+  return !!(mon && mon.bindImmune);
 }
 // 割合ダメージの量（現在HP基準 or 最大HP基準）
 //   hpNow … 「現在HP基準」のときの基準HP（省略=今のHP）。行動の最初のHPを渡すと、同じ行動内の他のダメージに左右されない
@@ -956,6 +969,35 @@ function guardAttrOf(sk) {
   }
   return ATTRS.includes(sk.attr) ? sk.attr : 'dark';
 }
+// 属性吸収の対象属性（配列）。target:'all'=全属性 / attrs:[…]=選んだ属性まとめて / それ以外は attr の1属性（'random'は発動のたびに抽選）
+function absorbAttrsOf(sk) {
+  const ATTRS = ['fire', 'water', 'wood', 'light', 'dark'];
+  if (sk.target === 'all') return ATTRS.slice();
+  if (Array.isArray(sk.attrs)) {
+    const l = ATTRS.filter(a => sk.attrs.includes(a));
+    if (l.length) return l;
+  }
+  if (sk.attr === 'random') {
+    if (!sk._rolledAbs) sk._rolledAbs = ATTRS[Math.floor(Math.random() * ATTRS.length)];
+    return [sk._rolledAbs];
+  }
+  return [ATTRS.includes(sk.attr) ? sk.attr : 'fire'];
+}
+// いま属性吸収中か（この属性の攻撃は、ダメージの代わりに敵のHPが回復する）
+function enemyAbsorbs(enemy, attr) {
+  if (buffAbsorbVoid && buffAbsorbVoid.turns > 0) return false;   // 味方スキル「属性吸収無効」中は、吸収されない
+  const a = enemy && enemy._attrAbsorbs && enemy._attrAbsorbs[attr];
+  return !!(a && a.turns > 0);
+}
+// 吸収した時の「吸収! +〇〇」の緑の文字
+function showAbsorbText(x, y, amount, ms) {
+  const ab = document.createElement('div');
+  const dur = ms || DMG_NUM_MS;
+  ab.style.cssText = `position:fixed;left:${x}px;top:${y}px;transform:translate(-50%,-50%);font-size:1.25rem;font-weight:900;color:#7dff9a;text-shadow:0 0 8px #000,0 2px 0 #000;pointer-events:none;z-index:230;white-space:nowrap;animation:dmgPop ${dur}ms ease-out forwards;`;
+  ab.textContent = `吸収! +${Math.floor(amount).toLocaleString()}`;
+  document.body.appendChild(ab);
+  setTimeout(() => ab.remove(), dur + 100);
+}
 function buildEnemyActionFn(skills, enemyRef) {
   return function(e) {
     const _hp0 = playerCurrentHP;
@@ -981,7 +1023,7 @@ function buildEnemyActionFn(skills, enemyRef) {
         }
         case 'bind': {
           // 全員 / 指定属性 / ランダム〇〜〇体 を、〇〜〇ターンバインド
-          for (const t of pickBindTargets(sk)) bindTimers[t.u] = (bindTimers[t.u] || 0) + t.turns;
+          for (const t of pickBindTargets(sk)) { if (!t.immune) bindTimers[t.u] = (bindTimers[t.u] || 0) + t.turns; }   // バインド無効のモンスターにはかからない
           updatePlayerHP();
           break;
         }
@@ -1278,6 +1320,16 @@ function buildEnemyActionFn(skills, enemyRef) {
           updateEnemyUI();
           break;
         }
+        case 'attr_absorb': {
+          // 属性吸収：指定した属性（1つ／選んだ属性まとめて／全属性）の攻撃を受けると、ダメージの代わりに敵のHPが回復する（〇ターン）
+          const list = absorbAttrsOf(sk);
+          delete sk._rolledAbs;                          // ランダムは次の発動でまた抽選
+          const turns = Math.max(1, Math.floor(Number(sk.turn) || 1));
+          if (!e._attrAbsorbs) e._attrAbsorbs = {};
+          for (const a of list) e._attrAbsorbs[a] = { turns };   // 同じ属性は上書き
+          updateEnemyUI();
+          break;
+        }
         case 'status_shield': {
           // ○ターンの間、プレイヤーからの状態異常（防御ダウン・威嚇＝行動遅延）を無効化。いま掛かっているものも消す
           e._statusShield = Math.max(1, sk.turn || 1);
@@ -1540,7 +1592,11 @@ function calcHitDamage(enemy, damage, attr, sub) {
     subMult = getAttrMulti(sub.attr, enemy.attr);   // 副属性も、敵の属性との相性（弱点・半減）を受ける
     subDmg = Math.max(1, Math.floor(sub.dmg * subMult * enemyAttrGuardMult(enemy, sub.attr)) - def);
   }
-  return { main, sub: subDmg, attrMult, subMult };
+  // 属性吸収中：その属性のぶんはダメージにならず、同じ量だけ敵のHPが回復する（heal に集めて返す）
+  let heal = 0;
+  if (main > 0 && enemyAbsorbs(enemy, attr)) { heal += main; main = 0; }
+  if (subDmg > 0 && sub && enemyAbsorbs(enemy, sub.attr)) { heal += subDmg; subDmg = 0; }
+  return { main, sub: subDmg, attrMult, subMult, heal };
 }
 // 主属性 → 副属性の順に当てる（超根性・HPが尽きたときも、実際に当たった分だけ返る）
 function dealHitDamage(enemy, hit) {
@@ -1594,12 +1650,21 @@ const ICON_SUPER_GUT_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   "<rect x='4' y='4' width='56' height='56' rx='13' fill='url(#g)' stroke='#fff3c4' stroke-width='3'/>" +
   "<path d='M32 9 L51 16 L51 33 C51 44 42 52 32 56 C22 52 13 44 13 33 L13 16 Z' fill='#fff' stroke='#5a2a00' stroke-width='3' stroke-linejoin='round'/>" +
   "<text x='32' y='42' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='28' text-anchor='middle' fill='#c25a00'>根</text></svg>");
+// 属性吸収無効（zkm.png が読み込めなかった時だけ使う代わりの絵：属性ドロップに緑の吸収矢印＋禁止マーク）
+const ICON_ABSORB_VOID_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3fbf7a'/><stop offset='1' stop-color='#145a35'/></linearGradient></defs>" +
+  "<rect x='4' y='4' width='56' height='56' rx='13' fill='url(#g)' stroke='#d8ffe8' stroke-width='3'/>" +
+  "<path d='M32 46V20M22 29L32 19L42 29' fill='none' stroke='#fff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/>" +
+  "<circle cx='32' cy='32' r='24' fill='none' stroke='#3a0000' stroke-width='10'/><circle cx='32' cy='32' r='24' fill='none' stroke='#ff2f2f' stroke-width='6'/>" +
+  "<path d='M15 49L49 15' stroke='#3a0000' stroke-width='10' stroke-linecap='round'/><path d='M15 49L49 15' stroke='#ff2f2f' stroke-width='6' stroke-linecap='round'/></svg>");
 let ICON_SKILL_SEAL = 'shs.png';
 let ICON_NO_FALL = 'otc.png';
+let ICON_ABSORB_VOID = 'zkm.png';
 (function () {
   const probe = (file, onFail) => { const im = new Image(); im.onerror = onFail; im.src = file; };
   probe('shs.png', () => { ICON_SKILL_SEAL = ICON_SKILL_SEAL_SVG; });
   probe('otc.png', () => { ICON_NO_FALL = ICON_NO_FALL_SVG; });
+  probe('zkm.png', () => { ICON_ABSORB_VOID = ICON_ABSORB_VOID_SVG; });
 })();
 // 盤面に〇ドロップが（いま）あるか。敵が行動を選ぶ“その瞬間”の盤面を見る（落ちコンなしで消えた直後でも、実際の盤面で判定）
 //   落ちコンなし中（敵のギミック／リーダースキル）は、補充の直前に盤面を控えておき（enemyJudgeBoard）、
@@ -1611,6 +1676,8 @@ function boardHasOrb(type) {
   return false;
 }
 function isSkillSealed() { return !!(enemySkillSeal && enemySkillSeal.turns > 0); }
+// バインド中か。バインド中のモンスターは「スキル使用不可・回復力0・攻撃不可」（HPは減らない）
+function isBound(uid) { return !!(bindTimers[uid] && bindTimers[uid] > 0); }
 let enemyAtkDowns        = [];   // 敵の「攻撃力ダウン」：{ attr:'fire'|…|'all', rate:0〜1, turns }
 let buffMoveTimeShort    = false;
 let buffMoveTimeShortTurns = 0;
@@ -2219,6 +2286,12 @@ function comboAbsorbIconSVG(n) {
   </svg>`;
 }
 
+// 属性吸収アイコンの上でキラキラする白い星（4つの角星。CSS .st-sparkle で順番に瞬く）
+const ABSORB_SPARKLE_HTML = (() => {
+  // 位置は外側の <g> に持たせる（CSSアニメの transform が位置を上書きしてしまわないように）
+  const star = (cx, cy, r, cls) => `<g transform="translate(${cx} ${cy}) scale(${r})"><polygon class="sp ${cls}" points="0,-1 .26,-.26 1,0 .26,.26 0,1 -.26,.26 -1,0 -.26,-.26"/></g>`;
+  return `<svg class="st-sparkle" viewBox="0 0 40 40" aria-hidden="true">${star(11, 10, 9, 's1')}${star(31, 15, 7, 's2')}${star(16, 31, 7.5, 's3')}${star(33, 33, 5, 's4')}</svg>`;
+})();
 function updateEnemyUI() {
   for (let i = 0; i < enemyList.length; i++) {
     const enemy = enemyList[i];
@@ -2275,6 +2348,15 @@ function updateEnemyUI() {
               name:`${GN[a][0]}属性軽減`, text:`${GN[a][0]}属性の攻撃から受けるダメージを${Math.round(g.rate * 100)}%軽減している${g.turns > 0 ? '' : '（ずっと続く）'}` });
           }
         }
+        if (enemy.hp > 0 && enemy._attrAbsorbs) {   // 属性吸収：属性アイコン（1.png=火〜5.png=闇）に白い星がキラキラ。右に残りターン
+          const AN = { fire:['火','1','#ff6a3d'], water:['水','2','#3da8ff'], wood:['木','3','#4fd25a'], light:['光','4','#ffd84a'], dark:['闇','5','#b060e8'] };
+          for (const a of Object.keys(AN)) {
+            const g = enemy._attrAbsorbs[a];
+            if (!g || !(g.turns > 0)) continue;
+            icons.push({ img:`${AN[a][1]}.png`, turns:g.turns, title:`${AN[a][0]}属性吸収`, absorb:true, fbColor:AN[a][2],
+              name:`${AN[a][0]}属性吸収`, text:`${AN[a][0]}属性の攻撃を受けると、ダメージの代わりに敵のHPが回復してしまう` });
+          }
+        }
         if (enemy.hp > 0 && enemy._superGut && enemy._superGut.keepHp == null) {   // 超根性（tc.png）。発動したらアイコンは消える。：ターンは常に無限＝ターン数は出さない
           const pct = Math.round(enemy._superGut.rate);
           icons.push({ img:'tc.png', alts:[ICON_SUPER_GUT_SVG], turns:0, title:`超根性${pct}%`, sgut:true,
@@ -2298,7 +2380,9 @@ function updateEnemyUI() {
             } else if (o.img) {
               const im = document.createElement('img');
               im.src = o.img; im.alt = o.title;
+              if (o.absorb) d.classList.add('absorb');   // 属性吸収：右にターン数・白い星がキラキラ
               im.onerror = function(){
+                if (o.absorb) { this.remove(); d.classList.add('absorb-fallback'); d.style.background = `radial-gradient(circle at 35% 30%,#fff 0 10%,${o.fbColor} 45%,#222 100%)`; return; }
                 if (o.alts && o.alts.length) { this.src = o.alts.shift(); return; }   // items/ → 直下 → 大文字の順に探す
                 if (o.ikari && !this._retried) { this._retried = true; this.src = 'ikari.png'; return; }   // items/ に無ければ直下も探す
                 if (o.tien && !this._retried) { this._retried = true; this.src = 'tien.png'; return; }
@@ -2306,6 +2390,7 @@ function updateEnemyUI() {
               };
               d.appendChild(im);
             } else { d.classList.add('emoji'); d.textContent = o.emoji; }
+            if (o.absorb) d.insertAdjacentHTML('beforeend', ABSORB_SPARKLE_HTML);   // 白い星のキラキラ（アイコンの上）
             if (o.turns > 0) {
               const t = document.createElement('span');
               t.className = 'st-turn'; t.textContent = o.turns;
@@ -2719,6 +2804,22 @@ async function fxGuard(enemy, sk, apply) {
   f.layer.remove();
 }
 
+// 属性吸収：軽減と同じ演出で、吸収アイコン（属性アイコン＋キラキラ）がポンと増える。複数の属性は全部同時に増える
+async function fxAttrAbsorb(enemy, sk, apply) {
+  playSE('bshield');
+  const N = { fire:'火', water:'水', wood:'木', light:'光', dark:'闇' };
+  const titles = absorbAttrsOf(sk).map(a => `${N[a]}属性吸収`);   // ランダムはここで抽選（apply が抽選結果を消すので先に控える）
+  const f = _fxLayer(enemy);
+  if (!f) { apply(); await sleep(800); return; }
+  const tgs = [];
+  titles.forEach((t, k) => { const tg = _prepareNewIcon(enemy, k === 0 ? apply : (() => {}), t, f.layer); if (tg) tgs.push(tg); });
+  if (titles.length > 1) { try { updateEnemyUI(); } catch (e) {} }
+  await sleep(500);
+  tgs.forEach(tg => _revealIcon(tg, f.layer));
+  await sleep(300);
+  f.layer.remove();
+}
+
 // 超根性：軽減と同じ「盾」の演出で、超根性アイコン（tc.png）がポンと現れる
 async function fxSuperGut(enemy, sk, apply) { return fxGuard(enemy, sk, apply); }
 
@@ -2990,6 +3091,20 @@ function bindFlightFx(sx, sy, targets, impact) {
   }));
   return Promise.all(flights);
 }
+// バインド無効の枠：弾が当たっても「バインド無効」の文字が出るだけ（かからない）
+function bindImmuneFx(slot) {
+  if (!slot || !slot.animate) return;
+  const tx = document.createElement('div');
+  tx.textContent = 'バインド無効';
+  tx.style.cssText = 'position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);z-index:32;pointer-events:none;white-space:nowrap;font-size:.5rem;font-weight:bold;color:#fff;background:rgba(40,150,90,.92);border:1px solid rgba(190,255,215,.9);border-radius:3px;padding:1px 4px;text-shadow:0 0 3px rgba(0,80,40,.9);';
+  slot.appendChild(tx);
+  tx.animate([
+    { opacity: 0, transform: 'translate(-50%,-30%) scale(.7)' },
+    { opacity: 1, transform: 'translate(-50%,-50%) scale(1.05)', offset: .2 },
+    { opacity: 1, transform: 'translate(-50%,-60%) scale(1)', offset: .7 },
+    { opacity: 0, transform: 'translate(-50%,-90%) scale(1)' }
+  ], { duration: 900, easing: 'ease-out' }).onfinish = () => tx.remove();
+}
 // ▲BINDFX-END
 
 // バインド：敵から紫のバインド弾が飛んでいき、当たったモンスターが拘束される（当たった瞬間に効果音 bind.mp3）
@@ -3006,16 +3121,20 @@ async function fxBind(enemy, sk, apply) {
   let sePlayed = false;
 
   const impact = (t) => {
+    if (t.immune) {   // 隠し効果「バインド無効」：かからない
+      bindImmuneFx(document.querySelectorAll('#party-grid .party-slot')[t.i]);
+      return;
+    }
     bindTimers[t.u] = (bindTimers[t.u] || 0) + t.turns;   // ここでバインド成立
-    updatePlayerHP();   // バインドされたモンスターのHP分だけ最大HPが減る
     if (!sePlayed) { sePlayed = true; playSE('bind'); }
     renderParty();
     renderBuffIcons();
     bindHitFx(document.querySelectorAll('#party-grid .party-slot')[t.i]);
   };
 
-  // マルチ：相手（観戦側）の画面でも、同じ弾の演出を同時に再生する（対象の枠とターン数を渡す）
-  if (window.MultiShare) MultiShare.fx('bd', { e: eIdx, t: targets.map(t => [t.i, t.turns]) });
+  // マルチ：相手（観戦側）の画面でも、同じ弾の演出を同時に再生する（対象の枠とターン数を渡す。バインド無効の枠は除く）
+  { const _rt = targets.filter(t => !t.immune);
+    if (window.MultiShare && _rt.length) MultiShare.fx('bd', { e: eIdx, t: _rt.map(t => [t.i, t.turns]) }); }
   await bindFlightFx(sx, sy, targets, impact);
   if (window.MultiShare) { try { MultiShare.fxStatus(); } catch (e) {} }   // マルチ：バインドがかかったことを、相手（観戦側）の画面へ（確定）
   await sleep(150);
@@ -3084,7 +3203,7 @@ async function fxAtkDown(enemy, sk, apply) {
 async function playEnemySelfSkillFx(enemy, action, actionName) {
   let sks = (action && action.skills) ? action.skills : [];
   if (!sks.length && actionName === 'キュアー') sks = [{ type:'heal_self', _noApply:true }];   // 半分以下で使う回復（効果は呼び出し側で適用）
-  const table = { combo_absorb: fxComboAbsorb, status_shield: fxStatusShield, dmg_reduce: fxGuard, attr_guard: fxGuard, super_gut: fxSuperGut, attack_buff: fxAttackUp, heal_self: fxHeal, action_change: fxActionChange, blind: fxBlind, bind: fxBind, atk_down: fxAtkDown, skill_seal: fxSkillSeal, no_fall: fxNoFall, roulette: fxRoulette };
+  const table = { combo_absorb: fxComboAbsorb, status_shield: fxStatusShield, dmg_reduce: fxGuard, attr_guard: fxGuard, attr_absorb: fxAttrAbsorb, super_gut: fxSuperGut, attack_buff: fxAttackUp, heal_self: fxHeal, action_change: fxActionChange, blind: fxBlind, bind: fxBind, atk_down: fxAtkDown, skill_seal: fxSkillSeal, no_fall: fxNoFall, roulette: fxRoulette };
   for (const sk of sks) {
     const fx = table[sk.type];
     if (!fx) continue;
@@ -3954,6 +4073,7 @@ function resetPlayerBuffs() {
   buffAllAttack = false; buffAllAttackTurns = 0;
   atkBuffs = [];
   buffNoFall = null;
+  buffAbsorbVoid = null;
   clearAttrShifts();   // 属性変化スキルの効果もダンジョンの始めにリセット
   clearSelfAtkBuffs();   // 自己エンハンスもリセット
   orbBoosts = [];
@@ -3992,6 +4112,7 @@ function tickPlayerBuffs() {
     for (const k of Object.keys(selfAtkBuffs)) { _sbTouched = true; if (--selfAtkBuffs[k].turns <= 0) delete selfAtkBuffs[k]; }
     if (_sbTouched && typeof renderParty === 'function' && document.getElementById('party-grid')) { try { renderParty(); } catch (err) {} } }
   if (buffNoFall && --buffNoFall.turns <= 0) buffNoFall = null;   // 落ちコンなし（味方スキル）
+  if (buffAbsorbVoid && --buffAbsorbVoid.turns <= 0) buffAbsorbVoid = null;   // 属性吸収無効（味方スキル）
   // 属性変化：ターンが尽きたら元の属性に戻す（枠の表示も戻すので、戻った時だけパーティ欄を描き直す）
   let _attrShiftEnded = false;
   for (const k of Object.keys(attrShifts)) { _attrShiftEnded = true; if (--attrShifts[k].turns <= 0) delete attrShifts[k]; }   // 残りターンの数字も毎ターン更新するので、変化中は描き直す
@@ -4181,14 +4302,13 @@ function leaderBaseMoveMs() { return Math.max(1000, baseMoveMs + leaderMoveAddMs
 // HP計算（partyUids + レベルをキーにキャッシュ）
 // ============================================================
 let _hpCache = { key: '', value: 0 };
-// バインド中のモンスターのHPはチーム合計から引く（本家と同じ）。解除されると元に戻る（減った分のHPは回復しない）。
-// ignoreBind=true の時はバインドを無視した値（出撃準備画面の表示用）
-function calcTotalHP(ignoreBind) {
+// バインド中でも最大HPは減らない（バインドの効果は「スキル使用不可・回復0・攻撃不可」）。
+function calcTotalHP() {
   let key = '';
   for (const uid of partyUids) {
     if (uid === null) { key += ','; continue; }
     const e = box.find(b => b.uid === uid);
-    if (e) key += `${e.monsterId}:${e.level}${(!ignoreBind && bindTimers[uid] > 0) ? 'B' : ''},`;
+    if (e) key += `${e.monsterId}:${e.level},`;
     else key += ',';
   }
   if (key === _hpCache.key) return _hpCache.value;
@@ -4210,7 +4330,6 @@ function calcTotalHP(ignoreBind) {
   });
   for (const uid of partyUids) {
     if (uid === null) continue;
-    if (!ignoreBind && bindTimers[uid] > 0) continue;   // バインド中：このモンスターのHPは数えない
     const entry = box.find(b => b.uid === uid);
     if (entry) {
       const mon = MONSTER_DATA[entry.monsterId];
@@ -4233,7 +4352,7 @@ function calcTotalHP(ignoreBind) {
     }
   }
   _hpCache.key = key;
-  _hpCache.value = Math.max(1, Math.floor(total));   // 全員バインドでも最大HPは1以上（HP0で即やられにならないように）
+  _hpCache.value = Math.max(1, Math.floor(total));   // 最大HPは1以上（HP0で即やられにならないように）
   return _hpCache.value;
 }
 
@@ -7301,6 +7420,7 @@ function countReadySkills() {
     if (!entry) continue;
     const mon = MONSTER_DATA[entry.monsterId];
     if (!mon) continue;
+    if (isBound(uid)) continue;   // バインド中はスキルが使えない
     if (partySp >= getRequiredSp(entry, mon) && skillCondOk(curSkill(entry, mon))) n++;
   }
   return isSkillSealed() ? 0 : n;   // スキル使用不可の間は「使える」扱いにしない
@@ -7340,6 +7460,7 @@ function openSkillConfirm(uid) {
   if (!entry) return;
   const mon = MONSTER_DATA[entry.monsterId];
   if (!mon || !mon.skill) return;   // スキル未設定のモンスターは発動できない
+  if (isBound(uid)) { showSkillMessage(`バインド中はスキルが使えません！（あと${bindTimers[uid]}ターン）`, 1200); return; }
   const requiredSp = getRequiredSp(entry, mon);
   if (partySp < requiredSp) return;
   const cs = curSkill(entry, mon);
@@ -7513,6 +7634,12 @@ function damageAllEnemies(rawDmg, attr, se = 'skilldamage', ignoreDef = false) {
     // 固定ダメージ(ignoreDef)は防御無視。それ以外も最低ダメージ1
     const gm = (attr && !ignoreDef) ? enemyAttrGuardMult(enemy, attr) : 1;   // 属性軽減
     const dmg2 = ignoreDef ? Math.max(1, finalDmgBase) : Math.max(1, Math.floor(finalDmgBase * gm) - getEnemyDef(enemy));
+    if (attr && enemyAbsorbs(enemy, attr)) {   // 属性吸収中：ダメージの代わりにHPが回復する
+      enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg2);
+      const _u = enemyUnits[i];
+      if (_u) { const rect = _u.getBoundingClientRect(); showAbsorbText(rect.left + rect.width / 2, rect.top + rect.height / 2 - 10, dmg2); }
+      continue;
+    }
     const dealt = enemyTakeDamage(enemy, dmg2);   // 超根性対応（実際に与えたダメージ）
     if (window.DamageTotal) DamageTotal.add(i, dealt);   // HPバー上の合計ダメージ
     const unit = enemyUnits[i];
@@ -7536,6 +7663,13 @@ function damageSingleEnemy(rawDmg, attr, se = 'skilldamage', ignoreDef = false) 
   const finalDmgBase = Math.floor(rawDmg * attrMult);
   const gm = (attr && !ignoreDef) ? enemyAttrGuardMult(enemy, attr) : 1;   // 属性軽減
   const dmg2 = ignoreDef ? Math.max(1, finalDmgBase) : Math.max(1, Math.floor(finalDmgBase * gm) - getEnemyDef(enemy));
+  if (attr && enemyAbsorbs(enemy, attr)) {   // 属性吸収中：ダメージの代わりにHPが回復する
+    enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg2);
+    const _u = document.querySelectorAll('#enemy-area .enemy-unit')[idx];
+    if (_u) { const rect = _u.getBoundingClientRect(); showAbsorbText(rect.left + rect.width / 2, rect.top + rect.height / 2 - 10, dmg2); }
+    updateEnemyUI();
+    return finalDmgBase;
+  }
   const dealt = enemyTakeDamage(enemy, dmg2);   // 超根性対応（実際に与えたダメージ）
   if (window.DamageTotal) DamageTotal.add(idx, dealt);   // HPバー上の合計ダメージ
   const unit = document.querySelectorAll('#enemy-area .enemy-unit')[idx];
@@ -7891,7 +8025,6 @@ function runSkillEffect(eff, context) {
         bindTimers[key] -= n;
         if (bindTimers[key] <= 0) delete bindTimers[key];
       }
-      updatePlayerHP();   // バインドが解けたぶん最大HPが戻る（現在HPは増えない）
       renderParty();
       renderBuffIcons();
       if (eff.message) showSkillMessage(eff.message, 1000);
@@ -7907,6 +8040,13 @@ function runSkillEffect(eff, context) {
       buffNoFall = { turns: Math.max(t, buffNoFall ? buffNoFall.turns : 0) };
       renderBuffIcons();
       showSkillMessage(eff.message || `⬇ ${t}ターンの間、落ちコンなし！`, 1200);
+      break;
+    }
+    case 'absorbVoid': { // ○ターンの間、属性吸収を無効化（すでに掛かっていれば、残りターンの多い方を採用）
+      const t = Math.max(1, Math.floor(Number(eff.turns) || 1));
+      buffAbsorbVoid = { turns: Math.max(t, buffAbsorbVoid ? buffAbsorbVoid.turns : 0) };
+      renderBuffIcons();
+      showSkillMessage(eff.message || `🛡 ${t}ターンの間、属性吸収を無効化！`, 1200);
       break;
     }
     case 'attrChange': { // ○ターンの間、自分（target を指定すれば リーダー/フレンド/左隣/右隣/両隣/サブ全員）の属性が○属性に変化。副属性は消えて単属性になる
@@ -7962,6 +8102,7 @@ const _pendingTransforms = [];
 function restoreTransforms() {
   _pendingTransforms.length = 0;
   buffNoFall = null;
+  buffAbsorbVoid = null;
   clearAttrShifts();   // 属性変化もダンジョンの外には持ち出さない
   clearSelfAtkBuffs();   // 自己エンハンスも持ち出さない
   let changed = false;
@@ -8040,7 +8181,7 @@ async function confirmSkill() {
   if (!mon || !mon.skill) return;
   const requiredSp = getRequiredSp(entry, mon);
   const cs = curSkill(entry, mon);   // 変化スキルなら、今のスキル番号のもの
-  if (partySp < requiredSp || isSkillSealed() || !skillCondOk(cs)) { closeSkillConfirm(); return; }
+  if (partySp < requiredSp || isSkillSealed() || isBound(skillTargetUid) || !skillCondOk(cs)) { closeSkillConfirm(); return; }
 
   closeSkillConfirm();
   busy = true;
@@ -8097,7 +8238,6 @@ function updateSkillTurnsNormal(comboCount) {
       if (bindTimers[key] <= 0) { delete bindTimers[key]; _bindEnded = true; }
     }
   }
-  if (_bindEnded) updatePlayerHP();   // バインドが解けたぶん最大HPが戻る（現在HPは増えない）
 }
 
 // 敵の弱体（攻撃力ダウン／回復力ダウン／操作時間ダウン／スキル使用不可／落ちコンなし）の残りターンを減らす
@@ -8333,6 +8473,7 @@ function buildBuffItems() {
   if (enemySkillSeal) items.push({ icon: ICON_SKILL_SEAL, turns: enemySkillSeal.turns, name:'スキル使用不可', text:'敵の効果で、チーム全員のスキルが使えない' });
   if (buffNoFall) items.push({ icon: ICON_NO_FALL, turns: buffNoFall.turns, name:'落ちコンなし', text:'スキルの効果で、ドロップを消しても新しいドロップが降ってこない（消し終わってから補充される）' });
   if (enemyNoFall) items.push({ icon: ICON_NO_FALL, turns: enemyNoFall.turns, name:'落ちコンなし', text:'敵の効果で、ドロップを消しても新しいドロップが降ってこない（消し終わってから補充される）' });
+  if (buffAbsorbVoid) items.push({ icon: ICON_ABSORB_VOID, turns: buffAbsorbVoid.turns, name:'属性吸収無効', text:'スキルの効果で、敵の属性吸収を受けない（吸収される属性で攻撃しても、ふつうにダメージを与えられる）' });
   if (buffMoveTimeShort && !moveTimeFixed) items.push({ icon:'j4.png', turns: buffMoveTimeShortTurns, name:'操作時間ダウン', text:'敵の効果でドロップ操作時間が1秒短くなる' });
   // 光・闇など複数属性の攻撃力ダウンは、同じ割合・同じ残りターンなら1つのアイコンにまとめる
   const enemyDownGroups = [];
@@ -8921,7 +9062,10 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
           finalDmg = dealt.main; dealtSub = dealt.sub;
           if (window.DamageTotal) DamageTotal.add(enemyIndex, finalDmg + dealtSub);   // HPバー上の合計ダメージ（副属性ぶんも足す）
         }
-        if (!absorbed) _msLogHit(enemyIndex, attrMult > 1, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
+        const attrHeal = hit.heal || 0;   // 属性吸収：吸収された属性のぶんは、ダメージの代わりに敵のHPが回復
+        if (attrHeal > 0) enemy.hp = Math.min(enemy.maxHp, enemy.hp + attrHeal);
+        const allAbsorbed = absorbed || (attrHeal > 0 && finalDmg + dealtSub <= 0);   // ダメージが1も入らなかった（全部吸収）
+        if (!allAbsorbed) _msLogHit(enemyIndex, attrMult > 1, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
         // 着弾の瞬間に敵本体へノックバックと属性の爆発を重ねる。
         if (enemyUnit && enemyUnit.animate) enemyUnit.animate([
           { transform:'translate(0,0) scale(1)' }, { transform:'translate(-5px,2px) scale(1.06)' },
@@ -8929,12 +9073,14 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
         ], { duration:230, easing:'ease-out' });
         spawnEnergyBurst(endX, endY, attr, attrMult > 1 ? 1.45 : 1);
         if (absorbed) {
-          const ab = document.createElement('div');
-          ab.style.cssText = `position:fixed;left:${endX}px;top:${endY-10}px;transform:translate(-50%,-50%);font-size:1.25rem;font-weight:900;color:#7dff9a;text-shadow:0 0 8px #000,0 2px 0 #000;pointer-events:none;z-index:230;white-space:nowrap;animation:dmgPop ${DMG_NUM_MS}ms ease-out forwards;`;
-          ab.textContent = `吸収! +${finalDmg.toLocaleString()}`;
-          document.body.appendChild(ab);
-          setTimeout(() => ab.remove(), DMG_NUM_MS + 100);
-        } else showDamageNumber(endX, endY - 10, finalDmg, attr, attrMult > 1, slotIndex, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
+          showAbsorbText(endX, endY - 10, finalDmg + attrHeal);
+        } else {
+          const _dmgTotal = finalDmg + dealtSub;
+          if (attrHeal > 0) showAbsorbText(endX, endY - 10 - (_dmgTotal > 0 ? 34 : 0), attrHeal);   // 属性吸収（ダメージも入った時は、数字の上に出す）
+          if (finalDmg > 0) showDamageNumber(endX, endY - 10, finalDmg, attr, attrMult > 1, slotIndex, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
+          else if (dealtSub > 0) showDamageNumber(endX, endY - 10, dealtSub, sub.attr, hit.subMult > 1, slotIndex, null);   // 主属性が吸収されて、副属性だけ入った
+          else if (attrHeal <= 0) showDamageNumber(endX, endY - 10, finalDmg, attr, attrMult > 1, slotIndex, null);
+        }
       }
       spawnAttrImpact(attr, endX, endY, false);
       updateEnemyUI();
@@ -10064,7 +10210,7 @@ function renderDungeonEntry() {
   }
 
 
-  const totalHP  = calcTotalHP(true);
+  const totalHP  = calcTotalHP();
   const totalREC = calcTotalREC();
   document.getElementById('de-total-hp').textContent  = totalHP.toLocaleString();
   document.getElementById('de-total-rec').textContent = totalREC.toLocaleString();
@@ -10679,7 +10825,7 @@ function renderParty() {
           }
 
           const requiredSp = getRequiredSp(entry, mon);
-          const isSpReady = partySp >= requiredSp && !isSkillSealed() && skillCondOk(curSkill(entry, mon)); // 共通SPで発動可能か（スキル使用不可の間は不可）
+          const isSpReady = partySp >= requiredSp && !isSkillSealed() && !isBound(uid) && skillCondOk(curSkill(entry, mon)); // 共通SPで発動可能か（スキル使用不可・バインド中は不可）
           // スキル使用不可中の印は、右のバフアイコン欄に出すので、各モンスターには付けない
 
           if (isSpReady) {
@@ -10716,10 +10862,6 @@ function renderParty() {
             bindLabel.className = 'bind-turn-label';
             bindLabel.textContent = `バインド ${bindTimers[uid]}T`;
             slot.appendChild(bindLabel);
-            if (isSpReady) {
-              const cd2 = slot.querySelector('.skill-ready');
-              if (cd2) { cd2.style.opacity = '0.3'; cd2.classList.add('dim'); }   // バインド中は枠を薄く
-            }
           }
 
           const dmgEl = document.createElement('div');
@@ -11323,6 +11465,8 @@ async function _evaluateInner() {
 
   if (totalCombo > 0 && !_chestOn) {
     const _recDownSnap = enemyRecDown ? enemyRecDown.value : 1;   // 敵の回復力ダウン（ターン経過の前の値で回復を計算）
+    // このターンの操作が始まった時点でバインドされていたモンスター（ターン経過で解けても、このターンの回復力は0のまま）
+    const _boundThisMove = new Set(Object.keys(bindTimers).filter(k => bindTimers[k] > 0));
     updateSkillTurnsNormal(totalCombo);
 
     // ★ 最終コンボ補正を一括適用し、LS/エンハンス倍率を乗算 ★
@@ -11437,7 +11581,7 @@ async function _evaluateInner() {
       });
       for (const uid of partyUids) {
         if (uid === null) continue;
-        if (bindTimers[uid] && bindTimers[uid] > 0) continue;   // バインド中：回復力も数えない
+        if (_boundThisMove.has(String(uid)) || isBound(uid)) continue;   // バインド中：回復力は0（ターン経過で解けたぶんも、このターンは数えない）
         const entry = box.find(b => b.uid === uid);
         if (entry) {
           const mon = MONSTER_DATA[entry.monsterId];
@@ -11618,6 +11762,9 @@ async function _evaluateInner() {
     if (en._dmgReduce && en._dmgReduce.turns > 0 && --en._dmgReduce.turns <= 0) delete en._dmgReduce;   // ダメージ軽減（-1=無期限）
     if (en._attrGuards) for (const a of Object.keys(en._attrGuards)) {   // 属性軽減（-1=無期限は減らさない）
       if (en._attrGuards[a].turns > 0 && --en._attrGuards[a].turns <= 0) delete en._attrGuards[a];
+    }
+    if (en._attrAbsorbs) for (const a of Object.keys(en._attrAbsorbs)) {   // 属性吸収：残りターンを減らす
+      if (--en._attrAbsorbs[a].turns <= 0) delete en._attrAbsorbs[a];
     }
     // 敵の攻撃アップ：残りターンを減らし、切れたら元の攻撃力に戻す
     if (en._atkBuffTurns > 0 && --en._atkBuffTurns <= 0) { en._atkBuffTurns = 0; if (en._baseAtk) { en.atk = en._baseAtk; delete en._baseAtk; } }

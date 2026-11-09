@@ -28,6 +28,9 @@
 //     { type:'roulette', count:3, turn:3, sec:2 }                               ルーレット（盤面のランダムなマスに3個・3ターン。sec秒(2/1/0.5/0.2)で針が1周するたびに、そのマスのドロップが 火→水→木→光→闇→回復→火… と変化）
 //     { type:'board_change', pattern:'row'|'col', to:'dark', pos:'random'|'1'〜'6', lines:1 }  横列／縦列を〇ドロップに変化（posは横=上から1〜5・縦=左から1〜6、linesは本数）
 //     { type:'attr_guard', attr:'random'|'fire'〜'dark', rate:50, turn:3 }      属性軽減（attr:'random' は火〜闇から1つを発動のたびに抽選）
+//     { type:'attr_absorb', target:'single', attr:'fire'|'random', turn:5 }     属性吸収（火属性の攻撃を受けるとダメージの代わりにHP回復。5ターン。アイコンは属性アイコン＋キラキラ）
+//     { type:'attr_absorb', target:'multi', attrs:['fire','water'], turn:5 }     属性吸収：選んだ属性をまとめて（火と水を5ターン）
+//     { type:'attr_absorb', target:'all', turn:3 }                              属性吸収：全属性をまとめて（3ターン）
 //     { type:'flee' }                                                           にげる（バトルから逃げて倒した扱い。経験値・エナ・チップ・卵は絶対に落とさない）
 //     ※ プレイヤーの エンハンス / 回復力スキル / 操作時間スキル を使うと、同じ種類の敵のダウンは上書きされて消えます。
 //     ※ 旧形式 { type:'bind', target:'random', turn:2 } もそのまま動きます。
@@ -46519,7 +46522,7 @@ const DUNGEON_DATA = {
       }
     ],
     "random": {
-      "floors": 1,
+      "floors": 4,
       "monsters": {
         "m1": {
           "name": "ツツケラ",
@@ -46987,7 +46990,7 @@ const DUNGEON_DATA = {
       }
     ],
     "random": {
-      "floors": 1,
+      "floors": 4,
       "monsters": {
         "m1": {
           "name": "ツツケラ",
@@ -47390,7 +47393,7 @@ const DUNGEON_DATA = {
       }
     ],
     "random": {
-      "floors": 1,
+      "floors": 4,
       "monsters": {
         "m1": {
           "name": "ツツケラ",
@@ -47826,6 +47829,19 @@ const DUNGEON_DATA = {
                     "repeat": 3
                   }
                 ]
+              },
+              {
+                "name": "エレメントヒール闇",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "attr_absorb",
+                    "target": "single",
+                    "attr": "dark",
+                    "turn": 5
+                  }
+                ]
               }
             ],
             "isBoss": true,
@@ -47841,7 +47857,7 @@ const DUNGEON_DATA = {
       }
     ],
     "random": {
-      "floors": 1,
+      "floors": 4,
       "monsters": {
         "m1": {
           "name": "アマカジ",
@@ -48177,8 +48193,8 @@ const DUNGEON_DATA = {
             "name": "ジジーロン",
             "img": "mp780.png",
             "attr": "light",
-            "hp": 900000,
-            "atk": 2600,
+            "hp": 500000,
+            "atk": 3000,
             "def": 0,
             "turnInterval": 1,
             "size": "XL",
@@ -48244,22 +48260,14 @@ const DUNGEON_DATA = {
                 "once": true,
                 "skills": [
                   {
-                    "type": "attr_guard",
-                    "attr": "dark",
-                    "rate": 75,
-                    "turn": -1
-                  },
-                  {
-                    "type": "attr_guard",
-                    "attr": "water",
-                    "rate": 75,
-                    "turn": -1
-                  },
-                  {
-                    "type": "attr_guard",
-                    "attr": "fire",
-                    "rate": 75,
-                    "turn": -1
+                    "type": "attr_absorb",
+                    "target": "multi",
+                    "turn": 99,
+                    "attrs": [
+                      "fire",
+                      "water",
+                      "wood"
+                    ]
                   }
                 ]
               },
@@ -48274,7 +48282,7 @@ const DUNGEON_DATA = {
                   },
                   {
                     "type": "roulette",
-                    "count": 7,
+                    "count": 3,
                     "turn": 99,
                     "sec": 1
                   }
@@ -48288,7 +48296,7 @@ const DUNGEON_DATA = {
       }
     ],
     "random": {
-      "floors": 1,
+      "floors": 6,
       "monsters": {
         "m1": {
           "name": "アマカジ",

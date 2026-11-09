@@ -7632,12 +7632,13 @@ const MONSTER_DATA = {
     skill: {
       name: 'AP弾装填',
       sp: 5,
-      desc: 'ドロップを水・光・闇・回復ドロップに変化。\n1ターンの間、火と木属性の攻撃が激減。',
+      desc: 'ドロップを光・闇・回復ドロップに変化。\n1ターンの間、属性吸収を無効化。',
       condition: { type: 'orbCount', attr: 'dark', value: 5 },
       effects: [
-        { type: 'orbChangeMulti', orb_heal: true, orb_light: true, orb_water: true, orb_dark: true },
+        { type: 'orbChangeMulti', orb_heal: true, orb_light: true, orb_dark: true },
         { type: 'atkBuff', attr: 'fire', value: 0.01, turns: 1 },
-        { type: 'atkBuff', attr: 'wood', value: 0.01, turns: 1 }
+        { type: 'atkBuff', attr: 'wood', value: 0.01, turns: 1 },
+        { type: 'absorbVoid', turns: 1 }
       ]
     },
     leaderSkill: {
@@ -8409,13 +8410,10 @@ const MONSTER_DATA = {
     skill: {
       name: '前進的論証',
       sp: 4,
-      desc: 'ドロップを火・水ドロップに変化。\n1ターンの間、操作時間が1秒延長。',
+      desc: 'ドロップを火・水ドロップに変化。\n1ターンの間、属性吸収を無効化。',
       cutin: true,
       condition: { type: 'orbBoost', attr: 'fire' },
-      effects: [
-        { type: 'orbChangeMulti', orb_fire: true, orb_water: true },
-        { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 }
-      ]
+      effects: [ { type: 'orbChangeMulti', orb_fire: true, orb_water: true }, { type: 'absorbVoid', turns: 1 } ]
     },
     leaderSkill: {
       name: '義・理・善',
@@ -9261,9 +9259,9 @@ const MONSTER_DATA = {
     skill: {
       name: 'あいされトッピング',
       sp: 2,
-      desc: 'バインドを3ターン回復。\n回復ドロップをランダムで3つ生成。',
+      desc: 'バインドを全回復。\n回復ドロップをランダムで3つ生成。',
       yumekawa: true,
-      effects: [ { type: 'bindRecover', turns: 3 }, { type: 'orbChangeRandom', attr: 'heal', count: 3 } ]
+      effects: [ { type: 'bindRecover', turns: 99 }, { type: 'orbChangeRandom', attr: 'heal', count: 3 } ]
     },
     leaderSkill: {
       name: 'ゴールは、プロデューサーさんのところかな',
@@ -9276,6 +9274,7 @@ const MONSTER_DATA = {
         { type: 'rarity', condition: 'allDiff', value: 0.01 }
       ]
     },
+    bindImmune: true,
     evolutions: [ { to: 5085, materials: [ { item: 'puzzle1', count: 5 }, { item: 'spuzzle_1', count: 5 } ] } ]
   },
   5085: {
@@ -9291,13 +9290,15 @@ const MONSTER_DATA = {
     skill: {
       name: '私もプレゼントのひとつです',
       sp: 3,
-      desc: 'ロックを解除し、火と回復ドロップをランダムで3つずつ生成。\n3ターンの間、自分の攻撃力が2倍。',
+      desc: 'ロックを解除し、火ドロップと回復ドロップをランダムで3つずつ生成。\n3ターンの間、両隣の攻撃力が1.5倍。1ターンの間、属性吸収を無効化。',
       yumekawa: true,
+      condition: { type: 'orbBoost', attr: 'fire' },
       effects: [
         { type: 'orbUnlock', target: 'all' },
         { type: 'orbChangeRandom', attr: 'fire', count: 3 },
         { type: 'orbChangeRandom', attr: 'heal', count: 3 },
-        { type: 'selfAtkBuff', value: 2, turns: 3 }
+        { type: 'selfAtkBuff', value: 1.5, turns: 3, target: 'adjacent' },
+        { type: 'absorbVoid', turns: 1 }
       ]
     },
     leaderSkill: {
@@ -9426,7 +9427,7 @@ const MONSTER_DATA = {
     skill: {
       name: '届くまで歌い続けます〜！',
       sp: 3,
-      desc: 'ロックを解除し、光と回復ドロップをランダムで3つずつ生成。\n1ターンの間、回復力が2倍。',
+      desc: 'ロックを解除し、光と回復ドロップをランダムで3つずつ生成。\n1ターンの間、回復力が2倍、さらに応援で何か起こる。',
       yumekawa: true,
       condition: { type: 'orbBoost', attr: 'light' },
       effects: [
@@ -9438,17 +9439,17 @@ const MONSTER_DATA = {
           type: 'randomEvent',
           options: [
             {
-              desc: '3ターンの間、自分と両隣の攻撃力が1.5倍、20ターンの間、光と回復ドロップが少し落ちやすくなる、バインドを99ターン回復',
+              desc: '3ターンの間、自分と両隣の攻撃力が1.5倍、20ターンの間、光と回復ドロップが少し落ちやすくなる、3ターンの間、属性吸収を無効化',
               effects: [
                 { type: 'selfAtkBuff', target: 'adjacent', includeSelf: true, value: 1.5, turns: 3 },
                 { type: 'orbSpawnBoost2', attr: 'light', rate: 0.15, attr2: 'heal', rate2: 0.15, turns: 20 },
-                { type: 'bindRecover', turns: 99 }
+                { type: 'absorbVoid', turns: 3 }
               ]
             },
             {
-              desc: '3ターンの間、両隣の攻撃力が2倍、5ターンの間、光と回復ドロップが落ちやすくなる、敵全体の行動を1ターン遅らせる',
+              desc: '3ターンの間、両隣の攻撃力が2.5倍、5ターンの間、光と回復ドロップが落ちやすくなる、敵全体の行動を1ターン遅らせる',
               effects: [
-                { type: 'selfAtkBuff', target: 'adjacent', value: 2, turns: 3 },
+                { type: 'selfAtkBuff', target: 'adjacent', value: 2.5, turns: 3 },
                 { type: 'orbSpawnBoost2', attr: 'light', rate: 0.2, attr2: 'heal', rate2: 0.2, turns: 5 },
                 { type: 'enemyDelay', target: 'all', turns: 1 }
               ]
@@ -9470,13 +9471,14 @@ const MONSTER_DATA = {
       desc: '光ドロップの2コンボ以上で攻撃1.5倍、受けるダメージ15%軽減。\n残りドロップ4個以下で攻撃と回復力2倍。',
       effects: [
         { type: 'atk', condition: 'attrCombos', attr: 'light', count: 2, value: 2, reduce: 0.15 },
-        { type: 'eggDropUp', value: 20 },
+        { type: 'moveTimeAdd', value: 1.5 },
         { type: 'expMult', value: 2 },
         { type: 'rarity', condition: 'allDiff', value: 0.0001 },
         { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 2, recValue: 2 },
         { type: 'spCharge', size: 'medium' }
       ]
-    }
+    },
+    bindImmune: true
   }
 };
 

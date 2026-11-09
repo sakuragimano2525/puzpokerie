@@ -207,6 +207,7 @@
         case 'orbSpawnBoost': add('e:fall'); add('fb:' + attrOf(e.attr)); mx('turns', turnsOf(e)); break;
         case 'orbSpawnBoost2': add('e:fall'); add('fb:' + attrOf(e.attr)); add('fb:' + attrOf(e.attr2)); mx('turns', turnsOf(e)); break;
         case 'noFallBuff': add('e:noFall'); mx('turns', turnsOf(e)); break;
+        case 'absorbVoid': add('e:absVoid'); mx('turns', turnsOf(e)); break;
         case 'roulette': add('e:roulette'); mx('turns', turnsOf(e)); break;
         // 自分
         case 'selfDamage': add('e:selfDmg'); break;
@@ -340,7 +341,7 @@
       row('ダメージ', [T('e:dmgFix', '固定ダメージ'), T('e:dmgAtk', '攻撃力×倍の攻撃', '攻撃力×倍の攻撃'), T('e:dmgHalf', '敵のHP半減')]),
       row('ドロップを変える', [T('e:conv', '色を変換', 'ドロップを別の色に変換'), T('e:line', '列を変える', '列をまるごと変える'), T('e:shape', '十字・L字で生成'), T('e:rand', 'ランダム生成'), T('e:all', '全ドロップ変化', '全ドロップを変化')]),
       row('ドロップのしかけ', [T('e:lock', 'ロック'), T('e:unlock', 'ロック解除'), T('e:fall', '落ちやすくする', 'ドロップが落ちやすくなる'), T('e:noFall', '落ちコンなし'), T('e:roulette', 'ルーレット')]),
-      row('味方を強くする', [T('e:atkUp', '攻撃力アップ'), T('e:reduce', 'ダメージ軽減'), T('e:recUp', '回復力アップ'), T('e:heal', 'HP回復'), T('e:bind', 'バインド回復'), T('e:allAtk', '全体攻撃'), T('e:time', '操作時間アップ'), T('e:stop', '時間停止'), T('e:sp', 'SPを増やす')]),
+      row('味方を強くする', [T('e:atkUp', '攻撃力アップ'), T('e:reduce', 'ダメージ軽減'), T('e:recUp', '回復力アップ'), T('e:heal', 'HP回復'), T('e:bind', 'バインド回復'), T('e:allAtk', '全体攻撃'), T('e:time', '操作時間アップ'), T('e:stop', '時間停止'), T('e:absVoid', '属性吸収無効', '敵の属性吸収を無効にする'), T('e:sp', 'SPを増やす')]),
       row('敵を弱らせる', [T('e:delay', '行動を遅らせる'), T('e:defDown', '防御ダウン', '敵の防御ダウン')]),
       row('そのほか', [T('e:attrCh', '属性が変わる', '属性が変わる（自分・仲間）'), T('e:randEv', '何かが起こる', 'ランダムで何かが起こる'), T('e:trans', 'へんしん'), T('e:other', 'その他')]),
       row('デメリット', [T('e:selfDmg', 'HPが減る', 'デメリット:HPが減る'), T('e:atkDown', '攻撃ダウン', 'デメリット:攻撃ダウン'), T('e:recDown', '回復力ダウン', 'デメリット:回復力ダウン'), T('e:timeDown', '操作時間ダウン', 'デメリット:操作時間ダウン')])

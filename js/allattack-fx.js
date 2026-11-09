@@ -758,7 +758,10 @@
     if (absorbed) enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg);   // コンボ吸収：ダメージの代わりにHP回復
     else { const dealt = dealHitDamage(enemy, hit); dmg = dealt.main; dealtSub = dealt.sub; if (window.DamageTotal) DamageTotal.add(idx, dmg + dealtSub); }   // 超根性対応（実際に与えたダメージ）／HPバー上の合計ダメージ
 
-    if (!absorbed && typeof _msLogHit === 'function') _msLogHit(idx, mult > 1, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);   // マルチ：観戦側へ副属性ぶんも伝える
+    const attrHeal = hit.heal || 0;   // 属性吸収：吸収された属性のぶんは、ダメージの代わりに敵のHPが回復
+    if (attrHeal > 0) enemy.hp = Math.min(enemy.maxHp, enemy.hp + attrHeal);
+    const allAbsorbed = absorbed || (attrHeal > 0 && dmg + dealtSub <= 0);
+    if (!allAbsorbed && typeof _msLogHit === 'function') _msLogHit(idx, mult > 1, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);   // マルチ：観戦側へ副属性ぶんも伝える
     // 被弾：のけぞり＋属性色のフラッシュ
     if (unit.animate) unit.animate([
       { transform: 'translate(0,0) scale(1)' }, { transform: 'translate(-5px,2px) scale(1.06)' },
@@ -785,7 +788,12 @@
       ab.textContent = `吸収! +${dmg.toLocaleString()}`;
       document.body.appendChild(ab);
       setTimeout(() => ab.remove(), NUM_MS + 100);
-    } else showDamageNumber(ex + jx, ey - 10, dmg, attr, mult > 1, slotIndex, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
+    } else {
+      if (attrHeal > 0) showAbsorbText(ex + jx, ey - 10 - (dmg + dealtSub > 0 ? 34 : 0), attrHeal, NUM_MS);   // 属性吸収（ダメージも入った時は、数字の上に出す）
+      if (dmg > 0) showDamageNumber(ex + jx, ey - 10, dmg, attr, mult > 1, slotIndex, dealtSub > 0 ? { value: dealtSub, attr: sub.attr, weak: hit.subMult > 1 } : null);
+      else if (dealtSub > 0) showDamageNumber(ex + jx, ey - 10, dealtSub, sub.attr, hit.subMult > 1, slotIndex, null);   // 主属性が吸収されて、副属性だけ入った
+      else if (attrHeal <= 0) showDamageNumber(ex + jx, ey - 10, dmg, attr, mult > 1, slotIndex, null);
+    }
 
     spawnEnergyBurst(ex, ey, attr, (mult > 1 ? 1.45 : 1) * (q < .7 ? .6 : 1));
     if (enemy.hp <= 0) tryDrop(enemy);

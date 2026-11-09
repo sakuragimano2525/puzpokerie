@@ -85,7 +85,7 @@
   // ---------- 共有する状態：書き出し ----------
   const ENEMY_KEYS = ['hp', 'maxHp', 'atk', 'turnProgress', 'turnInterval', '_baseTurnInterval', '_baseAtk', '_atkBuffTurns',
     'healUsed', 'preemptiveDone', '_hpCondUsed', '_orbNoneSeq', '_actSeq', '_delayed', '_fled', '_killCombo',
-    '_comboAbsorb', '_statusShield', '_dmgReduce', '_attrGuards', '_superGut', 'defDown',
+    '_comboAbsorb', '_statusShield', '_dmgReduce', '_attrGuards', '_attrAbsorbs', '_superGut', 'defDown',
     '_comboRule'];   // 【〇コンボしろ】の指定：次の人の画面にも表示され、次の人のターンで判定される
   const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
   const gridStr = () => grid.map(r => r.map(v => v || '').join(',')).join('|');
@@ -716,12 +716,12 @@
         slot.appendChild(img);
         slot._sk = { mon: mon, entry: null };   // 長押しでスキル説明（game.js の長押し処理がそのまま使う）
         const isBound = bound[i] > 0;
-        if (p.sp >= (d[1] || 1) && !p.seal) {
+        if (p.sp >= (d[1] || 1) && !p.seal && !isBound) {   // バインド中はスキルが使えない（溜まっている印も出さない）
           const ready = document.createElement('div');
           ready.className = 'skill-ready';
           ready.innerHTML = '<i class="sr-frame"></i><i class="sr-shine"></i>';
           slot.appendChild(ready);
-          if (!isBound) { img.classList.add('sk-lift'); ready.classList.add('sk-lift'); } else { ready.style.opacity = '0.3'; }
+          img.classList.add('sk-lift'); ready.classList.add('sk-lift');
         }
         if (isBound) {
           slot.classList.add('bound');

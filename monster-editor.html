@@ -223,6 +223,15 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
   </div>
 </section>
 
+<section class="panel">
+  <h2>隠し効果</h2>
+  <p class="hint" style="margin-top:0">ゲーム内のモンスター詳細には表示されない、裏の効果です。</p>
+  <div class="fields">
+    <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="monBindImmune" type="checkbox" style="width:auto"> 🛡️ バインド無効（このモンスターは、敵のバインドを受けない。バインド弾は当たっても「バインド無効」と出るだけ）</label>
+  </div>
+  <p class="hint">パーティのどこにいても、このモンスター自身にバインドがかかりません（ほかのモンスターには普通にかかります）。</p>
+</section>
+
 <section class="panel full">
   <h2>進化先</h2>
   <div id="evoList"></div>
@@ -327,7 +336,7 @@ function normalizeMonsterTypes(m){
   if(m.leaderSkill) fix(m.leaderSkill.effects);
   return m;
 }
-const KNOWN_KEYS = ['id','name','img','rarity','attr','sub','type','maxLevel','baseExp','stats','skill','leaderSkill','evolutions'];
+const KNOWN_KEYS = ['id','name','img','rarity','attr','sub','type','maxLevel','baseExp','stats','skill','leaderSkill','bindImmune','evolutions'];
 const EXP_TABLE_LEN = 99; // js/data/exp.js の長さ。これより上の最大レベルは設定できない
 const DEFAULT_HEADER = `// ============================================================
 // ★ モンスターデータ ★
@@ -356,6 +365,7 @@ const activeTemplates = {
   atkBuff:{label:'攻撃エンハンス',data:{type:'atkBuff',attr:'water',monType:'',value:1.5,turns:1},fields:[['attr','属性（指定なし=全属性）','attrAny'],typeF('monType','タイプ（空欄=指定なし）'),numF('value','攻撃倍率'),numF('turns','ターン数')]},
   selfAtkBuff:{label:'自己エンハンス（自分／隣／リーダー等の攻撃力を○ターン○倍）',data:{type:'selfAtkBuff',target:'self',value:2,turns:1},fields:[['target','かける相手','select','self:自分|leader:リーダー（自分以外）|friend:フレンド（自分以外）|leaderFriend:リーダーとフレンド（自分以外）|left:左隣|right:右隣|adjacent:両隣（左右）|subs:サブ4匹全員（自分以外）'],['includeSelf','自分も一緒にかける（「自分と両隣」など。「自分」を選んだ時は不要）','bool'],numF('value','攻撃倍率（その相手だけ）'),numF('turns','ターン数')]},
   noFallBuff:{label:'○ターンの間、落ちコンなし',data:{type:'noFallBuff',turns:3},fields:[numF('turns','ターン数')]},
+  absorbVoid:{label:'○ターンの間、属性吸収を無効化',data:{type:'absorbVoid',turns:3},fields:[numF('turns','ターン数')]},
   attrChange:{label:'属性を○ターン○属性に変化（自分／隣／リーダー等）',data:{type:'attrChange',target:'self',attr:'fire',turns:3},fields:[['target','かける相手','select','self:自分|leader:リーダー（自分以外）|friend:フレンド（自分以外）|leaderFriend:リーダーとフレンド（自分以外）|left:左隣|right:右隣|adjacent:両隣（左右）|subs:サブ4匹全員（自分以外）'],['includeSelf','自分も一緒にかける（「自分と両隣」など。「自分」を選んだ時は不要）','bool'],['attr','変化先の属性（副属性は消えて単属性になる）','select','fire:火|water:水|wood:木|light:光|dark:闇|random:ランダム（今の属性以外から1つ）'],numF('turns','ターン数')]},
   randomEvent:{label:'何かが起こる（下のパターンからランダムで1つ）',data:{type:'randomEvent',options:[
     {desc:'',effects:[{key:'selfAtkBuff',data:{type:'selfAtkBuff',target:'adjacent',includeSelf:true,value:1.5,turns:7}}]},
@@ -712,6 +722,7 @@ function buildMonster(){
   m.leaderSkill = { name:$('lsName').value, desc:$('lsDesc').value, effects:leaderEffects.map(e=>cleanEff(e.data)) };
   const evos = evolutions.filter(e=>e.to!==''&&e.to!=null).map(e=>({to:Number(e.to),materials:e.materials.filter(x=>x.item).map(x=>({item:x.item,count:Number(x.count)||1}))}));
   if(evos.length) m.evolutions = evos;
+  if($('monBindImmune').checked) m.bindImmune = true;   // 隠し効果：バインド無効
   Object.assign(m, Object.fromEntries(Object.entries(extraKeys).filter(([k])=>!(k in m))));
   return normalizeMonsterTypes(m);
 }
@@ -725,6 +736,7 @@ function loadMonsterToForm(m){
   $('monType').value = m.type ?? '';
   $('monMaxLevel').value = m.maxLevel ?? '';
   $('monBaseExp').value = m.baseExp ?? 100;
+  $('monBindImmune').checked = m.bindImmune === true;
   const s = m.stats||{};
   const g=(k,w)=>s[k]&&s[k][w]!==undefined?s[k][w]:0;
   $('hpMin').value=g('hp','min'); $('hpMax').value=g('hp','max');
@@ -911,6 +923,7 @@ function describeActiveOne(e0){
       case 'damageAll': case 'damageSingle': out.push(`敵${(e.target==='single'||e.type==='damageSingle')?'単体':'全体'}に${Number(e.value).toLocaleString()}の固定ダメージ`); break;
       case 'atkBuff': out.push(`${e.turns||1}ターンの間、${e.monType?e.monType+'タイプ':(e.attr?ATTR_NAME[e.attr]+'属性':'全属性')}の攻撃が${fmt(e.value)}倍`); break;
       case 'noFallBuff': out.push(`${e.turns||1}ターンの間、落ちコンなし`); break;
+      case 'absorbVoid': out.push(`${e.turns||1}ターンの間、属性吸収を無効化`); break;
       case 'randomEvent': out.push('何かが起こる'); break;
       case 'selfAtkBuff': out.push(`${e.turns||1}ターンの間、${targetText(e)}の攻撃力が${fmt(e.value)}倍`); break;
       case 'attrChange': out.push(`${e.turns||1}ターンの間、${targetText(e)}の属性が${ATTR_NAME[e.attr]?ATTR_NAME[e.attr]+'属性':'ランダムな属性'}に変化`); break;
@@ -1075,7 +1088,7 @@ function cmpKey(a,b){
   return 0;
 }
 // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','selfAtkBuff','attrChange','randomEvent','noFallBuff','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','selfAtkBuff','attrChange','randomEvent','noFallBuff','absorbVoid','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
 function skillSortKey(sk){
   const e = (sk.effects||[])[0] || {};
   const i = SK_TYPE_ORDER.indexOf(e.type);
