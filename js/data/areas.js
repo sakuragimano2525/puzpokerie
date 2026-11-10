@@ -113,6 +113,8 @@ riza: { both: true, name: 'ライザのアトリエコラボ', desc: 'コラボ�
     Astral: { both: true, name: 'アストラルパーティー', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL.png', hue: 200,stageNames: { boss: 'アストラルパーティー'} , stageLevels: { boss: '超級' }},
 Astralb: { both: true, name: 'アストラルパーティー2', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL2.png', hue: 200,stageNames: { boss: 'アストラルパーティー2'} , stageLevels: { boss: '超級' }},
 Astralc: { both: true, name: 'アストラルパーティー3', desc: 'コラボキャラがドロップするチャンス！', bg: 'dungeon17.png', hue: 200,stageNames: { boss: '幽魂路地'} , stageLevels: { boss: '超級' }},
+tou: { both: true, name: '東方コラボ', desc: 'コラボキャラがドロップするチャンス！', bg: 'campus.png', hue: 200,stageNames: { boss: '東方Project-1'} , stageLevels: { boss: '上級' }},
+
 
 monhan: { both: true, name: 'モンスターハンター', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'VS.ディノバルド',2: 'VS.ジンオウガ',3: 'VS.バルファルク',4: 'VS.ゴア・マガラ',5: 'VS.ブラキディオス,',boss: 'Vs.ブラキディオス+'} , stageLevels: { 1: '上級', 2: '上級',3: '上級',4: '超級',5: '超級',boss: '超上級'}},
 

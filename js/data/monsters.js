@@ -9911,6 +9911,123 @@ const MONSTER_DATA = {
       ]
     },
     bindImmune: true
+  },
+  5089: {
+    id: 5089,
+    name: '秦 こころ',
+    rarity: 5,
+    attr: 'none',
+    sub: 'dark',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 12525,
+    stats: { hp: { min: 100, max: 3500 }, atk: { min: 1000, max: 7000 }, rec: { min: 0, max: 200 } },
+    skill: {
+      name: '感情を操る程度の能力',
+      sp: 2,
+      desc: '何かが起こる。',
+      condition: { type: 'orbBoost', attr: 'heal' },
+      effects: [
+        {
+          type: 'randomEvent',
+          options: [
+            {
+              desc: '7ターンの間、自分とサブ全員の属性が火属性に変化、1ターンの間、自分とリーダーとフレンドの攻撃力が1.5倍、1ターンの間、自分とサブ全員の攻撃力が1.5倍',
+              effects: [
+                { type: 'attrChange', target: 'subs', attr: 'fire', turns: 7, includeSelf: true },
+                { type: 'selfAtkBuff', target: 'leaderFriend', value: 1.5, turns: 1, includeSelf: true },
+                { type: 'selfAtkBuff', target: 'subs', value: 1.5, turns: 1, includeSelf: true }
+              ]
+            },
+            {
+              desc: '7ターンの間、自分とサブ全員の属性が水属性に変化、敵全体の行動を1ターン遅らせる',
+              effects: [
+                { type: 'attrChange', target: 'subs', attr: 'water', turns: 7, includeSelf: true },
+                { type: 'enemyDelay', target: 'all', turns: 1 }
+              ]
+            },
+            {
+              desc: '7ターンの間、自分とサブ全員の属性が木属性に変化、12秒間、時を止める、1ターンの間、敵全体の防御力を50%ダウン',
+              effects: [
+                { type: 'attrChange', target: 'subs', attr: 'wood', turns: 7, includeSelf: true },
+                { type: 'timeStop', seconds: 12 },
+                { type: 'defenseDown', target: 'all', value: 0.5, turns: 1 }
+              ]
+            },
+            {
+              desc: '7ターンの間、自分の属性が光属性に変化、1ターンの間、ダメージを75%軽減',
+              effects: [
+                { type: 'attrChange', target: 'self', attr: 'light', turns: 7, includeSelf: true },
+                { type: 'dmgReductionBuff', turns: 1, value: 0.75 }
+              ]
+            },
+            {
+              desc: '7ターンの間、自分と両隣の属性が闇属性に変化、3ターンの間、属性吸収を無効化',
+              effects: [
+                { type: 'attrChange', target: 'adjacent', attr: 'dark', turns: 7, includeSelf: true },
+                { type: 'absorbVoid', turns: 3 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    leaderSkill: { name: 'オールエレメント-II', desc: '全属性の攻撃1.2倍。', effects: [ { type: 'atk', value: 1.2 } ] }
+  },
+  5090: {
+    id: 5090,
+    name: '洩矢 諏訪子',
+    rarity: 4,
+    attr: 'light',
+    sub: 'wood',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 260, max: 2600 }, atk: { min: 60, max: 1100 }, rec: { min: 100, max: 300 } },
+    skill: {
+      name: '土着神「手長足長さま」',
+      sp: 6,
+      desc: '敵全体に攻撃力×10倍の火属性攻撃。\n敵全体に攻撃力×10倍の水属性攻撃。',
+      effects: [
+        { type: 'damageSelfAtkMult', target: 'all', value: 5, attr: 'fire' },
+        { type: 'damageSelfAtkMult', target: 'all', value: 5, attr: 'water' }
+      ]
+    },
+    leaderSkill: {
+      name: '土着神の頂点',
+      desc: '水属性の十字消しをすると攻撃1.6倍。木ドロップの2コンボ以上で攻撃1.6倍。\n光属性のL字消しをすると攻撃1.6倍。',
+      effects: [
+        { type: 'atk', condition: 'cross', shapeAttr: 'water', value: 1.5 },
+        { type: 'atk', condition: 'attrCombos', attr: 'wood', count: 2, value: 1.5 },
+        { type: 'atk', condition: 'lShapes', shapeAttr: 'light', value: 1.5 }
+      ]
+    }
+  },
+  5091: {
+    id: 5091,
+    name: 'レミリア・スカーレット',
+    rarity: 4,
+    attr: 'dark',
+    sub: 'fire',
+    type: '神秘',
+    maxLevel: 99,
+    baseExp: 2500,
+    stats: { hp: { min: 310, max: 2600 }, atk: { min: 60, max: 2000 }, rec: { min: -10, max: -100 } },
+    skill: {
+      name: '運命「ミゼラブルフェイト」',
+      sp: 6,
+      desc: '1ターンの間、落ちコンなし、闇属性の攻撃が2倍。\nHPが最大HPの50%減る。',
+      effects: [
+        { type: 'noFallBuff', turns: 1 },
+        { type: 'selfDamage', mode: 'percent', value: 0.5 },
+        { type: 'atkBuff', attr: 'dark', value: 1.5, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: '紅色の運命',
+      desc: 'HP75%以上で攻撃2倍、受けるダメージ10%軽減。',
+      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.75, value: 2, reduce: 0.1 }, { type: 'rec', value: 0.25 } ]
+    }
   }
 };
 

@@ -207,7 +207,8 @@ const DUNGEON_BGM = {
   "20-2": {"field":"b10.mp3","boss":"boss2.mp3"},
   "20-3": {"field":"b10.mp3","boss":"boss2.mp3"},
   "20-4": {"field":"b10.mp3","boss":"boss2.mp3"},
-  "20-boss": {"field":"b9.mp3","boss":"boss3.mp3"}
+  "20-boss": {"field":"b9.mp3","boss":"boss3.mp3"},
+  "tou-boss": {"field":"b11.mp3","boss":"boss10.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -51923,7 +51924,7 @@ const DUNGEON_DATA = {
             "name": "カプ・テテフ",
             "img": "mp786.png",
             "attr": "none",
-            "hp": 250000,
+            "hp": 1500000,
             "atk": 2500,
             "def": 0,
             "turnInterval": 1,
@@ -52965,5 +52966,393 @@ const DUNGEON_DATA = {
         }
       }
     }
+  },
+  "tou-boss": {
+    "bgImg": "campus.png",
+    "bgm": "b11.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "洩矢 諏訪子",
+            "img": "mp5090.png",
+            "attr": "light",
+            "hp": 600000,
+            "atk": 1600,
+            "def": 0,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "土着神「手長足長さま」",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "row",
+                    "to": "fire",
+                    "pos": "2",
+                    "lines": 1,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "row",
+                    "to": "fire",
+                    "pos": "4",
+                    "lines": 1,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "col",
+                    "to": "wood",
+                    "pos": "2",
+                    "lines": 1,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "col",
+                    "to": "wood",
+                    "pos": "4",
+                    "lines": 1,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "row",
+                    "to": "water",
+                    "pos": "1",
+                    "lines": 1,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "レミリア・スカーレット",
+            "img": "mp5091.png",
+            "attr": "dark",
+            "hp": 500000,
+            "atk": 12000,
+            "def": 0,
+            "turnInterval": 4,
+            "size": "XL",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "紅色の運命",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "time_reduce",
+                    "seconds": 1,
+                    "turn": 5
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "秦 こころ",
+            "img": "mp5089.png",
+            "attr": "dark",
+            "hp": 100000,
+            "atk": 3000,
+            "def": 100000,
+            "turnInterval": 3,
+            "size": "XL",
+            "exp": 25000,
+            "coin": 1500,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "感情のスプレッドバレット",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 99
+                  },
+                  {
+                    "type": "skill_seal",
+                    "turn": 99
+                  }
+                ],
+                "hpAbove": 91
+              },
+              {
+                "name": "こころのお面",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "super_gut",
+                    "rate": 90
+                  },
+                  {
+                    "type": "roulette",
+                    "count": 1,
+                    "turn": 99,
+                    "sec": 1
+                  }
+                ]
+              },
+              {
+                "name": "怒の面",
+                "condition": "normal",
+                "weight": 33,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "attack_buff",
+                    "rate": 1.3,
+                    "turn": 2
+                  }
+                ],
+                "hpBelow": 90
+              },
+              {
+                "name": "哀の面",
+                "condition": "normal",
+                "weight": 33,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  },
+                  {
+                    "type": "rec_down",
+                    "value": 0.5,
+                    "turn": 2
+                  }
+                ],
+                "hpBelow": 90
+              },
+              {
+                "name": "楽の面",
+                "condition": "normal",
+                "weight": 34,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1.1
+                  },
+                  {
+                    "type": "time_reduce",
+                    "seconds": 2,
+                    "turn": 1
+                  }
+                ],
+                "hpBelow": 90
+              },
+              {
+                "name": "仮面喪心舞 暁の神楽",
+                "condition": "hp<=90%",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "action_change",
+                    "interval": 1
+                  },
+                  {
+                    "type": "attr_guard",
+                    "attr": "wood",
+                    "rate": 25,
+                    "turn": 3
+                  },
+                  {
+                    "type": "attr_guard",
+                    "attr": "dark",
+                    "rate": 25,
+                    "turn": 3
+                  },
+                  {
+                    "type": "heal_self",
+                    "rate": 1
+                  }
+                ]
+              },
+              {
+                "name": "怒面「怒れる忌狼の面」",
+                "condition": "hp<=10%",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "attack_buff",
+                    "rate": 100,
+                    "turn": -1
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "spawn",
+                    "to": "ojama",
+                    "count": 30,
+                    "counts.fire": 1,
+                    "counts.water": 1,
+                    "counts.wood": 1,
+                    "counts.light": 1,
+                    "counts.dark": 1,
+                    "counts.heal": 1,
+                    "counts.poison": 1,
+                    "counts.ojama": 1,
+                    "orb_fire": "",
+                    "orb_water": "",
+                    "orb_wood": "",
+                    "orb_light": "",
+                    "orb_dark": "",
+                    "orb_heal": "",
+                    "orb_poison": "",
+                    "orb_ojama": ""
+                  }
+                ]
+              }
+            ],
+            "isBoss": true
+          }
+        ]
+      }
+    ],
+    "requireAllAttr": true
   }
 };
