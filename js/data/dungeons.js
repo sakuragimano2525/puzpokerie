@@ -51923,7 +51923,7 @@ const DUNGEON_DATA = {
             "name": "カプ・テテフ",
             "img": "mp786.png",
             "attr": "none",
-            "hp": 1500000,
+            "hp": 250000,
             "atk": 2500,
             "def": 0,
             "turnInterval": 1,
