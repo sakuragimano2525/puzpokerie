@@ -51528,10 +51528,9 @@ const DUNGEON_DATA = {
                     {
                       "type": "attr_absorb",
                       "target": "multi",
-                      "turn": 5,
+                      "turn": 1,
                       "attrs": [
                         "fire",
-                        "wood",
                         "dark"
                       ]
                     }
@@ -51550,10 +51549,9 @@ const DUNGEON_DATA = {
                     {
                       "type": "attr_absorb",
                       "target": "multi",
-                      "turn": 5,
+                      "turn": 1,
                       "attrs": [
-                        "water",
-                        "light"
+                        "water"
                       ]
                     }
                   ]
@@ -51925,7 +51923,7 @@ const DUNGEON_DATA = {
             "name": "カプ・テテフ",
             "img": "mp786.png",
             "attr": "none",
-            "hp": 2000000,
+            "hp": 1500000,
             "atk": 2500,
             "def": 0,
             "turnInterval": 1,
@@ -51964,22 +51962,6 @@ const DUNGEON_DATA = {
                     "type": "time_reduce",
                     "seconds": 3,
                     "turn": 1
-                  }
-                ]
-              },
-              {
-                "name": "ガーディアンパワー",
-                "condition": "normal",
-                "weight": 100,
-                "once": false,
-                "skills": [
-                  {
-                    "type": "damage_mult",
-                    "value": 1.1
-                  },
-                  {
-                    "type": "status_shield",
-                    "turn": 4
                   }
                 ]
               },
@@ -52088,13 +52070,13 @@ const DUNGEON_DATA = {
                 "skills": [
                   {
                     "type": "combo_absorb",
-                    "turn": 12,
-                    "combo": 6
+                    "turn": 10,
+                    "combo": 3
                   },
                   {
                     "type": "roulette",
                     "count": 2,
-                    "turn": 8,
+                    "turn": 10,
                     "sec": 0.5
                   }
                 ]
@@ -52398,7 +52380,7 @@ const DUNGEON_DATA = {
           "img": "mp778.png",
           "attr": "dark",
           "hp": 2200,
-          "atk": 2000,
+          "atk": 5000,
           "def": 2580,
           "turnInterval": 1,
           "size": "S",
