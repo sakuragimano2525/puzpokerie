@@ -146,6 +146,12 @@ const BossCloud = (() => {
   async function play(key, battleIdx) {
     if (!has(key)) return;
     { const st = stageOf(key); if (st && typeof st === 'object' && st.transition === 'cave') return playCave(key, battleIdx); }
+    return runCloud(bgOf(key), battleIdx);
+  }
+
+  // 雲の演出の本体。bg … 雲が晴れたあとの背景（空なら背景はそのまま）
+  //   BOSS_CLOUD_STAGES に無いダンジョンでも使える（宝箱の分岐ボスなど。game.js から BossCloud.playCloud で呼ぶ）
+  async function runCloud(bg, battleIdx) {
     const T = BOSS_CLOUD_TIMING;
     const dungeon = document.getElementById('dungeon');
     const ov = document.createElement('div');
@@ -193,17 +199,18 @@ const BossCloud = (() => {
       await wait(T.cloudHold);
 
       // 雲で隠れているあいだに、背景をラスボス用に入れ替える
-      const bg = bgOf(key);
-      dungeon.style.backgroundImage = `url('${bg}')`;
-      dungeon.style.backgroundSize = 'cover';
-      dungeon.style.backgroundPosition = 'center';
-      if (typeof setPartyBackground === 'function') setPartyBackground(bg);
-      if (typeof layoutBattleBg === 'function') layoutBattleBg();
-      // 画像が読み込み前でも、表示される前にはそろえておく
-      try {
-        const im = new Image(); im.src = bg;
-        if (im.decode) await Promise.race([im.decode().catch(() => {}), wait(1500)]);
-      } catch (e) {}
+      if (bg) {
+        dungeon.style.backgroundImage = `url('${bg}')`;
+        dungeon.style.backgroundSize = 'cover';
+        dungeon.style.backgroundPosition = 'center';
+        if (typeof setPartyBackground === 'function') setPartyBackground(bg);
+        if (typeof layoutBattleBg === 'function') layoutBattleBg();
+        // 画像が読み込み前でも、表示される前にはそろえておく
+        try {
+          const im = new Image(); im.src = bg;
+          if (im.decode) await Promise.race([im.decode().catch(() => {}), wait(1500)]);
+        } catch (e) {}
+      }
 
       // ③ 雲がゆっくり晴れる（外へ流れて薄くなる）
       const outAnims = [
@@ -2205,7 +2212,7 @@ const BossCloud = (() => {
   // 登場演出：ラスボス用（BOSS_CLOUD_STAGES の entrance）→ なければ 伝説の鳥用（BOSS_INTRO_STAGES）
   const entranceOf = key => { const s = stageOf(key); return (s && typeof s === 'object' && ENTRANCES[s.entrance]) || introOf(key); };
 
-  return { has, bgOf, bannerOf, entranceOf, introOf, attrIntroOf, preload, play };
+  return { has, bgOf, bannerOf, entranceOf, introOf, attrIntroOf, preload, play, playCloud: runCloud };
 })();
 // ★ 重要：トップレベルの const は window のプロパティにならないため、game.js の window.BossCloud 判定が常に false になっていた
 window.BossCloud = BossCloud;

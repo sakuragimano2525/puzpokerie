@@ -130,3 +130,21 @@
   animation: rcFadeIn .4s ease-out both;
 }
 @keyframes rcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── ボス前の報酬宝箱（js/ryuseki.js の openRewardChest）：中身が飛び出す ── */
+.rc-rewards {
+  position: absolute; left: 50%; bottom: calc(100% - 1cqw); z-index: 4; transform: translateX(-50%);
+  width: 78cqw; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 1.6cqw;
+  pointer-events: none;
+}
+.rc-rw {
+  width: var(--sz, 16cqw); display: flex; flex-direction: column; align-items: center; gap: .4cqw;
+  opacity: 0; animation: rcRwUp .8s cubic-bezier(.2, 1.4, .4, 1) both;
+  filter: drop-shadow(0 0 2.4cqw rgba(255, 220, 90, .95));
+}
+.rc-rw img { width: 100%; aspect-ratio: 1; object-fit: contain; display: block; }
+.rc-rw span {
+  font-weight: 900; font-size: max(10px, 3.6cqw); color: #fff; white-space: nowrap;
+  text-shadow: 0 0 4px #b34700, 0 1px 0 #b34700, 1px 0 0 #b34700, -1px 0 0 #b34700;
+}
+@keyframes rcRwUp { from { opacity: 0; transform: translateY(14cqw) scale(.3); } to { opacity: 1; transform: translateY(0) scale(1); } }

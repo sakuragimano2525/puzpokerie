@@ -1910,7 +1910,7 @@ async function loadBattle(battleData, autoStart = true) {
   enemyList = battleData.enemies.map(buildEnemyFromDef);
   buffMoveTimeShort = false;
   if (battleData.chest && window.Ryuseki) {   // 竜石の宝箱バトル：HPバーなし。宝箱・あと〇・ミッションを出す（js/ryuseki.js）
-    Ryuseki.load(enemyList[0], currentDungeonKey);
+    Ryuseki.load(enemyList[0], currentDungeonKey, battleData.rewardChest);   // rewardChest があれば報酬宝箱（ミッション・ターン・中身を指定）
     updateEnemyTurnBadge();
     return;
   }
@@ -2602,6 +2602,17 @@ function updateCoinDisplay() {
 function addCoin(n) {
   totalCoin += n;
   updateCoinDisplay();
+}
+
+// 報酬宝箱の中身を、この冒険の獲得分に加える（チップ・おふだなどはリザルトで受け取り、エナはクリア時に所持エナへ）
+//   r = { kind:'item'|'ena'|'monster', item, monsterId, count }
+function grantChestReward(r) {
+  if (!r) return;
+  const n = Math.max(1, Math.floor(Number(r.count)) || 1);
+  if (r.kind === 'ena') addCoin(n);
+  else if (r.kind === 'monster') { if (MONSTER_DATA[r.monsterId]) for (let i = 0; i < n; i++) droppedMonsters.push(r.monsterId); }
+  else if (ITEM_DATA[r.item]) droppedItems.push({ item: r.item, count: n });
+  updateDropCount();
 }
 
 function updateDropCount() {
@@ -3871,6 +3882,15 @@ function monsterImg(mon) {
 let box = [];
 let nextUid = 1;
 
+// ★ 助っ人（js/friends.js）★
+//   フレンドの助っ人は、このuidの「仮のモンスター」として、出撃準備〜ダンジョン中だけ box に入る（フレンド枠＝6枠目に入る）。
+//   セーブ（saveGame）・図鑑・経験値の対象にはならない（entry._helper = true で見分ける）。
+//   uid が 1e9 以上なので、本物のuidの採番（nextUid）にも影響しない。
+const HELPER_UID = 2000000001;
+function isHelperUid(uid) { return uid === HELPER_UID; }
+// 出撃準備〜ダンジョンで「実際に使う6枠」：助っ人を選んでいれば、フレンド枠（6枠目）がその助っ人になる（本物の編成 currentTeam は書き換えない）
+function effTeam() { return (window.Friends && Friends.injected()) ? Friends.team(currentTeam) : currentTeam; }
+
 // ============================================================
 // ★ セーブデータ（localStorage）★
 //   BOX（モンスター）・所持チップ・メールの受け取り状況を保存する。
@@ -3918,7 +3938,7 @@ function saveGame() {
     const mail = {};
     if (typeof MAIL_DATA !== 'undefined') MAIL_DATA.forEach(m => { mail[m.id] = { received: !!m.received, unread: !!m.unread }; });
     const json = JSON.stringify({
-      v: 1, box: box.map(b => (b && b._tfFrom !== undefined) ? { ...b, monsterId: b._tfFrom, _tfFrom: undefined } : b), nextUid, seeded: [..._seededIds],
+      v: 1, box: box.filter(b => !(b && b._helper)).map(b => (b && b._tfFrom !== undefined) ? { ...b, monsterId: b._tfFrom, _tfFrom: undefined } : b), nextUid, seeded: [..._seededIds],
       items: (typeof itemInventory !== 'undefined') ? itemInventory : {},
       loginBonusAt, combo8Bonus,
       mail
@@ -4454,6 +4474,16 @@ async function handleBattleEnd() {
       return;
     }
     currentBattleIndex++;
+    let _brCloud = false;   // 分岐ボスの前に雲の演出を出すか（ダンジョン設定ツールの「☁」）
+    let _brBg = null;   // 宝箱で消したドロップによるボス分岐：次（最後）のボスを差し替え、背景・BGMも分岐ごとに（js/ryuseki.js の takeBranch）
+    if (window.Ryuseki && Ryuseki.takeBranch && currentBattleIndex === currentDungeonBattles.length - 1) {
+      const br = Ryuseki.takeBranch();
+      if (br) {
+        currentDungeonBattles[currentBattleIndex] = br.battle;
+        if (br.bgImg) { _brBg = br.bgImg; try { new Image().src = _brBg; } catch (e) {} }
+        _brCloud = !!br.cloud;
+      }
+    }
     if (window.MultiShare) MultiShare.fx('nf', { bi: currentBattleIndex, k: MultiShare.kills });   // マルチ：次の階層への移動を、相手の画面でも同時に始める
     const nextNum = currentBattleIndex + 1;
     const totalNum = currentDungeonBattles.length;
@@ -4465,9 +4495,13 @@ async function handleBattleEnd() {
     if (nextIsBoss) stopDungeonBGM();   // BOSS SE は菱形がBOSSに切り替わる瞬間に鳴らす
     await showBattleBanner(nextNum, totalNum, nextIsBoss, (nextIsBoss && window.BossCloud && BossCloud.bannerOf) ? BossCloud.bannerOf(currentDungeonKey) : null);
     // ラスボス演出（js/boss-cloud.js）：暗転 → 雲の中 → 雲が晴れて専用背景 ＋ ボスBGM
-    if (nextIsBoss && window.BossCloud && BossCloud.has(currentDungeonKey)) {
+    if (nextIsBoss && _brCloud && window.BossCloud && BossCloud.playCloud) {
+      // 分岐ボスの雲の演出（ミュウと同じ）：雲が晴れると分岐ボスの背景になる
+      await BossCloud.playCloud(_brBg, currentBattleIndex);
+    } else if (nextIsBoss && window.BossCloud && BossCloud.has(currentDungeonKey)) {
       await BossCloud.play(currentDungeonKey, currentBattleIndex);
     }
+    if (_brBg) applyBranchBg(_brBg);   // 分岐ごとのボス背景
     if (!(nextIsBoss && hasBossIntro())) playBattleBgm(currentBattleIndex);   // サンダー等は登場演出の中でボスBGM
     // 先制攻撃の演出が終わるまで待つ（待たないと呼び出し元の busy=false の後に
     // loadBattle が busy=true を書き戻し、操作不能になる）
@@ -4631,7 +4665,7 @@ async function showResultScreen(silent = false) {
     grantDrops();                      // BOX・所持品へ実際に追加
   }
 
-  const partyMembers = partyUids.filter(uid => uid !== null);
+  const partyMembers = partyUids.filter(uid => uid !== null && !isHelperUid(uid));   // 助っ人は借りものなので、経験値は入らない（分ける人数にも数えない）
   const perExp = partyMembers.length > 0 ? Math.floor(totalExp / partyMembers.length) : 0;
   membersContainer.innerHTML = '';
   const members = [];   // 演出用：各モンスターの 前のレベル/経験値 → 今のレベル/経験値
@@ -5567,6 +5601,7 @@ function openTeamEditFromDungeonEntry() {
   teSetSwapMode(false);
   teSetFavMode(false);
   teamEditReturnTo = 'dungeon-entry';
+  if (window.Friends) Friends.eject();   // 編成を触っている間は、助っ人をいったん外す（戻ったら、選んでいた助っ人をもう一度つける）
   activeAttrFilters.clear();
   activeTypeFilters.clear();
   searchQuery = '';
@@ -6081,7 +6116,22 @@ function previewMonsterDetail(ids, id) {
   renderMonsterDetail();
   document.getElementById('monster-detail').style.display = 'flex';
 }
+// 「いまの状態のまま」見るだけのステータス画面（フレンドの助っ人・マイカードのモンスター用）。ボックスのデータにはさわらない
+//   entry … { monsterId, level, plusHp… }（経験値は Lv の頭に合わせて表示）／ title … 画面の見出し
+function previewEntryDetail(entry, title) {
+  if (!entry || !MONSTER_DATA[entry.monsterId]) return;
+  const e = Object.assign({}, entry, { uid: 'preview' });
+  const mon = MONSTER_DATA[e.monsterId];
+  e.level = Math.max(1, Math.min(Math.floor(Number(e.level)) || 1, getMonsterMaxLevel(mon)));
+  e.exp = EXP_CUMULATIVE[e.level - 1] || 0;
+  detailPreview = { ids: [e.monsterId], pos: 0, entry: e, title: title || '' };
+  detailFromScreen = 'preview-entry';
+  detailFromList = false;
+  renderMonsterDetail();
+  document.getElementById('monster-detail').style.display = 'flex';
+}
 function openMonsterDetail(boxIdx, fromScreen, fromList) {
+  if (box[boxIdx] && box[boxIdx]._helper) { previewEntryDetail(box[boxIdx], '助っ人の詳細'); return; }   // 助っ人は借りものなので、見るだけ（レベルアップ・進化はできない）
   detailPreview = null;
   detailBoxIndex = boxIdx;
   detailFromScreen = fromScreen || 'team-edit';
@@ -6103,7 +6153,7 @@ function closeMonsterDetail() {
 }
 
 function renderMonsterDetail() {
-  const entry = detailPreview ? { uid: 'preview', monsterId: detailPreview.ids[detailPreview.pos], level: 1, exp: 0 } : box[detailBoxIndex];
+  const entry = detailPreview ? (detailPreview.entry || { uid: 'preview', monsterId: detailPreview.ids[detailPreview.pos], level: 1, exp: 0 }) : box[detailBoxIndex];
   if (!entry) return;
   const mon = MONSTER_DATA[entry.monsterId];
   if (!mon) return;
@@ -6202,7 +6252,8 @@ function renderMonsterDetail() {
   if (evoBtn) evoBtn.style.display = (!detailPreview && detailFromScreen !== 'game' && getEvolutions(entry.monsterId).length) ? '' : 'none';
   // 仮表示（ガチャのラインナップ）では、持っていないのでレベルアップ・進化はできない
   const luBtn = document.getElementById('md-levelup-btn'); if (luBtn) luBtn.style.display = detailPreview ? 'none' : '';
-  const ttl = document.getElementById('md-title'); if (ttl) ttl.textContent = detailPreview ? 'モンスター詳細（Lv1）' : 'モンスター詳細';
+  const ttl = document.getElementById('md-title'); if (ttl) ttl.textContent = detailPreview ? (detailPreview.title || 'モンスター詳細（Lv1）') : 'モンスター詳細';
+  { const one = !!(detailPreview && detailPreview.ids.length < 2); ['md-prev', 'md-next'].forEach(id => { const b = document.getElementById(id); if (b) b.style.visibility = one ? 'hidden' : ''; }); }   // 1体だけ見るときは左右ボタンを隠す
 }
 
 // 左右ボタンの巡回先：パーティー編成中のモンスターを開いているときはパーティー内（空き枠は飛ばす）、
@@ -9910,6 +9961,15 @@ document.getElementById('ss-back-btn').addEventListener('click', closeStageSelec
 
 // ダンジョン中のチーム背景（下部）を、今のステージの背景画像に合わせる。
 // 上のダンジョン背景とは「同じ1枚の画像をひと続きで」見せる（境目で絵が切り替わって見えないように）
+// ボス分岐：ダンジョンの背景（上下とも）を指定の画像にする
+function applyBranchBg(img) {
+  const d = document.getElementById('dungeon');
+  if (!d || !img) return;
+  d.style.backgroundImage = `url('${img}')`;
+  d.style.backgroundSize = 'cover';
+  d.style.backgroundPosition = 'center';
+  setPartyBackground(img);
+}
 let _battleBgImg = null;
 function setPartyBackground(img) {
   const pa = document.getElementById('party-area');
@@ -9973,6 +10033,7 @@ async function startGameFromHome() {
     if (i < partyUids.length) partyUids[i] = newPartyUids[i] !== undefined ? newPartyUids[i] : null;
     else partyUids.push(newPartyUids[i] !== undefined ? newPartyUids[i] : null);
   }
+  if (window.Friends) { try { Friends.syncParty(); } catch (e) { console.warn('[friends]', e); } }   // 助っ人を選んでいれば、フレンド枠（6枠目）をその助っ人に
   try { updateSpGaugeUI(); } catch (e) {}   // リーダー/フレンドのSP上限アップを、入場時にバーへ反映
   resetPlayerBuffs();
   moveTimeFixed = null;
@@ -9995,6 +10056,7 @@ async function startGameFromHome() {
     // マルチ(オンライン)：ランダム階層・乱入の抽選は、部屋IDのシードで2人とも同じ結果にする
     currentDungeonBattles = (window.MultiShare ? MultiShare.withSeed : (t, f) => f())('battles', () => applyIntrusion(dungeonData, buildDungeonBattles(dungeonData)));
     if (window.Ryuseki) { Ryuseki.reset(); currentDungeonBattles = Ryuseki.insertChest(dungeonKey, currentDungeonBattles); }   // 竜石：10-1〜の未取得ステージは、ボスの前に宝箱バトルを追加
+    if (window.Ryuseki && dungeonData.rewardChest) currentDungeonBattles = Ryuseki.insertRewardChest(dungeonData.rewardChest, currentDungeonBattles);   // ボス前の報酬宝箱（ダンジョン設定ツールの rewardChest）。竜石の宝箱の次＝ボスの直前
     currentBattleIndex    = 0;
     let battleBg = dungeonData.bgImg || areaBgImage(currentAreaNum);
     if (window.BossCloud && BossCloud.has(dungeonKey)) {
@@ -10115,7 +10177,7 @@ const ATTR_BORDER = { fire:'de-attr-fire', water:'de-attr-water', wood:'de-attr-
 
 function calcTotalREC() {
   let total = 0;
-  for (const uid of currentTeam) {
+  for (const uid of effTeam()) {
     if (uid === null) continue;
     const entry = box.find(b => b.uid === uid);
     if (entry) total += calcMonsterStats(entry).rec;
@@ -10125,7 +10187,7 @@ function calcTotalREC() {
 // 編成画面・出撃準備に表示する「チーム合計」（リーダースキル補正なし）
 function calcTeamSums() {
   const sums = { hp: 0, atk: 0, rec: 0 };
-  for (const uid of currentTeam) {
+  for (const uid of effTeam()) {
     if (uid === null) continue;
     const entry = box.find(b => b.uid === uid);
     if (!entry) continue;
@@ -10157,6 +10219,7 @@ function deToast(msg, ms = 2000) {
 }
 
 function renderDungeonEntry() {
+  if (window.Friends) { try { Friends.onRenderEntry(); } catch (e) { console.warn('[friends]', e); } }   // 助っ人：選んでいれば仮のモンスターを用意／「助っ人一覧」を描く
   updateDungeonEntryCost();
   updateRensenBtn();
   const stageLabel = stageShortLabel(currentAreaNum, currentStageType);
@@ -10170,8 +10233,9 @@ function renderDungeonEntry() {
   // 【全属性必須】の帯表示は、パーティー画面では出さない（入場時のチェックは startDungeon 側で行う）
   const reqEl = document.getElementById('de-req-all');
   if (reqEl) reqEl.style.display = 'none';
+  const team6 = effTeam();   // 助っ人を選んでいれば、フレンド枠（6枠目）は助っ人
   for (let i = 0; i < 6; i++) {
-    const uid = currentTeam[i];
+    const uid = team6[i];
     const card = document.createElement('div');
     card.className = 'de-mon-card';
     if (uid !== null) {
@@ -10179,6 +10243,7 @@ function renderDungeonEntry() {
       if (entry) {
         const mon = MONSTER_DATA[entry.monsterId];
         if (ATTR_BORDER[mon.attr]) card.classList.add(ATTR_BORDER[mon.attr]);
+        if (entry._helper) { card.classList.add('de-helper'); const tg = document.createElement('div'); tg.className = 'de-helper-tag'; tg.textContent = '助っ人'; card.appendChild(tg); }
         const img = document.createElement('img');
         img.className = 'de-mon-img';
         img.src = monsterImg(mon);
@@ -10196,6 +10261,7 @@ function renderDungeonEntry() {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
       if (_longPressTriggered) { _longPressTriggered = false; return; }   // 長押しで詳細を開いた後の誤タップ防止
+      if (uid === HELPER_UID && window.Friends) { Friends.focusList(); return; }   // 助っ人のマス：下の「助っ人一覧」へ（編成画面は開かない）
       openTeamEditFromDungeonEntry();
     });
     if (uid !== null && card.querySelector('img')) {
@@ -10219,12 +10285,12 @@ function renderDungeonEntry() {
 
   let ls1Name = '', ls1Desc = '（なし）';
   let ls2Name = '', ls2Desc = '（なし）';
-  if (currentTeam[0] !== null) {
-    const e = box.find(b => b.uid === currentTeam[0]);
+  if (team6[0] !== null) {
+    const e = box.find(b => b.uid === team6[0]);
     if (e) { const m = MONSTER_DATA[e.monsterId]; if (m) { ls1Name = m.name; ls1Desc = (m.leaderSkill && m.leaderSkill.desc) || '（なし）'; } }
   }
-  if (currentTeam[5] !== null) {
-    const e = box.find(b => b.uid === currentTeam[5]);
+  if (team6[5] !== null) {
+    const e = box.find(b => b.uid === team6[5]);
     if (e) { const m = MONSTER_DATA[e.monsterId]; if (m) { ls2Name = m.name; ls2Desc = (m.leaderSkill && m.leaderSkill.desc) || '（なし）'; } }
   }
   document.getElementById('de-ls1-name').textContent = ls1Name;
@@ -10314,6 +10380,18 @@ function renderDungeonEntryInfo(dKey, dd) {
       centerCropImg(cell.querySelector('img'));   // 画像の余白が偏っていても、中身を枠の真ん中に
     }
   }
+  const _rc = dd.rewardChest;   // ボス前の宝箱に入っているアイテムも「入手できるもの」に出す
+  if (_rc && _rc.enabled !== false) (_rc.rewards || []).forEach(rw => {
+    const def = rw && rw.kind === 'item' && ITEM_DATA[rw.item];
+    if (!def || seenChip.has(rw.item)) return;
+    seenChip.add(rw.item);
+    const cell = document.createElement('div');
+    cell.className = 'de-info-cell chip-cell';
+    cell.title = def.name;
+    cell.innerHTML = `<img src="${def.img}" alt="${def.name}" onerror="this.parentNode.style.display='none'">`;
+    chipList.appendChild(cell);
+    centerCropImg(cell.querySelector('img'));
+  });
   monBlock.style.display = seenMon.size ? '' : 'none';
   chipBlock.style.display = seenChip.size ? '' : 'none';
   if (seenMon.size || seenChip.size) section.style.display = 'flex';
@@ -10326,7 +10404,7 @@ function dungeonRequiresAllAttr(areaNum, stageKey) {
 }
 function teamHasAllAttrs() {
   const got = new Set();
-  for (const uid of currentTeam) {
+  for (const uid of effTeam()) {
     if (uid === null || uid === undefined) continue;
     const entry = box.find(b => b.uid === uid);
     const mon = entry && MONSTER_DATA[entry.monsterId];
@@ -10352,7 +10430,7 @@ function openDungeonEntry(areaNum, stageType) {
 let multiLobby = null;
 const _moEl = id => document.getElementById(id);
 function moTeamStr() {   // 自分の編成を「モンスターID:Lv,…」(6枠)にして相手へ見せる
-  return currentTeam.map(uid => { const e = uid !== null && uid !== undefined && box.find(b => b.uid === uid); return e ? e.monsterId + ':' + e.level : ''; }).join(',');
+  return effTeam().map(uid => { const e = uid !== null && uid !== undefined && box.find(b => b.uid === uid); return e ? e.monsterId + ':' + e.level : ''; }).join(',');
 }
 function moRenderOpp() {
   const panel = _moEl('mo-opp');
@@ -10467,7 +10545,9 @@ async function startMultiMatching(areaNum, stageKey) {
       onParty: v => { if (window.MultiShare) MultiShare.onParty(v); },   // 相手のパーティー（モンスター・HP・SP）
       onFx: v => { if (window.MultiShare) MultiShare.onFx(v); },         // 相手の操作中の出来事（コンボ・攻撃・HP…）
       onChat: v => { if (window.MultiChat) MultiChat.receive(v); },      // 相手の定型文
+      onCard: v => { if (window.Friends) Friends.onMultiCard(v); },      // 相手のマイカード（フレンドなら、助っ人も含めて最新に更新）
     });
+    if (window.Friends) Friends.onMultiRoomEntered();                    // こちらのマイカードも相手に渡す
     openDungeonEntry(areaNum, stageKey);
   } catch (e) {
     if (e && e.message === 'cancel') return;
@@ -10481,6 +10561,7 @@ if (window.MultiTurn) MultiTurn.onMyTurn = () => { busy = false; };   // あい�
 document.getElementById('de-edit-btn').addEventListener('click', openTeamEditFromDungeonEntry);
 document.getElementById('de-back-btn').addEventListener('click', () => {
   moLeaveLobby();   // マルチ：部屋から退出
+  if (window.Friends) Friends.release();   // 助っ人の選択は、出撃準備を出たら解除
   document.getElementById('dungeon-entry').style.display = 'none';
   document.getElementById('stage-select').style.display = 'flex';
   startMenuBGM();
@@ -12025,6 +12106,26 @@ function redeemGiftCode() {
     try { saveGame(); } catch (e) {}
     try { if (typeof buildMainMap === 'function') buildMainMap(); } catch (e) {}
     msg.className = 'ok'; msg.textContent = 'メインステージをエリア' + target + 'まで開放しました！';
+    input.value = '';
+    return;
+  }
+  // IDLE(数字) … メインステージをそのエリアの「-boss」まで開放する（例：IDLE20 → エリア20が開き、20-1〜20-4・20-boss が全部挑戦できる）
+  //   ・エリア1〜(数字-1) のボスをクリア済みにする（＝そのエリアが開放される）
+  //   ・そのエリアの通常ステージをクリア済み扱いにして、-boss に挑戦できるようにする（-boss 自体はクリア扱いにしない＝次のエリアは開放されない）
+  const idle = /^IDLE(\d+)$/.exec(code);
+  if (idle) {
+    const target = parseInt(idle[1], 10);
+    if (!(target >= 1) || target > TOTAL_STAGES || !AREA_INFO[target]) {
+      msg.className = 'ng'; msg.textContent = 'そのエリアはありません';
+      return;
+    }
+    for (let a = 1; a < target; a++) clearedBosses.add(a);
+    getStageList(target).forEach(st => { if (!st.boss) clearedDungeons.add(`${target}-${st.key}`); });
+    try { localStorage.setItem(CLEARED_BOSSES_KEY, JSON.stringify([...clearedBosses])); } catch (e) {}
+    try { localStorage.setItem(CLEARED_DUNGEONS_KEY, JSON.stringify([...clearedDungeons])); } catch (e) {}
+    try { saveGame(); } catch (e) {}
+    try { if (typeof buildMainMap === 'function') buildMainMap(); } catch (e) {}
+    msg.className = 'ok'; msg.textContent = 'エリア' + target + 'の「-boss」まで開放しました！';
     input.value = '';
     return;
   }

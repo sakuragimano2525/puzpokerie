@@ -6852,9 +6852,25 @@ const MONSTER_DATA = {
     attr: 'none',
     sub: 'dark',
     type: 'バランス',
-    maxLevel: 25,
+    maxLevel: 75,
     baseExp: 500,
-    stats: { hp: { min: 210, max: 450 }, atk: { min: 90, max: 190 }, rec: { min: 14, max: 25 } }
+    stats: { hp: { min: 210, max: 450 }, atk: { min: 90, max: 190 }, rec: { min: 14, max: 25 } },
+    skill: {
+      name: 'ほしのかご',
+      sp: 3,
+      desc: '回復ドロップをランダムで3つ生成。',
+      effects: [
+        { type: 'orbChangeRandom', attr: 'heal', count: 3 },
+        { type: 'atkBuff', monType: 'こうげき', value: 0.0001, turns: 99 }
+      ]
+    },
+    leaderSkill: { name: 'なし', desc: '', effects: [] },
+    evolutions: [
+      {
+        to: 790,
+        materials: [ { item: 'puzzle12', count: 10 }, { item: 'puzzle22', count: 10 }, { item: 'puzzle32', count: 10 } ]
+      }
+    ]
   },
   790: {
     id: 790,
@@ -6863,9 +6879,23 @@ const MONSTER_DATA = {
     attr: 'none',
     sub: 'dark',
     type: 'バランス',
-    maxLevel: 50,
+    maxLevel: 75,
     baseExp: 1000,
-    stats: { hp: { min: 360, max: 1290 }, atk: { min: 150, max: 550 }, rec: { min: 32, max: 72 } }
+    stats: { hp: { min: 360, max: 1290 }, atk: { min: 150, max: 550 }, rec: { min: 32, max: 72 } },
+    skill: {
+      name: 'ほしのかご',
+      sp: 3,
+      desc: '回復ドロップをランダムで3つ生成。',
+      effects: [
+        { type: 'orbChangeRandom', attr: 'heal', count: 3 },
+        { type: 'atkBuff', monType: 'こうげき', value: 0.0001, turns: 99 }
+      ]
+    },
+    leaderSkill: { name: 'なし', desc: '', effects: [] },
+    evolutions: [
+      { to: 791, materials: [ { item: 'puzzle43', count: 10 } ] },
+      { to: 792, materials: [ { item: 'puzzle53', count: 10 } ] }
+    ]
   },
   791: {
     id: 791,
@@ -6876,7 +6906,18 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 480, max: 2860 }, atk: { min: 350, max: 2220 }, rec: { min: 29, max: 87 } }
+    stats: { hp: { min: 480, max: 2860 }, atk: { min: 350, max: 2220 }, rec: { min: 29, max: 87 } },
+    skill: {
+      name: 'メテオドライブ',
+      sp: 3,
+      desc: '光ドロップを火ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'light', to: 'fire' } ]
+    },
+    leaderSkill: {
+      name: '業火のソウル',
+      desc: '火属性の攻撃1.8倍。',
+      effects: [ { type: 'atk', attr: 'fire', value: 1.8 }, { type: 'atk', condition: 'type', attr: 'こうげき', value: 0.75 } ]
+    }
   },
   792: {
     id: 792,
@@ -6888,8 +6929,13 @@ const MONSTER_DATA = {
     maxLevel: 99,
     baseExp: 25000,
     stats: { hp: { min: 490, max: 3260 }, atk: { min: 190, max: 1260 }, rec: { min: 158, max: 464 } },
-    skill: { name: '', sp: 1, desc: '', effects: [] },
-    leaderSkill: { name: '', desc: '', effects: [] }
+    skill: {
+      name: '裏ドロップチェンジ・水',
+      sp: 3,
+      desc: '木ドロップを水ドロップに変化。',
+      effects: [ { type: 'orbConvert', from: 'wood', to: 'water' } ]
+    },
+    leaderSkill: { name: '大滝のソウル', desc: '水属性の攻撃1.8倍。', effects: [ { type: 'atk', attr: 'water', value: 1.8 } ] }
   },
   793: {
     id: 793,
@@ -6970,10 +7016,26 @@ const MONSTER_DATA = {
     name: 'ネクロズマ',
     rarity: 5,
     attr: 'dark',
-    type: 'バランス',
+    type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 520, max: 3460 }, atk: { min: 240, max: 1600 }, rec: { min: 72, max: 205 } }
+    stats: { hp: { min: 820, max: 3400 }, atk: { min: 740, max: 2700 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'フォトンゲイザー',
+      sp: 2,
+      desc: '全ドロップを闇ドロップに変化。\nHPが最大HPの25%減る。',
+      condition: { type: 'orbBoost', attr: 'light' },
+      effects: [
+        { type: 'orbChangeRandom', attr: 'dark', count: 30 },
+        { type: 'selfDamage', mode: 'percent', value: 0.25 },
+        { type: 'attrChange', target: 'subs', attr: 'dark', turns: 3, includeSelf: true }
+      ]
+    },
+    leaderSkill: {
+      name: 'プリズムレーザー',
+      desc: '闇を13個以上つなげて消すと攻撃2倍、受けるダメージ25%軽減、1コンボ加算。',
+      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'dark', count: 12, value: 2, comboAdd: 1, reduce: 0.25 } ]
+    }
   },
   801: {
     id: 801,
@@ -7996,7 +8058,7 @@ const MONSTER_DATA = {
   5028: {
     id: 5028,
     name: 'ヒフミ',
-    rarity: 3,
+    rarity: 5,
     attr: 'light',
     type: '神秘',
     maxLevel: 99,
@@ -8005,14 +8067,9 @@ const MONSTER_DATA = {
     skill: {
       name: 'AP弾装填',
       sp: 5,
-      desc: 'ドロップを光・闇・回復ドロップに変化。\n1ターンの間、属性吸収を無効化。',
-      condition: { type: 'orbCount', attr: 'dark', value: 5 },
-      effects: [
-        { type: 'orbChangeMulti', orb_heal: true, orb_light: true, orb_dark: true },
-        { type: 'atkBuff', attr: 'fire', value: 0.01, turns: 1 },
-        { type: 'atkBuff', attr: 'wood', value: 0.01, turns: 1 },
-        { type: 'absorbVoid', turns: 1 }
-      ]
+      desc: 'ドロップを光・回復ドロップに変化。\n1ターンの間、属性吸収を無効化。',
+      condition: { type: 'orbBoost', attr: 'light' },
+      effects: [ { type: 'orbChangeMulti', orb_heal: true, orb_light: true }, { type: 'absorbVoid', turns: 1 } ]
     },
     leaderSkill: {
       name: 'ペロロ様の応援',
@@ -9224,7 +9281,7 @@ const MONSTER_DATA = {
       name: '銀翼の凶星',
       desc: '【操作時間2秒固定】5コンボ以上で攻撃2倍、受けるダメージ5%軽減。',
       effects: [
-        { type: 'moveTimeFixed', value: 2500 },
+        { type: 'moveTimeFixed', value: 1900 },
         { type: 'atk', condition: 'combo', count: 5, value: 1.9, reduce: 0.05 }
       ]
     }
@@ -9695,7 +9752,7 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 1200, max: 4000 }, atk: { min: 2000, max: 4000 }, rec: { min: 25, max: 150 } },
+    stats: { hp: { min: 1200, max: 4000 }, atk: { min: 2000, max: 6000 }, rec: { min: 25, max: 150 } },
     skill: {
       name: 'フラム',
       sp: 2,
@@ -9762,7 +9819,7 @@ const MONSTER_DATA = {
     skill: {
       name: 'プレゼントの準備もバッチリ！',
       sp: 3,
-      desc: '闇ドロップを光ドロップ、火ドロップを回復ドロップに変化。\n1ターンの間、ルーレットを1つ生成し操作時間2秒延長。',
+      desc: '闇ドロップを光ドロップに変化。火ドロップを回復ドロップに変化。\n1ターンの間、ルーレットを1つ生成。バインドを全回復。',
       yumekawa: true,
       condition: { type: 'orbBoost', attr: 'light' },
       effects: [
@@ -9770,21 +9827,23 @@ const MONSTER_DATA = {
         { type: 'orbConvert', from: 'fire', to: 'heal' },
         { type: 'orbConvert', from: 'poison', to: 'light' },
         { type: 'roulette', turns: 1, count: 1, sec: '1' },
-        { type: 'moveTimeBuff', turns: 1, seconds: 3, mult: 1 }
+        { type: 'moveTimeBuff', turns: 1, seconds: 3, mult: 1 },
+        { type: 'bindRecover', turns: 99 }
       ]
     },
     leaderSkill: {
       name: '毎日がプレゼント！',
-      desc: '【チームのレア度が全員別の場合発動/落ちコンなし】光ドロップの2コンボ以上で攻撃2倍、受けるダメージ20%軽減。\n残りドロップ4個以下で攻撃と回復力1.2倍。',
+      desc: '【チームのレア度が全員別の場合発動/落ちコンなし】光ドロップの2コンボ以上で攻撃2倍、受けるダメージ20%軽減。\n残りドロップ5個以下で攻撃と回復力1.1倍。',
       effects: [
         { type: 'atk', condition: 'attrCombos', attr: 'light', count: 2, value: 2.3, reduce: 0.2 },
         { type: 'eggDropUp', value: 20 },
         { type: 'expMult', value: 2 },
         { type: 'noDrop', value: true },
         { type: 'rarity', condition: 'allDiff', value: 0.0001 },
-        { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 1.2, recValue: 1.2 }
+        { type: 'atk', condition: 'remainingOrbs', threshold: 5, value: 1.3, recValue: 1.2 }
       ]
     },
+    bindImmune: true,
     evolutions: [ { to: 5088, materials: [ { item: 'puzzle43', count: 1 }, { item: 'spuzzle_5', count: 1 } ] } ]
   },
   5088: {
@@ -9828,11 +9887,11 @@ const MONSTER_DATA = {
               ]
             },
             {
-              desc: '7ターンの間、サブ全員の属性が光属性に変化、5ターンの間、光と回復ドロップが少し落ちやすくなる、12秒間、時を止める',
+              desc: '7ターンの間、サブ全員の属性が光属性に変化、3ターンの間、光と回復ドロップが落ちやすくなる、1ターンの間、操作時間が2倍',
               effects: [
                 { type: 'attrChange', target: 'subs', attr: 'light', turns: 7 },
-                { type: 'orbSpawnBoost2', attr: 'light', rate: 0.1, attr2: 'heal', rate2: 0.1, turns: 5 },
-                { type: 'timeStop', seconds: 12 }
+                { type: 'orbSpawnBoost2', attr: 'light', rate: 0.25, attr2: 'heal', rate2: 0.25, turns: 3 },
+                { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 2 }
               ]
             }
           ]
@@ -9841,13 +9900,13 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'スペシャルの応援歌',
-      desc: '光ドロップの2コンボ以上で攻撃1.5倍、受けるダメージ15%軽減。\n残りドロップ4個以下で攻撃と回復力2倍。',
+      desc: '光ドロップの2コンボ以上で攻撃1.5倍、受けるダメージ20%軽減。\n残りドロップ5個以下で攻撃と回復力2倍。',
       effects: [
-        { type: 'atk', condition: 'attrCombos', attr: 'light', count: 2, value: 2, reduce: 0.15 },
+        { type: 'atk', condition: 'attrCombos', attr: 'light', count: 2, value: 2, reduce: 0.2 },
         { type: 'moveTimeAdd', value: 1.5 },
         { type: 'expMult', value: 2 },
         { type: 'rarity', condition: 'allDiff', value: 0.0001 },
-        { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 2, recValue: 2 },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 5, value: 2, recValue: 2 },
         { type: 'spCharge', size: 'medium' }
       ]
     },

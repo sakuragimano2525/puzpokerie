@@ -74,7 +74,7 @@
     if (typeof box === 'undefined' || !Array.isArray(box)) return false;
     let changed = false;
     for (const b of box) {
-      if (!b) continue;
+      if (!b || b._helper) continue;   // フレンドの助っ人（js/friends.js）は借りものなので、図鑑に載せない
       const id = Number(b._tfFrom !== undefined ? b._tfFrom : b.monsterId);
       if (!known(id)) continue;
       if (!owned.has(id)) { owned.add(id); changed = true; }
@@ -563,6 +563,9 @@
   global.Zukan = {
     noteEnemies, syncOwned, open, close, render,
     isOwned: (id) => owned.has(Number(id)),   // 図鑑に登録（ゲット）済みか（進化パズルのスキップ判定に使う）
+    // フレンド（js/friends.js）のマイカード用：ゲット済みのモンスターID（小さい順）／図鑑の件数（図鑑画面の「ゲット ○ / ○」と同じ数え方）
+    ownedIds: () => allIds().filter(id => owned.has(id)),
+    counts: () => { const ids = allIds(); return { owned: ids.filter(id => owned.has(id)).length, seen: ids.filter(id => seen.has(id)).length, total: ids.length }; },
     // テスト・デバッグ用
     _state: () => ({ seen: [...seen], owned: [...owned] }),
     _statusOf: statusOf, _openInfo: openInfo

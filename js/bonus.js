@@ -1,8 +1,9 @@
 // ============================================================
 // ボーナス（ホーム右下のボタン）
-//   押すと「竜石」「ガチャ」の2択。
+//   押すと「竜石」「ガチャ」「フレンド」の3択。
 //   ・竜石 … 竜石の所持数に応じた報酬ショップ（下の RYU_REWARDS）。竜石は消費せず、数が届いたら「もらう」で1回だけ受け取れる
 //   ・ガチャ … 今までのガチャ画面（openGacha）
+//   ・フレンド … マイカード・助っ人設定・フレンド募集（js/friends.js）
 // ============================================================
 (function () {
   'use strict';
@@ -93,7 +94,7 @@
     } catch (e) {}
   }
 
-  // ボーナスボタンの真上に、竜石・ガチャ の2つのボタンを出す（画面の外やボタン以外をタップすると閉じる）
+  // ボーナスボタンの真上に、竜石・ガチャ・フレンド の3つのボタンを出す（画面の外やボタン以外をタップすると閉じる）
   function openMenu() {
     closeAll();
     menu = el(
@@ -101,6 +102,7 @@
         '<div class="bn-pop">' +
           '<button type="button" class="bn-btn ryu" id="bn-ryu"><img src="' + ryuImg() + '" alt="" onerror="this.style.visibility=\'hidden\'"><span>竜石</span><b>×' + ryusekiCount() + '</b><i class="bn-dot"></i></button>' +
           '<button type="button" class="bn-btn gacha" id="bn-gacha"><svg class="ic"><use href="#i-gacha"/></svg><span>ガチャ</span></button>' +
+          '<button type="button" class="bn-btn friend" id="bn-friend"><svg class="ic"><use href="#i-team"/></svg><span>フレンド</span></button>' +
         '</div>' +
       '</div>');
     menu.addEventListener('click', function (e) { if (e.target === menu) closeAll(); });
@@ -109,6 +111,11 @@
       closeAll();
       if (typeof openGacha === 'function') openGacha();
       else if (window.GachaScreen) GachaScreen.open();
+    });
+    menu.querySelector('#bn-friend').addEventListener('click', function () {
+      closeAll();
+      if (window.Friends) Friends.open();
+      else toast('フレンドは準備中です');
     });
     host().appendChild(menu);
     placePop();

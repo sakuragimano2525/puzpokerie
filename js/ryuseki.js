@@ -9,6 +9,11 @@
 //   ・1度そのステージで竜石を取ったら二度と手に入らない（宝箱バトルも出なくなる）。
 //   ・ステージ選択の▶の左に竜石の画像（取得済み＝カラー／未取得＝灰色）。
 //
+//   ★ ボス前の「報酬宝箱」（ダンジョン設定ツールで dungeon.rewardChest を設定したダンジョンだけ）
+//      竜石の宝箱の次（ボスの直前）に出る。ミッション（種類・属性・個数）／あと○ターン／中身（チップ・エナ・おふだ・モンスター。
+//      各アイテムの確率抽選 or テーブルから重みでランダム）を自由に指定できる。竜石は関係なく、挑戦のたびに出る。
+//      Ryuseki.insertRewardChest(cfg, battles) で差し込み、中身は game.js の grantChestReward() でリザルトに加算される。
+//
 //   game.js から呼ばれるもの：
 //     Ryuseki.isEligible(key) / has(key) / insertChest(key, battles)
 //     Ryuseki.load(enemy)      … 宝箱バトルの開始（loadBattle から）
@@ -165,26 +170,73 @@
     return out;
   }
 
+  // ボスの前（竜石の宝箱があればその次）に「報酬宝箱」バトルを追加
+  function insertRewardChest(cfg, battles) {
+    if (!cfg || cfg.enabled === false || !Array.isArray(battles) || !battles.length) return battles;
+    var chest = {
+      chest: true,
+      rewardChest: cfg,
+      enemies: [{ name: '宝箱', isChest: true, attr: 'dark', hp: 1, atk: 0, def: 0, size: 'M', turnInterval: 999, exp: 0, coin: 0, drops: [], actions: [] }]
+    };
+    var out = battles.slice();
+    out.splice(out.length - 1, 0, chest);
+    return out;
+  }
+
   // ── ミッション ──────────────────────────────────────────
   //   type: 'vert5'（○属性をタテに5つ）／'simul6'（○属性を同時に6つ）／'combo'（Nコンボ以上）／'total'（合計Nコンボ）
-  function makeMissions() {
+  function rollN(v) {   // 数字 または [最小, 最大]
+    if (Array.isArray(v)) {
+      var a = Math.floor(Number(v[0])) || 1, b = Math.floor(Number(v[1])) || a;
+      if (a > b) { var t = a; a = b; b = t; }
+      return rint(a, b);
+    }
+    return Math.floor(Number(v)) || 0;
+  }
+  function buildMission(t, c) {
+    var m = { type: t, done: false };
+    var n = (c && c.n !== undefined && c.n !== null && c.n !== '') ? rollN(c.n) : 0;
+    var attr = (c && c.attr && ATTRS.indexOf(c.attr) >= 0) ? c.attr : pick(ATTRS);   // 'random' や未指定ならランダム
+    if (t === 'vert5') { m.attr = attr; m.n = Math.max(2, Math.min(5, n || 5)); }
+    else if (t === 'simul6') { m.attr = attr; m.n = Math.max(3, n || 6); }
+    else if (t === 'combo') m.n = Math.max(1, n || rint(5, 8));
+    else if (t === 'total') { m.n = Math.max(1, n || rint(15, 20)); m.sum = 0; }
+    return m;
+  }
+  function makeMissions(custom, mode, pickN) {
     var types = ['vert5', 'simul6', 'combo', 'total'];
     var out = [];
+    if (Array.isArray(custom) && custom.length) {
+      // ツールで指定したミッション（最大2つ）。type が 'random'／未指定のぶんは、指定済みと被らない種類からランダム
+      var list;
+      if (mode === 'random') {   // 設定したミッションの中から、pickN 個（最大2）をランダムに選ぶ
+        var pool = custom.slice(), k = Math.max(1, Math.min(MISSION_COUNT, Math.floor(Number(pickN)) || MISSION_COUNT));
+        list = [];
+        while (list.length < k && pool.length) list.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      } else list = custom.slice(0, MISSION_COUNT);
+      var used = {};
+      list.forEach(function (c) { if (c && types.indexOf(c.type) >= 0) used[c.type] = 1; });
+      list.forEach(function (c) {
+        var t = c && c.type;
+        if (types.indexOf(t) < 0) {
+          var rest = types.filter(function (x) { return !used[x]; });
+          t = pick(rest.length ? rest : types);
+          used[t] = 1;
+        }
+        out.push(buildMission(t, c || {}));
+      });
+      return out;
+    }
     while (out.length < MISSION_COUNT && types.length) {
-      var t = types.splice(Math.floor(Math.random() * types.length), 1)[0];
-      var m = { type: t, done: false };
-      if (t === 'vert5') m.attr = pick(ATTRS);
-      else if (t === 'simul6') { m.attr = pick(ATTRS); m.n = 6; }
-      else if (t === 'combo') m.n = rint(5, 8);
-      else if (t === 'total') { m.n = rint(15, 20); m.sum = 0; }
-      out.push(m);
+      var t2 = types.splice(Math.floor(Math.random() * types.length), 1)[0];
+      out.push(buildMission(t2, {}));
     }
     return out;
   }
   function attrIcon(a) { return '<img class="rc-attr" src="' + ATTR_IMG[a] + '" alt="' + ATTR_JP[a] + '" draggable="false">'; }
   function missionHtml(m) {
-    if (m.type === 'vert5') return attrIcon(m.attr) + 'を<b>タテに5つ</b>で並べろ';
-    if (m.type === 'simul6') return attrIcon(m.attr) + 'を<b>同時に6つ繋げて</b>消せ';
+    if (m.type === 'vert5') return attrIcon(m.attr) + 'を<b>タテに' + (m.n || 5) + 'つ</b>で並べろ';
+    if (m.type === 'simul6') return attrIcon(m.attr) + 'を<b>同時に' + (m.n || 6) + 'つ繋げて</b>消せ';
     if (m.type === 'combo') return '<b>' + m.n + 'コンボ以上</b>しろ';
     return '<b>合計' + m.n + 'コンボ</b>しろ';
   }
@@ -212,11 +264,12 @@
     wrap.innerHTML =
       cards +
       '<div class="rc-center">' +
-        '<div class="rc-chest">' + (CHEST_IMG ? '<img src="' + CHEST_IMG + '" alt="宝箱" draggable="false">' : CHEST_SVG) + '</div>' +
+        '<div class="rc-chest">' + (CHEST_IMG ? '<img src="' + CHEST_IMG + '" alt="宝箱" draggable="false">' : (st.reward ? goldSvg() : CHEST_SVG)) + '</div>' +
         '<div class="rc-tagunit"><div class="enemy-top-left"><div class="enemy-turn-pad"><span class="turn-label">あと</span><span class="enemy-turn-counter rc-counter"></span></div></div></div>' +
       '</div>';
     el.appendChild(wrap);
     st.wrap = wrap;
+    if (st.reward) wrap.classList.add('gold');
     setCounter();
   }
 
@@ -244,18 +297,24 @@
 
   // ── 宝箱バトルの開始 ────────────────────────────────────
   //   enemy … game.js が enemyList に入れた宝箱の敵データ（ダメージを受けない・行動しない）
-  function load(enemy, key) {
+  //   cfg   … 報酬宝箱（dungeon.rewardChest）。竜石の宝箱のときは渡さない
+  function load(enemy, key, cfg) {
     enemy._chest = true;
     enemy._dropChecked = true;
     enemy.hp = enemy.maxHp = 1e12;   // 倒せない（ミッション結果で自分で消える）
-    st = { key: key, enemy: enemy, missions: makeMissions(), turns: START_TURNS, vert: {}, conn: {}, resolved: false, wrap: null };
+    var turns = START_TURNS, needAll = NEED_ALL;
+    if (cfg) {
+      turns = Math.max(1, Math.floor(Number(cfg.turns)) || START_TURNS);
+      needAll = cfg.need !== 'any';
+    }
+    st = { key: key, enemy: enemy, reward: cfg || null, needAll: needAll, missions: makeMissions(cfg && cfg.missions, cfg && cfg.missionMode, cfg && cfg.missionPick), turns: turns, vert: {}, vertMax: {}, conn: {}, tally: {}, branchPick: null, resolved: false, wrap: null };
     render();
     var c = st.wrap.querySelector('.rc-chest');
     if (c && c.animate) c.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: .6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 520, easing: 'ease-out' });
   }
 
   // ── 1回の操作（消す→コンボ）の記録 ──────────────────────
-  function beginMove() { if (st) { st.vert = {}; st.conn = {}; } }
+  function beginMove() { if (st) { st.vert = {}; st.vertMax = {}; st.conn = {}; } }
 
   // 消えた塊のうち、1列まるごと（タテ5つ）がそろっていたら、その属性を記録
   function noteGroup(color, cells, rows) {
@@ -263,25 +322,29 @@
     st.conn[color] = Math.max(st.conn[color] || 0, cells.length);   // その属性の、いちばん大きくつながった塊の個数
     var perCol = {};
     cells.forEach(function (q) { perCol[q.c] = (perCol[q.c] || 0) + 1; });
-    for (var c in perCol) if (perCol[c] >= (rows || 5)) { st.vert[color] = true; break; }
+    for (var c in perCol) {
+      if (perCol[c] >= (rows || 5)) st.vert[color] = true;
+      st.vertMax[color] = Math.max(st.vertMax[color] || 0, perCol[c]);   // 1列に何個そろったか（タテ○つ のミッション用）
+    }
   }
 
   function judge(totalCombo, attrCounts) {
     st.missions.forEach(function (m) {
       if (m.type === 'total') { m.sum += totalCombo; if (m.sum >= m.n) m.done = true; return; }
       if (m.done) return;
-      if (m.type === 'vert5') { if (st.vert[m.attr]) m.done = true; }
+      if (m.type === 'vert5') { if (st.vert[m.attr] || (st.vertMax[m.attr] || 0) >= (m.n || 5)) m.done = true; }
       else if (m.type === 'simul6') { if ((st.conn[m.attr] || 0) >= m.n) m.done = true; }   // 1つの塊で6個以上つなげて消す
       else if (m.type === 'combo') { if (totalCombo >= m.n) m.done = true; }
     });
   }
   function cleared() {
-    return NEED_ALL ? st.missions.every(function (m) { return m.done; }) : st.missions.some(function (m) { return m.done; });
+    return st.needAll ? st.missions.every(function (m) { return m.done; }) : st.missions.some(function (m) { return m.done; });
   }
 
   // 1回の操作が終わったとき（game.js の _evaluateInner から）。宝箱が開く／消えるなら演出を待ってから戻る
   async function endMove(totalCombo, attrCounts) {
     if (!active()) return;
+    if (st.reward && st.reward.branch && attrCounts) { for (var ak in attrCounts) st.tally[ak] = (st.tally[ak] || 0) + (attrCounts[ak] || 0); }   // ボス分岐：この宝箱の階層で消したドロップの数（属性ごと）
     judge(totalCombo || 0, attrCounts || {});
     st.turns = Math.max(0, st.turns - 1);
     refreshMissions();
@@ -293,8 +356,34 @@
 
   function finish() {
     st.resolved = true;
+    if (st.reward && st.reward.branch) { try { st.branchPick = decideBranch(); } catch (e) { st.branchPick = null; } }
     st.enemy.hp = 0;           // 宝箱バトル終了 → game.js が次のフロア（ボス）へ進める
     st.enemy._fled = true;     // 経験値・エナ・ドロップなし
+  }
+
+  // ── ボス分岐 ────────────────────────────────────────────
+  //   rewardChest.branch = { attrs:['fire','water'], outcomes:{ fire:{ bgImg, bgm, cloud, enemies:[…] }, water:{…}, tie:{…} } }
+  //     cloud:true … ボスが出る前に、雲がかかって晴れる演出（ミュウと同じ）。晴れると bgImg の背景になる
+  //   宝箱の階層で消した attrs のドロップのうち、いちばん多い属性のボスにする。最多が並んだら tie のボス。
+  //   指定のボス（enemies）が無いときは、ダンジョン本来のボスのまま。
+  function decideBranch() {
+    var br = st.reward.branch;
+    if (!br || !Array.isArray(br.attrs) || !br.attrs.length || !br.outcomes) return null;
+    var max = -1, win = [];
+    br.attrs.forEach(function (a) {
+      var n = st.tally[a] || 0;
+      if (n > max) { max = n; win = [a]; } else if (n === max) win.push(a);
+    });
+    var o = br.outcomes[win.length === 1 ? win[0] : 'tie'];
+    if (!o || !Array.isArray(o.enemies) || !o.enemies.length) return null;
+    var enemies = JSON.parse(JSON.stringify(o.enemies));
+    if (o.bgm) enemies.forEach(function (e) { if (!e.bgm) e.bgm = o.bgm; });   // 分岐ごとのボスBGM
+    return { battle: { enemies: enemies }, bgImg: o.bgImg || '', cloud: !!o.cloud };
+  }
+  // 宝箱バトルのあと、次のフロア（ボス）を差し替えるために game.js から呼ぶ。{ battle, bgImg } か null
+  function takeBranch() {
+    if (!st || !st.branchPick) return null;
+    var r = st.branchPick; st.branchPick = null; return r;
   }
 
   // 光のつぶ（開いた瞬間に飛び散る）
@@ -312,6 +401,7 @@
 
   // 成功：ミッションクリア → 宝箱がガタガタ → かぎが外れてふたが開く → 光があふれて竜石が飛び出す
   async function openChest() {
+    if (st.reward) { await openRewardChest(); return; }
     var key = st.key;
     obtain(key);
     var wrap = st.wrap, center = wrap.querySelector('.rc-center');
@@ -331,6 +421,112 @@
     center.appendChild(t);
     try { playSE('levelup'); } catch (e) {}
     await sleep(1700);
+    wrap.classList.add('leaving');
+    await sleep(350);
+    finish();
+    if (area()) area().innerHTML = '';
+  }
+
+  // ── 報酬宝箱：中身の抽選・表示 ───────────────────────────
+  //   cfg.rewardMode 'each'  … 中身の1つずつを rate（1=100%）で個別に抽選
+  //                  'table' … 重み(weight)のテーブルから、rolls 回ぶんランダムに選ぶ
+  //   中身 { kind:'item'|'ena'|'monster', item, monsterId, count(数字 or [最小,最大]), rate, weight }
+  function entryValid(e) {
+    if (!e) return false;
+    if (e.kind === 'ena') return true;
+    if (e.kind === 'monster') { try { return !!MONSTER_DATA[Number(e.monsterId)]; } catch (x) { return false; } }
+    try { return !!ITEM_DATA[e.item]; } catch (x2) { return false; }
+  }
+  function rollRewards(cfg) {
+    var list = (cfg.rewards || []).filter(entryValid), picked = [];
+    if (cfg.rewardMode === 'table') {
+      var rolls = Math.max(1, Math.floor(Number(cfg.rolls)) || 1);
+      for (var i = 0; i < rolls; i++) {
+        var total = 0;
+        list.forEach(function (e) { total += Math.max(0, e.weight === undefined ? 1 : Number(e.weight) || 0); });
+        if (total <= 0) break;
+        var r = Math.random() * total, hit = null;
+        for (var j = 0; j < list.length; j++) {
+          r -= Math.max(0, list[j].weight === undefined ? 1 : Number(list[j].weight) || 0);
+          if (r < 0) { hit = list[j]; break; }
+        }
+        picked.push(hit || list[list.length - 1]);
+      }
+    } else {
+      list.forEach(function (e) {
+        var rate = e.rate === undefined ? 1 : Number(e.rate);
+        if (Math.random() < rate) picked.push(e);
+      });
+    }
+    return picked.map(function (e) {
+      var n = rollN(e.count); if (n < 1) n = 1;
+      return { kind: e.kind, item: e.item, monsterId: Number(e.monsterId) || 0, count: n };
+    });
+  }
+  function rewardIcon(r) {
+    var src = '', label = '';
+    try {
+      if (r.kind === 'ena') { src = 'hcoin.png'; label = r.count.toLocaleString() + 'エナ'; }
+      else if (r.kind === 'monster') { src = (typeof monsterImg === 'function') ? monsterImg(MONSTER_DATA[r.monsterId]) : ''; label = r.count > 1 ? '×' + r.count : ''; }
+      else { src = ITEM_DATA[r.item].img; label = r.count > 1 ? '×' + r.count : ''; }
+    } catch (e) {}
+    var box = document.createElement('div');
+    box.className = 'rc-rw';
+    box.innerHTML = '<img src="' + src + '" alt="" draggable="false" onerror="this.style.visibility=\'hidden\'">' + (label ? '<span>' + label + '</span>' : '');
+    return box;
+  }
+  // 報酬宝箱の色：銀の部分は金、青い部分は赤に変える（光の黄色はそのまま）
+  var GOLD_HUE = 43, GOLD_SAT = .72, RED_HUE = 355;
+  var _gold = null;
+  function goldSvg() {
+    if (_gold) return _gold;
+    _gold = CHEST_SVG.replace(/#([0-9a-f]{6})\b/gi, function (all, hex) {
+      var r = parseInt(hex.slice(0, 2), 16) / 255, g = parseInt(hex.slice(2, 4), 16) / 255, b = parseInt(hex.slice(4, 6), 16) / 255;
+      var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, h = 0, sat = 0;
+      if (d > 0) {
+        sat = d / (1 - Math.abs(2 * l - 1));
+        if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+        h *= 60; if (h < 0) h += 360;
+      }
+      var nh, ns;
+      if (sat > .35 && h >= 190 && h <= 250) { nh = RED_HUE; ns = sat; }          // 青 → 赤
+      else if (sat <= .35 && l > .08 && l < .97) { nh = GOLD_HUE; ns = GOLD_SAT; } // 銀・グレー → 金
+      else return all;
+      var c = (1 - Math.abs(2 * l - 1)) * ns, hh = nh / 60, x = c * (1 - Math.abs(hh % 2 - 1)), m = l - c / 2;
+      var rgb = hh < 1 ? [c, x, 0] : [c, x, 0];
+      if (nh >= 300) rgb = [c, 0, x];
+      return '#' + rgb.map(function (v) { var q = Math.round((v + m) * 255); return (q < 16 ? '0' : '') + q.toString(16); }).join('');
+    });
+    return _gold;
+  }
+
+  // 成功（報酬宝箱）：ふたが開いて、中身が飛び出す。中身はリザルトで受け取る
+  async function openRewardChest() {
+    var cfg = st.reward, wrap = st.wrap, center = wrap.querySelector('.rc-center');
+    var got = rollRewards(cfg);
+    try { playSE('dropc'); } catch (e) {}
+    wrap.classList.add('shaking');
+    await sleep(600);
+    wrap.classList.remove('shaking');
+    wrap.classList.add('opening');
+    burst(center);
+    var row = document.createElement('div');
+    row.className = 'rc-rewards';
+    row.style.setProperty('--sz', (got.length > 4 ? 10 : got.length > 2 ? 13 : 16) + 'cqw');
+    got.forEach(function (r, i) {
+      var b = rewardIcon(r);
+      b.style.animationDelay = (.1 + i * .12).toFixed(2) + 's';
+      row.appendChild(b);
+      try { if (typeof grantChestReward === 'function') grantChestReward(r); } catch (e) {}   // この冒険の獲得分に加える（game.js）
+    });
+    center.appendChild(row);
+    await sleep(900);
+    var t = document.createElement('div');
+    t.className = 'rc-get-text';
+    t.textContent = got.length ? '宝箱ゲット！' : '宝箱は空っぽだった…';
+    center.appendChild(t);
+    try { playSE(got.length ? 'levelup' : 'kieru'); } catch (e) {}
+    await sleep(1900);
     wrap.classList.add('leaving');
     await sleep(350);
     finish();
@@ -377,7 +573,7 @@
 
   window.Ryuseki = {
     count: count, total: total, list: list, imgSrc: IMG,
-    isEligible: isEligible, has: has, insertChest: insertChest,
+    isEligible: isEligible, has: has, insertChest: insertChest, insertRewardChest: insertRewardChest, takeBranch: takeBranch,
     load: load, active: active, reset: reset,
     beginMove: beginMove, noteGroup: noteGroup, endMove: endMove,
     iconHtml: iconHtml

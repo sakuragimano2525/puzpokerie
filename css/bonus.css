@@ -9,6 +9,7 @@
 .bn-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink, #222); }
 .bn-btn.ryu { background: linear-gradient(180deg, #e6f4ff 0%, #b9dcff 100%); }
 .bn-btn.gacha { background: linear-gradient(180deg, #fff7d1 0%, #ffd98a 100%); }
+.bn-btn.friend { background: linear-gradient(180deg, #e2f7ea 0%, #a8e6c0 100%); }
 .bn-btn img { width: 34px; height: 34px; object-fit: contain; }
 .bn-btn .ic { width: 30px; height: 30px; }
 .bn-btn b { font-size: 1.05rem; }
@@ -38,7 +39,7 @@
 /* モンスター画像（mX.png）は枠・背景なし */
 .bn-ico.mon { background: none; border: none; border-radius: 0; overflow: visible; }
 
-/* ボーナスボタンの真上に出す2つのボタン */
+/* ボーナスボタンの真上に出す3つのボタン（竜石・ガチャ・フレンド） */
 .bn-pop-back { position: fixed; inset: 0; z-index: 150; background: transparent; }
 .bn-pop { position: fixed; display: flex; flex-direction: column; gap: 10px; transform-origin: bottom center; animation: bnPop .14s ease-out; }
 .bn-pop .bn-btn { min-height: 56px; font-size: 1.05rem; }

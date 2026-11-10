@@ -11,6 +11,7 @@
 //     4c. sendLive(obj)        … 相手が指を動かしている最中の盤面（onLive で受け取る。見せるだけ）
 //     4d. sendParty(obj)       … 自分のパーティー情報（onParty で相手の分を受け取る）
 //     4e. sendFx(obj)          … 操作中の出来事を1つ流す（onFx で受け取る）／ clearFx() で自分のターンの始めに消す
+//     4g. sendCard(str, got)   … 自分のマイカード（js/friends.js）を相手に渡す（onCard で相手の分を受け取る）。フレンド募集と、マルチでの自動更新に使う
 //     5. leave()               … 退出（相手には「退出」が伝わる）
 //
 //   DB の形
@@ -22,6 +23,7 @@
 //     mt_rooms/{room}/live           … { by, cur, round, g }          （操作中の盤面のミラー）
 //     mt_rooms/{room}/pt/{seat}      … 各自のパーティー情報（モンスター・HP・SP・バインド）。相手の画面に「相手のパーティー」を出すのに使う
 //     mt_rooms/{room}/fx/{push}      … 操作中の出来事の流れ { by, tk, t, d }（コンボ・攻撃・HP・敵の行動…）。自分のターンの始めに消す
+//     mt_rooms/{room}/card/{seat}    … 各自のマイカード { c:カードのJSON文字列, got:相手のカードを受け取ったら1, ts }（フレンド募集のマッチは、待ち行列キー 'friend_recruit' でこの部屋の仕組みをそのまま使う）
 //
 //   seat 0 = 先に待っていた人（A / 先攻）、seat 1 = あとから来た人（B）
 // ============================================================
@@ -144,7 +146,9 @@
     const myPtRef = rRef.child('pt/' + seat);
     const fxRef = rRef.child('fx');
     const chatRef = rRef.child('chat');
-    const ctx = { rRef, mine, oppRef, turnRef, evRef, liveRef, ptRef, myPtRef, fxRef, chatRef, lastChat: 0, started: false, lastTurn: 0, lastEv: 0, handlers: handlers || {}, opp: null };
+    const cardRef = rRef.child('card/' + (1 - seat));
+    const myCardRef = rRef.child('card/' + seat);
+    const ctx = { rRef, mine, oppRef, turnRef, evRef, liveRef, ptRef, myPtRef, fxRef, chatRef, cardRef, myCardRef, lastChat: 0, started: false, lastTurn: 0, lastEv: 0, handlers: handlers || {}, opp: null };
     MO._room = ctx;
 
     mine.update({ id: myId(), present: true, ready: false, team: '', dead: false });
@@ -183,6 +187,12 @@
       const v = s.val();
       if (!v) return;
       if (ctx.handlers.onParty) ctx.handlers.onParty(v);
+    });
+    // マイカード：相手が渡してきたカード（フレンド募集・マルチでの自動更新）
+    cardRef.on('value', s => {
+      const v = s.val();
+      if (!v) return;
+      if (ctx.handlers.onCard) ctx.handlers.onCard(v);
     });
     // 定型文チャット：相手が送ったものだけ受け取る
     chatRef.on('value', s => {
@@ -269,6 +279,14 @@
     c.fxRef.remove().catch(() => {});
   };
 
+  // ---------- 4g. マイカード（フレンド募集 / マルチでの自動更新） ----------
+  //   str = カードのJSON文字列 / got = 「相手のカードを受け取ったよ」の合図（フレンド募集で、先に抜けて相手のカードを消さないため）
+  MO.sendCard = function (str, got) {
+    const c = MO._room;
+    if (!c) return;
+    try { c.myCardRef.set({ c: String(str || ''), got: got ? 1 : 0, ts: Date.now() }); } catch (e) {}
+  };
+
   // ---------- 4f. 定型文チャット（idx = 定型文の番号） ----------
   let chatN = 0;
   MO.sendChat = function (idx) {
@@ -284,7 +302,7 @@
     const c = MO._room;
     if (!c) { MO.room = null; MO.seat = null; MO.ready = false; return; }
     MO._room = null;
-    try { c.oppRef.off(); c.turnRef.off(); c.evRef.off(); c.liveRef.off(); c.ptRef.off(); c.fxRef.off(); c.chatRef.off(); } catch (e) {}
+    try { c.oppRef.off(); c.turnRef.off(); c.evRef.off(); c.liveRef.off(); c.ptRef.off(); c.fxRef.off(); c.chatRef.off(); c.cardRef.off(); } catch (e) {}
     try { c.mine.child('present').onDisconnect().cancel(); c.mine.child('ready').onDisconnect().cancel(); } catch (e) {}
     c.mine.update({ present: false, ready: false }).catch(() => {});
     // 2人とも抜けたら部屋ごと消す
