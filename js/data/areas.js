@@ -101,7 +101,10 @@ const EVENT_AREA_DATA = {
 kourinc: {both: true, name: 'ハガネール降臨', desc: 'クリアでハガネールが解放！', bg: 'dungeon12.png', hue: 200,stageNames: { boss: 'ハガネール降臨'} , stageLevels: { boss: '上級' }},
 kourind: {both: true, name: 'クシャムシャ降臨', desc: '武者が現れる…', bg: 'kourina.png', hue: 200,stageNames: { boss: 'クシャムシャ降臨'} , stageLevels: { boss: '中〜超級' }},
 kourine: {both: true, name: 'キングドラ降臨', desc: 'クリアでキングドラが解放！', bg: 'dungeon3.png', hue: 200,stageNames: { boss: 'キングドラ降臨'} , stageLevels: { boss: '上級' }},
-denky: {both: true, name: 'イベルタル降臨', desc: 'イベルタルがドロップするチャンス！', bg: 'dungeon16.png', hue: 200,stageNames: { boss: '死の化身'} , stageLevels: { boss: '超上級' }},
+kourinf: {name: '化石ポケモン降臨①', desc: 'カロス地方のポケモンが登場！', bg: 'dungeon13-1.png', hue: 200,stageNames: { boss: '化石ポケモン降臨'} , stageLevels: { boss: '超級' }},
+kouring: {name: 'オンバーン降臨', desc: 'オンバーンが登場！', bg: 'dungeon7.png', hue: 200,stageNames: { boss: 'オンバーン降臨'} , stageLevels: { boss: '地獄級' }},
+
+denky: {both: true, name: 'イベルタル降臨', desc: 'イベルタルがドロップするチャンス！', bg: 'dungeon16.png', hue: 200,stageNames: { boss: '死の化身'} , stageLevels: { boss: '超級' }},
 
   BLLU: {both: true, name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'ブルアカ-スタジアム1',boss: 'ブルアカ-スタジアム2'} , stageLevels: { 1: '上級',boss: '超級' }},
    jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョ-スタジアム'} , stageLevels: { boss: '中級' }},
