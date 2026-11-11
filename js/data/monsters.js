@@ -761,7 +761,7 @@ const MONSTER_DATA = {
     stats: { hp: { min: 280, max: 600 }, atk: { min: 60, max: 240 }, rec: { min: 25, max: 40 } },
     skill: { name: 'キュアー', sp: 2, desc: 'バインドを2ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: { name: '闇のオーラ', desc: '闇属性のHP1.2倍。', effects: [ { type: 'hp', attr: 'dark', value: 1.2 } ] },
-    evolutions: [ { to: 40, materials: [ { item: 'puzzle54', count: 3 } ] } ]
+    evolutions: [ { to: 40, materials: [ { item: 'puzzle52', count: 3 } ] } ]
   },
   40: {
     id: 40,
@@ -771,8 +771,8 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 5000,
-    stats: { hp: { min: 730, max: 4850 }, atk: { min: 170, max: 1100 }, rec: { min: 91, max: 260 } },
-    skill: { name: 'スーパーキュアー', sp: 3, desc: 'バインドを5ターン回復。', effects: [ { type: 'bindRecover', turns: 5 } ] },
+    stats: { hp: { min: 730, max: 4080 }, atk: { min: 170, max: 1100 }, rec: { min: 91, max: 260 } },
+    skill: { name: 'スーパーキュアー', sp: 3, desc: 'バインドを5ターン回復。', effects: [ { type: 'bindRecover', turns: 2 } ] },
     leaderSkill: { name: '闇のオーラ・中', desc: '闇属性のHP1.5倍。', effects: [ { type: 'hp', attr: 'dark', value: 1.5 } ] }
   },
   41: {
@@ -8201,22 +8201,26 @@ const MONSTER_DATA = {
   5023: {
     id: 5023,
     name: 'ノア',
-    rarity: 3,
+    rarity: 5,
     attr: 'water',
-    type: 'バランス',
+    type: 'かいふく',
     maxLevel: 99,
-    baseExp: 7500,
-    stats: { hp: { min: 500, max: 2800 }, atk: { min: 430, max: 2200 }, rec: { min: 170, max: 250 } },
+    baseExp: 100000,
+    stats: { hp: { min: 500, max: 2800 }, atk: { min: 430, max: 1600 }, rec: { min: 170, max: 450 } },
     skill: {
       name: '記録はスピードが命ですから',
-      sp: 3,
-      desc: '1ターンの間、操作時間が1.5倍。',
-      effects: [ { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 1.5 } ]
+      sp: 2,
+      desc: '1ターンの間、操作時間が1秒延長。\nロックを解除し、ドロップを5属性＋回復ドロップに変化。',
+      effects: [
+        { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 },
+        { type: 'orbUnlock', target: 'all' },
+        { type: 'orbChange5ColorHeal' }
+      ]
     },
     leaderSkill: {
       name: '書記のこだわり',
-      desc: 'L字消しする度に攻撃1.25倍、受けるダメージ8%軽減。',
-      effects: [ { type: 'atk', condition: 'lShapes', value: 1.25, exponential: true, reduce: 0.08 } ]
+      desc: 'L字消しする度に攻撃1.6倍、受けるダメージ3%軽減。',
+      effects: [ { type: 'atk', condition: 'lShapes', value: 1.7, exponential: true, reduce: 0.03 } ]
     }
   },
   5024: {
@@ -8364,10 +8368,10 @@ const MONSTER_DATA = {
     skill: {
       name: 'Macte Virtute',
       sp: 1,
-      desc: '光と闇ドロップをランダムで1つずつ生成。\n1ターンの間、神秘タイプ以外の攻撃が激減。',
+      desc: '光と闇ドロップをランダムで2つずつ生成。\n1ターンの間、神秘タイプ以外の攻撃が激減。',
       effects: [
-        { type: 'orbChangeRandom', attr: 'light', count: 1, message: '☠️ 毒ドロップ生成！' },
-        { type: 'orbChangeRandom', attr: 'dark', count: 1 },
+        { type: 'orbChangeRandom', attr: 'light', count: 2, message: '☠️ 毒ドロップ生成！' },
+        { type: 'orbChangeRandom', attr: 'dark', count: 2 },
         { type: 'atkBuff', monType: 'バランス', value: 0.01, turns: 1 },
         { type: 'atkBuff', monType: 'こうげき', value: 0.01, turns: 1 },
         { type: 'atkBuff', monType: 'たいりょく', value: 0.01, turns: 1 },
@@ -9646,19 +9650,19 @@ const MONSTER_DATA = {
     rarity: 5,
     attr: 'fire',
     sub: 'water',
-    type: 'バランス',
+    type: 'かいふく',
     maxLevel: 99,
-    baseExp: 35500,
-    stats: { hp: { min: 500, max: 3750 }, atk: { min: 400, max: 1450 }, rec: { min: 150, max: 300 } },
+    baseExp: 105500,
+    stats: { hp: { min: 500, max: 3250 }, atk: { min: 400, max: 1650 }, rec: { min: 150, max: 400 } },
     skill: {
       name: '気功修練B',
       sp: 3,
-      desc: '1ターンの間、火と水属性の攻撃が1.5倍。',
+      desc: '20ターンの間、回復ドロップが少し落ちやすくなる。\n1ターンの間、かいふくタイプの攻撃が1.5倍。',
       cutin: true,
-      condition: { type: 'orbBoost', attr: 'water' },
       effects: [
-        { type: 'atkBuff', value: 1.5, turns: 1, attr: 'fire' },
-        { type: 'atkBuff', attr: 'water', value: 1.5, turns: 1 }
+        { type: 'orbSpawnBoost', attr: 'heal', rate: 0.05, turns: 20 },
+        { type: 'atkBuff', value: 1.5, turns: 1, monType: 'かいふく' },
+        { type: 'selfAtkBuff', target: 'leaderFriend', value: 2, turns: 1, includeSelf: true }
       ]
     },
     leaderSkill: {
@@ -9668,7 +9672,8 @@ const MONSTER_DATA = {
         { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.1 },
         { type: 'atk', condition: 'eraseAttr', attr: 'fire', value: 1, reduce: 0.08 }
       ]
-    }
+    },
+    bindImmune: true
   },
   5073: {
     id: 5073,
@@ -10083,7 +10088,7 @@ const MONSTER_DATA = {
     rarity: 5,
     attr: 'light',
     sub: 'dark',
-    type: 'たいりょく',
+    type: 'かいふく',
     maxLevel: 50,
     baseExp: 50000,
     stats: { hp: { min: 800, max: 4500 }, atk: { min: 200, max: 1900 }, rec: { min: 0, max: 200 } },
@@ -10123,7 +10128,7 @@ const MONSTER_DATA = {
     rarity: 5,
     attr: 'light',
     sub: 'light',
-    type: 'たいりょく',
+    type: 'かいふく',
     maxLevel: 99,
     baseExp: 50000,
     stats: { hp: { min: 700, max: 5000 }, atk: { min: 300, max: 1600 }, rec: { min: 0, max: 200 } },
