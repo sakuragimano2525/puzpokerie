@@ -5563,7 +5563,8 @@ const MONSTER_DATA = {
       name: 'そらのひとみ',
       desc: '4色以上同時に消すと攻撃1.3倍。',
       effects: [ { type: 'atk', condition: 'colorCount', value: 1.3, count: 4 } ]
-    }
+    },
+    evolutions: [ { to: 715, materials: [ { item: 'puzzle5', count: 5 } ] } ]
   },
   715: {
     id: 715,
@@ -9387,7 +9388,7 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 50,
     baseExp: 15000,
-    stats: { hp: { min: 1600, max: 3600 }, atk: { min: 6000, max: 9999 }, rec: { min: 20, max: 100 } },
+    stats: { hp: { min: 1600, max: 3600 }, atk: { min: 4000, max: 7000 }, rec: { min: 20, max: 100 } },
     skill: {
       name: '破滅',
       sp: 3,
@@ -9510,7 +9511,7 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 600, max: 4200 }, atk: { min: 300, max: 1700 }, rec: { min: 25, max: 100 } },
+    stats: { hp: { min: 600, max: 3900 }, atk: { min: 300, max: 1700 }, rec: { min: 25, max: 100 } },
     skill: {
       name: '落雷放電',
       sp: 3,
@@ -10022,7 +10023,7 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 1200, max: 4000 }, atk: { min: 2000, max: 6000 }, rec: { min: 25, max: 150 } },
+    stats: { hp: { min: 1000, max: 3500 }, atk: { min: 1500, max: 5000 }, rec: { min: 25, max: 150 } },
     skill: {
       name: 'フラム',
       sp: 2,
