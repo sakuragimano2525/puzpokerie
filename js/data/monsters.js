@@ -7211,76 +7211,153 @@ const MONSTER_DATA = {
   793: {
     id: 793,
     name: 'ウツロイド',
-    rarity: 5,
+    rarity: 4,
     attr: 'none',
     sub: 'water',
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 500, max: 2940 }, atk: { min: 350, max: 2230 }, rec: { min: 32, max: 95 } }
+    stats: { hp: { min: 500, max: 2940 }, atk: { min: 350, max: 2230 }, rec: { min: 32, max: 95 } },
+    skill: {
+      name: 'ウルトラブースト+',
+      sp: 3,
+      desc: '3ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 3 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラポイズンシールド',
+      desc: '毒ドロップを消すと受けるダメージ50%軽減。',
+      effects: [ { type: 'atk', condition: 'poison', value: 1, reduce: 0.5 } ]
+    }
   },
   794: {
     id: 794,
     name: 'マッシブーン',
-    rarity: 5,
+    rarity: 4,
     attr: 'fire',
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 490, max: 2930 }, atk: { min: 330, max: 2080 }, rec: { min: 31, max: 93 } }
+    stats: { hp: { min: 490, max: 2930 }, atk: { min: 330, max: 2080 }, rec: { min: 31, max: 93 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   795: {
     id: 795,
     name: 'フェローチェ',
-    rarity: 5,
+    rarity: 4,
     attr: 'none',
     sub: 'wood',
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 490, max: 2910 }, atk: { min: 330, max: 2100 }, rec: { min: 30, max: 90 } }
+    stats: { hp: { min: 490, max: 2910 }, atk: { min: 330, max: 2100 }, rec: { min: 30, max: 90 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   796: {
     id: 796,
     name: 'デンジュモク',
-    rarity: 5,
+    rarity: 4,
     attr: 'none',
     sub: 'light',
     type: 'バランス',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 510, max: 3450 }, atk: { min: 230, max: 1520 }, rec: { min: 77, max: 221 } }
+    stats: { hp: { min: 510, max: 3450 }, atk: { min: 230, max: 1520 }, rec: { min: 77, max: 221 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   797: {
     id: 797,
     name: 'テッカグヤ',
-    rarity: 5,
+    rarity: 4,
     attr: 'wood',
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 690, max: 4620 }, atk: { min: 230, max: 1580 }, rec: { min: 31, max: 86 } }
+    stats: { hp: { min: 690, max: 4620 }, atk: { min: 230, max: 1580 }, rec: { min: 31, max: 86 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   798: {
     id: 798,
     name: 'カミツルギ',
-    rarity: 5,
+    rarity: 4,
     attr: 'none',
     sub: 'light',
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 480, max: 2840 }, atk: { min: 340, max: 2120 }, rec: { min: 32, max: 97 } }
+    stats: { hp: { min: 480, max: 2840 }, atk: { min: 340, max: 2120 }, rec: { min: 32, max: 97 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   799: {
     id: 799,
     name: 'アクジキング',
-    rarity: 5,
+    rarity: 4,
     attr: 'dark',
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 720, max: 4800 }, atk: { min: 220, max: 1530 }, rec: { min: 35, max: 95 } }
+    stats: { hp: { min: 720, max: 4800 }, atk: { min: 220, max: 1530 }, rec: { min: 35, max: 95 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   800: {
     id: 800,
@@ -7336,39 +7413,88 @@ const MONSTER_DATA = {
     type: 'こうげき',
     maxLevel: 25,
     baseExp: 5000,
-    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } }
+    stats: { hp: { min: 160, max: 360 }, atk: { min: 120, max: 260 }, rec: { min: 7, max: 12 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    },
+    evolutions: [ { to: 804, materials: [ { item: 'puzzle54', count: 1 } ] } ]
   },
   804: {
     id: 804,
     name: 'アーゴヨン',
-    rarity: 5,
+    rarity: 4,
     attr: 'dark',
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 490, max: 2890 }, atk: { min: 330, max: 2100 }, rec: { min: 32, max: 95 } }
+    stats: { hp: { min: 490, max: 2890 }, atk: { min: 330, max: 2100 }, rec: { min: 32, max: 95 } },
+    skill: {
+      name: 'ポイズンウルトラブースト',
+      sp: 3,
+      desc: '2ターンの間、自分の攻撃力が1.5倍。毒ドロップをランダムで3つ生成。\n1ターンの間、敵単体の防御力を50%ダウン。',
+      effects: [
+        { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 2 },
+        { type: 'orbChangeRandom', attr: 'poison', count: 3 },
+        { type: 'defenseDown', target: 'single', value: 0.5, turns: 1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'ポイズンウルトラアップ',
+      desc: '毒を10個以上つなげて消すと攻撃4倍、受けるダメージ25%軽減。',
+      effects: [ { type: 'atk', condition: 'orbConnect', attr: 'poison', count: 10, value: 4, reduce: 0.25 } ]
+    }
   },
   805: {
     id: 805,
     name: 'ツンデツンデ',
-    rarity: 5,
+    rarity: 4,
     attr: 'none',
     sub: 'water',
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 670, max: 4500 }, atk: { min: 230, max: 1600 }, rec: { min: 34, max: 94 } }
+    stats: { hp: { min: 670, max: 4500 }, atk: { min: 230, max: 1600 }, rec: { min: 34, max: 94 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   806: {
     id: 806,
     name: 'ズガドーン',
-    rarity: 5,
+    rarity: 4,
     attr: 'none',
     sub: 'fire',
     type: 'こうげき',
     maxLevel: 99,
     baseExp: 25000,
-    stats: { hp: { min: 480, max: 2830 }, atk: { min: 350, max: 2180 }, rec: { min: 33, max: 99 } }
+    stats: { hp: { min: 480, max: 2830 }, atk: { min: 350, max: 2180 }, rec: { min: 33, max: 99 } },
+    skill: {
+      name: 'ウルトラブースト',
+      sp: 3,
+      desc: '1ターンの間、自分の攻撃力が1.5倍。',
+      effects: [ { type: 'selfAtkBuff', target: 'self', value: 1.5, turns: 1 } ]
+    },
+    leaderSkill: {
+      name: 'ウルトラアップ',
+      desc: '神秘タイプの攻撃1.33倍。',
+      effects: [ { type: 'atk', condition: 'type', attr: '神秘', value: 1.23 } ]
+    }
   },
   807: {
     id: 807,

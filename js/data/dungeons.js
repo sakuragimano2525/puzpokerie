@@ -210,7 +210,8 @@ const DUNGEON_BGM = {
   "20-boss": {"field":"b9.mp3","boss":"boss3.mp3"},
   "tou-boss": {"field":"b11.mp3","boss":"boss10.mp3"},
   "kourinf-boss": {"field":"b3.mp3","boss":"boss5.mp3"},
-  "kouring-boss": {"field":"b8.mp3","boss":"boss5.mp3"}
+  "kouring-boss": {"field":"b8.mp3","boss":"boss5.mp3"},
+  "ultra-boss": {"field":"b11.mp3","boss":"boss7.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -54027,5 +54028,392 @@ const DUNGEON_DATA = {
         }
       ]
     }
+  },
+  "ultra-boss": {
+    "bgImg": "ultra.png",
+    "bgm": "b11.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "マッシブーン",
+            "img": "mp794.png",
+            "attr": "fire",
+            "hp": 500000,
+            "atk": 5000,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "フェローチェ",
+            "img": "mp795.png",
+            "attr": "wood",
+            "hp": 500000,
+            "atk": 5000,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "デンジュモク",
+            "img": "mp796.png",
+            "attr": "light",
+            "hp": 500000,
+            "atk": 5000,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "テッカグヤ",
+            "img": "mp797.png",
+            "attr": "wood",
+            "hp": 500000,
+            "atk": 5000,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "カミツルギ",
+            "img": "mp798.png",
+            "attr": "light",
+            "hp": 500000,
+            "atk": 5000,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "アクジキング",
+            "img": "mp799.png",
+            "attr": "dark",
+            "hp": 2500000,
+            "atk": 10000,
+            "def": 0,
+            "turnInterval": 4,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ツンデツンデ",
+            "img": "mp805.png",
+            "attr": "water",
+            "hp": 250000,
+            "atk": 10000,
+            "def": 5000,
+            "turnInterval": 4,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ズガドーン",
+            "img": "mp806.png",
+            "attr": "none",
+            "hp": 500000,
+            "atk": 5000,
+            "def": 0,
+            "turnInterval": 2,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "アーゴヨン",
+            "img": "mp804.png",
+            "attr": "dark",
+            "hp": 250000,
+            "atk": 3000,
+            "def": 1000,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05,
+              "monsterId": 803
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "どくのめざめ",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "orb_boost",
+                    "attr": "poison",
+                    "rate": 15,
+                    "attr2": "none",
+                    "rate2": 15,
+                    "turn": 3
+                  }
+                ]
+              }
+            ],
+            "isBoss": false
+          }
+        ]
+      },
+      {
+        "enemies": [
+          {
+            "name": "ウツロイド",
+            "img": "mp793.png",
+            "attr": "dark",
+            "hp": 250000,
+            "atk": 3000,
+            "def": 5000,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 1000,
+            "coin": 100,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.05
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "name": "どくのめざめ",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "orb_boost",
+                    "attr": "poison",
+                    "rate": 15,
+                    "attr2": "none",
+                    "rate2": 15,
+                    "turn": 3
+                  }
+                ]
+              }
+            ],
+            "isBoss": true
+          }
+        ]
+      }
+    ]
   }
 };

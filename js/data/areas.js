@@ -105,6 +105,7 @@ kourinf: {name: '化石ポケモン降臨①', desc: 'カロス地方のポケ�
 kouring: {name: 'オンバーン降臨', desc: 'オンバーンが登場！', bg: 'dungeon7.png', hue: 200,stageNames: { boss: 'オンバーン降臨'} , stageLevels: { boss: '地獄級' }},
 
 denky: {both: true, name: 'イベルタル降臨', desc: 'イベルタルがドロップするチャンス！', bg: 'dungeon16.png', hue: 200,stageNames: { boss: '死の化身'} , stageLevels: { boss: '超級' }},
+   ultra: {both: true, name: 'ウルトラホール', desc: 'ウルトラホールドロップするチャンス！', bg: 'ultra.png', hue: 200,stageNames: { boss: 'ウルトラホール'} , stageLevels: { boss: '上級' }},
 
   BLLU: {both: true, name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'ブルアカ-スタジアム1',boss: 'ブルアカ-スタジアム2'} , stageLevels: { 1: '上級',boss: '超級' }},
    jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョ-スタジアム'} , stageLevels: { boss: '中級' }},
