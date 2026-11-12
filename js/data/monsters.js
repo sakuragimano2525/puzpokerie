@@ -7985,9 +7985,10 @@ const MONSTER_DATA = {
       desc: '【落ちコンなし】回復をちょうど5個消すと攻撃1.5倍。\n水ドロップの3コンボ以上で攻撃2倍。\n残りドロップ3個以下で攻撃3倍、受けるダメージ30%軽減。',
       effects: [
         { type: 'atk', condition: 'exactCount', attr: 'heal', count: 5, value: 1.5 },
-        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 3, value: 2 },
+        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 3, value: 1.3 },
         { type: 'noDrop', value: true },
-        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 2.5, reduce: 0.25 }
+        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 2 },
+        { type: 'hp', value: 0.9 }
       ]
     }
   },
