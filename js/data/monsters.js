@@ -7674,7 +7674,15 @@ const MONSTER_DATA = {
     maxLevel: 50,
     baseExp: 10000,
     stats: { hp: { min: 250, max: 2500 }, atk: { min: 125, max: 1250 }, rec: { min: 25, max: 125 } },
-    skill: { name: 'スキルP', sp: 1, desc: 'HPが1になる。', effects: [ { type: 'selfDamage', mode: 'toOne', value: 0 } ] },
+    skill: {
+      name: 'スキルP',
+      sp: 2,
+      desc: 'HPが1になる。',
+      effects: [
+        { type: 'selfDamage', mode: 'toOne', value: 0 },
+        { type: 'orbLock', target: 'attrs', orb_ojama: true, orb_poison: true }
+      ]
+    },
     leaderSkill: {
       name: 'リーダースキルP',
       desc: '毒ダメージを無効化。\nHP25%以下で攻撃1.5倍、受けるダメージ20%軽減。',
@@ -7964,7 +7972,7 @@ const MONSTER_DATA = {
     attr: 'water',
     type: '神秘',
     maxLevel: 99,
-    baseExp: 500,
+    baseExp: 5000,
     stats: { hp: { min: 410, max: 2650 }, atk: { min: 300, max: 2000 }, rec: { min: 25, max: 50 } },
     skill: {
       name: 'シルバーチャリオッツ',
@@ -7974,11 +7982,12 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '「戦車」のタロット',
-      desc: '【落ちコンなし】水と光を同時に5個以上繋げて消すと攻撃1.3倍。\n残りドロップ3個以下で攻撃1.5倍。',
+      desc: '【落ちコンなし】回復をちょうど5個消すと攻撃1.5倍。\n水ドロップの3コンボ以上で攻撃2倍。\n残りドロップ3個以下で攻撃3倍、受けるダメージ30%軽減。',
       effects: [
-        { type: 'atk', condition: 'orbConnect', attr: 'water', count: 5, value: 1.3, attr2: 'light' },
-        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 1.5 },
-        { type: 'noDrop', value: true }
+        { type: 'atk', condition: 'exactCount', attr: 'heal', count: 5, value: 1.5 },
+        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 3, value: 2 },
+        { type: 'noDrop', value: true },
+        { type: 'atk', condition: 'remainingOrbs', threshold: 3, value: 2.5, reduce: 0.25 }
       ]
     }
   },
@@ -8225,7 +8234,6 @@ const MONSTER_DATA = {
       name: 'フリーダムペイント',
       sp: 3,
       desc: '左の縦1列を木ドロップに変化、右は闇ドロップに変化。\n木・闇・回復ドロップをロック。',
-      condition: { type: 'orbBoost', attr: 'wood' },
       effects: [
         { type: 'orbChangeLine', dir: 'col', index: 0, count: 1, attr: 'wood' },
         { type: 'orbChangeLine', dir: 'col', index: 5, count: 1, attr: 'dark' },
@@ -8263,7 +8271,6 @@ const MONSTER_DATA = {
       sp: 5,
       desc: 'ドロップを木・闇ドロップに変化。\n敵全体に仲間の絆に比例する無属性の攻撃。',
       cutin: true,
-      condition: { type: 'orbBoost', attr: 'wood' },
       effects: [
         { type: 'orbChangeMulti', orb_wood: true, orb_dark: true },
         { type: 'damagePartyAtkMult', target: 'all', value: 10, attr: 'poison' }
@@ -8636,7 +8643,7 @@ const MONSTER_DATA = {
     stats: { hp: { min: 150, max: 3100 }, atk: { min: 50, max: 1300 }, rec: { min: 350, max: 650 } },
     skill: {
       name: '癒しの粘液',
-      sp: 4,
+      sp: 2,
       desc: '1ターンの間、回復力が1.5倍。\n毒とお邪魔ドロップのロックを解除し、左上に回復を逆L字型に生成。',
       cutin: true,
       effects: [
@@ -8664,7 +8671,7 @@ const MONSTER_DATA = {
     type: 'かいふく',
     maxLevel: 99,
     baseExp: 7500,
-    stats: { hp: { min: 250, max: 2500 }, atk: { min: 250, max: 2000 }, rec: { min: 100, max: 300 } },
+    stats: { hp: { min: 250, max: 2500 }, atk: { min: 250, max: 2000 }, rec: { min: 0, max: 0 } },
     skill: {
       name: 'インシークレット',
       sp: 4,
@@ -8679,12 +8686,10 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: '真実への鍵',
-      desc: '【落ちコンなし】4色以上同時に消すと攻撃力上昇、最大2倍。\n残りドロップ4個以下で攻撃1.3倍、受けるダメージ5%軽減。',
+      desc: '【落ちコンなし】4色以上同時に消すと攻撃倍率上昇、最大2.3倍。',
       effects: [
-        { type: 'atk', condition: 'colorRamp', count: 4, healCounts: true, value: 1.2, maxValue: 2 },
-        { type: 'noDrop', value: true },
-        { type: 'atk', condition: 'remainingOrbs', threshold: 4, value: 1.3, reduce: 0.1 },
-        { type: 'moveTimeAdd', value: 1 }
+        { type: 'atk', condition: 'colorRamp', count: 4, healCounts: true, value: 1.2, maxValue: 2.1 },
+        { type: 'noDrop', value: true }
       ]
     }
   },
@@ -8922,15 +8927,15 @@ const MONSTER_DATA = {
     name: 'フリージア',
     rarity: 5,
     attr: 'water',
-    type: 'バランス',
+    type: 'たいりょく',
     maxLevel: 50,
     baseExp: 12500,
-    stats: { hp: { min: 1200, max: 3800 }, atk: { min: 300, max: 1600 }, rec: { min: 100, max: 200 } },
+    stats: { hp: { min: 1200, max: 4800 }, atk: { min: 300, max: 1600 }, rec: { min: 100, max: 200 } },
     skill: {
       name: '激情戦斧',
       sp: 2,
-      desc: '1ターンの間、水ドロップが少し落ちやすくなる。',
-      effects: [ { type: 'orbSpawnBoost', attr: 'water', rate: 0.15, turns: 1 } ]
+      desc: 'ロックを解除し、バインドを全回復。',
+      effects: [ { type: 'orbUnlock', target: 'all' }, { type: 'bindRecover', turns: 9 } ]
     },
     leaderSkill: {
       name: 'ウォーターコンボ・超',
@@ -9494,7 +9499,6 @@ const MONSTER_DATA = {
       sp: 1,
       desc: '99ターンの間、自分の属性が木属性に変化。\n1ターンの間、操作時間が1秒延長。',
       cutin: true,
-      condition: { type: 'orbBoost', attr: 'wood' },
       effects: [ { type: 'attrChange', attr: 'wood', turns: 99 }, { type: 'moveTimeBuff', turns: 1, seconds: 1, mult: 1 } ]
     },
     leaderSkill: {
@@ -9641,19 +9645,18 @@ const MONSTER_DATA = {
     type: 'たいりょく',
     maxLevel: 99,
     baseExp: 10000,
-    stats: { hp: { min: 600, max: 3900 }, atk: { min: 300, max: 1700 }, rec: { min: 25, max: 100 } },
+    stats: { hp: { min: 600, max: 3900 }, atk: { min: 300, max: 1700 }, rec: { min: 0, max: 0 } },
     skill: {
       name: '落雷放電',
       sp: 3,
       desc: 'ドロップを5属性＋回復ドロップに変化。\n光ドロップをランダムで3つ生成。',
-      cutin: true,
       condition: { type: 'orbCount', attr: 'light', value: 6 },
       effects: [ { type: 'orbChange5ColorHeal' }, { type: 'orbChangeRandom', attr: 'light', count: 3 } ]
     },
     leaderSkill: {
       name: '真なる覚醒',
-      desc: '5色同時に消すと攻撃2倍。',
-      effects: [ { type: 'atk', condition: 'colorCount', count: 5, value: 2 } ]
+      desc: '5色同時に消すと攻撃2.3倍。',
+      effects: [ { type: 'atk', condition: 'colorCount', count: 5, value: 2.3 } ]
     }
   },
   5068: {
@@ -10022,7 +10025,7 @@ const MONSTER_DATA = {
   5082: {
     id: 5082,
     name: 'ルル（チア）',
-    rarity: 1,
+    rarity: 5,
     attr: 'none',
     sub: 'wood',
     type: 'かいふく',
@@ -10065,17 +10068,17 @@ const MONSTER_DATA = {
     skill: {
       name: '咆哮粘菌大爆発',
       sp: 4,
-      desc: '敵単体に攻撃力×70倍の火属性攻撃。\n最上段と最下段の横1列をお邪魔ドロップに変化。',
+      desc: '敵単体に攻撃力×30倍の火属性攻撃。\n最上段の横1列をお邪魔ドロップに変化。最下段の横1列をお邪魔ドロップに変化。',
       effects: [
-        { type: 'damageSelfAtkMult', value: 100, attr: 'fire', target: 'single' },
+        { type: 'damageSelfAtkMult', value: 30, attr: 'fire', target: 'single' },
         { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'ojama' },
         { type: 'orbChangeLine', dir: 'row', index: 4, count: 1, attr: 'ojama' }
       ]
     },
     leaderSkill: {
       name: '粘菌落下爆発',
-      desc: 'お邪魔ドロップの2コンボ以上で攻撃2.5倍、1コンボ加算。',
-      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'ojama', count: 2, value: 2.5, comboAdd: 1 } ]
+      desc: 'お邪魔ドロップの2コンボ以上で攻撃2.5倍、受けるダメージ5%軽減。',
+      effects: [ { type: 'atk', condition: 'attrCombos', attr: 'ojama', count: 2, value: 2.5, reduce: 0.05 } ]
     }
   },
   5084: {
@@ -10158,19 +10161,19 @@ const MONSTER_DATA = {
     skill: {
       name: 'フラム',
       sp: 2,
-      desc: '敵全体に攻撃力×10倍の火属性攻撃。\n水ドロップを火ドロップに変化。\nスキル2に変化。',
+      desc: '敵全体に攻撃力×3倍の火属性攻撃。\n水ドロップを火ドロップに変化。\nスキル2に変化。',
       effects: [
-        { type: 'damageSelfAtkMult', target: 'all', value: 10, attr: 'fire' },
+        { type: 'damageSelfAtkMult', target: 'all', value: 5, attr: 'fire' },
         { type: 'orbConvert', from: 'water', to: 'fire' }
       ],
       stages: [
         {
           name: 'レヘルン',
           sp: 2,
-          desc: '敵単体に攻撃力×10倍の水属性攻撃。\n1ターンの間、敵全体の防御力を50%ダウン。\nスキル3に変化。',
+          desc: '敵単体に攻撃力×5倍の水属性攻撃。\n1ターンの間、敵全体の防御力を25%ダウン。\nスキル3に変化。',
           effects: [
-            { type: 'damageSelfAtkMult', target: 'single', value: 10, attr: 'water' },
-            { type: 'defenseDown', target: 'all', value: 0.5, turns: 1 }
+            { type: 'damageSelfAtkMult', target: 'single', value: 3, attr: 'water' },
+            { type: 'defenseDown', target: 'all', value: 0.1, turns: 1 }
           ]
         },
         {
@@ -10201,10 +10204,10 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'ひと夏の大冒険',
-      desc: '4色以上同時に消すと攻撃2倍、受けるダメージ15%軽減。',
+      desc: '4色以上同時に消すと攻撃2倍、受けるダメージ10%軽減。',
       effects: [
-        { type: 'atk', condition: 'colorCount', count: 4, value: 2, reduce: 0.15 },
-        { type: 'moveTimeAdd', value: -1 }
+        { type: 'atk', condition: 'colorCount', count: 4, value: 2, reduce: 0.1 },
+        { type: 'moveTimeAdd', value: -0.5 }
       ]
     }
   },
@@ -10328,7 +10331,7 @@ const MONSTER_DATA = {
       name: '感情を操る程度の能力',
       sp: 2,
       desc: '何かが起こる。',
-      condition: { type: 'orbBoost', attr: 'heal' },
+      condition: { type: 'orbBoost', attr: 'wood' },
       effects: [
         {
           type: 'randomEvent',
@@ -10349,24 +10352,24 @@ const MONSTER_DATA = {
               ]
             },
             {
-              desc: '7ターンの間、自分とサブ全員の属性が木属性に変化、12秒間、時を止める、1ターンの間、敵全体の防御力を50%ダウン',
+              desc: '7ターンの間、自分とサブ全員の属性が木属性に変化、12秒間、時を止める、1ターンの間、敵全体の防御力を100%ダウン',
               effects: [
                 { type: 'attrChange', target: 'subs', attr: 'wood', turns: 7, includeSelf: true },
                 { type: 'timeStop', seconds: 12 },
-                { type: 'defenseDown', target: 'all', value: 0.5, turns: 1 }
+                { type: 'defenseDown', target: 'all', value: 1, turns: 1 }
               ]
             },
             {
-              desc: '7ターンの間、自分の属性が光属性に変化、1ターンの間、ダメージを75%軽減',
+              desc: '7ターンの間、自分とサブ全員の属性が光属性に変化、1ターンの間、ダメージを100%軽減',
               effects: [
-                { type: 'attrChange', target: 'self', attr: 'light', turns: 7, includeSelf: true },
-                { type: 'dmgReductionBuff', turns: 1, value: 0.75 }
+                { type: 'attrChange', target: 'subs', attr: 'light', turns: 7, includeSelf: true },
+                { type: 'dmgReductionBuff', turns: 1, value: 1 }
               ]
             },
             {
-              desc: '7ターンの間、自分と両隣の属性が闇属性に変化、3ターンの間、属性吸収を無効化',
+              desc: '7ターンの間、自分とサブ全員の属性が闇属性に変化、3ターンの間、属性吸収を無効化',
               effects: [
-                { type: 'attrChange', target: 'adjacent', attr: 'dark', turns: 7, includeSelf: true },
+                { type: 'attrChange', target: 'subs', attr: 'dark', turns: 7, includeSelf: true },
                 { type: 'absorbVoid', turns: 3 }
               ]
             }
@@ -10388,11 +10391,12 @@ const MONSTER_DATA = {
     stats: { hp: { min: 260, max: 2600 }, atk: { min: 60, max: 1100 }, rec: { min: 100, max: 300 } },
     skill: {
       name: '土着神「手長足長さま」',
-      sp: 6,
-      desc: '敵全体に攻撃力×10倍の火属性攻撃。\n敵全体に攻撃力×10倍の水属性攻撃。',
+      sp: 7,
+      desc: '最上段横3列を火・水・木ドロップに変化。',
       effects: [
-        { type: 'damageSelfAtkMult', target: 'all', value: 5, attr: 'fire' },
-        { type: 'damageSelfAtkMult', target: 'all', value: 5, attr: 'water' }
+        { type: 'orbChangeLine', dir: 'row', index: 0, count: 1, attr: 'fire' },
+        { type: 'orbChangeLine', dir: 'row', index: 1, count: 1, attr: 'water' },
+        { type: 'orbChangeLine', dir: 'row', index: 2, count: 1, attr: 'wood' }
       ]
     },
     leaderSkill: {
@@ -10428,7 +10432,11 @@ const MONSTER_DATA = {
     leaderSkill: {
       name: '紅色の運命',
       desc: 'HP75%以上で攻撃2倍、受けるダメージ10%軽減。',
-      effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.75, value: 2, reduce: 0.1 }, { type: 'rec', value: 0.25 } ]
+      effects: [
+        { type: 'atk', condition: 'hpAbove', threshold: 0.75, value: 2, reduce: 0.1 },
+        { type: 'rec', value: 0.25 },
+        { type: 'hp', value: 0.9 }
+      ]
     }
   },
   5092: {
@@ -10444,22 +10452,22 @@ const MONSTER_DATA = {
     skill: {
       name: 'ラブアトラクト',
       sp: 4,
-      desc: 'HPとバインドを全回復。\n1ターンの間、全員の攻撃力が2倍。',
+      desc: '1ターンの間、全員の攻撃力が2倍。\n全ドロップを光・回復ドロップに変化。',
       yumekawa: true,
       effects: [
-        { type: 'heal', value: 1 },
         { type: 'bindRecover', turns: 99 },
         { type: 'selfAtkBuff', target: 'subs', value: 2, turns: 1, includeSelf: true },
-        { type: 'selfAtkBuff', target: 'leaderFriend', value: 2, turns: 1, includeSelf: true }
+        { type: 'selfAtkBuff', target: 'leaderFriend', value: 2, turns: 1, includeSelf: true },
+        { type: 'orbChangeMulti', orb_heal: true, orb_light: true }
       ]
     },
     leaderSkill: {
       name: 'ブルームマイセルフ',
-      desc: '回復ドロップを消す度に攻撃1.7倍、受けるダメージ8%軽減。',
+      desc: '回復ドロップを消す度に攻撃1.9倍、受けるダメージ8%軽減。',
       effects: [
         { type: 'eggDropUp', value: 20 },
         { type: 'expMult', value: 2 },
-        { type: 'atk', condition: 'eraseAttr', attr: 'heal', value: 1.8, reduce: 0.08 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'heal', value: 2, reduce: 0.08 },
         { type: 'spCharge', size: 'medium' }
       ]
     },
@@ -10478,12 +10486,12 @@ const MONSTER_DATA = {
     skill: {
       name: 'アイシイアクト',
       sp: 1,
-      desc: '30ターンの間、自分の属性が水属性に変化。\n水ドロップをランダムで6つ生成し、水ドロップと回復ドロップをロック。\nスキル2に変化。',
+      desc: '30ターンの間、自分の属性が水属性に変化。\n水ドロップと回復ドロップをランダムで3つ生成。\nスキル2に変化。',
       yumekawa: true,
       effects: [
         { type: 'attrChange', target: 'self', attr: 'water', turns: 30 },
-        { type: 'orbChangeRandom', attr: 'water', count: 6 },
-        { type: 'orbLock', target: 'attrs', orb_water: true, orb_heal: true }
+        { type: 'orbChangeRandom', attr: 'water', count: 3 },
+        { type: 'orbChangeRandom', attr: 'heal', count: 3 }
       ],
       stages: [
         {
@@ -10535,11 +10543,11 @@ const MONSTER_DATA = {
     },
     leaderSkill: {
       name: 'アグレッシブワイドビリーフ',
-      desc: 'スキル使用時、攻撃1.5倍、受けるダメージ25%軽減。\n水ドロップを消す度に攻撃1.3倍。\n水ドロップの2コンボ以上で回復力2倍、1コンボ加算。',
+      desc: 'スキル使用時、受けるダメージ25%軽減。\n水ドロップを消す度に攻撃1.3倍。\n水ドロップの2コンボ以上で回復力2倍、1コンボ加算。',
       effects: [
         { type: 'eggDropUp', value: 20 },
         { type: 'expMult', value: 2 },
-        { type: 'atk', condition: 'skillUsed', value: 2, reduce: 0.25 },
+        { type: 'atk', condition: 'skillUsed', value: 1.5, reduce: 0.25 },
         { type: 'spCharge', size: 'medium' },
         { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.4 },
         { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1, recValue: 2, comboAdd: 1 }
@@ -10604,14 +10612,14 @@ const MONSTER_DATA = {
     skill: {
       name: 'トゥフューチャー',
       sp: 2,
-      desc: 'HPを全回復。1ターンの間、全属性の攻撃が1.5倍。\n15秒間、時を止める。',
+      desc: 'HPを全回復。1ターンの間、全属性の攻撃が1.5倍。\n10秒間、時を止める。',
       yumekawa: true,
       condition: { type: 'hpBelow', value: 1 },
-      effects: [ { type: 'heal', value: 1 }, { type: 'atkBuff', value: 2, turns: 1 }, { type: 'timeStop', seconds: 15 } ]
+      effects: [ { type: 'heal', value: 1 }, { type: 'atkBuff', value: 2, turns: 1 }, { type: 'timeStop', seconds: 10 } ]
     },
     leaderSkill: {
       name: 'アトラクトゲイン',
-      desc: 'ダンジョン潜入時にリーダー/フレンドの時、チップとタマゴドロップ率が少し上昇。\n全属性のHP1.15倍。',
+      desc: 'ダンジョン潜入時にリーダー/フレンドの時、チップとタマゴドロップ率が少し上昇。\n全属性のHP1.2倍。',
       effects: [ { type: 'hp', value: 1.1 } ]
     }
   },
@@ -10664,7 +10672,7 @@ const MONSTER_DATA = {
       sp: 4,
       desc: 'ロックを解除し、全ドロップを光・闇ドロップに変化。\n99ターンの間、サブ全員の属性が闇属性に変化、\n自分とリーダーとフレンドの属性が光属性に変化。',
       yumekawa: true,
-      condition: { type: 'orbBoost', attr: 'dark' },
+      condition: { type: 'orbBoost', attr: 'wood' },
       effects: [
         { type: 'orbUnlock', target: 'all' },
         { type: 'orbChangeMulti', orb_light: true, orb_dark: true },
@@ -10694,13 +10702,9 @@ const MONSTER_DATA = {
       desc: '1ターンの間、火ドロップが落ちやすくなる。\nHPを最大HPの50%回復。',
       yumekawa: true,
       condition: { type: 'orbBoost', attr: 'fire' },
-      effects: [ { type: 'orbSpawnBoost', attr: 'fire', rate: 0.42, turns: 1 }, { type: 'heal', value: 0.5 } ]
+      effects: [ { type: 'orbSpawnBoost', attr: 'fire', rate: 0.4, turns: 1 }, { type: 'heal', value: 0.5 } ]
     },
-    leaderSkill: {
-      name: 'ブルームレッドアップ',
-      desc: 'SPの上限が5アップ（最大15）。',
-      effects: [ { type: 'spCapUp', value: 5 }, { type: 'rec', value: 0.01 } ]
-    }
+    leaderSkill: { name: 'ブルームレッドアップ', desc: 'SPの上限が5アップ（最大15）。', effects: [ { type: 'spCapUp', value: 5 } ] }
   },
   5099: {
     id: 5099,
@@ -10723,24 +10727,25 @@ const MONSTER_DATA = {
       ],
       stages: [
         {
-          name: 'ファイナル=カラミティ',
+          name: 'ファイナルフォース',
           sp: 10,
           yumekawa: true,
-          desc: '敵単体に攻撃力×100倍の水属性攻撃。\nスキル1に変化。',
-          effects: [ { type: 'damageSelfAtkMult', target: 'single', value: 150, attr: 'water' } ]
+          desc: '敵単体に攻撃力×150倍の水属性攻撃。\nスキル1に変化。',
+          effects: [ { type: 'damageSelfAtkMult', target: 'single', value: 200, attr: 'water' } ]
         }
       ]
     },
     leaderSkill: {
       name: 'ブルーシャインワイドビリーフ',
-      desc: 'スキル使用時、攻撃1.2倍、受けるダメージ30%軽減。\n水ドロップを消す度に攻撃1.3倍。\n水ドロップの2コンボ以上で1コンボ加算。\nSP上限値+5',
+      desc: 'スキル使用時、受けるダメージ30%軽減。\n水ドロップを消す度に攻撃1.3倍。\n水ドロップの2コンボ以上で1コンボ加算。\nSP上限値+5',
       effects: [
         { type: 'eggDropUp', value: 20 },
         { type: 'coinMult', value: 2 },
-        { type: 'atk', condition: 'skillUsed', value: 1.5, reduce: 0.3 },
+        { type: 'atk', condition: 'skillUsed', value: 1.2, reduce: 0.3 },
         { type: 'spCapUp', value: 5 },
         { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.4 },
-        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1, recValue: 2, comboAdd: 1 }
+        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1, recValue: 2, comboAdd: 1 },
+        { type: 'moveTimeAdd', value: 2 }
       ]
     },
     bindImmune: true
