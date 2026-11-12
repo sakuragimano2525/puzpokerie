@@ -14,6 +14,11 @@
 //      各アイテムの確率抽選 or テーブルから重みでランダム）を自由に指定できる。竜石は関係なく、挑戦のたびに出る。
 //      Ryuseki.insertRewardChest(cfg, battles) で差し込み、中身は game.js の grantChestReward() でリザルトに加算される。
 //
+//   ★ 宝箱フロア（ダンジョン設定ツールで、バトル（階層）の種類を「宝箱」にしたフロア）
+//      battles の中に { chestFloor: { turns, need, missions, rewardMode, rewards … } } と書くと、その階層は敵の代わりに宝箱になる。
+//      何階あってもよく、全階層を宝箱にすればモンスターなしの宝箱だけのダンジョンになる。竜石は関係なく、挑戦のたびに出る。
+//      Ryuseki.expandFloors(battles) で宝箱バトルに置き換える（game.js の startGameFromHome から）。
+//
 //   game.js から呼ばれるもの：
 //     Ryuseki.isEligible(key) / has(key) / insertChest(key, battles)
 //     Ryuseki.load(enemy)      … 宝箱バトルの開始（loadBattle から）
@@ -126,7 +131,8 @@
   var STORE_KEY = 'puzzdra_ryuseki';   // 取得済みのダンジョン一覧（localStorage）
   var START_AREA = 10;                 // この番号のエリアから竜石がある
   var START_TURNS = 3;                 // 宝箱の「あと」
-  var MISSION_COUNT = 2;               // ミッションの数
+  var MISSION_COUNT = 2;               // ミッションの数（竜石の宝箱・指定なしのとき）
+  var MAX_MISSIONS = 3;                // 報酬宝箱でツールから指定できるミッションの最大数
   var NEED_ALL = true;                 // true：2つとも達成で開く ／ false：どれか1つ達成で開く
   var ATTRS = ['fire', 'water', 'wood', 'light', 'dark'];     // 火〜闇
   var ATTR_IMG = { fire: '1.png', water: '2.png', wood: '3.png', light: '4.png', dark: '5.png' };
@@ -170,21 +176,43 @@
     return out;
   }
 
+  // 報酬宝箱（cfg）1フロアぶんのバトルデータを作る
+  function rewardChestBattle(cfg) {
+    var def = { name: '宝箱', isChest: true, attr: 'dark', hp: 1, atk: 0, def: 0, size: 'M', turnInterval: 999, exp: 0, coin: 0, drops: [], actions: [] };
+    var mo = cfg.monster;   // モンスター画像つき：宝箱の代わりにモンスターが出る（あと〇で攻撃してくる）
+    if (mo && mo.img) {
+      def.img = mo.img; def.name = mo.name || 'モンスター'; def.size = (['S', 'M', 'L', 'XL'].indexOf(mo.size) >= 0) ? mo.size : 'M';
+      def.atk = Math.max(0, Math.floor(Number(mo.atk)) || 0);
+      def.turnInterval = Math.max(1, Math.floor(Number(cfg.turns)) || START_TURNS);
+      if (mo.attr) def.attr = mo.attr;
+    }
+    return { chest: true, rewardChest: cfg, enemies: [def] };
+  }
+
   // ボスの前（竜石の宝箱があればその次）に「報酬宝箱」バトルを追加
   function insertRewardChest(cfg, battles) {
     if (!cfg || cfg.enabled === false || !Array.isArray(battles) || !battles.length) return battles;
-    var chest = {
-      chest: true,
-      rewardChest: cfg,
-      enemies: [{ name: '宝箱', isChest: true, attr: 'dark', hp: 1, atk: 0, def: 0, size: 'M', turnInterval: 999, exp: 0, coin: 0, drops: [], actions: [] }]
-    };
     var out = battles.slice();
-    out.splice(out.length - 1, 0, chest);
+    out.splice(out.length - 1, 0, rewardChestBattle(cfg));
     return out;
+  }
+
+  // ダンジョンデータの battles の中の「宝箱フロア」（{ chestFloor: {…} }）を、宝箱バトルに置き換える。
+  //   モンスターの代わりに宝箱を置いたフロア。何階でも、全階層を宝箱にもできる（宝箱だけのダンジョン）。
+  //   chestFloor の中身は rewardChest と同じ（turns / need / missions / rewardMode / rewards …）。ボス分岐（branch）だけは使わない。
+  function expandFloors(battles) {
+    if (!Array.isArray(battles) || !battles.some(function (b) { return b && b.chestFloor; })) return battles;
+    return battles.map(function (b) {
+      if (!b || !b.chestFloor) return b;
+      var cfg = Object.assign({}, b.chestFloor);
+      delete cfg.branch;
+      return rewardChestBattle(cfg);
+    });
   }
 
   // ── ミッション ──────────────────────────────────────────
   //   type: 'vert5'（○属性をタテに5つ）／'simul6'（○属性を同時に6つ）／'combo'（Nコンボ以上）／'total'（合計Nコンボ）
+  //         ／'drops'（○属性のドロップを合計N個消す。attr は fire〜dark か 'random'。複数ターンにまたがって数える）
   function rollN(v) {   // 数字 または [最小, 最大]
     if (Array.isArray(v)) {
       var a = Math.floor(Number(v[0])) || 1, b = Math.floor(Number(v[1])) || a;
@@ -201,24 +229,26 @@
     else if (t === 'simul6') { m.attr = attr; m.n = Math.max(3, n || 6); }
     else if (t === 'combo') m.n = Math.max(1, n || rint(5, 8));
     else if (t === 'total') { m.n = Math.max(1, n || rint(15, 20)); m.sum = 0; }
+    else if (t === 'drops') { m.attr = attr; m.n = Math.max(1, n || rint(15, 25)); m.sum = 0; }   // ○属性のドロップを合計N個
     return m;
   }
   function makeMissions(custom, mode, pickN) {
-    var types = ['vert5', 'simul6', 'combo', 'total'];
+    var types = ['vert5', 'simul6', 'combo', 'total'];   // 種類を指定しない（ランダム）ときに選ばれる種類
+    var validTypes = types.concat(['drops']);              // ツールで指定できる種類（drops は指定したときだけ出る）
     var out = [];
     if (Array.isArray(custom) && custom.length) {
-      // ツールで指定したミッション（最大2つ）。type が 'random'／未指定のぶんは、指定済みと被らない種類からランダム
+      // ツールで指定したミッション（最大3つ）。type が 'random'／未指定のぶんは、指定済みと被らない種類からランダム
       var list;
       if (mode === 'random') {   // 設定したミッションの中から、pickN 個（最大2）をランダムに選ぶ
-        var pool = custom.slice(), k = Math.max(1, Math.min(MISSION_COUNT, Math.floor(Number(pickN)) || MISSION_COUNT));
+        var pool = custom.slice(), k = Math.max(1, Math.min(MAX_MISSIONS, Math.floor(Number(pickN)) || MISSION_COUNT));
         list = [];
         while (list.length < k && pool.length) list.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-      } else list = custom.slice(0, MISSION_COUNT);
+      } else list = custom.slice(0, MAX_MISSIONS);
       var used = {};
-      list.forEach(function (c) { if (c && types.indexOf(c.type) >= 0) used[c.type] = 1; });
+      list.forEach(function (c) { if (c && validTypes.indexOf(c.type) >= 0) used[c.type] = 1; });
       list.forEach(function (c) {
         var t = c && c.type;
-        if (types.indexOf(t) < 0) {
+        if (validTypes.indexOf(t) < 0) {
           var rest = types.filter(function (x) { return !used[x]; });
           t = pick(rest.length ? rest : types);
           used[t] = 1;
@@ -237,6 +267,7 @@
   function missionHtml(m) {
     if (m.type === 'vert5') return attrIcon(m.attr) + 'を<b>タテに' + (m.n || 5) + 'つ</b>で並べろ';
     if (m.type === 'simul6') return attrIcon(m.attr) + 'を<b>同時に' + (m.n || 6) + 'つ繋げて</b>消せ';
+    if (m.type === 'drops') return attrIcon(m.attr) + 'ドロップを<b>合計' + m.n + '個</b>消せ';
     if (m.type === 'combo') return '<b>' + m.n + 'コンボ以上</b>しろ';
     return '<b>合計' + m.n + 'コンボ</b>しろ';
   }
@@ -248,19 +279,31 @@
 
   function area() { return document.getElementById('enemy-area'); }
 
+  // ミッションカードの位置：1つ＝左 ／ 2つ＝左・右 ／ 3つ＝左・中・右
+  function mpos(i, n, mon) {
+    if (n >= 3) return ['left', 'mid', 'right'][i] || 'right';
+    if (n === 1) return mon ? 'mid' : 'left';
+    return i === 0 ? 'left' : 'right';
+  }
+  function cardsHtml(mon) {
+    var n = st.missions.length;
+    return st.missions.map(function (m, i) {
+      return '<div class="rc-mission ' + mpos(i, n, mon) + (m.done ? ' done' : '') + '" data-i="' + i + '">' +
+        '<span class="rc-mtext">' + missionHtml(m) + '</span>' +
+        ((m.type === 'total' || m.type === 'drops') ? '<span class="rc-prog">' + Math.min(m.sum, m.n) + ' / ' + m.n + '</span>' : '') +
+        '<span class="rc-check">✓</span></div>';
+    }).join('');
+  }
+
   function render() {
     var el = area();
     if (!el || !st) return;
+    if (st.mon) { renderMon(el); return; }
     el.innerHTML = '';
     el.classList.remove('has-xl');
     var wrap = document.createElement('div');
-    wrap.className = 'rc-wrap';
-    var cards = st.missions.map(function (m, i) {
-      return '<div class="rc-mission ' + (i === 0 ? 'left' : 'right') + (m.done ? ' done' : '') + '" data-i="' + i + '">' +
-        '<span class="rc-mtext">' + missionHtml(m) + '</span>' +
-        (m.type === 'total' ? '<span class="rc-prog">' + Math.min(m.sum, m.n) + ' / ' + m.n + '</span>' : '') +
-        '<span class="rc-check">✓</span></div>';
-    }).join('');
+    wrap.className = 'rc-wrap' + (st.missions.length >= 3 ? ' m3' : '');
+    var cards = cardsHtml(false);
     wrap.innerHTML =
       cards +
       '<div class="rc-center">' +
@@ -271,6 +314,26 @@
     st.wrap = wrap;
     if (st.reward) wrap.classList.add('gold');
     setCounter();
+  }
+
+  // モンスター画像つき：ふつうの敵と同じ表示（サイズ S/M/L/XL・画像の自動フィット・「あと〇」）。HPバー・属性アイコンは出さない
+  function renderMon(el) {
+    renderEnemyUI(false);   // game.js：enemyList（＝このモンスター）をふつうの敵として配置
+    var unit = el.querySelector('.enemy-unit');
+    var wrap = document.createElement('div');
+    wrap.className = 'rc-wrap rc-mon' + (st.missions.length >= 3 ? ' m3' : '');
+    wrap.innerHTML = cardsHtml(true);
+    var stage = document.createElement('div');
+    stage.className = 'rc-stage';
+    if (unit) {
+      var hp = unit.querySelector('.enemy-hp-row'); if (hp) hp.remove();   // HPバー・属性アイコンなし
+      stage.appendChild(unit);
+    }
+    wrap.appendChild(stage);
+    el.appendChild(wrap);
+    st.wrap = wrap;
+    wrap.classList.add('gold');
+    if (typeof fitEnemyImages === 'function') fitEnemyImages();
   }
 
   function setCounter() {
@@ -303,14 +366,18 @@
     enemy._dropChecked = true;
     enemy.hp = enemy.maxHp = 1e12;   // 倒せない（ミッション結果で自分で消える）
     var turns = START_TURNS, needAll = NEED_ALL;
+    var mon = !!(cfg && cfg.monster && cfg.monster.img);
+    if (mon) enemy._chestMon = true;   // game.js：このモンスターは「あと〇」で攻撃してくる（processEnemyTurns）
     if (cfg) {
       turns = Math.max(1, Math.floor(Number(cfg.turns)) || START_TURNS);
       needAll = cfg.need !== 'any';
     }
-    st = { key: key, enemy: enemy, reward: cfg || null, needAll: needAll, missions: makeMissions(cfg && cfg.missions, cfg && cfg.missionMode, cfg && cfg.missionPick), turns: turns, vert: {}, vertMax: {}, conn: {}, tally: {}, branchPick: null, resolved: false, wrap: null };
+    st = { key: key, enemy: enemy, mon: mon, reward: cfg || null, needAll: needAll, missions: makeMissions(cfg && cfg.missions, cfg && cfg.missionMode, cfg && cfg.missionPick), turns: turns, vert: {}, vertMax: {}, conn: {}, tally: {}, branchPick: null, resolved: false, wrap: null };
+    if (mon) { enemy.turnInterval = enemy._baseTurnInterval = turns; enemy.turnProgress = 0; }
     render();
-    var c = st.wrap.querySelector('.rc-chest');
-    if (c && c.animate) c.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: .6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 520, easing: 'ease-out' });
+    var c = st.wrap.querySelector(mon ? '.rc-stage' : '.rc-chest');
+    if (mon && c && c.animate) c.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 480, easing: 'ease-out' });
+    else if (c && c.animate) c.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: .6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 520, easing: 'ease-out' });
   }
 
   // ── 1回の操作（消す→コンボ）の記録 ──────────────────────
@@ -331,6 +398,7 @@
   function judge(totalCombo, attrCounts) {
     st.missions.forEach(function (m) {
       if (m.type === 'total') { m.sum += totalCombo; if (m.sum >= m.n) m.done = true; return; }
+      if (m.type === 'drops') { m.sum += ((attrCounts && attrCounts[m.attr]) || 0); if (m.sum >= m.n) m.done = true; return; }   // ○属性のドロップを、このフロアで消した合計
       if (m.done) return;
       if (m.type === 'vert5') { if (st.vert[m.attr] || (st.vertMax[m.attr] || 0) >= (m.n || 5)) m.done = true; }
       else if (m.type === 'simul6') { if ((st.conn[m.attr] || 0) >= m.n) m.done = true; }   // 1つの塊で6個以上つなげて消す
@@ -346,6 +414,12 @@
     if (!active()) return;
     if (st.reward && st.reward.branch && attrCounts) { for (var ak in attrCounts) st.tally[ak] = (st.tally[ak] || 0) + (attrCounts[ak] || 0); }   // ボス分岐：この宝箱の階層で消したドロップの数（属性ごと）
     judge(totalCombo || 0, attrCounts || {});
+    if (st.mon) {   // モンスター：ターンは game.js 側で進み、0になると攻撃してくる。ここではミッション達成だけ見る
+      refreshMissions();
+      await sleep(450);
+      if (cleared()) await openMonsterReward();
+      return;
+    }
     st.turns = Math.max(0, st.turns - 1);
     refreshMissions();
     setCounter();
@@ -533,6 +607,42 @@
     if (area()) area().innerHTML = '';
   }
 
+  // 成功（モンスター）：いつもの敵と同じ消え方で消えて、中身が出る。中身はリザルトで受け取る
+  async function openMonsterReward() {
+    var cfg = st.reward, wrap = st.wrap;
+    var got = rollRewards(cfg);
+    wrap.classList.add('opening');   // ミッションの板を消す
+    try {
+      if (typeof startEnemyVanish === 'function') await startEnemyVanish(st.enemy); else { try { playSE('kieru'); } catch (e) {} await sleep(900); }
+    } catch (e) {}
+    var over = document.createElement('div');
+    over.className = 'rc-mover';
+    wrap.appendChild(over);
+    try { playSE('dropc'); } catch (e) {}
+    burst(over);
+    var row = document.createElement('div');
+    row.className = 'rc-rewards';
+    row.style.setProperty('--sz', (got.length > 4 ? 10 : got.length > 2 ? 13 : 16) + 'cqw');
+    got.forEach(function (r, i) {
+      var b = rewardIcon(r);
+      b.style.animationDelay = (.1 + i * .12).toFixed(2) + 's';
+      row.appendChild(b);
+      try { if (typeof grantChestReward === 'function') grantChestReward(r); } catch (e) {}
+    });
+    over.appendChild(row);
+    await sleep(900);
+    var t = document.createElement('div');
+    t.className = 'rc-get-text';
+    t.textContent = 'レッスンクリア！';   // モンスター画像つきは「宝箱ゲット！」ではなくレッスンクリア（中身が空でも）
+    over.appendChild(t);
+    try { playSE('levelup'); } catch (e) {}
+    await sleep(1900);
+    wrap.classList.add('leaving');
+    await sleep(350);
+    finish();
+    if (area()) area().innerHTML = '';
+  }
+
   // 失敗：宝箱が消滅
   async function vanishChest() {
     try { playSE('kieru'); } catch (e) {}
@@ -573,7 +683,7 @@
 
   window.Ryuseki = {
     count: count, total: total, list: list, imgSrc: IMG,
-    isEligible: isEligible, has: has, insertChest: insertChest, insertRewardChest: insertRewardChest, takeBranch: takeBranch,
+    isEligible: isEligible, has: has, insertChest: insertChest, insertRewardChest: insertRewardChest, expandFloors: expandFloors, takeBranch: takeBranch,
     load: load, active: active, reset: reset,
     beginMove: beginMove, noteGroup: noteGroup, endMove: endMove,
     iconHtml: iconHtml

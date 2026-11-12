@@ -119,7 +119,7 @@
   #gacha-toast { bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 
-/* ── ページ切りかえ（1ページ目＝虹がかった白／2ページ目＝赤／3ページ目＝青／4ページ目＝緑） ──────────────
+/* ── ページ切りかえ（1ページ目＝虹がかった白／2ページ目＝赤／3ページ目＝青／4ページ目＝緑／5ページ目＝ピンク） ──────────────
    左右の矢印・下のドット・左右スワイプ・キーボードの ←→ で切りかえ（js/gacha.js の setPage）
    ページごとに、マシン本体・左上のマーク・PAGE 札の色を変えて、ひと目で分かるようにしています */
 .gs-machine .gm-body { transition: fill 0.25s; }
@@ -131,6 +131,8 @@
 #gacha-screen[data-page="3"] .gs-emblem { background: #2f7bff; }
 #gacha-screen[data-page="4"] .gs-machine .gm-body { fill: #2fb860; }   /* ブルアカガチャ2：緑 */
 #gacha-screen[data-page="4"] .gs-emblem { background: #22a553; }
+#gacha-screen[data-page="5"] .gs-machine .gm-body { fill: #ff7eb6; }   /* 蓮ノ空ガチャ：ピンク */
+#gacha-screen[data-page="5"] .gs-emblem { background: #ff5fa2; }
 
 .gs-pager { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 0 0; }
 .gs-pg-label {
@@ -141,6 +143,7 @@
 #gacha-screen[data-page="2"] .gs-pg-label { color: #fff; background: #ff5f4a; }
 #gacha-screen[data-page="3"] .gs-pg-label { color: #fff; background: #2f7bff; }
 #gacha-screen[data-page="4"] .gs-pg-label { color: #fff; background: #22a553; }
+#gacha-screen[data-page="5"] .gs-pg-label { color: #fff; background: #ff5fa2; }
 .gs-dot {
   position: relative; width: 14px; height: 14px; padding: 0; box-sizing: border-box; border-radius: 50%; cursor: pointer;
   background: rgba(255, 255, 255, 0.85); border: 2.5px solid var(--ink); -webkit-tap-highlight-color: transparent;
@@ -151,6 +154,7 @@
 .gs-dot[data-page="2"].on { background: var(--coral); transform: scale(1.25); }
 .gs-dot[data-page="3"].on { background: #2f7bff; transform: scale(1.25); }
 .gs-dot[data-page="4"].on { background: #22a553; transform: scale(1.25); }
+.gs-dot[data-page="5"].on { background: #ff5fa2; transform: scale(1.25); }
 
 /* マシンの左右の矢印 */
 .gs-machine-wrap { position: relative; }
@@ -167,7 +171,7 @@
 .gs-arrow:active { animation: none; transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 @keyframes gsNudgeR { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
 @keyframes gsNudgeL { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-4px); } }
-/* 矢印は、行き先のページの色にして知らせる（1＝虹がかった白／2＝赤／3＝青／4＝緑） */
+/* 矢印は、行き先のページの色にして知らせる（1＝虹がかった白／2＝赤／3＝青／4＝緑／5＝ピンク） */
 .gs-arrow.next, .gs-arrow.prev { background: #ffe1db; }
 #gacha-screen[data-page="1"] .gs-arrow.next { background: #ffe1db; }   /* 1→2 は赤 */
 #gacha-screen[data-page="2"] .gs-arrow.prev { background: #f4eefe; }   /* 2→1 は虹がかった白 */
@@ -175,6 +179,8 @@
 #gacha-screen[data-page="3"] .gs-arrow.prev { background: #ffe1db; }   /* 3→2 は赤 */
 #gacha-screen[data-page="3"] .gs-arrow.next { background: #d4f4de; }   /* 3→4 は緑 */
 #gacha-screen[data-page="4"] .gs-arrow.prev { background: #dbe9ff; }   /* 4→3 は青 */
+#gacha-screen[data-page="4"] .gs-arrow.next { background: #ffd9ea; }   /* 4→5 はピンク */
+#gacha-screen[data-page="5"] .gs-arrow.prev { background: #d4f4de; }   /* 5→4 は緑 */
 
 /* 切りかえのときの、横からスッと出る動き */
 #gacha-machine-wrap.slide-from-right { animation: gsSlideR 0.3s cubic-bezier(0.2, 0.9, 0.3, 1); }
@@ -319,6 +325,7 @@
 #gacha-screen[data-page="2"] .gs-ex-btn { background: #ffe9e4; }
 #gacha-screen[data-page="3"] .gs-ex-btn { background: #dbe9ff; }
 #gacha-screen[data-page="4"] .gs-ex-btn { background: #d4f4de; }
+#gacha-screen[data-page="5"] .gs-ex-btn { background: #ffd9ea; }
 
 #gacha-exchange .gs-card { width: min(100%, 440px); }
 .gs-ex-sec { align-self: stretch; margin-top: 4px; padding: 4px 10px 3px; font: 900 0.85rem/1.3 var(--ff); letter-spacing: 0.04em; color: var(--ink); background: #fff3b8; border: 2px solid var(--ink); border-radius: 10px; }

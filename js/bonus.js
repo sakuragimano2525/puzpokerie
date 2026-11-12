@@ -1,9 +1,10 @@
 // ============================================================
 // ボーナス（ホーム右下のボタン）
-//   押すと「竜石」「ガチャ」「フレンド」の3択。
+//   押すと「竜石」「ガチャ」「フレンド」「履歴」の4択。
 //   ・竜石 … 竜石の所持数に応じた報酬ショップ（下の RYU_REWARDS）。竜石は消費せず、数が届いたら「もらう」で1回だけ受け取れる
 //   ・ガチャ … 今までのガチャ画面（openGacha）
 //   ・フレンド … マイカード・助っ人設定・フレンド募集（js/friends.js）
+//   ・履歴 … クリアしたダンジョンの記録 最新30件（ドロップ／モンスターごとのダメージ・回復／スキル回数／消したドロップ／ターン／コンボ／受けたダメージ。js/history.js）
 // ============================================================
 (function () {
   'use strict';
@@ -103,6 +104,7 @@
           '<button type="button" class="bn-btn ryu" id="bn-ryu"><img src="' + ryuImg() + '" alt="" onerror="this.style.visibility=\'hidden\'"><span>竜石</span><b>×' + ryusekiCount() + '</b><i class="bn-dot"></i></button>' +
           '<button type="button" class="bn-btn gacha" id="bn-gacha"><svg class="ic"><use href="#i-gacha"/></svg><span>ガチャ</span></button>' +
           '<button type="button" class="bn-btn friend" id="bn-friend"><svg class="ic"><use href="#i-team"/></svg><span>フレンド</span></button>' +
+          '<button type="button" class="bn-btn hist" id="bn-hist"><svg class="ic"><use href="#i-history"/></svg><span>履歴</span></button>' +
         '</div>' +
       '</div>');
     menu.addEventListener('click', function (e) { if (e.target === menu) closeAll(); });
@@ -116,6 +118,11 @@
       closeAll();
       if (window.Friends) Friends.open();
       else toast('フレンドは準備中です');
+    });
+    menu.querySelector('#bn-hist').addEventListener('click', function () {
+      closeAll();
+      if (window.BattleLog) BattleLog.open();
+      else toast('履歴は準備中です');
     });
     host().appendChild(menu);
     placePop();

@@ -76,7 +76,12 @@ const ITEM_DATA = {
   fcoin:  { id: 'fcoin',  name: 'ガチャコイン',       img: 'fcoin.png',  kind: 'coin',  desc: 'ガチャを1回まわすときに1枚つかう' },
 
   // ── アルカナエキス（第2ガチャ＝ガチャ画面の2ページ目で1回まわすのに1つつかう。画像は arukana.png） ──
-  arukana: { id: 'arukana', name: 'アルカナエキス',   img: 'arukana.png', kind: 'coin',  desc: '第2ガチャを1回まわすときに1つつかう' }
+  arukana: { id: 'arukana', name: 'アルカナエキス',   img: 'arukana.png', kind: 'coin',  desc: '第2ガチャを1回まわすときに1つつかう' },
+
+  // ── 桜の花びら（コインと同じ種類のアイテム。画像はゲームのフォルダ直下の mystic_petal.png） ──
+  //   ※ 手に入れ方は、ダンジョン設定ツールの宝箱の中身（アイテム → 桜の花びら）／メール報酬（reward: { item:'mystic_petal', count:10 }）などで増やせます
+  //   ※ ガチャで使うときは、js/data/gacha.js のページの coin: に 'mystic_petal' を書きます
+  mystic_petal: { id: 'mystic_petal', name: '桜の花びら', img: 'mystic_petal.png', kind: 'coin', desc: '蓮ノ空コラボで手に入る桜の花びら' }
 };
 
 // ゲーム開始時の所持数（いまは何も持たずに開始。持たせたいときは { puzzle1: 5 } のように書く）

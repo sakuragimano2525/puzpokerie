@@ -756,7 +756,7 @@
     const absorbed = !!(enemy._comboAbsorb && enemy._comboAbsorb.turns > 0 &&
       attackPhaseCombo > 0 && attackPhaseCombo <= enemy._comboAbsorb.max);
     if (absorbed) enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg);   // コンボ吸収：ダメージの代わりにHP回復
-    else { const dealt = dealHitDamage(enemy, hit); dmg = dealt.main; dealtSub = dealt.sub; if (window.DamageTotal) DamageTotal.add(idx, dmg + dealtSub); }   // 超根性対応（実際に与えたダメージ）／HPバー上の合計ダメージ
+    else { const dealt = dealHitDamage(enemy, hit); dmg = dealt.main; dealtSub = dealt.sub; if (window.DamageTotal) DamageTotal.add(idx, dmg + dealtSub); if (window.BattleLog) BattleLog.dmg(slotIndex, enemy._chest ? 0 : hit.main + hit.sub, dmg + dealtSub); }   // 超根性対応（実際に与えたダメージ）／HPバー上の合計ダメージ
 
     const attrHeal = hit.heal || 0;   // 属性吸収：吸収された属性のぶんは、ダメージの代わりに敵のHPが回復
     if (attrHeal > 0) enemy.hp = Math.min(enemy.maxHp, enemy.hp + attrHeal);

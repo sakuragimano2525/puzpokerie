@@ -53,11 +53,13 @@
 //       全員同じなら intrusion: { rate: 10, bgm: 'dio.mp3', monsters: [ … ] } でもOK（各モンスターの bgm が優先）。
 //   ボス前の宝箱: rewardChest: { turns: 3, need: 'all', missions: [ { type: 'simul6', attr: 'fire', n: 7 }, { type: 'combo', n: 8 } ],
 //                 rewardMode: 'table', rolls: 1, rewards: [ { kind: 'item', item: 'ohuda1', count: 1, weight: 30 }, { kind: 'ena', count: [300, 500], weight: 70 } ] }
-//     竜石の宝箱の次（ボスの直前）に出る。need は 'all'（全部達成）／'any'（どれか1つ）。type は vert5／simul6／combo／total／random。attr は fire など か 'random'。n は数字 か [最小, 最大]。
+//     竜石の宝箱の次（ボスの直前）に出る。need は 'all'（全部達成）／'any'（どれか1つ）。type は vert5／simul6／combo／total／drops（○属性のドロップを合計n個。n は個数）／random。attr は fire など か 'random'。n は数字 か [最小, 最大]。
 //     ボス分岐: rewardChest.branch: { attrs: ['fire','water'], outcomes: { fire: { bgImg: 'a.png', bgm: 'b.mp3', enemies: [ {敵データ} ] }, water: {…}, tie: {…} } }
 //     宝箱の階層で消した attrs のドロップのうち、いちばん多い属性の outcomes のボスに差し替わる。最多が並んだら tie。attrs は fire／water／wood／light／dark／heal。bgImg・bgm は省略可。
 //     missionMode: 'random' にすると、missions の中から missionPick 個（1〜2）をランダムに選ぶ（省略なら missions をそのまま出す）。
 //     rewardMode 'each' は中身ごとに rate（1=100%）で抽選、'table' は weight の重みで rolls 回ランダムに選ぶ。kind は item／ena／monster（monsterId を指定）。
+//   宝箱フロア: battles の中に { chestFloor: { turns: 3, need: 'all', missions: [ { type: 'combo', n: 8 } ], rewardMode: 'each', rewards: [ { kind: 'ena', count: 300, rate: 1 } ] } } を書くと、その階層は敵の代わりに宝箱になる。
+//     中身の書き方は rewardChest と同じ（branch だけ使えない）。全階層を { chestFloor } にすれば、モンスターなしの宝箱だけのダンジョンになる。
 // ============================================================
 // ============================================================
 // ★ ダンジョンBGM（道中 / ボス）★
@@ -211,7 +213,10 @@ const DUNGEON_BGM = {
   "tou-boss": {"field":"b11.mp3","boss":"boss10.mp3"},
   "kourinf-boss": {"field":"b3.mp3","boss":"boss5.mp3"},
   "kouring-boss": {"field":"b8.mp3","boss":"boss5.mp3"},
-  "ultra-boss": {"field":"b11.mp3","boss":"boss7.mp3"}
+  "ultra-boss": {"field":"b11.mp3","boss":"boss7.mp3"},
+  "hasu-1": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
+  "hasu-2": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
+  "hasu-boss": {"field":"hasu.mp3","boss":"hasuboss.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -54413,6 +54418,313 @@ const DUNGEON_DATA = {
             "isBoss": true
           }
         ]
+      }
+    ]
+  },
+  "hasu-1": {
+    "bgImg": "hasu.png",
+    "bgm": "hasu.mp3",
+    "battles": [
+      {
+        "chestFloor": {
+          "turns": 1,
+          "need": "all",
+          "missions": [
+            {
+              "type": "combo",
+              "n": 6
+            }
+          ],
+          "monster": {
+            "img": "mp5095.png",
+            "name": "百生 吟子",
+            "size": "XL",
+            "atk": 2000
+          },
+          "rewardMode": "each",
+          "rewards": [
+            {
+              "kind": "ena",
+              "count": 300,
+              "rate": 1
+            }
+          ]
+        }
+      },
+      {
+        "chestFloor": {
+          "turns": 3,
+          "need": "all",
+          "missions": [
+            {
+              "type": "vert5",
+              "attr": "random",
+              "n": 5
+            },
+            {
+              "type": "simul6",
+              "attr": "random",
+              "n": 6
+            }
+          ],
+          "monster": {
+            "img": "mp5096.png",
+            "name": "徒町 小鈴",
+            "size": "XL",
+            "atk": 10000
+          },
+          "rewardMode": "each",
+          "rewards": [
+            {
+              "kind": "ena",
+              "count": 200,
+              "rate": 1
+            }
+          ]
+        }
+      },
+      {
+        "chestFloor": {
+          "turns": 1,
+          "need": "all",
+          "missionMode": "random",
+          "missionPick": 2,
+          "missions": [
+            {
+              "type": "combo",
+              "n": [
+                5,
+                7
+              ]
+            },
+            {
+              "type": "drops",
+              "attr": "random",
+              "n": [
+                10,
+                20
+              ]
+            }
+          ],
+          "monster": {
+            "img": "mp5097.png",
+            "name": "安養寺 姫芽",
+            "size": "XL",
+            "atk": 4000
+          },
+          "rewardMode": "table",
+          "rolls": 1,
+          "rewards": [
+            {
+              "kind": "ena",
+              "count": 300,
+              "weight": 90
+            },
+            {
+              "kind": "item",
+              "item": "mystic_petal",
+              "count": 1,
+              "weight": 10
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "hasu-2": {
+    "bgImg": "hasu.png",
+    "bgm": "hasu.mp3",
+    "battles": [
+      {
+        "chestFloor": {
+          "turns": 1,
+          "need": "all",
+          "missions": [
+            {
+              "type": "combo",
+              "n": 6
+            },
+            {
+              "type": "drops",
+              "attr": "random",
+              "n": [
+                10,
+                15
+              ]
+            },
+            {
+              "type": "total",
+              "n": 26
+            }
+          ],
+          "monster": {
+            "img": "mp5098.png",
+            "name": "錦上 マイカ",
+            "size": "XL",
+            "atk": 3500
+          },
+          "rewardMode": "each",
+          "rewards": [
+            {
+              "kind": "ena",
+              "count": 500,
+              "rate": 1
+            }
+          ]
+        }
+      },
+      {
+        "chestFloor": {
+          "turns": 1,
+          "need": "all",
+          "missions": [
+            {
+              "type": "drops",
+              "attr": "light",
+              "n": [
+                20,
+                40
+              ]
+            },
+            {
+              "type": "total",
+              "n": [
+                30,
+                40
+              ]
+            }
+          ],
+          "monster": {
+            "img": "mp5099.png",
+            "name": "令沢 葵",
+            "size": "XL",
+            "atk": 5500
+          },
+          "rewardMode": "table",
+          "rolls": 1,
+          "rewards": [
+            {
+              "kind": "ena",
+              "count": 300,
+              "weight": 50
+            },
+            {
+              "kind": "item",
+              "item": "mystic_petal",
+              "count": 1,
+              "weight": 50
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "hasu-boss": {
+    "bgImg": "hasu.png",
+    "bgm": "hasu.mp3",
+    "battles": [
+      {
+        "chestFloor": {
+          "turns": 1,
+          "need": "all",
+          "missions": [
+            {
+              "type": "combo",
+              "n": 8
+            }
+          ],
+          "monster": {
+            "img": "mp5094.png",
+            "name": "大沢 瑠璃乃",
+            "size": "XL",
+            "atk": 20000
+          },
+          "rewardMode": "table",
+          "rolls": 1,
+          "rewards": [
+            {
+              "kind": "ena",
+              "count": 750,
+              "weight": 80
+            },
+            {
+              "kind": "item",
+              "item": "mystic_petal",
+              "count": 1,
+              "weight": 20
+            }
+          ]
+        }
+      },
+      {
+        "chestFloor": {
+          "turns": 3,
+          "need": "all",
+          "missions": [
+            {
+              "type": "drops",
+              "attr": "water",
+              "n": 30
+            },
+            {
+              "type": "combo",
+              "n": 8
+            }
+          ],
+          "monster": {
+            "img": "mp5093.png",
+            "name": "村野 さやか",
+            "size": "XL",
+            "atk": 20000
+          },
+          "rewardMode": "table",
+          "rolls": 1,
+          "rewards": [
+            {
+              "kind": "ena",
+              "count": 2000,
+              "weight": 50
+            },
+            {
+              "kind": "item",
+              "item": "mystic_petal",
+              "count": 1,
+              "weight": 50
+            }
+          ]
+        }
+      },
+      {
+        "chestFloor": {
+          "turns": 2,
+          "need": "all",
+          "missions": [
+            {
+              "type": "combo",
+              "n": 9
+            },
+            {
+              "type": "total",
+              "n": 30
+            }
+          ],
+          "monster": {
+            "img": "mp5092.png",
+            "name": "日野下 花帆",
+            "size": "XL",
+            "atk": 12000
+          },
+          "rewardMode": "table",
+          "rolls": 1,
+          "rewards": [
+            {
+              "kind": "item",
+              "item": "mystic_petal",
+              "count": 2,
+              "weight": 100
+            }
+          ]
+        }
       }
     ]
   }

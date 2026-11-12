@@ -148,3 +148,37 @@
   text-shadow: 0 0 4px #b34700, 0 1px 0 #b34700, 1px 0 0 #b34700, -1px 0 0 #b34700;
 }
 @keyframes rcRwUp { from { opacity: 0; transform: translateY(14cqw) scale(.3); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ============================================================
+   ミッション3つ／モンスター画像つきの報酬宝箱（js/ryuseki.js）
+   ============================================================ */
+
+/* ミッションが3つ：左・中・右の3枚を横に並べる（少し細く・小さく） */
+.rc-wrap.m3 .rc-mission { width: 30cqw; font-size: max(9px, 3cqw); padding-left: 1.8cqw; padding-right: 1.8cqw; }
+.rc-wrap.m3 .rc-mission.left { left: 2cqw; }
+.rc-wrap.m3 .rc-mission.right { right: 2cqw; padding-left: 3.4cqw; }
+.rc-mission.mid { left: calc(50% - 16cqw); }
+.rc-wrap.m3 .rc-mission.mid { left: calc(50% - 15cqw); }
+.rc-mission.mid::before, .rc-mission.mid::after { clip-path: none; }
+
+/* モンスター画像つき：ふつうの敵と同じ並び。ミッションの板は上に重ねて、モンスターは板の下に置く */
+.rc-wrap.rc-mon {
+  display: block; height: auto; max-height: none; min-height: 50cqw;
+  padding-top: 15cqw; box-sizing: border-box;
+}
+.rc-stage { display: flex; justify-content: center; align-items: flex-end; width: 100%; }
+#enemy-area .rc-mon .enemy-unit { pointer-events: none; cursor: default; }
+/* 「あと〇」は画像の左上すみに重ねる（ミッションの板と重ならない） */
+#enemy-area .rc-mon .enemy-unit .enemy-top-left { top: 2px; }
+.rc-wrap.rc-mon.leaving { opacity: 0; }
+
+/* クリア：モンスターが消えたあと、同じ場所に中身が出る */
+.rc-mover {
+  position: absolute; left: 0; right: 0; top: 15cqw; bottom: 0; z-index: 5; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3cqw;
+}
+.rc-mon .rc-rewards { position: static; transform: none; }
+.rc-mon .rc-get-text { position: static; transform: none; animation: rcTextIn2 .5s cubic-bezier(.2, 1.5, .4, 1) both; }
+.rc-mon .rc-spark { top: 50%; }
+@keyframes rcTextIn2 { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+.rc-wrap.rc-mon.opening .enemy-top-left { opacity: 0; transition: opacity .2s; }   /* クリアで消えるとき「あと〇」も消す */

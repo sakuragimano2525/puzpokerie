@@ -579,9 +579,9 @@ function playTapSound()  { playUiSE('tap'); }
 function playModoSound() { playUiSE('modo'); }
 
 // 戻る・閉じる系のボタン
-const UI_BACK_SELECTOR = '#de-back-btn, #ss-back-btn, #md-back-btn, #te-back, #iku-back, #evo-list-back, #pz-back-btn, #zukan-back, #settings-close-btn, #zukan-info-close, #mail-close-btn, #md2-back-btn, #res-close-btn, #sp-no, #gacha-back, #gacha-lineup-close, #menu-btn, #quit-no, #menu-drops-back, #cs-close, #cj-no, #menu-retire-no, .te-back-btn, #gameover-home-btn';
+const UI_BACK_SELECTOR = '#de-back-btn, #hasu-back-btn, #ss-back-btn, #md-back-btn, #te-back, #iku-back, #evo-list-back, #pz-back-btn, #zukan-back, #settings-close-btn, #zukan-info-close, #mail-close-btn, #md2-back-btn, #res-close-btn, #sp-no, #gacha-back, #gacha-lineup-close, #menu-btn, #quit-no, #menu-drops-back, #cs-close, #cj-no, #menu-retire-no, .te-back-btn, #gameover-home-btn';
 // 「進む」操作（画面遷移・決定・挑戦など）だけ tap.mp3
-const UI_FORWARD_SELECTOR = '#start, #btn-team, #btn-grow, #btn-evo, #btn-gacha, #gacha-spin-btn, #gacha-lineup-btn, .gs-arrow, .gs-dot, #gacha-res-ok, .ht-tab, #settings-open-btn, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
+const UI_FORWARD_SELECTOR = '#start, .ev-subtab.hasu, .hasu-stage, #btn-team, #btn-grow, #btn-evo, #btn-gacha, #gacha-spin-btn, #gacha-lineup-btn, .gs-arrow, .gs-dot, #gacha-res-ok, .ht-tab, #settings-open-btn, #zukan-open-btn, #mail-open-btn, #bag-open-btn, .area-go, .ss-stage-btn, .de-mon-card, #de-challenge-btn, #md-levelup-btn, #md-evolve-btn, #iku-gassho-btn, #iku-result-ok, #sp-yes, #quit-yes, #md2-receive-btn, .mail-item, #lb-ok-btn, .evo-mat-detail, #cj-yes, .cs-spot.go';
 document.addEventListener('click', (e) => {
   const t = e.target;
   if (!(t instanceof Element)) return;
@@ -1427,6 +1427,7 @@ function applyPlayerDamage(rawDmg, enemy) {
     finalDmg = Math.min(finalDmg, Math.max(0, _actionLossCap.cap - taken));
   }
   playerCurrentHP = Math.max(0, playerCurrentHP - finalDmg);
+  if (window.BattleLog) BattleLog.taken(finalDmg);
   updatePlayerHP(-finalDmg);
   return finalDmg;
 }
@@ -1695,10 +1696,20 @@ let battleCoinQueue      = 0;
 const DUNGEON_BGM_VOL = 0.6;   // ダンジョン中（道中・ボス）のBGM音量（0〜1。以前は0.5）
 let dungeonBGMFile = null;
 let currentDungeonKey = null;
+// ★蓮ノ空コラボ：最後のフロアが「モンスター画像つきの宝箱」でも、ボス戦として扱う（BOSSバナー・ボスBGM・ボス登場演出）
+//   対象にしたいダンジョンを増やすときは、この正規表現にキーの頭を足す（例 /^(hasu|xxx)-/）
+const CHEST_BOSS_KEYS = /^hasu-/;
+function isChestBossFloor(idx) {
+  const b = currentDungeonBattles && currentDungeonBattles[idx];
+  if (!b || !b.chest || !CHEST_BOSS_KEYS.test(String(currentDungeonKey || ''))) return false;
+  if (idx < currentDungeonBattles.length - 1) return false;                       // 最後のフロアだけ
+  return !!(b.enemies && b.enemies[0] && b.enemies[0].img);                       // モンスター画像つきの宝箱だけ（ふつうの宝箱は対象外）
+}
 // このバトルがボス戦か（isBoss の敵がいる／最終バトル／データ無しのBOSSステージ）
 function isBossBattleIndex(idx) {
   if (!currentDungeonBattles || !currentDungeonBattles.length) return currentStageType === 'boss';
   const b = currentDungeonBattles[idx];
+  if (b && b.chest) return isChestBossFloor(idx);   // 宝箱のフロアは、最後でもふつうはボス戦にしない（BOSS表示・ボスBGM・ボス演出なし）。蓮ノ空だけ例外（下）
   return idx >= currentDungeonBattles.length - 1 || !!(b && b.enemies && b.enemies.some(e => e.isBoss));
 }
 // 道中BGM / ボスBGM を選んで流す（同じ曲が既に流れていれば途切れさせない）
@@ -1912,6 +1923,7 @@ async function loadBattle(battleData, autoStart = true) {
   if (battleData.chest && window.Ryuseki) {   // 竜石の宝箱バトル：HPバーなし。宝箱・あと〇・ミッションを出す（js/ryuseki.js）
     Ryuseki.load(enemyList[0], currentDungeonKey, battleData.rewardChest);   // rewardChest があれば報酬宝箱（ミッション・ターン・中身を指定）
     updateEnemyTurnBadge();
+    if (autoStart && enemyList[0] && enemyList[0]._chestMon && isChestBossFloor(currentBattleIndex)) await playChestBossAppear();   // 蓮ノ空：ボス扱いの宝箱は、ボス登場演出
     return;
   }
   renderEnemyUI(true);   // 敵は透明で配置 → 登場演出で半透明から現れる
@@ -2124,6 +2136,29 @@ function playEnemyAppear() {
   return new Promise(r => setTimeout(r, total + 80));
 }
 
+// ── 蓮ノ空：ボス扱いの「モンスター宝箱」の登場演出（ふつうのボスと同じ属性別の演出 ＋ ボスBGM） ──
+async function playChestBossAppear() {
+  const idx = currentBattleIndex;
+  const en = enemyList && enemyList[0];
+  const img = document.querySelector('#enemy-area .enemy-unit .enemy-img-wrap img');
+  const attr = en ? (getMonsterAttrFromImg(en.img) || en.attr || null) : null;
+  const special = (window.BossCloud && BossCloud.attrIntroOf) ? BossCloud.attrIntroOf(currentDungeonKey, attr) : null;
+  if (!special || !img) { playBattleBgm(idx); return; }   // 演出がないときも、ボスBGMは流す
+  img.style.opacity = '0';                                // 宝箱側のふわっと表示（約0.5秒）が終わるまで姿を隠す
+  await sleep(520);
+  try { special.fx(img); } catch (e) {}
+  if (special.bgmAt != null) { const gen = _bgmGen; setTimeout(() => { if (gen === _bgmGen) playBattleBgm(idx); }, special.bgmAt); }
+  else playBattleBgm(idx);
+  if (special.se) setTimeout(() => { try { playSE(special.se); } catch (e) {} }, special.ms);
+  const clear = () => { img.style.opacity = ''; };
+  if (!img.animate) { setTimeout(clear, special.ms); await sleep(special.ms + 80); return; }
+  const anim = img.animate(special.frames, { duration: special.ms, easing: special.easing || 'linear', fill: 'both' });
+  const fin = () => { clear(); try { anim.cancel(); } catch (e) {} };
+  anim.onfinish = fin;
+  setTimeout(fin, special.ms + 200);
+  await sleep(special.ms + 80);
+}
+
 // 画像が1枚読み込まれるたびに全体を測り直すと、読み込みの多い場面で何度もレイアウト計算が走って重い。
 // 次の描画フレームに1回だけまとめて実行する（見た目は同じ）
 let _fitRaf = 0;
@@ -2144,7 +2179,8 @@ function fitEnemyImages() {
   const imgOf = u => u.querySelector('.enemy-img-wrap img');
   units.forEach(u => { const im = imgOf(u); if (im) { im.style.maxHeight = ''; im.style.width = ''; } });   // いったん制限なしに戻して測り直す
   const cs = getComputedStyle(dg), acs = getComputedStyle(area);
-  const avail = dg.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - (parseFloat(acs.marginTop) || 0) - 2;
+  const _rcm = area.querySelector('.rc-wrap.rc-mon');   // モンスター画像つきの宝箱：ミッションの板ぶんの高さを引く
+  const avail = dg.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - (parseFloat(acs.marginTop) || 0) - 2 - (_rcm ? (parseFloat(getComputedStyle(_rcm).paddingTop) || 0) : 0);
   // 折り返して複数段になる時（XL＋小さい敵など）は、各段の元の高さに比例して高さを分け合う
   const rowsArr = [];
   units.forEach((u, i) => {
@@ -3721,7 +3757,7 @@ async function processEnemyTurns() {
   // ① カウントを進める
   for (const enemy of enemyList) {
     enemy._acting = false;
-    if (enemy._chest) { enemy._due = false; continue; }   // 宝箱は行動しない
+    if (enemy._chest && !enemy._chestMon) { enemy._due = false; continue; }   // 宝箱は行動しない（モンスター画像つきの報酬宝箱は、あと0で攻撃する）
     if (enemy.hp <= 0) { enemy._due = false; continue; }
     enemy.turnProgress++;
     enemy._due = enemy.turnProgress >= enemy.turnInterval;
@@ -3731,7 +3767,7 @@ async function processEnemyTurns() {
 
   // ② 順番に行動
   for (const enemy of enemyList) {
-    if (enemy.hp <= 0 || enemy._chest) continue;
+    if (enemy.hp <= 0 || (enemy._chest && !enemy._chestMon)) continue;
     let gameOver = false;
     try {
       gameOver = await runOneEnemyTurn(enemy);
@@ -4526,6 +4562,7 @@ async function handleBattleEnd() {
 // ダンジョンクリアの締め（マルチでは、相手の端末からも呼ばれる）
 async function finishDungeonClear() {
   markDungeonCleared(currentDungeonKey);   // このダンジョンをクリア済みにする（出撃準備の表示用）
+  try { if (window.BattleLog) BattleLog.finish({ coin: totalCoin, exp: totalExp, mon: droppedMonsters, items: droppedItems, floors: currentDungeonBattles.length }); } catch (e) { console.warn('[history]', e); }   // 履歴（js/history.js）
   // エリアのBOSSを初めてクリアしたら、次のエリアを開放する
   const unlockedArea = (!isEventArea(currentAreaNum) && currentStageType === 'boss' && markBossCleared(currentAreaNum) && currentAreaNum < TOTAL_STAGES) ? currentAreaNum + 1 : 0;
   await playDungeonClear(unlockedArea);   // チップ/卵が光に包まれて消える → CLEAR! ＋ 花火 ＋ ホームへボタン
@@ -7693,6 +7730,7 @@ function damageAllEnemies(rawDmg, attr, se = 'skilldamage', ignoreDef = false) {
     }
     const dealt = enemyTakeDamage(enemy, dmg2);   // 超根性対応（実際に与えたダメージ）
     if (window.DamageTotal) DamageTotal.add(i, dealt);   // HPバー上の合計ダメージ
+    if (window.BattleLog) BattleLog.skillDmg(enemy._chest ? 0 : dmg2, dealt);
     const unit = enemyUnits[i];
     if (unit) {
       const rect = unit.getBoundingClientRect();
@@ -7723,6 +7761,7 @@ function damageSingleEnemy(rawDmg, attr, se = 'skilldamage', ignoreDef = false) 
   }
   const dealt = enemyTakeDamage(enemy, dmg2);   // 超根性対応（実際に与えたダメージ）
   if (window.DamageTotal) DamageTotal.add(idx, dealt);   // HPバー上の合計ダメージ
+  if (window.BattleLog) BattleLog.skillDmg(enemy._chest ? 0 : dmg2, dealt);
   const unit = document.querySelectorAll('#enemy-area .enemy-unit')[idx];
   if (unit) {
     const rect = unit.getBoundingClientRect();
@@ -7866,8 +7905,10 @@ function runSkillEffect(eff, context) {
     case 'heal': { // 自分の最大HPの割合分を回復
       const heal = Math.floor(playerMaxHP * eff.value);
       playSE('healk');   // 割合回復スキルの回復音：healk.mp3
+      const _hp0 = playerCurrentHP;
       playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + heal);
       updatePlayerHP();
+      if (window.BattleLog && context && context.entry) BattleLog.heal(partyUids.indexOf(context.entry.uid), playerCurrentHP - _hp0);
       if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
@@ -8247,9 +8288,13 @@ async function confirmSkill() {
   if (window.EnemyCutIn && window.EnemyCutIn.showSkill) {
     try { await window.EnemyCutIn.showSkill(cs === mon.skill ? mon : { ...mon, skill: cs }); } catch (err) {}
   }
-  if (cs.effects && cs.effects.length) {
-    runSkillEffects(cs.effects, entry, mon);
-  }
+  const _blSlot = partyUids.indexOf(entry.uid);   // 履歴：スキルの使用回数／スキルダメージ・回復の持ち主
+  if (window.BattleLog) { BattleLog.skill(_blSlot, cs.name || mon.name); BattleLog.caster(_blSlot); }
+  try {
+    if (cs.effects && cs.effects.length) {
+      runSkillEffects(cs.effects, entry, mon);
+    }
+  } finally { if (window.BattleLog) BattleLog.caster(-1); }
   advanceSkillStage(entry, mon);   // 変化スキル：次のスキル番号へ（最後まで使ったらスキル1に戻る）
   const orbSpawnFx = flushOrbSpawnFx();   // ドロップ生成・変換の演出を開始（盤面データはもう新しい。見た目は演出で入れ替わる）
   if (window.MultiShare) { MultiShare.fxGrid(); MultiShare.fx('en', { hp: enemyList.map(e => e.hp) }); MultiShare.fxStatus(); }   // スキルで変わった盤面・敵のHP・状態異常
@@ -9111,7 +9156,7 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
         } else {
           const dealt = dealHitDamage(enemy, hit);   // 超根性対応（実際に与えたダメージ。主属性→副属性の順）
           finalDmg = dealt.main; dealtSub = dealt.sub;
-          if (window.DamageTotal) DamageTotal.add(enemyIndex, finalDmg + dealtSub);   // HPバー上の合計ダメージ（副属性ぶんも足す）
+          if (window.DamageTotal) DamageTotal.add(enemyIndex, finalDmg + dealtSub); if (window.BattleLog) BattleLog.dmg(slotIndex, enemy._chest ? 0 : hit.main + hit.sub, finalDmg + dealtSub);   // 履歴：HPを超えた分も含む本来のダメージ／実際に入った分   // HPバー上の合計ダメージ（副属性ぶんも足す）
         }
         const attrHeal = hit.heal || 0;   // 属性吸収：吸収された属性のぶんは、ダメージの代わりに敵のHPが回復
         if (attrHeal > 0) enemy.hp = Math.min(enemy.maxHp, enemy.hp + attrHeal);
@@ -9357,7 +9402,7 @@ let homeMode = 'main';   // 'main' | 'event' | 'multi'（ホームのタブ）
 // ★ イベント／マルチ一覧の中の切り替え：'event'（通常）／'kourin'（降臨 = IDが kourin で始まるもの）
 let eventSub = 'event', multiSub = 'event';
 function isKourinId(id) { return /^kourin/i.test(String(id)); }
-function buildSubTabs(cur, onSelect) {
+function buildSubTabs(cur, onSelect, withCollab) {
   const bar = document.createElement('div');
   bar.className = 'ev-subtabs'; bar.setAttribute('role', 'tablist');
   [['event', 'イベント'], ['kourin', '降臨']].forEach(([k, label]) => {
@@ -9369,6 +9414,14 @@ function buildSubTabs(cur, onSelect) {
     t.addEventListener('click', () => { if (k === cur) return; onSelect(k); buildStageMap(true); });
     bar.appendChild(t);
   });
+  // 蓮ノ空コラボ：イベント／降臨を短くして空いた右側に置く。押すと専用の全画面（js/hasunosora.js）が開く
+  if (withCollab) {
+    const c = document.createElement('button');
+    c.type = 'button'; c.className = 'ev-subtab hasu'; c.setAttribute('aria-label', '蓮ノ空コラボを開く');
+    c.innerHTML = '<svg class="hasu-ic" viewBox="0 0 100 80" aria-hidden="true"><use href="#hasu-lotus"/></svg><span>蓮ノ空コラボ</span>';
+    c.addEventListener('click', () => { if (window.openHasuCollab) window.openHasuCollab(); });
+    bar.appendChild(c);
+  }
   return bar;
 }
 let _forceMulti = false;   // 一覧づくりなどで、一時的に「マルチとして扱う」ためのフラグ
@@ -9654,7 +9707,7 @@ function buildEventMap() {
   const head = document.createElement('div');
   head.className = 'ev-head'; head.textContent = 'イベントステージ';
   map.appendChild(head);
-  map.appendChild(buildSubTabs(eventSub, k => { eventSub = k; }));
+  map.appendChild(buildSubTabs(eventSub, k => { eventSub = k; }, true));
   const isK = eventSub === 'kourin';
   const ids = Object.keys(EVENT_INFO).filter(id => !EVENT_INFO[id].hidden && isKourinId(id) === isK);
   const dailyId = isK ? null : dailyTodayId();
@@ -10050,12 +10103,13 @@ async function startGameFromHome() {
   const dungeonKey = `${currentAreaNum}-${stageKey}`;
   const dungeonData = DUNGEON_DATA[dungeonKey];
   currentDungeonKey = dungeonKey;
+  try { if (window.BattleLog) BattleLog.begin(partyUids, box); } catch (e) {}   // 履歴（js/history.js）：この挑戦の集計を始める
   const dungeon = document.getElementById('dungeon');
 
   if (dungeonData) {
     // マルチ(オンライン)：ランダム階層・乱入の抽選は、部屋IDのシードで2人とも同じ結果にする
     currentDungeonBattles = (window.MultiShare ? MultiShare.withSeed : (t, f) => f())('battles', () => applyIntrusion(dungeonData, buildDungeonBattles(dungeonData)));
-    if (window.Ryuseki) { Ryuseki.reset(); currentDungeonBattles = Ryuseki.insertChest(dungeonKey, currentDungeonBattles); }   // 竜石：10-1〜の未取得ステージは、ボスの前に宝箱バトルを追加
+    if (window.Ryuseki) { Ryuseki.reset(); currentDungeonBattles = Ryuseki.insertChest(dungeonKey, Ryuseki.expandFloors(currentDungeonBattles)); }   // 宝箱フロア（battles の { chestFloor }）を宝箱バトルに。竜石：10-1〜の未取得ステージは、ボスの前に宝箱バトルを追加
     if (window.Ryuseki && dungeonData.rewardChest) currentDungeonBattles = Ryuseki.insertRewardChest(dungeonData.rewardChest, currentDungeonBattles);   // ボス前の報酬宝箱（ダンジョン設定ツールの rewardChest）。竜石の宝箱の次＝ボスの直前
     currentBattleIndex    = 0;
     let battleBg = dungeonData.bgImg || areaBgImage(currentAreaNum);
@@ -10099,7 +10153,10 @@ async function startGameFromHome() {
         stopDungeonBGM();
         await showBattleBanner(currentBattleIndex + 1, currentDungeonBattles.length, true, null);
       }
-      await playEnemyAppear(); await runBattleStartActions();
+      const _b0 = currentDungeonBattles[currentBattleIndex];
+      if (!(_b0 && _b0.chest)) await playEnemyAppear();   // 宝箱のフロアは、宝箱側（ryuseki.js の load）が登場演出をする
+      else if (isChestBossFloor(currentBattleIndex)) await playChestBossAppear();   // 蓮ノ空：最初からボス扱いの宝箱ならボス演出＋ボスBGM
+      await runBattleStartActions();
     }
     if (window.MultiTurn && MultiTurn.active) await MultiTurn.announce();   // マルチ：「Aのターン」
     if (window.MultiTurn && MultiTurn.active && MultiTurn.online) await MultiTurn.markReady();   // マルチ(オンライン)：先攻は最初の状態を渡す／待たされた相手の状態を反映
@@ -10380,8 +10437,9 @@ function renderDungeonEntryInfo(dKey, dd) {
       centerCropImg(cell.querySelector('img'));   // 画像の余白が偏っていても、中身を枠の真ん中に
     }
   }
-  const _rc = dd.rewardChest;   // ボス前の宝箱に入っているアイテムも「入手できるもの」に出す
-  if (_rc && _rc.enabled !== false) (_rc.rewards || []).forEach(rw => {
+  const _rcs = (dd.battles || []).filter(b => b && b.chestFloor).map(b => b.chestFloor);   // 宝箱フロアの中身も出す
+  if (dd.rewardChest) _rcs.push(dd.rewardChest);   // ボス前の宝箱に入っているアイテムも「入手できるもの」に出す
+  _rcs.forEach(_rc => { if (_rc && _rc.enabled !== false) (_rc.rewards || []).forEach(rw => {
     const def = rw && rw.kind === 'item' && ITEM_DATA[rw.item];
     if (!def || seenChip.has(rw.item)) return;
     seenChip.add(rw.item);
@@ -10391,7 +10449,7 @@ function renderDungeonEntryInfo(dKey, dd) {
     cell.innerHTML = `<img src="${def.img}" alt="${def.name}" onerror="this.parentNode.style.display='none'">`;
     chipList.appendChild(cell);
     centerCropImg(cell.querySelector('img'));
-  });
+  }); });
   monBlock.style.display = seenMon.size ? '' : 'none';
   chipBlock.style.display = seenChip.size ? '' : 'none';
   if (seenMon.size || seenChip.size) section.style.display = 'flex';
@@ -10562,6 +10620,13 @@ document.getElementById('de-edit-btn').addEventListener('click', openTeamEditFro
 document.getElementById('de-back-btn').addEventListener('click', () => {
   moLeaveLobby();   // マルチ：部屋から退出
   if (window.Friends) Friends.release();   // 助っ人の選択は、出撃準備を出たら解除
+  if (window.HASU_BACK_TO_COLLAB && window.openHasuCollab) {   // 蓮ノ空コラボ画面から来たときは、その画面に戻る
+    window.HASU_BACK_TO_COLLAB = false;
+    window.openHasuCollab();   // 先にコラボ画面を出してから出撃準備を隠す（黒い下地が見えない）
+    document.getElementById('dungeon-entry').style.display = 'none';
+    startMenuBGM();
+    return;
+  }
   document.getElementById('dungeon-entry').style.display = 'none';
   document.getElementById('stage-select').style.display = 'flex';
   startMenuBGM();
@@ -11506,6 +11571,7 @@ async function _evaluateInner() {
   lastTurnCtx = { comboCount: totalCombo, exact4Count, orbCounts: { ...attrCounts }, crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes,
     darkCombos, healCombos, attrCombos: { ...attrCombos }, hasWaterConnect5, hasDarkConnect5, maxConnect: { ...maxConnect },
     exactAttrCounts: { ...exactAttrCounts }, connectSizes: { ...connectSizes }, remainingOrbs, skillUsed: skillUsedThisTurn };
+  if (window.BattleLog) BattleLog.move(totalCombo, attrCounts);   // 履歴：ターン・コンボ・消したドロップの数
   // 盤面に残ったドロップ数で決まる軽減など、最後にわかる軽減もここで発動させる
   if (totalCombo > 0) checkLsGuard(lsAllEffects(), defenseCtx(enemyList[0]), lastGroupCells);
 
@@ -11536,9 +11602,67 @@ async function _evaluateInner() {
   const _chestOn = !!(window.Ryuseki && Ryuseki.active());
   if (_chestOn) {
     if (totalCombo > 0) {
+      const _boundChest = new Set(Object.keys(bindTimers).filter(k => bindTimers[k] > 0));   // この操作の開始時にバインドされていたモンスター（回復力0）
       updateSkillTurnsNormal(totalCombo);   // スキルのターン・SPは通常どおり進む
       setComboLabel(totalCombo + ' コンボ');
       turn++;
+
+      // 回復ドロップ：宝箱バトルでも通常どおり回復する（回復力×ドロップ数ボーナス×コンボ補正。リーダー／フレンドの回復力倍率も有効）
+      // ※ リーダー／フレンドの「いやし」系（ドロップを消すと最大HPの○%回復＝hpRecovery）は宝箱では無効なので、ここでは処理しない
+      if (attrCounts.heal >= 3) {
+        let totalRec = 0;
+        const _recBy = {};
+        const recEffects = [];
+        const recCondEffects = [];
+        [0, 5].forEach(idx => {
+          if (partyUids.length > idx && partyUids[idx] !== null) {
+            const leaderEntry = box.find(b => b.uid === partyUids[idx]);
+            const leader = leaderEntry && MONSTER_DATA[leaderEntry.monsterId];
+            if (leader && leader.leaderSkill && leader.leaderSkill.effects) {
+              for (const eff of leader.leaderSkill.effects) {
+                if (eff.type === 'rec') recEffects.push(eff);
+                else if (eff.type === 'atk' && eff.recValue > 0) recCondEffects.push(eff);
+              }
+            }
+          }
+        });
+        for (const uid of partyUids) {
+          if (uid === null) continue;
+          if (_boundChest.has(String(uid)) || isBound(uid)) continue;
+          const entry = box.find(b => b.uid === uid);
+          const mon = entry && MONSTER_DATA[entry.monsterId];
+          if (!mon) continue;
+          let rec = calcMonsterStats(entry).rec;
+          let _rM = 1, _rS = 1;
+          for (const eff of recEffects) {
+            const apply = isRarityCond(eff.condition) ? rarityEffApplies(eff, mon.attr, mon.type, subAttrOf(mon)) : (eff.condition === 'type' ? mon.type === eff.attr : attrTargetOk(eff.attr, mon.attr, subAttrOf(mon)));
+            if (apply) {
+              if (eff.condition !== 'type' && eff.attr && isSubOnlyMatch(eff.attr, mon.attr)) _rS *= eff.value;
+              else if (eff.condition !== 'type' && eff.attr) _rM *= eff.value;
+              else rec *= eff.value;
+            }
+          }
+          rec *= Math.max(_rM, _rS);
+          if (recCondEffects.length) {
+            const _hpN = playerCurrentHP / Math.max(1, playerMaxHP);
+            const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, subAttr: subAttrOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: _hpN, hpRatioLow: _hpN, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
+            rec *= rc.recMultiplier;
+          }
+          totalRec += rec; _recBy[partyUids.indexOf(uid)] = rec;
+        }
+        const orbBonus = 1 + 0.25 * (attrCounts.heal - 3);
+        const comboBonus = 1 + 0.25 * (totalCombo - 1);
+        const healAmount = Math.floor(totalRec * orbBonus * comboBonus * (buffRecMult ? buffRecMultValue : 1));
+        if (healAmount > 0) {
+          playSE('heal');
+          const prevHPc = playerCurrentHP;
+          playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + healAmount);
+          updatePlayerHP(playerCurrentHP - prevHPc);
+          if (window.BattleLog) BattleLog.healShare(_recBy, playerCurrentHP - prevHPc);
+          setComboLabel(`❤️ ${healAmount} 回復！`);
+          await sleep(800);
+        }
+      }
     }
     hidePoisonPreview();
     await Ryuseki.endMove(totalCombo, attrCounts);
@@ -11630,6 +11754,7 @@ async function _evaluateInner() {
       const prevHP3 = playerCurrentHP;
       playSE('poison');
       playerCurrentHP = Math.max(0, playerCurrentHP - poisonDmg);
+      if (window.BattleLog) BattleLog.taken(poisonDmg, true);
       updatePlayerHP(0);
       _poisonNet = -poisonDmg;
       _showPoisonLabel(_poisonNet);
@@ -11646,6 +11771,7 @@ async function _evaluateInner() {
     // ★ 回復処理（攻撃より先に処理） ★
     if (attrCounts.heal >= 3) {
       let totalRec = 0;
+      const _recBy = {};   // 履歴用：枠番号 → 回復力
       const recEffects = [];
       const recCondEffects = [];   // 回復力倍率（recValue）つきの攻撃効果
       [0, 5].forEach(idx => {
@@ -11684,7 +11810,7 @@ async function _evaluateInner() {
               const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, subAttr: subAttrOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: Math.max(_hpStartRatio, _hpN), hpRatioLow: Math.min(_hpStartRatio, _hpN), skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
               rec *= rc.recMultiplier;
             }
-            totalRec += rec;
+            totalRec += rec; _recBy[partyUids.indexOf(uid)] = rec;
           }
         }
       }
@@ -11696,6 +11822,7 @@ async function _evaluateInner() {
         const prevHP2 = playerCurrentHP;
         playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + healAmount);
         updatePlayerHP(playerCurrentHP - prevHP2);
+        if (window.BattleLog) BattleLog.healShare(_recBy, playerCurrentHP - prevHP2);
         setComboLabel(`❤️ ${healAmount} 回復！`);
         // 攻撃がある場合は回復SEの少し後に攻撃開始、回復のみなら従来通り余韻を残す
         await sleep(finalDamages.some(d => d > 0) ? 350 : 800);
@@ -11798,6 +11925,7 @@ async function _evaluateInner() {
 
     // ★ LS HP回復 ★
     const hpRecoveryEffects = [];
+    const hpRecoverySlots = [];   // 履歴用：回復するリーダー／フレンドの枠番号
     [0,5].forEach(idx => {
       if (partyUids.length > idx && partyUids[idx] !== null) {
         const e = box.find(b => b.uid === partyUids[idx]);
@@ -11805,18 +11933,21 @@ async function _evaluateInner() {
           const m = MONSTER_DATA[e.monsterId];
           if (m && m.leaderSkill && m.leaderSkill.effects) {
             for (const eff of m.leaderSkill.effects) {
-              if (eff.type === 'hpRecovery') hpRecoveryEffects.push(eff.value);
+              if (eff.type === 'hpRecovery') { hpRecoveryEffects.push(eff.value); hpRecoverySlots.push(idx); }
             }
           }
         }
       }
     });
+    let _hri = 0;
     for (const val of hpRecoveryEffects) {
+      const _hslot = hpRecoverySlots[_hri++];
       const rec = Math.floor(playerMaxHP * val);
       playSE('heal');   // リーダースキル（生命など）の回復音：heal.mp3
       const prevHP4 = playerCurrentHP;
       playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + rec);
       updatePlayerHP(playerCurrentHP - prevHP4);
+      if (window.BattleLog) BattleLog.heal(_hslot, playerCurrentHP - prevHP4);
       setComboLabel(`💚 ${rec} 回復！`);
       await sleep(600);
     }
@@ -12270,7 +12401,7 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 (function validateEnemyDrops() {
   for (const [dn, dun] of Object.entries(DUNGEON_DATA)) {
     const _allBt = dun.battles.concat(dun.random ? [{ enemies: Object.values(dun.random.monsters || {}) }] : [], dun.intrusion ? [{ enemies: dun.intrusion.monsters || [] }] : []);
-    for (const bt of _allBt) for (const e of bt.enemies) {
+    for (const bt of _allBt) for (const e of (bt.enemies || [])) {   // 宝箱フロア（{ chestFloor }）は enemies なし
       const attr = getMonsterAttrFromImg(e.img) || e.attr;
       for (const d of (e.drops || [])) {
         const item = ITEM_DATA[d.item];

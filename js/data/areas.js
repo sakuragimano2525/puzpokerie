@@ -121,6 +121,10 @@ tou: { both: true, name: '東方コラボ', desc: 'コラボキャラがドロ�
 
 
 monhan: { both: true, name: 'モンスターハンター', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'VS.ディノバルド',2: 'VS.ジンオウガ',3: 'VS.バルファルク',4: 'VS.ゴア・マガラ',5: 'VS.ブラキディオス,',boss: 'Vs.ブラキディオス+'} , stageLevels: { 1: '上級', 2: '上級',3: '上級',4: '超級',5: '超級',boss: '超上級'}},
+  // ── 蓮ノ空コラボ（ホーム「イベント」の「蓮ノ空コラボ」ボタンから js/hasunosora.js の画面で遊ぶ。一覧には出さない = hidden） ──
+  //   ダンジョンのキーは hasu-1 / hasu-2 / hasu-boss（ダンジョン設定ツールで作る）
+  hasu: { hidden: true, name: '蓮ノ空コラボ', desc: '蓮ノ空女学院スクールアイドルクラブ', bg: 'hasu.png', hue: 330, stageNames: { 1: '蓮ノ空コラボ-1', 2: '蓮ノ空コラボ-2', boss: '蓮ノ空コラボ-BOSS' } },
+
 
 
   // ── マルチプレイダンジョン（ホーム右上「マルチ」ボタンの一覧に出る。イベント一覧には出さない = hidden） ──

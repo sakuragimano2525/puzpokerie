@@ -10430,6 +10430,320 @@ const MONSTER_DATA = {
       desc: 'HP75%以上で攻撃2倍、受けるダメージ10%軽減。',
       effects: [ { type: 'atk', condition: 'hpAbove', threshold: 0.75, value: 2, reduce: 0.1 }, { type: 'rec', value: 0.25 } ]
     }
+  },
+  5092: {
+    id: 5092,
+    name: '日野下 花帆',
+    rarity: 6,
+    attr: 'none',
+    sub: 'light',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 100000,
+    stats: { hp: { min: 522, max: 3000 }, atk: { min: 103, max: 7522 }, rec: { min: 105, max: 522 } },
+    skill: {
+      name: 'ラブアトラクト',
+      sp: 4,
+      desc: 'HPとバインドを全回復。\n1ターンの間、全員の攻撃力が2倍。',
+      yumekawa: true,
+      effects: [
+        { type: 'heal', value: 1 },
+        { type: 'bindRecover', turns: 99 },
+        { type: 'selfAtkBuff', target: 'subs', value: 2, turns: 1, includeSelf: true },
+        { type: 'selfAtkBuff', target: 'leaderFriend', value: 2, turns: 1, includeSelf: true }
+      ]
+    },
+    leaderSkill: {
+      name: 'ブルームマイセルフ',
+      desc: '回復ドロップを消す度に攻撃1.7倍、受けるダメージ8%軽減。',
+      effects: [
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 2 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'heal', value: 1.8, reduce: 0.08 },
+        { type: 'spCharge', size: 'medium' }
+      ]
+    },
+    bindImmune: true
+  },
+  5093: {
+    id: 5093,
+    name: '村野 さやか',
+    rarity: 6,
+    attr: 'none',
+    sub: 'water',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 100000,
+    stats: { hp: { min: 1003, max: 5113 }, atk: { min: 1013, max: 9113 }, rec: { min: 157, max: 727 } },
+    skill: {
+      name: 'アイシイアクト',
+      sp: 1,
+      desc: '30ターンの間、自分の属性が水属性に変化。\n水ドロップをランダムで6つ生成し、水ドロップと回復ドロップをロック。\nスキル2に変化。',
+      yumekawa: true,
+      effects: [
+        { type: 'attrChange', target: 'self', attr: 'water', turns: 30 },
+        { type: 'orbChangeRandom', attr: 'water', count: 6 },
+        { type: 'orbLock', target: 'attrs', orb_water: true, orb_heal: true }
+      ],
+      stages: [
+        {
+          name: 'プライムスケーター',
+          sp: 1,
+          yumekawa: true,
+          desc: '1ターンの間、操作時間が2倍、高速ルーレットを1つ生成。\nロックを解除し、水ドロップをランダムで3つ生成。\nスキル3に変化。',
+          effects: [
+            { type: 'moveTimeBuff', turns: 1, seconds: 0, mult: 2 },
+            { type: 'roulette', turns: 1, count: 1, sec: '0.5' },
+            { type: 'orbUnlock', target: 'all' },
+            { type: 'orbChangeRandom', attr: 'water', count: 3 }
+          ]
+        },
+        {
+          name: 'フルブルームフィナーレ',
+          sp: 1,
+          yumekawa: true,
+          desc: '1ターンの間、敵全体の防御力を無視し、属性吸収を無効化。\n水ドロップと回復ドロップをランダムで3つずつ生成。\nスキル4に変化。',
+          effects: [
+            { type: 'defenseDown', target: 'all', value: 1, turns: 1 },
+            { type: 'absorbVoid', turns: 1 },
+            { type: 'orbChangeRandom', attr: 'water', count: 3 },
+            { type: 'orbChangeRandom', attr: 'heal', count: 3 }
+          ]
+        },
+        {
+          name: 'スノーギャザーブースト',
+          sp: 1,
+          yumekawa: true,
+          desc: 'ロックを解除し、全ドロップを水・回復ドロップに変化。\n1ターンの間、水属性の攻撃が1.5倍。\nスキル5に変化。',
+          effects: [
+            { type: 'orbUnlock', target: 'all' },
+            { type: 'orbChangeMulti', orb_water: true, orb_heal: true },
+            { type: 'atkBuff', attr: 'water', value: 1.5, turns: 1 }
+          ]
+        },
+        {
+          name: 'アイシイ インフィニティ',
+          sp: 5,
+          yumekawa: true,
+          desc: '敵全体に味方全員の攻撃力×15倍の水属性攻撃。\n敵単体の行動を4ターン遅らせる。\nスキル1に変化。',
+          effects: [
+            { type: 'damagePartyAtkMult', target: 'all', value: 20, attr: 'water' },
+            { type: 'enemyDelay', target: 'all', turns: 4 }
+          ]
+        }
+      ]
+    },
+    leaderSkill: {
+      name: 'アグレッシブワイドビリーフ',
+      desc: 'スキル使用時、攻撃1.5倍、受けるダメージ25%軽減。\n水ドロップを消す度に攻撃1.3倍。\n水ドロップの2コンボ以上で回復力2倍、1コンボ加算。',
+      effects: [
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 2 },
+        { type: 'atk', condition: 'skillUsed', value: 2, reduce: 0.25 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.4 },
+        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1, recValue: 2, comboAdd: 1 }
+      ]
+    },
+    bindImmune: true
+  },
+  5094: {
+    id: 5094,
+    name: '大沢 瑠璃乃',
+    rarity: 6,
+    attr: 'none',
+    sub: 'light',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 100000,
+    stats: { hp: { min: 831, max: 3831 }, atk: { min: 103, max: 6831 }, rec: { min: 105, max: 300 } },
+    skill: {
+      name: 'リシャッフル',
+      sp: 2,
+      desc: 'ドロップをシャッフルした後、ロックする。\nスキル2に変化。',
+      yumekawa: true,
+      effects: [ { type: 'orbUnlock', target: 'all' }, { type: 'orbChange5ColorHeal' }, { type: 'orbLock', target: 'all' } ],
+      stages: [
+        {
+          name: 'リシャッフル+',
+          sp: 2,
+          yumekawa: true,
+          desc: 'ドロップをシャッフルした後、ロックする。\n1ターンの間、回復力が2倍。\nスキル1に変化。',
+          effects: [
+            { type: 'orbUnlock', target: 'all' },
+            { type: 'orbChange5ColorHeal' },
+            { type: 'orbUnlock', target: 'all' },
+            { type: 'recMult', turns: 1, value: 2 }
+          ]
+        }
+      ]
+    },
+    leaderSkill: {
+      name: 'トモダチメモリーズ',
+      desc: 'チームの総レア度が36以上の場合、攻撃力が4倍。',
+      effects: [
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 2 },
+        { type: 'rarity', condition: 'totalAbove', threshold: 36, atk: true, value: 4 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'dmgReduction', value: 0.05 }
+      ]
+    },
+    bindImmune: true
+  },
+  5095: {
+    id: 5095,
+    name: '百生 吟子',
+    rarity: 4,
+    attr: 'none',
+    sub: 'wood',
+    type: 'バランス',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 300, max: 3000 }, atk: { min: 600, max: 6000 }, rec: { min: 10, max: 100 } },
+    skill: {
+      name: 'トゥフューチャー',
+      sp: 2,
+      desc: 'HPを全回復。1ターンの間、全属性の攻撃が1.5倍。\n15秒間、時を止める。',
+      yumekawa: true,
+      condition: { type: 'hpBelow', value: 1 },
+      effects: [ { type: 'heal', value: 1 }, { type: 'atkBuff', value: 2, turns: 1 }, { type: 'timeStop', seconds: 15 } ]
+    },
+    leaderSkill: {
+      name: 'アトラクトゲイン',
+      desc: 'ダンジョン潜入時にリーダー/フレンドの時、チップとタマゴドロップ率が少し上昇。\n全属性のHP1.15倍。',
+      effects: [ { type: 'hp', value: 1.1 } ]
+    }
+  },
+  5096: {
+    id: 5096,
+    name: '徒町 小鈴',
+    rarity: 4,
+    attr: 'none',
+    sub: 'wood',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 300, max: 3000 }, atk: { min: 600, max: 6000 }, rec: { min: 10, max: 100 } },
+    skill: {
+      name: 'メンタルプロテクト',
+      sp: 2,
+      desc: 'HPが1になる。\n3ターンの間、属性吸収を無効し、ダメージを10%軽減。',
+      yumekawa: true,
+      condition: { type: 'orbBoost', attr: 'wood' },
+      effects: [
+        { type: 'selfDamage', mode: 'toOne', value: 0.2 },
+        { type: 'absorbVoid', turns: 3 },
+        { type: 'dmgReductionBuff', turns: 3, value: 0.1 }
+      ]
+    },
+    leaderSkill: {
+      name: 'ちぇすとー！',
+      desc: 'チームの総レア度が32以上の場合、攻撃力が2倍。\nHP3%以下で攻撃2倍、受けるダメージ30%軽減。',
+      effects: [
+        { type: 'eggDropUp', value: 20 },
+        { type: 'expMult', value: 2 },
+        { type: 'rarity', condition: 'totalAbove', threshold: 32, atk: true, value: 3 },
+        { type: 'spCharge', size: 'medium' },
+        { type: 'atk', condition: 'hpBelow', threshold: 0.03, value: 2, reduce: 0.3 }
+      ]
+    }
+  },
+  5097: {
+    id: 5097,
+    name: '安養寺 姫芽',
+    rarity: 6,
+    attr: 'dark',
+    sub: 'light',
+    type: 'こうげき',
+    maxLevel: 99,
+    baseExp: 100000,
+    stats: { hp: { min: 300, max: 3000 }, atk: { min: 300, max: 3000 }, rec: { min: 10, max: 100 } },
+    skill: {
+      name: 'イグニッションモード',
+      sp: 4,
+      desc: 'ロックを解除し、全ドロップを光・闇ドロップに変化。\n99ターンの間、サブ全員の属性が闇属性に変化、\n自分とリーダーとフレンドの属性が光属性に変化。',
+      yumekawa: true,
+      condition: { type: 'orbBoost', attr: 'dark' },
+      effects: [
+        { type: 'orbUnlock', target: 'all' },
+        { type: 'orbChangeMulti', orb_light: true, orb_dark: true },
+        { type: 'attrChange', target: 'subs', attr: 'dark', turns: 99 },
+        { type: 'attrChange', target: 'leaderFriend', attr: 'light', turns: 99, includeSelf: true }
+      ]
+    },
+    leaderSkill: {
+      name: 'チアフルボルテージブースト',
+      desc: '【落ちコンなし】ダンジョン潜入時にリーダー/フレンドの時、タマゴドロップ率がそこそこ上昇。',
+      effects: [ { type: 'noDrop', value: true } ]
+    }
+  },
+  5098: {
+    id: 5098,
+    name: '錦上 マイカ',
+    rarity: 4,
+    attr: 'fire',
+    sub: 'water',
+    type: 'かいふく',
+    maxLevel: 99,
+    baseExp: 10000,
+    stats: { hp: { min: 100, max: 4000 }, atk: { min: 100, max: 1819 }, rec: { min: 0, max: 0 } },
+    skill: {
+      name: 'レッドカラミティ',
+      sp: 2,
+      desc: '1ターンの間、火ドロップが落ちやすくなる。\nHPを最大HPの50%回復。',
+      yumekawa: true,
+      condition: { type: 'orbBoost', attr: 'fire' },
+      effects: [ { type: 'orbSpawnBoost', attr: 'fire', rate: 0.42, turns: 1 }, { type: 'heal', value: 0.5 } ]
+    },
+    leaderSkill: {
+      name: 'ブルームレッドアップ',
+      desc: 'SPの上限が5アップ（最大15）。',
+      effects: [ { type: 'spCapUp', value: 5 }, { type: 'rec', value: 0.01 } ]
+    }
+  },
+  5099: {
+    id: 5099,
+    name: '令沢 葵',
+    rarity: 6,
+    attr: 'none',
+    sub: 'water',
+    type: 'かいふく',
+    maxLevel: 50,
+    baseExp: 100000,
+    stats: { hp: { min: 2000, max: 5700 }, atk: { min: 2000, max: 9200 }, rec: { min: 20, max: 220 } },
+    skill: {
+      name: 'ブルーカラミティ',
+      sp: 1,
+      desc: '99ターンの間、自分の属性が水属性に変化。\n99ターンの間、水ドロップが少し落ちやすくなる。\nスキル2に変化。',
+      yumekawa: true,
+      effects: [
+        { type: 'attrChange', target: 'self', attr: 'water', turns: 99 },
+        { type: 'orbSpawnBoost', attr: 'water', rate: 0.3, turns: 99 }
+      ],
+      stages: [
+        {
+          name: 'ファイナル=カラミティ',
+          sp: 10,
+          yumekawa: true,
+          desc: '敵単体に攻撃力×100倍の水属性攻撃。\nスキル1に変化。',
+          effects: [ { type: 'damageSelfAtkMult', target: 'single', value: 150, attr: 'water' } ]
+        }
+      ]
+    },
+    leaderSkill: {
+      name: 'ブルーシャインワイドビリーフ',
+      desc: 'スキル使用時、攻撃1.2倍、受けるダメージ30%軽減。\n水ドロップを消す度に攻撃1.3倍。\n水ドロップの2コンボ以上で1コンボ加算。\nSP上限値+5',
+      effects: [
+        { type: 'eggDropUp', value: 20 },
+        { type: 'coinMult', value: 2 },
+        { type: 'atk', condition: 'skillUsed', value: 1.5, reduce: 0.3 },
+        { type: 'spCapUp', value: 5 },
+        { type: 'atk', condition: 'eraseAttr', attr: 'water', value: 1.4 },
+        { type: 'atk', condition: 'attrCombos', attr: 'water', count: 2, value: 1, recValue: 2, comboAdd: 1 }
+      ]
+    },
+    bindImmune: true
   }
 };
 

@@ -1,0 +1,110 @@
+/* 履歴（ボーナス →「履歴」）  js/history.js
+   軽さ：棒グラフはCSSの div だけ／アニメは transform のみ／画面外の行は描画を省略 */
+.hs-back { position: fixed; inset: 0; z-index: 151; display: grid; place-items: center; padding: 10px; box-sizing: border-box;
+  background: rgba(0,0,0,.55); font-family: inherit; }
+.hs-box { width: min(94vw, 430px); height: min(92vh, 780px); height: min(92dvh, 780px); display: flex; flex-direction: column; gap: 10px;
+  padding: 14px; box-sizing: border-box; background: var(--paper, #fff); color: var(--ink, #222);
+  border: var(--bw, 3px) solid var(--ink, #222); border-radius: 20px; box-shadow: 0 5px 0 var(--ink, #222); }
+.hs-title { text-align: center; font-weight: 900; font-size: 1.15rem; flex-shrink: 0; }
+.hs-title small { font-size: .8rem; opacity: .6; margin-left: 4px; }
+.hs-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; gap: 10px; padding: 2px 2px 6px; }
+.hs-foot { flex-shrink: 0; padding: 10px; font-weight: 800; font-size: 1rem; background: #eee; color: var(--ink, #222);
+  border: var(--bw, 3px) solid var(--ink, #222); border-radius: 12px; cursor: pointer; touch-action: manipulation; }
+.hs-foot:active { background: #ddd; }
+.hs-empty { padding: 36px 8px; text-align: center; font-weight: 800; line-height: 1.7; opacity: .7; }
+.hs-none { padding: 6px 0; text-align: center; font-weight: 800; opacity: .55; }
+
+/* ── 一覧 ── */
+.hs-row { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 8px 10px; text-align: left; font: inherit; color: inherit;
+  background: #fff; border: 3px solid var(--ink, #222); border-radius: 14px; box-shadow: 0 3px 0 var(--ink, #222);
+  cursor: pointer; touch-action: manipulation; flex-shrink: 0;
+  content-visibility: auto; contain-intrinsic-size: auto 108px; }
+.hs-row:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink, #222); }
+.hs-r1 { display: flex; align-items: baseline; gap: 6px; }
+.hs-r1 b { font-weight: 900; font-size: 1rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-r1 span { margin-left: auto; flex-shrink: 0; font-size: .72rem; font-weight: 800; opacity: .6; }
+.hs-r1 em, .hs-dname em { flex-shrink: 0; font-style: normal; font-size: .62rem; font-weight: 900; color: #fff; background: #2d6fd0; border-radius: 999px; padding: 1px 6px; }
+.hs-dname em { margin-left: 6px; vertical-align: middle; }
+.hs-r2 { font-size: .75rem; font-weight: 800; opacity: .65; }
+.hs-team { display: flex; gap: 3px; }
+.hs-team.c { justify-content: center; margin-top: 6px; }
+.hs-mi { width: 30px; height: 30px; object-fit: contain; flex-shrink: 0; }
+.hs-mi.s { width: 24px; height: 24px; }
+.hs-r3 { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .72rem; font-weight: 800; color: #2d6fd0; }
+
+/* ── 詳細 ── */
+.hs-dhead { text-align: center; flex-shrink: 0; }
+.hs-dname { font-weight: 900; font-size: 1.2rem; }
+.hs-dsub { font-size: .76rem; font-weight: 800; opacity: .6; margin-top: 2px; }
+.hs-sec { flex-shrink: 0; padding: 8px 10px 10px; background: #fff; border: 3px solid var(--ink, #222); border-radius: 14px; box-shadow: 0 3px 0 var(--ink, #222);
+  content-visibility: auto; contain-intrinsic-size: auto 200px; }
+.hs-sec h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 6px; font-size: .95rem; font-weight: 900; }
+.hs-tot { font-size: .72rem; font-weight: 800; opacity: .8; }
+.hs-tot b { font-size: .85rem; color: #d2550a; }
+
+/* 縦グラフ */
+.hs-chart { display: flex; gap: 4px; align-items: flex-end; padding-top: 2px; border-bottom: 2px solid rgba(0,0,0,.25); }
+.hs-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.hs-colbar { width: 100%; height: 134px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.hs-val { max-width: none; white-space: nowrap; font-weight: 900; line-height: 1.15; margin-bottom: 2px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.hs-bar { width: 66%; max-width: 34px; box-sizing: border-box; border: 2px solid var(--ink, #222); border-bottom: 0; border-radius: 7px 7px 0 0;
+  background: linear-gradient(180deg, #9fb4ff, #5b78e8); transform-origin: 50% 100%; animation: hsGrow .45s cubic-bezier(.2,.8,.3,1) both; }
+.hs-bar.fire  { background: linear-gradient(180deg, #ff9a63, #e04a10); }
+.hs-bar.water { background: linear-gradient(180deg, #74c4ff, #1f7fd6); }
+.hs-bar.wood  { background: linear-gradient(180deg, #86e486, #2f9f3a); }
+.hs-bar.light { background: linear-gradient(180deg, #fff08a, #e6b800); }
+.hs-bar.dark  { background: linear-gradient(180deg, #c58cf0, #7a35b8); }
+.hs-bar.zero  { background: #cfcfcf; border-color: rgba(0,0,0,.35); animation: none; }
+.hs-ci { width: 100%; max-width: 40px; aspect-ratio: 1; object-fit: contain; margin-top: 3px; }
+@keyframes hsGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.hs-lite .hs-bar { animation: none; }
+@media (prefers-reduced-motion: reduce) { .hs-bar { animation: none; } }
+
+/* 内訳 */
+.hs-note { margin: -2px 0 6px; font-size: .66rem; font-weight: 800; opacity: .75; line-height: 1.5; }
+.hs-note b { color: #d2550a; }
+.hs-legend { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+.hs-lg { display: flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 800; }
+.hs-lg-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-lg-n i { font-style: normal; font-size: .58rem; color: #fff; background: #2fa86a; border-radius: 999px; padding: 0 5px; margin-left: 4px; vertical-align: middle; }
+.hs-lg b { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.hs-lg small { flex-shrink: 0; width: 2.6em; text-align: right; font-size: .68rem; opacity: .55; }
+
+/* スキル使用 */
+.hs-sk { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-top: 1px dashed rgba(0,0,0,.22); }
+.hs-sk:first-of-type { border-top: 0; }
+.hs-sk-b { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; min-height: 30px; gap: 2px; }
+.hs-sk-l { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; font-weight: 800; }
+.hs-sk-l span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-sk-l b { flex-shrink: 0; color: #d2550a; }
+.hs-sk-l.mute { opacity: .45; }
+
+/* 消したドロップ */
+.hs-orbbar { display: flex; height: 12px; margin-bottom: 8px; overflow: hidden; border: 2px solid var(--ink, #222); border-radius: 8px; }
+.hs-orbbar i { display: block; min-width: 2px; }
+.hs-orbs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px 12px; }
+.hs-oc { display: flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 800; }
+.hs-oc i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink, #222); box-sizing: border-box; flex-shrink: 0; }
+.hs-oc span { flex: 1; }
+.hs-oc b { font-variant-numeric: tabular-nums; }
+
+/* せんせき */
+.hs-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.hs-st { padding: 6px 8px; background: #f1f5ff; border: 2px solid rgba(0,0,0,.2); border-radius: 10px; }
+.hs-st .k { font-size: .66rem; font-weight: 800; opacity: .65; }
+.hs-st .v { font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.hs-st .v small { font-size: .65rem; margin-left: 2px; opacity: .7; }
+.hs-st .s { font-size: .64rem; font-weight: 800; color: #7b3fa0; }
+
+/* ドロップ */
+.hs-drops { display: flex; flex-wrap: wrap; gap: 8px; }
+.hs-dr { position: relative; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hs-dri { width: 52px; height: 52px; object-fit: contain; }
+.hs-dr.item .hs-dri { width: 44px; height: 44px; margin: 4px 0; }
+.hs-dr b { position: absolute; right: 0; top: 34px; font-size: .72rem; font-weight: 900; color: #fff; background: rgba(0,0,0,.78); border-radius: 999px; padding: 0 5px; }
+.hs-dr.item b { top: 30px; }
+.hs-dr span { max-width: 100%; font-size: .56rem; font-weight: 800; text-align: center; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 画像の保存メニュー・ドラッグを出さない */
+.hs-box img { -webkit-user-drag: none; -webkit-touch-callout: none; user-select: none; pointer-events: none; }

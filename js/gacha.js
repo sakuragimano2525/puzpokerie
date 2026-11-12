@@ -8,13 +8,13 @@
 //                   → 外にころがり出て画面中央へ → タップで開く → 結果を表示
 //     ・「ラインナップ」… 出るモンスターの一覧を表示
 //     ・コインが足りないときは何も消費せず「ガチャコインが足りません」
-//     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（エナ・虹がかった白）⇔ 2ページ目（ブルアカ・赤）⇔ 3ページ目（ステラソラ・青）⇔ 4ページ目（ブルアカ2・緑）。
-//                各ページの設定は GACHA_DATA.page1〜page4（coin・cost・lineup・隠し条件 requires・unlock もページごと）
+//     ・ページ … 左右の矢印／ドット／スワイプ／←→キーで 1ページ目（エナ・虹がかった白）⇔ 2ページ目（ブルアカ・赤）⇔ 3ページ目（ステラソラ・青）⇔ 4ページ目（ブルアカ2・緑）⇔ 5ページ目（蓮ノ空・ピンク）。
+//                各ページの設定は GACHA_DATA.page1〜page5（coin・cost・lineup・隠し条件 requires・unlock もページごと）
 //
 //     ・「交換所」（右下）… ラインナップのモンスター3匹（GACHA_DATA.exchangeCost）をわたして、図鑑に登録ずみのラインナップの1匹と確定交換
 //
 //   外から使うもの
-//     GachaScreen.open() / close() / isOpen()
+//     GachaScreen.open(ページ番号は省略可) / close() / isOpen()
 //     GachaScreen.setTitle('名前')   左上のガチャ名を変える（ふだんは GACHA_DATA.title）
 //     GachaScreen.refresh()          コインの数などを表示し直す
 // ============================================================
@@ -25,7 +25,7 @@
   var $ = function (id) { return document.getElementById(id); };
 
   var cfg = (typeof GACHA_DATA !== 'undefined' && GACHA_DATA) || { title: 'ガチャ', coin: 'fcoin', cost: 1, lineup: [] };
-  // ページごとの設定：cfg.page1〜page4（coin・cost・lineup・requires・unlock。capsules・exchangeCost は共通）
+  // ページごとの設定：cfg.page1〜page5（coin・cost・lineup・requires・unlock。capsules・exchangeCost は共通）
   function pc() { return cfg['page' + page] || {}; }
   function COIN() { return pc().coin || 'fcoin'; }
   function isEna() { return COIN() === 'ena'; }   // 'ena' だけ特別：ホーム左上の所持エナを使う
@@ -34,7 +34,7 @@
   var busy = false;
   var toastTimer = null;
   var seq = null, runId = 0;   // カプセル演出の進行状況（runId が変わったら古い演出は止まる）
-  var PAGES = 4, page = 1;      // いま見ているページ（1＝エナガチャ／2＝ブルアカガチャ／3＝ステラソラガチャ／4＝ブルアカガチャ2）
+  var PAGES = 5, page = 1;      // いま見ているページ（1＝エナガチャ／2＝ブルアカガチャ／3＝ステラソラガチャ／4＝ブルアカガチャ2／5＝蓮ノ空ガチャ）
   var customTitle = null;       // setTitle() で変えたタイトル（1ページ目用）
 
   // ── 設定の読み取り ───────────────────────────
@@ -367,12 +367,15 @@
 
   // ── 画面の開閉 ───────────────────────────────
   function isOpen() { return screen.style.display === 'flex'; }
-  function open() {
+  // open(n)：n ページ目から開く（省略 → 1ページ目。蓮ノ空コラボ画面の「コラボガチャ」ボタンは open(5)）
+  //   画面は重ねて開くだけなので、「もどる」で閉じると、開く前にいた画面（蓮ノ空コラボ画面など）にそのまま戻る
+  function open(startPage) {
     busy = false;
     resetFx();
     closeLineup(); closeResult(); closeExchange();
     var t = $('gacha-toast'); if (t) t.classList.remove('show');
-    setPage(1, 0);   // 開くときはいつも1ページ目から
+    var sp = Math.floor(Number(startPage));
+    setPage(sp >= 1 && sp <= PAGES ? sp : 1, 0);   // ふだんは1ページ目から（ページ指定があればそのページ）
     refresh();
     screen.style.display = 'flex';
     fitTitle();

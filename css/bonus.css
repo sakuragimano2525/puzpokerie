@@ -10,6 +10,7 @@
 .bn-btn.ryu { background: linear-gradient(180deg, #e6f4ff 0%, #b9dcff 100%); }
 .bn-btn.gacha { background: linear-gradient(180deg, #fff7d1 0%, #ffd98a 100%); }
 .bn-btn.friend { background: linear-gradient(180deg, #e2f7ea 0%, #a8e6c0 100%); }
+.bn-btn.hist { background: linear-gradient(180deg, #f1e6ff 0%, #d2b8f5 100%); }
 .bn-btn img { width: 34px; height: 34px; object-fit: contain; }
 .bn-btn .ic { width: 30px; height: 30px; }
 .bn-btn b { font-size: 1.05rem; }
