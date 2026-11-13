@@ -1323,3 +1323,6 @@ button.cs-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--in
 #de-footer .btn-rensen:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 #de-footer .btn-rensen:focus-visible { outline: 3px solid var(--water); outline-offset: 3px; }
 
+
+/* 練習場（miga-X）：攻撃設定で、いま選んでいる攻撃力 */
+.skill-popup .sp-btn.is-cur { box-shadow: inset 0 0 0 3px var(--coral, #ff6b57); font-weight: 800; }

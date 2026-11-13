@@ -1556,6 +1556,7 @@ function compileEnemyActions(enemyDef) {
 // ============================================================
 const ATTR_STRONG = { fire:'wood', water:'fire', wood:'water', light:'dark', dark:'light' };
 function getAttrMulti(attackAttr, defAttr) {
+  if (isPracticeStage()) return 1.0;   // 練習場：属性相性なし（敵の属性は見た目だけ）
   if (ATTR_STRONG[attackAttr] === defAttr) return 1.5;
   if (ATTR_STRONG[defAttr] === attackAttr) return 0.5;
   return 1.0;
@@ -1706,7 +1707,13 @@ function isChestBossFloor(idx) {
   return !!(b.enemies && b.enemies[0] && b.enemies[0].img);                       // モンスター画像つきの宝箱だけ（ふつうの宝箱は対象外）
 }
 // このバトルがボス戦か（isBoss の敵がいる／最終バトル／データ無しのBOSSステージ）
+// ★練習場（areas.js で practice:true。miga-X）★ ボス表示なし／属性相性なし／メニューに「SP最大」「攻撃設定」
+function isPracticeArea(a) { return typeof a === 'string' && typeof EVENT_INFO !== 'undefined' && Object.prototype.hasOwnProperty.call(EVENT_INFO, a) && !!EVENT_INFO[a].practice; }
+function isPracticeStage() { return isPracticeArea(currentAreaNum); }
+// 練習場の敵は「見た目だけ」属性あり。ダメージ計算・リーダースキルの「敵の属性」条件では無属性として扱う
+function enemyAttrForCalc(enemy) { return isPracticeStage() ? 'none' : ((enemy && enemy.attr) || 'dark'); }
 function isBossBattleIndex(idx) {
+  if (isPracticeStage()) return false;   // 練習場：ボスしかなくても BOSS バナー・ボス登場演出は出さない
   if (!currentDungeonBattles || !currentDungeonBattles.length) return currentStageType === 'boss';
   const b = currentDungeonBattles[idx];
   if (b && b.chest) return isChestBossFloor(idx);   // 宝箱のフロアは、最後でもふつうはボス戦にしない（BOSS表示・ボスBGM・ボス演出なし）。蓮ノ空だけ例外（下）
@@ -1918,6 +1925,7 @@ async function loadBattle(battleData, autoStart = true) {
   battleExpQueue = 0;
   battleCoinQueue = 0;
   if (window.Zukan && !battleData.chest) { try { Zukan.noteEnemies(battleData.enemies); } catch (err) {} }   // 図鑑：出会ったモンスターを記録（js/zukan.js）
+  if (window.BattleLog) BattleLog.turnEnd();   // 履歴：前のバトルの最後のターンを確定
   enemyList = battleData.enemies.map(buildEnemyFromDef);
   buffMoveTimeShort = false;
   if (battleData.chest && window.Ryuseki) {   // 竜石の宝箱バトル：HPバーなし。宝箱・あと〇・ミッションを出す（js/ryuseki.js）
@@ -3753,6 +3761,7 @@ async function fxEnemyAttrChange(enemy, i, to) {
 //   ① 全員のカウントを1つ進める。0になった敵は「あと0」で止まる（複数いれば全員が0になる）
 //   ② 0になった敵が左から順に攻撃する。自分の番が来るまでは「0のまま攻撃待機」、攻撃が終わったらカウントが元に戻る
 async function processEnemyTurns() {
+  if (window.BattleLog) BattleLog.turnEnd();   // 履歴：このターンの味方のダメージを確定（瞬間最大ダメージの集計）
   await playEnemyAttrChanges();   // 2属性の敵：こちらの攻撃でHPが半分を切って属性が変わっていたら、行動の前に演出
   // ① カウントを進める
   for (const enemy of enemyList) {
@@ -7033,7 +7042,7 @@ function defenseCtx(enemy) {
   const b = lastTurnCtx || { comboCount: 0, exact4Count: 0, orbCounts: {}, crossCount: 0, crossAttrs: {}, lAttrs: {}, poisonCount: 0, fireCombos: 0, lShapes: 0,
     darkCombos: 0, healCombos: 0, attrCombos: {}, hasWaterConnect5: false, hasDarkConnect5: false, maxConnect: {}, exactAttrCounts: {}, connectSizes: {},
     remainingOrbs: undefined, skillUsed: false };
-  return { ...b, attr: 'none', enemyAttr: enemy ? enemy.attr : 'dark', hpRatio: playerCurrentHP / Math.max(1, playerMaxHP) };
+  return { ...b, attr: 'none', enemyAttr: enemyAttrForCalc(enemy), hpRatio: playerCurrentHP / Math.max(1, playerMaxHP) };
 }
 // ============================================================
 // ★ リーダースキルのダメージ軽減：発動演出（kei.mp3）＋HPバー右端のマーク ★
@@ -7722,6 +7731,7 @@ function damageAllEnemies(rawDmg, attr, se = 'skilldamage', ignoreDef = false) {
     // 固定ダメージ(ignoreDef)は防御無視。それ以外も最低ダメージ1
     const gm = (attr && !ignoreDef) ? enemyAttrGuardMult(enemy, attr) : 1;   // 属性軽減
     const dmg2 = ignoreDef ? Math.max(1, finalDmgBase) : Math.max(1, Math.floor(finalDmgBase * gm) - getEnemyDef(enemy));
+    if (window.BattleLog) BattleLog.skillNominal(enemy._chest ? 0 : dmg2);   // 履歴「瞬間最大ダメージ」：吸収される前の、味方側のダメージ
     if (attr && enemyAbsorbs(enemy, attr)) {   // 属性吸収中：ダメージの代わりにHPが回復する
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg2);
       const _u = enemyUnits[i];
@@ -7752,6 +7762,7 @@ function damageSingleEnemy(rawDmg, attr, se = 'skilldamage', ignoreDef = false) 
   const finalDmgBase = Math.floor(rawDmg * attrMult);
   const gm = (attr && !ignoreDef) ? enemyAttrGuardMult(enemy, attr) : 1;   // 属性軽減
   const dmg2 = ignoreDef ? Math.max(1, finalDmgBase) : Math.max(1, Math.floor(finalDmgBase * gm) - getEnemyDef(enemy));
+  if (window.BattleLog) BattleLog.skillNominal(enemy._chest ? 0 : dmg2);   // 履歴「瞬間最大ダメージ」：吸収される前の、味方側のダメージ
   if (attr && enemyAbsorbs(enemy, attr)) {   // 属性吸収中：ダメージの代わりにHPが回復する
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg2);
     const _u = document.querySelectorAll('#enemy-area .enemy-unit')[idx];
@@ -9146,6 +9157,7 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
       if (enemy && enemy.hp > 0) {
         playAttrHitSE(attr);   // 攻撃が敵に当たった瞬間の効果音
         const hit = calcHitDamage(enemy, damage, attr, sub);   // 主属性＋副属性（属性軽減・最低ダメージ1も含む）
+        if (window.BattleLog) BattleLog.nominal(slotIndex, enemy._chest ? 0 : hit.main + hit.sub + (hit.heal || 0));   // 履歴「瞬間最大ダメージ」：吸収・無効化される前の、味方側のダメージ
         const attrMult = hit.attrMult;
         let finalDmg = hit.main + hit.sub, dealtSub = 0;
         const absorbed = !!(enemy._comboAbsorb && enemy._comboAbsorb.turns > 0 &&
@@ -9585,6 +9597,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // ステージの短い表記（メイン: 3-2 / 3-BOSS ・ イベント: ステージ 2 / BOSS）
 function stageShortLabel(area, key) {
+  if (isPracticeArea(area)) return (EVENT_INFO[area].stageNames && EVENT_INFO[area].stageNames[key]) || EVENT_INFO[area].name || String(area);   // 練習場：「BOSS」と出さない
   const k = key === 'boss' ? 'BOSS' : key;
   return isEventArea(area) ? (key === 'boss' ? 'BOSS' : `ステージ ${k}`) : `${area}-${k}`;
 }
@@ -9619,7 +9632,7 @@ function getStageList(area) {
     let label = boss ? `ステージ ${area}-BOSS` : `ステージ ${area}-${key}`;
     if (isEventArea(area)) {
       const custom = EVENT_INFO[area].stageNames && EVENT_INFO[area].stageNames[key];
-      label = custom || (boss ? 'BOSS' : `ステージ ${key}`);
+      label = custom || (boss && !isPracticeArea(area) ? 'BOSS' : `ステージ ${key}`);
     }
     // ステージ名の下に出す小さな文字（初級・中級 など）。areas.js の stageLevels で指定
     const level = (isEventArea(area) && EVENT_INFO[area].stageLevels && EVENT_INFO[area].stageLevels[key]) || '';
@@ -9983,9 +9996,10 @@ function renderStageSelect() {
     const prev = idx > 0 ? stages[idx - 1] : null;
     const locked = !isMultiArea(currentAreaNum) && !!prev && !isStageCleared(currentAreaNum, prev.key);   // マルチは前のステージに関係なく、解放条件を満たしたものだけが出る
     const btn = document.createElement('button');
-    btn.className = `ss-stage-btn ${stage.boss ? 'boss' : 'normal'}${locked ? ' locked' : ''}`;
-    const num = isEventArea(currentAreaNum) ? (stage.boss ? 'B' : stage.key) : (stage.boss ? `${currentAreaNum}-B` : `${currentAreaNum}-${stage.key}`);
-    const crown = stage.boss ? '<svg class="ic ss-crown"><use href="#i-crown"/></svg>' : '';
+    const showBoss = stage.boss && !isPracticeArea(currentAreaNum);   // 練習場（miga-X）はボスだけでも「ボス表示」なし（王冠・B・赤い見た目）
+    btn.className = `ss-stage-btn ${showBoss ? 'boss' : 'normal'}${locked ? ' locked' : ''}`;
+    const num = isEventArea(currentAreaNum) ? (showBoss ? 'B' : (stage.boss ? '1' : stage.key)) : (showBoss ? `${currentAreaNum}-B` : `${currentAreaNum}-${stage.key}`);
+    const crown = showBoss ? '<svg class="ic ss-crown"><use href="#i-crown"/></svg>' : '';
     btn.innerHTML =
       `<span class="ss-stage-num">${num}</span>` +
       `<span class="ss-stage-body">` +
@@ -10698,7 +10712,12 @@ document.getElementById('home').addEventListener('click', () => {
 
 // Menu → 「続ける / ドロップを見る / リタイア」
 function showMenuView(name) {
-  ['main', 'drops', 'retire'].forEach(v => {
+  if (name === 'main') {   // 練習場（miga-X）だけ、メニューに「SP最大」「攻撃設定」を出す（ドロップを見る と リタイア の間）
+    const pr = isPracticeStage();
+    document.getElementById('menu-sp-max-btn').style.display = pr ? '' : 'none';
+    document.getElementById('menu-atk-btn').style.display = pr ? '' : 'none';
+  }
+  ['main', 'drops', 'retire', 'atk'].forEach(v => {
     document.getElementById('menu-view-' + v).style.display = (v === name) ? '' : 'none';
   });
 }
@@ -10721,6 +10740,39 @@ document.getElementById('menu-drops-btn').addEventListener('click', () => {     
   renderDropItems(document.getElementById('menu-drops-list'));
   showMenuView('drops');
 });
+// ── 練習場（miga-X）：SP最大 ／ 攻撃設定 ──
+document.getElementById('menu-sp-max-btn').addEventListener('click', () => {
+  if (!isPracticeStage() || isMenuLocked()) return;
+  closeMenu();
+  partySp = getSpCap();   // SP上限が上がっている（リーダースキル等）場合は、その上限まで
+  partyMemory = 0;
+  updateSpGaugeUI();
+  renderParty();          // スキルが溜まった枠の表示に更新
+});
+document.getElementById('menu-atk-btn').addEventListener('click', () => {
+  if (!isPracticeStage()) return;
+  const cur = enemyList && enemyList[0] ? enemyList[0].atk : 0;   // いまの設定を強調
+  document.querySelectorAll('#menu-atk-list [data-atk]').forEach(b => b.classList.toggle('is-cur', Number(b.dataset.atk) === cur));
+  showMenuView('atk');
+});
+document.getElementById('menu-atk-back').addEventListener('click', () => showMenuView('main'));
+document.querySelectorAll('#menu-atk-list [data-atk]').forEach(b => b.addEventListener('click', () => {
+  if (!isPracticeStage() || isMenuLocked()) return;
+  const atk = Number(b.dataset.atk);
+  closeMenu();
+  // 演出なし：敵の攻撃力を変え、行動ターンを1（あと1）にする。次のターンから毎ターンこの攻撃力で攻撃
+  for (const e of enemyList) {
+    if (!e || e.hp <= 0) continue;
+    e.atk = atk;
+    e.turnInterval = 1;
+    e._baseTurnInterval = 1;
+    e.turnProgress = 0;
+    e._due = false;
+    e._delayed = false;
+  }
+  updateEnemyUI();
+  updateEnemyTurnBadge();
+}));
 document.getElementById('menu-drops-back').addEventListener('click', () => showMenuView('main'));
 document.getElementById('menu-retire-btn').addEventListener('click', () => showMenuView('retire'));
 document.getElementById('menu-retire-no').addEventListener('click', () => showMenuView('main'));
@@ -10735,6 +10787,8 @@ document.getElementById('quit-yes').addEventListener('click', function() {      
   restoreTransforms();   // リタイアしたら変身は解ける
   setHomeFocusFromCurrent();
   const got = grantDrops();   // リタイアしても、ここまでに手に入れたドロップは受け取れる
+  // 練習場（miga-X）は、リタイアしても履歴に記録する（ふつうのダンジョンはクリア時だけ）
+  if (isPracticeStage()) { try { if (window.BattleLog) BattleLog.finish({ coin: totalCoin, exp: totalExp, mon: droppedMonsters, items: droppedItems, floors: Math.max(1, (currentBattleIndex || 0) + 1), retire: true }); } catch (e) { console.warn('[history]', e); } }
   document.getElementById('game').style.display = 'none';
   document.getElementById('home').style.display = 'flex';
   stopDungeonBGM();
@@ -11427,7 +11481,7 @@ async function _evaluateInner() {
       // 今消す塊も数えた個数で判定する（そうしないと「4色以上」は、4色目を消した瞬間には成立せず、5個目の塊まで倍率が出ない）
       const ctxCounts = { ...attrCounts };
       if (ctxCounts[color] !== undefined) ctxCounts[color] += cells.length;
-      const ctx = { attr: color, comboCount: totalCombo, exact4Count, orbCounts: ctxCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: ctxCounts.poison, fireCombos, lShapes, hpRatio: playerCurrentHP / playerMaxHP, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes };
+      const ctx = { attr: color, comboCount: totalCombo, exact4Count, orbCounts: ctxCounts, enemyAttr: enemyAttrForCalc(enemyList[0]), crossCount, crossAttrs, lAttrs, poisonCount: ctxCounts.poison, fireCombos, lShapes, hpRatio: playerCurrentHP / playerMaxHP, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes };
       const result = applyLeaderEffects(lsEffects, ctx);
       lastGroupCells = cells;
       checkLsGuard(lsEffects, ctx, cells);   // ダメージ軽減が発動（増えた）ならそのドロップの場所で演出
@@ -11527,7 +11581,7 @@ async function _evaluateInner() {
           if (e) { const m = MONSTER_DATA[e.monsterId]; if (m && m.leaderSkill && m.leaderSkill.effects) lsEffectsCA.push(...m.leaderSkill.effects); }
         }
       });
-      const caCtx = { attr:'none', comboCount:totalCombo, exact4Count, orbCounts:attrCounts, enemyAttr:enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount:attrCounts.poison, fireCombos, lShapes, hpRatio:playerCurrentHP/playerMaxHP, skillUsed:skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes };
+      const caCtx = { attr:'none', comboCount:totalCombo, exact4Count, orbCounts:attrCounts, enemyAttr:enemyAttrForCalc(enemyList[0]), crossCount, crossAttrs, lAttrs, poisonCount:attrCounts.poison, fireCombos, lShapes, hpRatio:playerCurrentHP/playerMaxHP, skillUsed:skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes };
       const caResult = applyLeaderEffects(lsEffectsCA, caCtx);
       if (caResult.comboAdd > 0) {
         comboAddTriggered = true;
@@ -11588,7 +11642,7 @@ async function _evaluateInner() {
         const mn = en && MONSTER_DATA[en.monsterId];
         if (!mn) continue;
         const rr = applyLeaderEffects(lsAll, { attr: mn.attr, subAttr: subAttrOf(mn), monsterType: mn.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts,
-          enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes,
+          enemyAttr: enemyAttrForCalc(enemyList[0]), crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes,
           hpRatio: playerCurrentHP / playerMaxHP, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos,
           hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
         if (rr.atkMultiplier > best) best = rr.atkMultiplier;
@@ -11645,7 +11699,7 @@ async function _evaluateInner() {
           rec *= Math.max(_rM, _rS);
           if (recCondEffects.length) {
             const _hpN = playerCurrentHP / Math.max(1, playerMaxHP);
-            const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, subAttr: subAttrOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: _hpN, hpRatioLow: _hpN, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
+            const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, subAttr: subAttrOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyAttrForCalc(enemyList[0]), crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: _hpN, hpRatioLow: _hpN, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
             rec *= rc.recMultiplier;
           }
           totalRec += rec; _recBy[partyUids.indexOf(uid)] = rec;
@@ -11714,7 +11768,7 @@ async function _evaluateInner() {
       const _hpNowRatio = playerCurrentHP / Math.max(1, playerMaxHP);
       const hpRatioFinal = Math.max(_hpStartRatio, _hpNowRatio);
       const hpRatioLowFinal = Math.min(_hpStartRatio, _hpNowRatio);
-      const context = { attr: lsAttrOf(mon), subAttr: lsSubOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: hpRatioFinal, hpRatioLow: hpRatioLowFinal, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs };
+      const context = { attr: lsAttrOf(mon), subAttr: lsSubOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyAttrForCalc(enemyList[0]), crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: hpRatioFinal, hpRatioLow: hpRatioLowFinal, skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs };
       const res = applyLeaderEffects(lse, context);
       atkMult = res.atkMultiplier;
       // エンハンス／攻撃力ダウン：主属性の攻撃には主属性が一致する分だけ、副属性の攻撃には副属性が一致する分だけ効く
@@ -11807,7 +11861,7 @@ async function _evaluateInner() {
             // 条件つきリーダースキルの「回復力倍率」（例: 火ドロップを消す度に攻撃1.2倍、回復力1.3倍）
             if (recCondEffects.length) {
               const _hpN = playerCurrentHP / Math.max(1, playerMaxHP);
-              const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, subAttr: subAttrOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyList[0]?.attr || 'dark', crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: Math.max(_hpStartRatio, _hpN), hpRatioLow: Math.min(_hpStartRatio, _hpN), skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
+              const rc = applyLeaderEffects(recCondEffects, { attr: mon.attr, subAttr: subAttrOf(mon), monsterType: mon.type, comboCount: totalCombo, exact4Count, orbCounts: attrCounts, enemyAttr: enemyAttrForCalc(enemyList[0]), crossCount, crossAttrs, lAttrs, poisonCount: attrCounts.poison, fireCombos, lShapes, hpRatio: Math.max(_hpStartRatio, _hpN), hpRatioLow: Math.min(_hpStartRatio, _hpN), skillUsed: skillUsedThisTurn, darkCombos, healCombos, attrCombos, hasWaterConnect5, hasDarkConnect5, maxConnect, exactAttrCounts, connectSizes, remainingOrbs });
               rec *= rc.recMultiplier;
             }
             totalRec += rec; _recBy[partyUids.indexOf(uid)] = rec;

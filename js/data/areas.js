@@ -95,6 +95,12 @@ const EVO_UNLOCK_DATA = {
 };
 const EVENT_AREA_DATA = {
   keiken: { name: 'けいけんパーク', desc: 'モンスターを育てよう！', bg: 'dungeon1.png', hue: 200, entryItem: 'ohuda1', entryCost: 1 },
+  // ── miga-X：パーティーの強さを試す練習場（ボスのみ・おふだ不要） ──
+  //   practice:true の効果（js/game.js）
+  //     ・ボス表示なし（BOSSバナー／ボス登場演出／王冠・「B」表記なし）
+  //     ・敵の属性は見た目だけ。ダメージの属性相性（弱点・半減）なし＝無属性扱い
+  //     ・ダンジョン中メニュー →「ドロップを見る」の下に「SP最大」「攻撃設定」が出る
+  miga: { name: '練習道場', desc: 'パーティーの強さを試そう！', bg: 'miga.png', hue: 200, practice: true, stageNames: { boss: '練習道場' } },
   halloween: { name: 'ハッピーハロウィン', bannerName: 'ハッピー\nハロウィン', desc: 'ゴーストタイプのポケモンが登場！', bg: 'dungeon5.png', hue: 200,stageNames: { 1: 'ハロウィン-1',boss: 'ハロウィン-2' } , stageLevels: { 1: '中級', boss: '上級' }},
   kourin: { multiOnly: true, name: 'ニンフィア降臨', desc: 'クリアでニンフィアが解放！', bg: 'daily_sun.png', hue: 200,stageNames: { boss: 'ニンフィア降臨'} , stageLevels: { boss: '上級' }},
   kourinb: { multiOnly: true, name: 'ハッサム降臨', desc: 'クリアでハッサムが解放！', bg: 'dungeon10.png', hue: 200,stageNames: { boss: 'ハッサム降臨'} , stageLevels: { boss: '中級' }},
@@ -109,14 +115,10 @@ denky: {both: true, name: 'イベルタル降臨', desc: 'イベルタルがド�
 
   BLLU: {both: true, name: 'ブルアカコラボ', desc: 'クリアでガチャコインゲット！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'ブルアカ-スタジアム1',boss: 'ブルアカ-スタジアム2'} , stageLevels: { 1: '上級',boss: '超級' }},
    jojo: { both: true, name: 'ジョジョコラボ', desc: 'ジョジョコラボが開催中ッ！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ジョジョ-スタジアム'} , stageLevels: { boss: '中級' }},
-    stella: { both: true, name: 'ステラソラコラボ', desc: 'クリアでアルカナエキスゲット！', bg: 'stadium.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム'} , stageLevels: { boss: '上級' }},
-stellab: { both: true, name: 'ステラソラコラボ2', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium3.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム2'} , stageLevels: { boss: '超級' }},
-stellac: { both: true, name: 'ステラソラコラボ3', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium3.png', hue: 200,stageNames: { boss: 'ステラソラ-スタジアム3'} , stageLevels: { boss: '超級' }},
+    
 riza: { both: true, name: 'ライザのアトリエコラボ', desc: 'コラボキャラがドロップするチャンス！', bg: 'riza.png', hue: 200,stageNames: { boss: 'ライザのアトリエ'} , stageLevels: { boss: '上級' }},
 
-    Astral: { both: true, name: 'アストラルパーティー', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL.png', hue: 200,stageNames: { boss: 'アストラルパーティー'} , stageLevels: { boss: '超級' }},
-Astralb: { both: true, name: 'アストラルパーティー2', desc: 'コラボキャラがドロップするチャンス！', bg: 'ASTRAL2.png', hue: 200,stageNames: { boss: 'アストラルパーティー2'} , stageLevels: { boss: '超級' }},
-Astralc: { both: true, name: 'アストラルパーティー3', desc: 'コラボキャラがドロップするチャンス！', bg: 'dungeon17.png', hue: 200,stageNames: { boss: '幽魂路地'} , stageLevels: { boss: '超級' }},
+   
 tou: { both: true, name: '東方コラボ', desc: 'コラボキャラがドロップするチャンス！', bg: 'campus.png', hue: 200,stageNames: { boss: '東方Project-1'} , stageLevels: { boss: '上級' }},
 
 

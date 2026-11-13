@@ -16,6 +16,8 @@
 //     begin(partyUids, box)            … ダンジョンに入った時（編成を控える・集計を 0 に）
 //     dmg(slot, raw, actual) / skillDmg(raw, actual) … 敵に与えたダメージ（通常攻撃は枠番号つき／スキルは caster で決まる）
 //                                       raw＝敵のHPを超えた分・超根性で止まった分も含む本来のダメージ ／ actual＝実際にHPが減った分
+//     nominal(slot, n) / skillNominal(n) … 「瞬間最大ダメージ」用：敵の吸収・無効化の前の、味方側のダメージ（枠ごとに1ターン分を足し合わせ、最大を記録）
+//     turnEnd()                        … 1ターンの区切り（processEnemyTurns の頭・次のバトルの頭・クリア時）。ここでそのターンの合計を確定
 //     caster(slot)                     … スキル発動中だけ、発動したモンスターの枠番号（それ以外は -1）
 //     heal(slot, n) / healShare(parts, n) … 回復（スキル・リーダースキル／回復ドロップは回復力の割合で分ける）
 //     skill(slot, name)                … スキルを使った回数
@@ -84,7 +86,7 @@
       try { multi = isMultiArea(currentAreaNum) ? 1 : 0; } catch (e) {}
       var sk = []; for (var k = 0; k < NSLOT; k++) sk.push([]);
       cur = { k: (typeof currentDungeonKey !== 'undefined' ? currentDungeonKey : '') || '', a: nm[0], s: nm[1], mu: multi,
-        t: team, d: zeros(), da: zeros(), h: zeros(), sk: sk,
+        t: team, d: zeros(), da: zeros(), h: zeros(), sk: sk, bm: zeros(), bt: zeros(),
         o: { fire: 0, water: 0, wood: 0, light: 0, dark: 0, heal: 0, poison: 0, ojama: 0 },
         tn: 0, cb: 0, mx: 0, tk: 0, ps: 0, cs: -1 };
     },
@@ -94,6 +96,14 @@
       if (!cur || !(raw > 0) || !inRange(slot)) return;
       cur.d[slot] += raw;
       cur.da[slot] += (actual === undefined ? raw : Math.min(actual, raw));
+    },
+    // 瞬間最大ダメージ：枠ごとに「1ターンで出した味方側のダメージ」を足し合わせる。
+    //   敵に吸収・無効化されても、本来のダメージとして数える（例：Aが800万を2回 → 1600万）。スキルのダメージもそのターンに含める
+    nominal: function (slot, n) { if (cur && n > 0 && inRange(slot)) cur.bt[slot] += n; },
+    skillNominal: function (n) { if (cur && cur.cs >= 0) BL.nominal(cur.cs, n); },
+    turnEnd: function () {
+      if (!cur) return;
+      for (var i = 0; i < NSLOT; i++) { if (cur.bt[i] > cur.bm[i]) cur.bm[i] = cur.bt[i]; cur.bt[i] = 0; }
     },
     caster: function (slot) { if (cur) cur.cs = inRange(slot) ? slot : -1; },
     skillDmg: function (raw, actual) { if (cur && cur.cs >= 0) BL.dmg(cur.cs, raw, actual); },
@@ -131,6 +141,7 @@
     // クリア：履歴に1件ぶん保存する（二重に呼ばれても1回だけ）
     finish: function (info) {
       if (!cur) return;
+      BL.turnEnd();
       var c = cur; cur = null;
       try {
         info = info || {};
@@ -143,7 +154,7 @@
         for (k in items) di.push([k, items[k]]);
         var rec = { v: 1, ts: Date.now(), k: c.k, a: c.a, s: c.s, mu: c.mu, fl: info.floors | 0,
           tn: c.tn, cb: c.cb, mx: c.mx, tk: c.tk, ps: c.ps,
-          t: c.t, d: c.d, da: c.da, h: c.h, sk: c.sk, o: c.o,
+          t: c.t, d: c.d, da: c.da, h: c.h, sk: c.sk, o: c.o, bm: c.bm, rt: info.retire ? 1 : 0,
           co: info.coin | 0, ex: info.exp | 0, dr: { m: dm, i: di } };
         load();
         list.unshift(rec);
@@ -207,12 +218,12 @@
 
   function listHtml() {
     var L = load();
-    if (!L.length) return '<div class="hs-empty">まだ履歴がありません。<br>ダンジョンをクリアすると、ここに記録されます。</div>';
+    if (!L.length) return '<div class="hs-empty">まだ履歴がありません。<br>ダンジョンをクリアすると（miga-X はリタイアでも）、ここに記録されます。</div>';
     var out = '';
     for (var i = 0; i < L.length; i++) {
       var r = L[i];
       out += '<button type="button" class="hs-row" data-i="' + i + '">' +
-        '<div class="hs-r1"><b>' + esc(r.s || r.k || 'ダンジョン') + '</b>' + (r.mu ? '<em>マルチ</em>' : '') + '<span>' + fmtDate(r.ts) + '</span></div>' +
+        '<div class="hs-r1"><b>' + esc(r.s || r.k || 'ダンジョン') + '</b>' + (r.mu ? '<em>マルチ</em>' : '') + (r.rt ? '<em>リタイア</em>' : '') + '<span>' + fmtDate(r.ts) + '</span></div>' +
         (r.a ? '<div class="hs-r2">' + esc(r.a) + '</div>' : '') +
         '<div class="hs-team">' + teamIcons(r.t, 'hs-mi') + '</div>' +
         '<div class="hs-r3"><span>' + r.tn + 'ターン</span><span>平均 ' + avgCombo(r).toFixed(1) + ' コンボ</span><span>ドロップ ' + dropCount(r) + '</span></div>' +
@@ -222,7 +233,8 @@
   }
 
   // 縦グラフ（モンスターごと）。vals＝枠ごとの数値
-  function chartHtml(vals, team, title, actual) {
+  //   peak＝true：「瞬間最大」用。合計ではなく最高値を見出しに出し、%は出さない
+  function chartHtml(vals, team, title, actual, peak) {
     var max = 0, total = 0, i;
     for (i = 0; i < NSLOT; i++) { if (team[i]) { var v0 = vals[i] || 0; total += v0; if (v0 > max) max = v0; } }
     var cols = '', rows = '';
@@ -237,7 +249,7 @@
         img(monSrc(team[i][0]), 'hs-ci') + '</div>';
       rows += '<div class="hs-lg">' + img(monSrc(team[i][0]), 'hs-mi s') +
         '<span class="hs-lg-n">' + esc(team[i][1] || (m && m.name) || '') + (team[i][2] ? '<i>助っ人</i>' : '') + '</span>' +
-        '<b>' + jp(v) + '</b><small>' + (total > 0 ? Math.round(v / total * 100) : 0) + '%</small></div>';
+        '<b>' + jp(v) + '</b>' + (peak ? '' : '<small>' + (total > 0 ? Math.round(v / total * 100) : 0) + '%</small>') + '</div>';
     }
     var note = '';
     if (actual) {   // 敵のHPを超えた分も含めた合計のうち、実際にHPが減った分／超過分
@@ -245,7 +257,7 @@
       act = Math.min(act, total);
       note = '<div class="hs-note">敵のHPに入った分 <b>' + jp(act) + '</b>　HP超過・超根性で止まった分 <b>' + jp(total - act) + '</b></div>';
     }
-    return '<section class="hs-sec"><h3><span>' + title + '</span><span class="hs-tot">合計 <b>' + jp(total) + '</b></span></h3>' + note +
+    return '<section class="hs-sec"><h3><span>' + title + '</span><span class="hs-tot">' + (peak ? '最高 <b>' + jp(max) + '</b>' : '合計 <b>' + jp(total) + '</b>') + '</span></h3>' + note +
       '<div class="hs-chart">' + cols + '</div><div class="hs-legend">' + rows + '</div></section>';
   }
 
@@ -301,11 +313,13 @@
   }
 
   function detailHtml(r) {
-    return '<div class="hs-dhead"><div class="hs-dname">' + esc(r.s || r.k || 'ダンジョン') + (r.mu ? '<em>マルチ</em>' : '') + '</div>' +
+    return '<div class="hs-dhead"><div class="hs-dname">' + esc(r.s || r.k || 'ダンジョン') + (r.mu ? '<em>マルチ</em>' : '') + (r.rt ? '<em>リタイア</em>' : '') + '</div>' +
       '<div class="hs-dsub">' + (r.a ? esc(r.a) + '　' : '') + fmtDate(r.ts) + '</div>' +
       '<div class="hs-team c">' + teamIcons(r.t, 'hs-mi') + '</div></div>' +
       dropsHtml(r) +
       chartHtml(r.d || [], r.t, '与えたダメージ', r.da) +
+      (r.bm ? chartHtml(r.bm, r.t, '瞬間最大ダメージ', null, true) +
+        '<div class="hs-note" style="margin:-4px 2px 10px">1ターンで出した味方のダメージ（敵に吸収・無効化された分も含む）の最大です</div>' : '') +
       chartHtml(r.h || [], r.t, '回復') +
       skillsHtml(r) +
       orbsHtml(r) +
@@ -330,7 +344,7 @@
     var r = load()[i];
     if (!r) return;
     if (scroller) listScroll = scroller.scrollTop;
-    panel.innerHTML = frame('クリアの記録', detailHtml(r),
+    panel.innerHTML = frame(r.rt ? 'リタイアの記録' : 'クリアの記録', detailHtml(r),
       '<button type="button" class="hs-foot" id="hs-back">一覧へ</button>');
     scroller = panel.querySelector('#hs-scroll');
     if (scroller) scroller.scrollTop = 0;

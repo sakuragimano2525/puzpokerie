@@ -20,7 +20,7 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap"></noscript>
 <link rel="stylesheet" href="css/style.css?v=20261108sl2">
-<link rel="stylesheet" href="css/ui.css?v=20261108sl">
+<link rel="stylesheet" href="css/ui.css?v=20261113miga">
 <link rel="stylesheet" href="css/battle-plus.css?v=20261108stage">
 <link rel="stylesheet" href="css/landscape.css?v=20261105">
 <link rel="stylesheet" href="css/cutin.css?v=20261106e">
@@ -518,6 +518,9 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
       <div class="sp-buttons sp-buttons-col">
         <button class="sp-btn sp-btn-yes" id="quit-no">続ける</button>
         <button class="sp-btn" id="menu-drops-btn">ドロップを見る</button>
+        <!-- 練習場（miga-X）だけに出るボタン -->
+        <button class="sp-btn" id="menu-sp-max-btn" style="display:none;">SP最大</button>
+        <button class="sp-btn" id="menu-atk-btn" style="display:none;">攻撃設定</button>
         <button class="sp-btn" id="menu-retire-btn">リタイア</button>
       </div>
     </div>
@@ -527,6 +530,19 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
       <div id="menu-drops-list" class="res-drops"></div>
       <div class="sp-buttons sp-buttons-col">
         <button class="sp-btn sp-btn-yes" id="menu-drops-back">戻る</button>
+      </div>
+    </div>
+    <!-- 練習場：敵の攻撃設定 -->
+    <div class="menu-view" id="menu-view-atk" style="display:none;">
+      <div class="sp-title">攻撃設定</div>
+      <div class="sp-desc">敵の攻撃力を選びます。<br>選ぶと「あと1」になり、次からその攻撃力で毎ターン攻撃します。</div>
+      <div class="sp-buttons sp-buttons-col" id="menu-atk-list">
+        <button class="sp-btn" data-atk="5000">5000</button>
+        <button class="sp-btn" data-atk="7500">7500</button>
+        <button class="sp-btn" data-atk="10000">10000</button>
+        <button class="sp-btn" data-atk="15000">15000</button>
+        <button class="sp-btn" data-atk="20000">20000</button>
+        <button class="sp-btn sp-btn-yes" id="menu-atk-back">戻る</button>
       </div>
     </div>
     <!-- リタイア確認 -->
@@ -1079,7 +1095,7 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <!-- データ -->
 <script defer src="js/data/monsters.js?v=20261105"></script>
 <script defer src="js/data/dungeons.js?v=20261112chest"></script>
-<script defer src="js/data/areas.js?v=20261112c"></script>
+<script defer src="js/data/areas.js?v=20261113miga"></script>
 <script defer src="js/data/exp.js?v=20261105"></script>
 <script defer src="js/data/mail.js?v=20261105"></script>
 <script defer src="js/data/items.js?v=20261112e"></script>
@@ -1097,7 +1113,7 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/multi-online.js?v=20261110fr"></script>
 <script defer src="js/enemy-autofit.js?v=20261105"></script>
 <script defer src="js/ryuseki.js?v=20261112f"></script>
-<script defer src="js/game.js?v=20261112heal2"></script>
+<script defer src="js/game.js?v=20261113miga"></script>
 <script defer src="js/hasunosora.js?v=20261112f"></script>
 <script defer src="js/hasu-petals.js?v=20261112petal"></script>
 <script defer src="js/audio-fast.js?v=20261106"></script>
@@ -1109,12 +1125,12 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/evo-scene.js?v=20261105"></script>
 <script defer src="js/zukan.js?v=20261110fr"></script>
 <script defer src="js/gacha.js?v=20261112d"></script>
-<script defer src="js/history.js?v=20261112hist2"></script>
+<script defer src="js/history.js?v=20261113miga"></script>
 <script defer src="js/bonus.js?v=20261112hist"></script>
 <!-- フレンド（マイカード・助っ人・フレンド募集）：game.js / zukan.js / multi-online.js / bonus.js のあと -->
 <script defer src="js/friends.js?v=20261110fr"></script>
 <script defer src="js/fx-lite.js?v=20261105"></script>
-<script defer src="js/allattack-fx.js?v=20261112hist2"></script>
+<script defer src="js/allattack-fx.js?v=20261113miga"></script>
 <script defer src="js/enemy-attack-fx.js?v=20261105"></script>
 <script defer src="js/orb-spawn-fx.js?v=20261105"></script>
 <script defer src="js/ls-fx.js?v=20261108erase"></script>

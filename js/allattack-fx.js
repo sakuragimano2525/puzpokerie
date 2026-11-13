@@ -751,6 +751,7 @@
 
     if (withSE) playAttrHitSE(attr);
     const hit = calcHitDamage(enemy, damage, attr, sub);   // 主属性＋副属性（単体攻撃と同じ計算：属性軽減・最低ダメージ1）
+    if (window.BattleLog) BattleLog.nominal(slotIndex, enemy._chest ? 0 : hit.main + hit.sub + (hit.heal || 0));   // 履歴「瞬間最大ダメージ」：吸収・無効化される前の、味方側のダメージ
     const mult = hit.attrMult;
     let dmg = hit.main + hit.sub, dealtSub = 0;
     const absorbed = !!(enemy._comboAbsorb && enemy._comboAbsorb.turns > 0 &&

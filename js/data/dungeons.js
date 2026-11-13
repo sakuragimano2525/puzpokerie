@@ -216,7 +216,8 @@ const DUNGEON_BGM = {
   "ultra-boss": {"field":"b11.mp3","boss":"boss7.mp3"},
   "hasu-1": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
   "hasu-2": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
-  "hasu-boss": {"field":"hasu.mp3","boss":"hasuboss.mp3"}
+  "hasu-boss": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
+  "miga-boss": {"field":"azu.mp3","boss":"azu.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -54725,6 +54726,46 @@ const DUNGEON_DATA = {
             }
           ]
         }
+      }
+    ]
+  },
+  "miga-boss": {
+    "bgImg": "miga.png",
+    "bgm": "azu.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "敵モンスター",
+            "img": "migas.png",
+            "attr": "wood",
+            "hp": 500000000,
+            "atk": 0,
+            "def": 0,
+            "turnInterval": 99,
+            "size": "XL",
+            "exp": 0,
+            "coin": 0,
+            "monsterDrop": {
+              "enabled": false,
+              "rate": 0.1
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "通常攻撃",
+                "condition": "normal",
+                "weight": 100,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }
