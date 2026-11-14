@@ -97,7 +97,7 @@
         case 'remainingOrbs': add('cnd:remain'); add('num:remain:' + th); break;
         case 'skillUsed': add('cnd:skill'); break;
         case 'poison': add('cnd:poison'); orb('poison'); break;
-        case 'rarity_allDiff': case 'rarity_allSame': case 'rarity_totalBelow': case 'rarity_totalAbove': case 'rarity_countAtLeast':
+        case 'rarity_allDiff': case 'rarity_allSame': case 'rarity_totalBelow': case 'rarity_totalAbove': case 'rarity_countAtLeast': case 'rarity_partyCount':
           add('cnd:rarity'); if (e.attr) add('tgt:' + normAttr(e.attr)); if (e.monType) add('tgt:t:' + e.monType); break;
         default: add('cnd:other'); break;
       }

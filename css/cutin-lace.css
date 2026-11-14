@@ -1,0 +1,45 @@
+/* ============================================================
+   レース額縁カットイン — js/cutin-lace.js が使う
+   金のレース柄の帯が左右へ伸びる → 上下に開いて、縞＋レース模様の壁紙の窓 → 金の三日月の斬撃＋モンスター＋スキル名
+   動くものに filter / clip-path は使わない（iPhone で落ちにくくするため）。絵は ぜんぶ canvas に1回だけ描いてある
+   ============================================================ */
+.cvl-root { position:absolute; inset:0; z-index:70; pointer-events:none; overflow:hidden; }
+
+/* 画面を、茶がかった黒に暗くする（盤面は少し透ける） */
+.cvl-dim { position:absolute; inset:0; opacity:0;
+  background:radial-gradient(ellipse at 50% 50%, rgba(12,7,2,.55) 0%, rgba(4,2,0,.88) 100%); }
+
+/* 窓（真ん中から上下へ開く入れ物） */
+.cvl-stage { position:absolute; left:0; width:100%; }
+.cvl-win { position:absolute; left:0; width:100%; overflow:hidden; background:#150e06; }
+.cvl-win-in { position:absolute; left:0; width:100%; }
+.cvl-stack { position:absolute; inset:0; }
+
+/* 壁紙・斬撃（どちらも窓と同じ大きさの canvas） */
+.cvl-wall, .cvl-slash { position:absolute; left:0; top:0; display:block; }
+
+/* モンスター（ふちどり＋絵） */
+.cvl-art { position:absolute; }
+.cvl-art > * { position:absolute; display:block; }
+.cvl-art > .cvl-mon { left:0; top:0; width:100%; height:100%; object-fit:contain; }
+.cvl-sticker { pointer-events:none; }
+
+/* 斜めに走る光の筋 */
+.cvl-glint { position:absolute; left:0; top:-20%; height:140%; opacity:0;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.75) 50%, rgba(255,255,255,0) 100%); }
+
+/* 瞬くきらきら（4つ角の星。止まった SVG を背景にしただけ） */
+.cvl-tw { position:absolute; display:block; background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z' fill='white'/></svg>") center/100% 100% no-repeat; }
+
+/* スキル名の後ろの、うっすら暗い板（右下） */
+.cvl-plate { position:absolute; right:0; bottom:0; opacity:0;
+  background:radial-gradient(ellipse 100% 100% at 100% 100%, rgba(8,4,0,.72) 0%, rgba(8,4,0,.5) 45%, rgba(8,4,0,0) 100%); }
+.cvl-line { position:absolute; }
+.cvl-line-cv { position:absolute; left:0; top:0; display:block; }
+
+/* レース帯（窓の上端・下端に張りつく） */
+.cvl-bands { position:absolute; left:0; width:100%; transform-origin:50% 50%; }
+.cvl-bandbox { position:absolute; left:0; width:100%; height:0; }
+.cvl-band { position:absolute; display:block; }
+
+.cvl-flash { position:absolute; left:0; width:100%; opacity:0; }

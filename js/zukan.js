@@ -399,9 +399,23 @@
       const sec = el('div', 'zk-sec ls');
       const h = el('div', 'zk-sec-head');
       h.appendChild(el('span', 'zk-sec-label', 'リーダースキル'));
-      h.appendChild(el('span', 'zk-sec-ls-name', ls.name || ''));
+      const nameNode = el('span', 'zk-sec-ls-name', ls.name || '');
+      nameNode.classList.toggle('soul-max-glow', mon._soulLeaderTier >= 5);
+      h.appendChild(nameNode);
       sec.appendChild(h);
-      { const p = el('p', 'zk-sec-desc'); setSkillText(p, ls.desc || ''); sec.appendChild(p); }
+      const descNode = el('p', 'zk-sec-desc');
+      setSkillText(descNode, ls.desc || '');
+      sec.appendChild(descNode);
+      // ソウルの数ごとのリーダースキル（ふつう / ソウル2個 / ソウル5個）。ソウル5個のときだけ名前が紫に光る
+      if (typeof buildSoulLsTabs === 'function') {
+        const tabs = el('div', 'soul-ls-tabs');
+        buildSoulLsTabs(tabs, mon, (picked, tier) => {
+          nameNode.textContent = picked ? picked.name || '' : '';
+          nameNode.classList.toggle('soul-max-glow', !!picked && tier >= 5);
+          setSkillText(descNode, picked ? picked.desc || '' : '');
+        });
+        if (!tabs.hidden) sec.appendChild(tabs);
+      }
       body.appendChild(sec);
     }
     // 入手場所（リーダースキルの下）：進化のチップの入手場所と同じ決まり。

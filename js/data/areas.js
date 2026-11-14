@@ -91,6 +91,7 @@ const EVO_UNLOCK_DATA = {
 208: 'kourinc-boss',
 230: 'kourine-boss',
 199: 'kourine-boss',
+5103: 'suguha-boss',
   700: 'kourin-boss'
 };
 const EVENT_AREA_DATA = {
@@ -118,9 +119,9 @@ denky: {both: true, name: 'イベルタル降臨', desc: 'イベルタルがド�
     
 riza: { both: true, name: 'ライザのアトリエコラボ', desc: 'コラボキャラがドロップするチャンス！', bg: 'riza.png', hue: 200,stageNames: { boss: 'ライザのアトリエ'} , stageLevels: { boss: '上級' }},
 
-   
 tou: { both: true, name: '東方コラボ', desc: 'コラボキャラがドロップするチャンス！', bg: 'campus.png', hue: 200,stageNames: { boss: '東方Project-1'} , stageLevels: { boss: '上級' }},
 
+suguha: {name: 'ステラソラコラボ4', desc: 'コラボキャラがドロップするチャンス！', bg: 'dungeon20.png', hue: 200,stageNames: { boss: 'VS.スグハ'} , stageLevels: { boss: '地獄級' }},
 
 monhan: { both: true, name: 'モンスターハンター', desc: 'コラボキャラがドロップするチャンス！', bg: 'stadium.png', hue: 200,stageNames: { 1: 'VS.ディノバルド',2: 'VS.ジンオウガ',3: 'VS.バルファルク',4: 'VS.ゴア・マガラ',5: 'VS.ブラキディオス,',boss: 'Vs.ブラキディオス+'} , stageLevels: { 1: '上級', 2: '上級',3: '上級',4: '超級',5: '超級',boss: '超上級'}},
   // ── 蓮ノ空コラボ（ホーム「イベント」の「蓮ノ空コラボ」ボタンから js/hasunosora.js の画面で遊ぶ。一覧には出さない = hidden） ──

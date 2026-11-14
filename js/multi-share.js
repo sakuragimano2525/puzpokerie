@@ -332,8 +332,6 @@
     try { setDragFx(false); } catch (e) {}
     const g = document.getElementById('game');
     if (g) g.classList.add('game-over', 'mt-spectate');   // 盤面・パーティ・Menuの操作を止める（見るだけ）
-    const lbl = document.getElementById('combo-label');
-    if (lbl) lbl.textContent = '';
     stopGameOverSE(); playGameOverSE();
     if (window.MultiTurn) { MultiTurn.renderHud(); if (MultiTurn.banner) MultiTurn.banner('GAME OVER', '観戦モード', 1); }
     MS.setView(true);   // 観戦中は、のこりの人のパーティーを見る
@@ -1054,14 +1052,6 @@
         try { playSE('dna'); } catch (_) {}
         try { if (typeof fxNoFall === 'function') fxNoFall(null, null, () => {}); } catch (_) {}
       }
-    },
-    // コンボ下のメッセージ（「○ コンボ」「☠️ 毒 ○ ダメージ！」「❤️ ○ 回復！」「スキル発動！」など）を、相手の画面にも同じ文字で出す
-    lb(d) {
-      const el = $id('combo-label');
-      if (!el || !d) return;
-      const text = String(d.t == null ? '' : d.t);
-      el.textContent = text;
-      if (d.ms > 0) setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, Math.min(Number(d.ms), 5000));
     },
     // 「残りドロップ○個以下」などの合計倍率（盤面の真ん中の ×○）
     rm(d) { try { showRemainingOrbsMult(d.m); } catch (_) {} },

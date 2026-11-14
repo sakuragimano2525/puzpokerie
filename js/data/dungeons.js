@@ -217,7 +217,8 @@ const DUNGEON_BGM = {
   "hasu-1": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
   "hasu-2": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
   "hasu-boss": {"field":"hasu.mp3","boss":"hasuboss.mp3"},
-  "miga-boss": {"field":"azu.mp3","boss":"azu.mp3"}
+  "miga-boss": {"field":"azu.mp3","boss":"azu.mp3"},
+  "suguha-boss": {"field":"azu.mp3","boss":"boss5.mp3"}
 };
 
 const DUNGEON_DATA = {
@@ -54768,5 +54769,185 @@ const DUNGEON_DATA = {
         ]
       }
     ]
+  },
+  "suguha-boss": {
+    "bgImg": "dungeon20.png",
+    "bgm": "azu.mp3",
+    "battles": [
+      {
+        "enemies": [
+          {
+            "name": "スグハ",
+            "img": "mp5100.png",
+            "attr": "light",
+            "hp": 10001,
+            "atk": 1,
+            "def": 9999999,
+            "turnInterval": 1,
+            "size": "XL",
+            "exp": 25000,
+            "coin": 500,
+            "monsterDrop": {
+              "enabled": true,
+              "rate": 0.01
+            },
+            "drops": [],
+            "actions": [
+              {
+                "name": "ガイアキューブ",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "status_shield",
+                    "turn": 99
+                  },
+                  {
+                    "type": "skill_seal",
+                    "turn": 4
+                  },
+                  {
+                    "type": "board_change",
+                    "pattern": "exact",
+                    "counts": {
+                      "fire": 6,
+                      "water": 6,
+                      "wood": 6,
+                      "light": 6,
+                      "dark": 6
+                    }
+                  },
+                  {
+                    "type": "combo_rule",
+                    "combo": 10,
+                    "mode": "exact",
+                    "damage": 9999999
+                  }
+                ]
+              },
+              {
+                "name": "コンパス",
+                "condition": "normal",
+                "weight": 1,
+                "skills": [
+                  {
+                    "type": "board_change",
+                    "pattern": "exact",
+                    "counts": {
+                      "fire": 5,
+                      "water": 11,
+                      "wood": 4,
+                      "light": 8,
+                      "dark": 2
+                    },
+                    "orb_fire": true,
+                    "orb_water": true,
+                    "orb_heal": false,
+                    "orb_dark": false,
+                    "orb_wood": true
+                  },
+                  {
+                    "type": "combo_rule",
+                    "combo": 0,
+                    "mode": "exact",
+                    "damage": 9999999
+                  }
+                ]
+              },
+              {
+                "name": "コンパス",
+                "condition": "normal",
+                "weight": 1,
+                "skills": [
+                  {
+                    "type": "board_change",
+                    "pattern": "exact",
+                    "counts": {
+                      "light": 15,
+                      "heal": 15
+                    }
+                  },
+                  {
+                    "type": "combo_rule",
+                    "combo": 10,
+                    "mode": "min",
+                    "damage": 9999999
+                  },
+                  {
+                    "type": "time_reduce",
+                    "seconds": 3,
+                    "turn": 1
+                  }
+                ]
+              },
+              {
+                "name": "コンパス",
+                "condition": "normal",
+                "weight": 1,
+                "skills": [
+                  {
+                    "type": "board_change",
+                    "pattern": "exact",
+                    "counts": {
+                      "fire": 6,
+                      "water": 6,
+                      "wood": 6,
+                      "light": 6,
+                      "dark": 6
+                    }
+                  },
+                  {
+                    "type": "combo_rule",
+                    "combo": 10,
+                    "mode": "exact",
+                    "damage": 9999999
+                  }
+                ]
+              },
+              {
+                "name": "最後は私を倒してみて？",
+                "condition": "normal",
+                "weight": 1,
+                "skills": []
+              },
+              {
+                "name": "でんじは",
+                "condition": "battle_start",
+                "once": true,
+                "skills": [
+                  {
+                    "type": "bind",
+                    "target": "random",
+                    "countMin": 6,
+                    "countMax": 6,
+                    "turnMin": 4,
+                    "turnMax": 4
+                  },
+                  {
+                    "type": "no_fall",
+                    "turn": 99
+                  }
+                ]
+              },
+              {
+                "name": "ジオ・マテリアライズ",
+                "condition": "normal",
+                "weight": 100,
+                "once": false,
+                "skills": [
+                  {
+                    "type": "damage_mult",
+                    "value": 250
+                  }
+                ]
+              }
+            ],
+            "actionMode": "sequence",
+            "isBoss": true
+          }
+        ]
+      }
+    ],
+    "requireAllAttr": true
   }
 };

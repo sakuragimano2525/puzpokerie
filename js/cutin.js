@@ -29,6 +29,11 @@
 //       スキル発動・へんしんのカットインが、ID5000以降の新カットインや従来のカットインの代わりに「ゆめかわふわ」になります。
 //       show(…, { yume:true, label:'モンスター名' }) で直接呼ぶこともできます。（チェックなしが初期状態）
 //
+//   ■ レース額縁カットイン（js/cutin-lace.js・css/cutin-lace.css）
+//       モンスターエディターの「レース額縁カットインにする」にチェック（skill.lace === true）したモンスターは、
+//       スキル発動・へんしんのカットインが「金のレース柄の額縁 → 縞模様の窓に金の斬撃＋モンスター」になります。
+//       show(…, { lace:true }) で直接呼ぶこともできます。（ゆめかわふわと両方チェックした時は、ゆめかわふわが優先）
+//
 //   ※ game.js の後に読み込む。公開しているのは window.EnemyCutIn だけ：
 //       EnemyCutIn.isCutin(技名, 行動)  … ⚠️付き（または 行動.cutin === true）なら true
 //       EnemyCutIn.show(敵, 技名)       … カットインを出して、終わったら resolve する Promise
@@ -307,6 +312,7 @@
   const NEW_STYLE_MIN_MS = 3000;   // 新カットインの最低の長さ（ミリ秒。短いと感じたら数字を上げる）
   const NEW_STYLE_SKILL_MS = 2000; // 味方のスキル発動の新カットインの長さ（ミリ秒）。音声あり・なしに関係なく全キャラこの長さ。長くしたい時はこの数字を上げる。変身・敵の技は上の数字のまま
   const YUME_MIN_MS = 3600;        // ゆめかわふわカットイン（js/cutin-yume.js）の最低の長さ（ミリ秒）
+  const LACE_MIN_MS = 3000;        // レース額縁カットイン（js/cutin-lace.js）の最低の長さ（ミリ秒）
   function isNewStyle(enemy, opts) {
     let id = opts && opts.id != null ? Number(opts.id) : NaN;
     if (!isFinite(id)) {
@@ -325,10 +331,11 @@
     const wantFace = !!(opts && opts.face);
     const ns = isNewStyle(enemy, opts);   // ID5000以降 → 新カットイン（js/cutin-v2.js）
     const ym = !!(opts && opts.yume);     // エディターで「ゆめかわふわカットイン」にチェック → js/cutin-yume.js（ID5000以降の新カットインより優先）
-    const wantImg = wantFace || ns || ym;
+    const lc = !!(opts && opts.lace) && !ym;   // エディターで「レース額縁カットイン」にチェック → js/cutin-lace.js（ID5000以降の新カットインより優先。ゆめかわふわが先）
+    const wantImg = wantFace || ns || ym || lc;
     const shortSkill = !!(opts && opts.skill) && !file;   // 味方のスキル発動 ＋ オリジナル音声なし → 新カットインを短め（NEW_STYLE_SKILL_MS）に
     const isSkill = !!(opts && opts.skill);   // 味方のスキル発動（音声あり・なしに関係なく、新カットインの長さを同じにするための目印）
-    const mkV2 = (img, face) => (img && (ns || ym)) ? { info: img, face, yume: ym, label: opts && opts.label, shortSkill, isSkill } : null;
+    const mkV2 = (img, face) => (img && (ns || ym || lc)) ? { info: img, face, yume: ym, lace: lc, label: opts && opts.label, shortSkill, isSkill } : null;
     const AF = window.AudioFast;
     if (AF && AF.IS_IOS && AF.loadCutBuf) {
       // iPhone：<audio> ではなく AudioBuffer で鳴らす（前半の繰り返し・音切れ対策）
@@ -420,6 +427,18 @@
           shake: typeof battleShake === 'function' ? battleShake : null
         }, () => { if (_active === stopY) _active = null; resolve(); });
         _active = stopY;
+        return;
+      }
+
+      // ── レース額縁カットイン（js/cutin-lace.js）。読み込めていない時は、下の新カットイン／従来のカットインにする ──
+      if (v2 && v2.lace && window.CutInLace) {
+        const key = THEMES[enemy && enemy.attr] ? enemy.attr : (THEMES[enemy && enemy.sub] ? enemy.sub : 'fire');
+        const Tl = Math.max(T, LACE_MIN_MS);
+        const stopL = window.CutInLace.run({
+          host, W, DH, T: Tl, IOS, theme: key, name, info: v2.info, face: v2.face,
+          shake: typeof battleShake === 'function' ? battleShake : null
+        }, () => { if (_active === stopL) _active = null; resolve(); });
+        _active = stopL;
         return;
       }
 
@@ -721,6 +740,7 @@
   //   ・スキルを持つモンスターは、みんなカットインが出ます（スキル名が空の時だけ出さない）
   //   ・ID 5000 以降 → 新しいカットイン（cutin-v2.js）／それ未満 → 従来のカットイン
   //   ・エディターで「ゆめかわふわカットイン」にチェック（skill.yumekawa）→ ゆめかわふわカットイン（cutin-yume.js。上の2つより優先）
+  //   ・エディターで「レース額縁カットイン」にチェック（skill.lace）→ レース額縁カットイン（cutin-lace.js。ゆめかわふわの次に優先）
   //   ・画像は mp{ID}.png（無ければ通常の画像）
   //   ・効果音：モンスターエディターの「オリジナル音声」にチェック（skill.cutin === true）のモンスターは {ID}.mp3
   //             （{ID}.mp3 が無ければ cutin.mp3）。チェックが無いモンスターは、普通のカットイン音 cutin.mp3
@@ -734,6 +754,7 @@
       const opts = { face: true, id: mon.id, skill: true };
       if (mon.skill.cutin === true) opts.se = mon.id + '.mp3';   // オリジナル音声あり
       if (mon.skill.yumekawa === true) { opts.yume = true; opts.label = mon.name; }   // ゆめかわふわカットイン（モンスター名のリボンつき）
+      else if (mon.skill.lace === true) { opts.lace = true; }                          // レース額縁カットイン
       return show({ attr: mon.attr, sub: mon.sub, img: 'mp' + mon.id + '.png', imgFallback: fb }, name, opts);
     } catch (e) { return Promise.resolve(); }
   }

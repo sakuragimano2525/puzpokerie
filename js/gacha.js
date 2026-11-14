@@ -186,9 +186,9 @@
   function closeLineup() { var m = $('gacha-lineup'); if (m) m.hidden = true; }
 
   // ── 結果 ─────────────────────────────────────
-  function showResult(monsterId, isNew, head) {
+  function showResult(monsterId, isNew, soulCount, head) {
     var mon = MONSTER_DATA[monsterId];
-    var hd = $('gacha-res-head'); if (hd) hd.textContent = head || 'GET！';
+    var hd = $('gacha-res-head'); if (hd) hd.textContent = head || (soulCount ? 'GET！　＋ジュエル' : 'GET！');
     var tile = $('gacha-res-tile'), img = $('gacha-res-img');
     tile.dataset.attr = mon.attr || 'water';
     img.style.visibility = ''; img.alt = mon.name;
@@ -328,7 +328,7 @@
     if (!got) { toast('交換できませんでした。もういちど えらびなおしてください', 2400); openExchange(); return; }
     closeExchange();
     refresh();
-    showResult(target, false, '交換かんりょう！');
+    showResult(target, false, 0, '交換かんりょう！');
   }
 
   // ── ページ切りかえ ───────────────────────────
@@ -651,7 +651,7 @@
     }
     busy = true;
     refresh();
-    function finish() { busy = false; if (kind === 'chip') showChipResult(id, got.count); else showResult(id, got.isNew); }
+    function finish() { busy = false; if (kind === 'chip') showChipResult(id, got.count); else showResult(id, got.isNew, got.soulCount || 0); }
     if (!FX_OK) {   // 動きを減らす設定などのとき：これまで通り、ゆらしてすぐ結果
       screen.classList.add('spinning');
       setTimeout(function () { screen.classList.remove('spinning'); finish(); }, SPIN_MS);

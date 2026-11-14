@@ -227,13 +227,6 @@ body {
   box-shadow:0 2px 8px rgba(30,144,255,0.45);
   letter-spacing:0.05em;
 }
-#combo-label {
-  color:#f5c518; font-weight:bold; font-size:0.85rem;
-  min-width:60px; text-align:center;
-  text-shadow:0 0 8px rgba(245,197,24,0.7);
-  white-space:pre-line;
-  line-height:1.4;
-}
 
 /* ── バフ表示UI ── */
 #buff-status {

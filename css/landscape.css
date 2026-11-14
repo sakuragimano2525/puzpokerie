@@ -42,7 +42,7 @@
   #status-right { order:-1; display:flex; align-items:center; gap:8px; }
   #status-right #menu-btn { order:-1; }
   #coin-display { order:1; }
-  #combo-label { order:2; margin-left:auto; pointer-events:none; }
+  #capture-toggle { order:2; margin-left:auto; }
 
   /* ── 左中央：敵モンスター ── */
   #dungeon {

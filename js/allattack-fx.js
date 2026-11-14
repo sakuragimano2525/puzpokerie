@@ -751,6 +751,13 @@
 
     if (withSE) playAttrHitSE(attr);
     const hit = calcHitDamage(enemy, damage, attr, sub);   // 主属性＋副属性（単体攻撃と同じ計算：属性軽減・最低ダメージ1）
+    // ソウルキャプチャー中のキャプチャー対象には、HPを減らさずソウルゲージだけ溜める（単体攻撃・スキルと同じ。ここが抜けていて全体攻撃で倒してしまっていた）
+    if (typeof isSoulTarget === 'function' && isSoulTarget(enemy)) {
+      const soulHit = addSoulDamage(enemy, hit.main + hit.sub, true);
+      if (soulHit > 0 && typeof showFloatingDamage === 'function') showFloatingDamage(ex, ey - 10, soulHit, attr, false);
+      spawnEnergyBurst(ex, ey, attr, (hit.attrMult > 1 ? 1.45 : 1) * (q < .7 ? .6 : 1));
+      return;
+    }
     if (window.BattleLog) BattleLog.nominal(slotIndex, enemy._chest ? 0 : hit.main + hit.sub + (hit.heal || 0));   // 履歴「瞬間最大ダメージ」：吸収・無効化される前の、味方側のダメージ
     const mult = hit.attrMult;
     let dmg = hit.main + hit.sub, dealtSub = 0;

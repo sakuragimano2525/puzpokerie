@@ -142,9 +142,19 @@
     }
     return bgmBytes + size <= BGM_BUDGET;
   }
+  // サーバーが audio/* 以外の Content-Type を返してもiPhoneで鳴るよう、拡張子から種類を付け直す
+  const MIME_BY_EXT = { mp3: 'audio/mpeg', m4a: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg' };
+  function fixType(b, file) {
+    try {
+      if (b.type && /^audio\//i.test(b.type)) return b;
+      const ext = ((String(file).match(/\.([a-z0-9]+)$/i) || [])[1] || '').toLowerCase();
+      return MIME_BY_EXT[ext] ? new Blob([b], { type: MIME_BY_EXT[ext] }) : b;
+    } catch (e) { return b; }
+  }
   function fetchBGM(file, urgent, retried) {
     return fetch(file, urgent ? { priority: 'high' } : undefined)
       .then(r => { if (!r.ok) throw new Error('http'); return r.blob(); })
+      .then(b => fixType(b, file))
       .then(b => {
         if (!makeRoom(b.size, file)) return;   // どうしても入らない：置かない（今まで通り普通に再生される）
         bgmBytes += b.size;
@@ -358,11 +368,35 @@
     const d = DUNGEON_DATA[key], f = (d && d.bgm) || 'dungeon1.mp3';
     return { field: f, boss: f };
   }
+  // DUNGEON_BGM に載っていない曲（分岐ボスの bgm／乱入モンスターの bgm／変身後の transform.bgm など）を、ダンジョンのデータから集める
+  //   → これらも先にメモリ(blob)へ読み込む（読み込まないと、iPhoneでは直接ストリーミング再生になり鳴らないことがある。例：sol.mp3）
+  const extraBgmCache = new Map();
+  function collectExtraBGM(key) {
+    if (extraBgmCache.has(key)) return extraBgmCache.get(key);
+    const out = [], seen = new Set();
+    try {
+      const AUD = /\.(mp3|wav|ogg|m4a)$/i;
+      (function walk(o, d) {
+        if (!o || typeof o !== 'object' || d > 14 || seen.has(o)) return;
+        seen.add(o);
+        if (Array.isArray(o)) { for (let i = 0; i < o.length; i++) walk(o[i], d + 1); return; }
+        for (const k in o) {
+          const v = o[k];
+          if (k === 'bgm' && typeof v === 'string') { if (d > 0 && AUD.test(v) && out.indexOf(v) < 0) out.push(v); }   // d>0：ダンジョン直下の bgm は DUNGEON_BGM が優先されるので対象外
+          else if (v && typeof v === 'object') walk(v, d + 1);
+        }
+      })(DUNGEON_DATA[key], 0);
+    } catch (e) {}
+    extraBgmCache.set(key, out);
+    return out;
+  }
   function prepareDungeonBGM(key) {
     try {
-      const o = bgmOfDungeon(key);
-      setWanted([o.field, o.boss]);
-      prefetchBGM(o.field, true); prefetchBGM(o.boss, true);
+      const o = bgmOfDungeon(key), ex = collectExtraBGM(key);
+      setWanted([o.field, o.boss].concat(ex));
+      prefetchBGM(o.field, true);
+      ex.forEach(f => prefetchBGM(f, true));
+      prefetchBGM(o.boss, true);
     } catch (e) {}
   }
   wrap('openDungeonEntry', function (areaNum, stageType) { prepareDungeonBGM((areaNum || 1) + '-' + (stageType || '1')); return false; });

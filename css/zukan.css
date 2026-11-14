@@ -138,6 +138,17 @@
 .zk-sec.ls .zk-sec-label::before { background: var(--sky-2); }
 .zk-sec-chip { flex-shrink: 0; padding: 3px 10px; font: 900 0.7rem/1.3 var(--ff); background: var(--sky); border: 2px solid var(--ink); border-radius: 999px; white-space: nowrap; }
 .zk-sec-ls-name { font: 900 0.8rem/1.2 var(--ff); color: #1f6fe5; text-align: right; }
+/* ソウル5個のときのリーダースキル名：紫色に光る文字（名前の最後に S がつく） */
+.soul-max-glow { color: #a53bff !important; text-shadow: 0 0 4px #d9a8ff, 0 0 9px #b455ff, 0 0 16px #8f2cff; animation: soulNameGlow 1.4s ease-in-out infinite alternate; }
+@keyframes soulNameGlow { from { filter: brightness(1); } to { filter: brightness(1.25) saturate(1.2); } }
+/* ソウルの数ごとのリーダースキルを切り替えるタブ（ふつう / ソウル2個 / ソウル5個） */
+.soul-ls-tabs { display: flex; gap: 6px; margin-top: 2px; }
+.soul-ls-tabs[hidden] { display: none; }
+.soul-ls-tab { position: relative; flex: 1 1 0; min-width: 0; padding: 5px 4px; border: 2px solid var(--ink); border-radius: 10px; background: #f1f3f7; color: var(--ink); font: 900 0.7rem/1.2 var(--ff); box-shadow: 0 2px 0 var(--ink); white-space: nowrap; }
+.soul-ls-tab.active { background: linear-gradient(135deg, #fff4aa, #ffc83d); }
+.soul-ls-tab.tier5.active { background: linear-gradient(135deg, #e9d2ff, #b97bff); }
+.soul-ls-tab:active { transform: translateY(2px); box-shadow: none; }
+.soul-ls-tab.now::after { content: 'いま'; position: absolute; top: -9px; right: 4px; padding: 0 5px; border: 1.5px solid var(--ink); border-radius: 999px; background: #fff; font: 900 0.55rem/1.35 var(--ff); }
 .zk-sec-desc { margin: 0; font: 500 0.8rem/1.45 var(--ff); color: var(--ink); white-space: pre-line; }
 .zk-sec.spots .zk-sec-label::before { background: #cdf0d6; }
 .zk-spot-list { display: flex; flex-direction: column; gap: 5px; max-height: min(30vh, 210px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 2px 2px 3px; }

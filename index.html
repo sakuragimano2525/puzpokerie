@@ -19,15 +19,16 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap"></noscript>
-<link rel="stylesheet" href="css/style.css?v=20261108sl2">
-<link rel="stylesheet" href="css/ui.css?v=20261113miga">
-<link rel="stylesheet" href="css/battle-plus.css?v=20261108stage">
-<link rel="stylesheet" href="css/landscape.css?v=20261105">
+<link rel="stylesheet" href="css/style.css?v=20261114nolabel">
+<link rel="stylesheet" href="css/ui.css?v=20261114capture">
+<link rel="stylesheet" href="css/battle-plus.css?v=20261114soulbar">
+<link rel="stylesheet" href="css/landscape.css?v=20261114nolabel">
 <link rel="stylesheet" href="css/cutin.css?v=20261106e">
 <link rel="stylesheet" href="css/cutin-v2.css?v=20261107a">
 <link rel="stylesheet" href="css/cutin-yume.css?v=20261108a">
+<link rel="stylesheet" href="css/cutin-lace.css?v=20261114a">
 <link rel="stylesheet" href="css/orb-spawn-fx.css?v=20261105">
-<link rel="stylesheet" href="css/zukan.css?v=20261105">
+<link rel="stylesheet" href="css/zukan.css?v=20261114soul3">
 <link rel="stylesheet" href="css/settings.css?v=20261105">
 <link rel="stylesheet" href="css/ls-search.css?v=20261106sk">
 <link rel="stylesheet" href="css/multi-turn.css?v=20261105c">
@@ -177,6 +178,10 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
     <button id="bag-close-btn" class="btn-back" aria-label="閉じる"><svg class="ic"><use href="#i-back"/></svg></button>
     <span id="bag-title">カバン</span>
     <span id="bag-total"></span>
+  </div>
+  <div id="bag-tabs" role="tablist" aria-label="アイテムの種類">
+    <button type="button" class="bag-tab active" data-kind="items">アイテム</button>
+    <button type="button" class="bag-tab" data-kind="jewel">ジュエル</button>
   </div>
   <div id="bag-grid"></div>
 </div>
@@ -611,6 +616,7 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
         <span id="md-ls-name"></span>
       </div>
       <p id="md-ls-desc">---</p>
+      <div id="md-soul-ls-tabs" class="soul-ls-tabs" hidden></div>
     </div>
   </div>
   <div id="md-footer" class="dock">
@@ -1067,7 +1073,7 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
   </div>
   <div id="status-bar">
     <div id="coin-display"><img class="coin-icon" src="hcoin.png" alt="エナ"><span id="coin-count">0</span><button id="mt-chat-btn" type="button" aria-label="定型文を送る">💬</button></div>
-    <span id="combo-label"></span>
+    <button id="capture-toggle" type="button" hidden>キャプチャー</button>
     <div id="status-right"><div id="drop-display"><img class="drop-icon" src="itembox.png" alt="ドロップ"><span id="drop-count">0</span></div><button id="menu-btn">Menu</button></div>
   </div>
   <div id="dungeon">
@@ -1102,10 +1108,10 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/data/gacha.js?v=20261112d"></script>
 <!-- ゲーム本体 -->
 <script defer src="js/damage-number.js?v=20261105"></script>
-<script defer src="js/skill-text.js?v=20261108sl2"></script>
+<script defer src="js/skill-text.js?v=20261114delay"></script>
 <script defer src="js/box-sort.js?v=20261105"></script>
 <script defer src="js/sk-search.js?v=20261106sk"></script>
-<script defer src="js/ls-search.js?v=20261106sk"></script>
+<script defer src="js/ls-search.js?v=20261115party1"></script>
 <script defer src="js/boss-cloud.js?v=20261106"></script>
 <script defer src="js/multi-turn.js?v=20261105"></script>
 <!-- マルチ通信（自動マッチング） -->
@@ -1113,18 +1119,18 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/multi-online.js?v=20261110fr"></script>
 <script defer src="js/enemy-autofit.js?v=20261105"></script>
 <script defer src="js/ryuseki.js?v=20261112f"></script>
-<script defer src="js/game.js?v=20261113miga"></script>
+<script defer src="js/game.js?v=20261115party1"></script>
 <script defer src="js/hasunosora.js?v=20261112f"></script>
 <script defer src="js/hasu-petals.js?v=20261112petal"></script>
-<script defer src="js/audio-fast.js?v=20261106"></script>
+<script defer src="js/audio-fast.js?v=20261114bgmios1"></script>
 <!-- マルチ：2人で盤面・敵・バフ/デバフを共有（game.js の変数を使うので game.js のあと） -->
-<script defer src="js/multi-share.js?v=20261107cutin"></script>
+<script defer src="js/multi-share.js?v=20261114nolabel"></script>
 <script defer src="js/multi-chat.js?v=20261105"></script>
 <script defer src="js/stat-fit.js?v=20261105"></script>
 <script defer src="js/evo-puzzle.js?v=20261105"></script>
 <script defer src="js/evo-scene.js?v=20261105"></script>
-<script defer src="js/zukan.js?v=20261110fr"></script>
-<script defer src="js/gacha.js?v=20261112d"></script>
+<script defer src="js/zukan.js?v=20261114soul3"></script>
+<script defer src="js/gacha.js?v=20261114soul2"></script>
 <script defer src="js/history.js?v=20261113miga"></script>
 <script defer src="js/bonus.js?v=20261112hist"></script>
 <!-- フレンド（マイカード・助っ人・フレンド募集）：game.js / zukan.js / multi-online.js / bonus.js のあと -->
@@ -1136,7 +1142,8 @@ L("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",function()
 <script defer src="js/ls-fx.js?v=20261108erase"></script>
 <script defer src="js/cutin-v2.js?v=20261107a"></script>
 <script defer src="js/cutin-yume.js?v=20261108b"></script>
-<script defer src="js/cutin.js?v=20261108b2"></script>
+<script defer src="js/cutin-lace.js?v=20261114a"></script>
+<script defer src="js/cutin.js?v=20261114a"></script>
 <script defer src="js/enemy-transform.js?v=20261107c"></script>
 <script defer src="js/landscape.js?v=20261105"></script>
  <script defer src="js/fire-frame.js?v=20261105b"></script>

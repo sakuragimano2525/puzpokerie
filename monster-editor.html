@@ -22,6 +22,12 @@ input,textarea,select,button{font:inherit}
 input,textarea,select{width:100%;margin-top:5px;padding:9px;border-radius:8px;border:1px solid var(--line);background:#ffffff;color:var(--text)}
 input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:middle}
 textarea{min-height:72px;resize:vertical}
+.soul-upgrade-editor{margin-top:12px;padding:12px;border:1px solid #bcd0ee;border-radius:10px;background:#f7faff}
+.soul-upgrade-editor summary{font-weight:800;color:#1d4ed8;cursor:pointer}
+.soul-upgrade-editor h3{margin:12px 0 5px;font-size:.9rem;color:#7c3aed}
+.soul-upgrade-editor label{margin:8px 0}
+.soul-effects-json{min-height:120px;font-family:ui-monospace,Consolas,monospace;font-size:.8rem}
+.soul-copy-btn{margin:2px 0 8px}
 .effect{margin:10px 0;padding:12px;border:1px solid #bcd0ee;border-radius:10px;background:#eef4ff}
 .effect-top{display:flex;gap:8px;align-items:center}
 .effect-top select{margin:0;flex:1}
@@ -171,6 +177,7 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
     <div class="wide small" id="skDescPrev" style="margin:-4px 0 0"></div>
     <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skCutin" type="checkbox" style="width:auto"> カットインのオリジナル音声を使う（カットインは全モンスターで出ます）</label>
     <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skYume" type="checkbox" style="width:auto"> 🎀 ゆめかわふわカットインにする（★の線が走って、タイトルカード → 上下に広がってモンスターが登場。背景色は属性で変わります）</label>
+    <label class="wide" style="flex-direction:row;align-items:center;gap:8px"><input id="skLace" type="checkbox" style="width:auto"> 🖼️ レース額縁カットインにする（金のレース柄の額縁が開いて、縞模様の壁紙の窓に金の斬撃＋モンスターが登場。色は属性で変わります。ゆめかわふわとはどちらか1つ）</label>
     <p class="small wide" id="skCutinHint" style="margin:0"></p>
     <div class="wide" id="skBaseOnly"><div class="fields">
     <label class="wide">発動条件（条件を満たしていないと、SPが溜まっていても使えません）
@@ -215,6 +222,22 @@ code{background:#eef4ff;padding:1px 5px;border-radius:4px}
   <div id="leaderEffects"></div>
   <div class="actions"><button class="add" data-add="leader">＋ リーダー効果を追加</button><button class="sub" id="autoLsDesc" type="button">効果から説明文を自動生成</button></div>
   <p class="hint">例：「火属性の攻撃1.2倍」→ 効果「属性の攻撃倍率」で属性＝火、倍率＝1.2。複数の効果を重ねられます。</p>
+    <details class="soul-upgrade-editor">
+      <summary>ソウル強化後のリーダースキル</summary>
+      <p class="hint">同じモンスターのジュエルを2個で第1段階、5個で第2段階に自動で切り替わります。名前には2個以上で「S」が付きます。効果は通常のリーダースキルと同じ形式のJSON配列です。説明を空欄のまま保存すると、効果から自動で説明文が作られます。5個（最大強化）が2個と同じなら、「ジュエル2個の効果・説明をそのまま使う」を押すか、5個側の効果JSONを空欄にしてください（空欄なら2個の強化がそのまま使われます）。</p>
+      <h3>ジュエル2個（S）</h3>
+      <label class="wide">説明<textarea id="lsSoul2Desc" placeholder="空欄なら、効果JSONから説明文を自動生成して保存します"></textarea></label>
+      <label class="wide">効果JSON<textarea id="lsSoul2Effects" class="soul-effects-json" placeholder='例: [{"type":"atk","attr":"fire","value":1.5}]'></textarea></label>
+      <button type="button" class="sub soul-copy-btn" data-copy-soul="2">通常のリーダー効果をコピー</button>
+      <button type="button" class="sub soul-copy-btn" data-auto-soul="2">効果から説明文を自動生成</button>
+      <h3>ジュエル5個（最大強化）</h3>
+      <label class="wide">説明<textarea id="lsSoul5Desc" placeholder="空欄なら、効果JSONから説明文を自動生成して保存します"></textarea></label>
+      <label class="wide">効果JSON<textarea id="lsSoul5Effects" class="soul-effects-json" placeholder='例: [{"type":"atk","attr":"fire","value":2}]'></textarea></label>
+      <button type="button" class="sub soul-copy-btn" data-copy-soul="5">通常のリーダー効果をコピー</button>
+      <button type="button" class="sub soul-copy-btn" data-copy-soul="from2">ジュエル2個の効果・説明をそのまま使う</button>
+      <button type="button" class="sub soul-copy-btn" data-auto-soul="5">効果から説明文を自動生成</button>
+      <p class="small" id="lsSoulConfigError" style="color:#b45309"></p>
+    </details>
   <p class="small" id="lsDup" style="color:#b45309"></p>
   <div class="lib">
     <h3>登録済みのリーダースキルから選ぶ</h3>
@@ -334,9 +357,10 @@ function normalizeMonsterTypes(m){
   const fix = list => (list||[]).forEach(e=>{ if(!e) return; if(e.condition==='type' && e.attr) e.attr = normType(e.attr); if(e.monType) e.monType = normType(e.monType); });
   if(m.skill){ fix(m.skill.effects); (m.skill.stages||[]).forEach(s=>s&&fix(s.effects)); }
   if(m.leaderSkill) fix(m.leaderSkill.effects);
+  Object.values(m.soulUpgrades||{}).forEach(u=>u&&fix(u.effects));
   return m;
 }
-const KNOWN_KEYS = ['id','name','img','rarity','attr','sub','type','maxLevel','baseExp','stats','skill','leaderSkill','bindImmune','evolutions'];
+const KNOWN_KEYS = ['id','name','img','rarity','attr','sub','type','maxLevel','baseExp','stats','skill','leaderSkill','soulUpgrades','bindImmune','evolutions'];
 const EXP_TABLE_LEN = 99; // js/data/exp.js の長さ。これより上の最大レベルは設定できない
 const DEFAULT_HEADER = `// ============================================================
 // ★ モンスターデータ ★
@@ -371,6 +395,7 @@ const activeTemplates = {
     {desc:'',effects:[{key:'selfAtkBuff',data:{type:'selfAtkBuff',target:'adjacent',includeSelf:true,value:1.5,turns:7}}]},
     {desc:'',effects:[{key:'selfAtkBuff',data:{type:'selfAtkBuff',target:'adjacent',includeSelf:true,value:2,turns:7}}]},
     {desc:'',effects:[{key:'recMult',data:{type:'recMult',turns:7,value:2}}]}]},fields:[]},
+  delayedEffect:{label:'予告（○ターン後に、下の効果が発動）',data:{type:'delayedEffect',turns:3,options:[{desc:'',effects:[{key:'absorbVoid',data:{type:'absorbVoid',turns:2}}]}]},fields:[numF('turns','何ターン後に発動するか')]},
   defenseDown:{label:'敵の防御力を○ターン○%ダウン',data:{type:'defenseDown',target:'all',value:0.5,turns:1},fields:[['target','対象','select','all:敵全体|single:敵単体'],numF('value','ダウン率（50%=0.5）'),numF('turns','ターン数')]},
   selfDamage:{label:'【自傷系】HPを減らす',data:{type:'selfDamage',mode:'percent',value:0.2},fields:[['mode','種類','select','percent:最大HPの○%減少|toOne:HPが1になる'],numF('value','減少割合（20%=0.2。「HPが1になる」の時は無視）')]},
   heal:{label:'最大HP割合を回復',data:{type:'heal',value:0.2},fields:[numF('value','割合（20%=0.2）')]},
@@ -407,6 +432,9 @@ const cleanEff = d=>{
     d=structuredClone(d);
     if(!d.attr) delete d.attr;
     if(!d.monType) delete d.monType;
+    if(!d.needAttr) delete d.needAttr;
+    if(!d.needType) delete d.needType;
+    if(d.condition==='partyCount' && !(Number(d.rarity)>0)) delete d.rarity;
     ['hp','atk','rec'].forEach(k=>{ if(!d[k]) delete d[k]; });
     if(d.hp&&d.atk&&d.rec){ delete d.hp; delete d.atk; delete d.rec; }   // 3つ全部＝全パラメータ（ゲーム側は何も指定が無ければ全パラメータ）
     return d;
@@ -445,8 +473,8 @@ const leaderTemplates = {
   crossCond:{label:'十字消しで',data:{type:'atk',condition:'cross',value:2},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!e.shapeAttr},
   hpFullAtk:{label:'HP満タンで',data:{type:'atk',condition:'hpFull',value:1.5},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')]},
   lShapeAtk:{label:'L字消しで',data:{type:'atk',condition:'lShapes',value:1.2},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!e.shapeAttr},
-  crossAttrCond:{label:'○属性の十字消しで',data:{type:'atk',condition:'cross',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップで十字を作ると発動）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!!e.shapeAttr},
-  lShapeAttrAtk:{label:'○属性のL字消しで',data:{type:'atk',condition:'lShapes',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップでL字を作ると発動）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!!e.shapeAttr},
+  crossAttrCond:{label:'○ドロップの十字消しで',data:{type:'atk',condition:'cross',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップで十字を作ると発動）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','十字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>isAtkOrRed(e)&&e.condition==='cross'&&!!e.shapeAttr},
+  lShapeAttrAtk:{label:'○ドロップのL字消しで',data:{type:'atk',condition:'lShapes',shapeAttr:'fire',value:2},fields:[attrF('shapeAttr','属性（この属性のドロップでL字を作ると発動）'),numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','L字の数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')],match:e=>e.type==='atk'&&e.condition==='lShapes'&&!!e.shapeAttr},
   skillUsedAtk:{label:'スキル使用時に',data:{type:'atk',condition:'skillUsed',value:1.3},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）')]},
   poisonAtk:{label:'毒ドロップを消して',data:{type:'atk',condition:'poison',value:1.5},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),numF('comboAdd','コンボ加算')]},
   exact4Atk:{label:'ちょうど4個消しで',data:{type:'atk',condition:'exact4',value:1.5},fields:[numF('value','攻撃倍率'),numF('recValue','回復力倍率（空欄=なし。攻撃と同じ倍率なら同じ数を入れる）'),numF('reduce','ダメージ軽減（35%=0.35）'),['exponential','4個消しの数だけ攻撃倍率を累乗','bool'],numF('comboAdd','コンボ加算')]},
@@ -466,6 +494,7 @@ const leaderTemplates = {
   rarityTotalBelow:{label:'チームの総レア度が○以下の場合、○が○倍',data:{type:'rarity',condition:'totalBelow',threshold:20, hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('threshold','総レア度'),numF('value','倍率')]},
   rarityTotalAbove:{label:'チームの総レア度が○以上の場合、○が○倍',data:{type:'rarity',condition:'totalAbove',threshold:30, hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('threshold','総レア度'),numF('value','倍率')]},
   rarityCount:{label:'チームにレア度○のモンスターが○体以上いる場合、○が○倍',data:{type:'rarity',condition:'countAtLeast',rarity:5,count:3, hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','属性','attrAny'],typeF('monType','タイプ'),numF('rarity','レア度'),numF('count','体数'),numF('value','倍率')]},
+  rarityParty:{label:'チームにレア度○・○属性・○タイプのモンスターが○体以上いる場合、○が○倍（隠し効果・説明文なし）',data:{type:'rarity',condition:'partyCount',rarity:'',needAttr:'',needType:'',count:2, hp:true,atk:true,value:1.5},fields:[['hp','HP','bool'],['atk','攻撃力','bool'],['rec','回復力','bool'],['attr','強化する属性','attrAny'],typeF('monType','強化するタイプ'),numF('rarity','必要なレア度（空欄=問わない）'),['needAttr','必要な属性（指定なし=問わない）','attrAny'],typeF('needType','必要なタイプ（空欄=問わない）'),numF('count','必要な体数'),numF('value','倍率')]},
   expMult:{label:'リーダー/フレンドの時、貰える経験値が○倍',data:{type:'expMult',value:2},fields:[numF('value','経験値の倍率')]},
   coinMult:{label:'リーダー/フレンドの時、貰えるエナが○倍',data:{type:'coinMult',value:2},fields:[numF('value','エナの倍率')]},
   eggDropUp:{label:'リーダー/フレンドの時、タマゴドロップ率が○%UP',data:{type:'eggDropUp',value:10},fields:[numF('value','UPする%')]},
@@ -545,6 +574,11 @@ function toActiveEff(e){
     e.options=(Array.isArray(e.options)?e.options:[]).map(o=>({desc:'',effects:normActiveEffs(Array.isArray(o)?o:((o&&o.effects)||[])).map(toActiveEff)}));
     return {key:'randomEvent',data:e};
   }
+  if(e.type==='delayedEffect'){   // 予告：中身の効果も {key,data} の形にして持つ（画面の部品を「何かが起こる」と共用するため options[0] に入れる。保存する時に元の形へ戻す）
+    e.options=[{desc:'',effects:normActiveEffs(Array.isArray(e.effects)?e.effects:[]).map(toActiveEff)}];
+    delete e.effects; delete e.desc;
+    return {key:'delayedEffect',data:e};
+  }
   if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; }
   if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; }
   return {key:matchTemplate(activeTemplates,e),data:e};
@@ -556,7 +590,7 @@ function flushStage(){
   s.sp = $('skSp').value==='' ? (curStage===0?1:'') : Number($('skSp').value);
   s.desc = $('skDesc').value;
   s.effects = activeEffects;
-  s.cutin = $('skCutin').checked; s.yumekawa = $('skYume').checked;
+  s.cutin = $('skCutin').checked; s.yumekawa = $('skYume').checked; s.lace = $('skLace').checked;
 }
 // いま選んでいるスキルを画面に出す
 function loadStageToForm(){
@@ -567,7 +601,7 @@ function loadStageToForm(){
   activeEffects = s.effects;
   const base = curStage===0;
   $('skBaseOnly').style.display = base ? '' : 'none';   // 発動条件はスキル1だけ
-  $('skCutin').checked = s.cutin === true; $('skYume').checked = s.yumekawa === true;   // カットイン・音声はスキルごと
+  $('skCutin').checked = s.cutin === true; $('skYume').checked = s.yumekawa === true; $('skLace').checked = s.lace === true;   // カットイン・音声はスキルごと
   $('skNameLbl').textContent = base ? 'スキル名' : `スキル${curStage+1}の名前（空欄 = スキル1と同じ名前）`;
   $('skSpLbl').textContent = base ? '必要スキルポイント（SP）' : `スキル${curStage+1}の必要SP（空欄 = スキル1と同じ）`;
   renderEffects('active');
@@ -575,8 +609,8 @@ function loadStageToForm(){
 function loadSkillToForm(sk){
   sk = sk||{};
   writeSkillCond(sk.condition);
-  stages = [{name:sk.name??'',sp:sk.sp??1,desc:sk.desc??'',cutin:sk.cutin===true,yumekawa:sk.yumekawa===true,effects:normActiveEffs(sk.effects).map(toActiveEff)}]
-    .concat((Array.isArray(sk.stages)?sk.stages:[]).slice(0,MAX_STAGES-1).map(s=>({name:s.name??'',sp:s.sp??'',desc:s.desc??'',cutin:s.cutin===true,yumekawa:s.yumekawa===true,effects:normActiveEffs(s.effects).map(toActiveEff)})));
+  stages = [{name:sk.name??'',sp:sk.sp??1,desc:sk.desc??'',cutin:sk.cutin===true,yumekawa:sk.yumekawa===true,lace:sk.lace===true,effects:normActiveEffs(sk.effects).map(toActiveEff)}]
+    .concat((Array.isArray(sk.stages)?sk.stages:[]).slice(0,MAX_STAGES-1).map(s=>({name:s.name??'',sp:s.sp??'',desc:s.desc??'',cutin:s.cutin===true,yumekawa:s.yumekawa===true,lace:s.lace===true,effects:normActiveEffs(s.effects).map(toActiveEff)})));
   curStage = 0;
   loadStageToForm();
 }
@@ -595,7 +629,7 @@ function applyChangeLines(){
 function addStage(){
   if(stages.length>=MAX_STAGES) return;
   flushStage();
-  stages.push({name:'',sp:'',desc:'',cutin:false,yumekawa:false,effects:[]});
+  stages.push({name:'',sp:'',desc:'',cutin:false,yumekawa:false,lace:false,effects:[]});
   applyChangeLines();
   curStage = stages.length-1; loadStageToForm();
   dirty=true; update();
@@ -619,7 +653,7 @@ function renderStageTabs(){
 function updateDescPreview(){
   const h=$('skDescPrev'); if(!h) return;
   const t=$('skDesc').value;
-  h.innerHTML = t ? '表示：'+esc(t).replace(/\n/g,'<br>').replace(/スキル([0-9０-９]{1,2})に変化。?/g,m=>`<span class="sk-change">${m}</span>`) : '';
+  h.innerHTML = t ? '表示：'+esc(t).replace(/\n/g,'<br>').replace(/スキル([0-9０-９]{1,2})に変化。?/g,m=>`<span class="sk-change">${m}</span>`).replace(/【[0-9０-９]{1,2}ターン後に発動】[^。\n<]*。?/g,m=>`<span class="sk-change">${m}</span>`) : '';
 }
 
 // ---------- 画面部品 ----------
@@ -651,7 +685,7 @@ function fieldHtml(kind, i, f, data, extra=''){
 // 「何かが起こる」の編集欄：パターンごとに効果を入れる（スキルを使うと、パターンのうち1つが同じ確率で選ばれる）
 function randomEventBody(i,e){
   const opts=e.data.options||(e.data.options=[]);
-  const subTpls=Object.entries(activeTemplates).filter(([k])=>k!=='randomEvent');
+  const subTpls=Object.entries(activeTemplates).filter(([k])=>k!=='randomEvent'&&k!=='delayedEffect');
   return `<div class="rand-ev"><p class="small">スキルを使うと、下のパターンのうち1つが同じ確率でランダムに起こります（他のモンスターのスキルを使うわけではありません）。スキル説明には「何かが起こる」と出ます。</p>`
   +opts.map((o,j)=>`<div class="rand-opt"><div class="effect-top"><b>パターン${j+1}</b><span style="flex:1"></span>
       <button class="remove" type="button" data-opt-del="${i}:${j}">このパターンを削除</button></div>`
@@ -666,10 +700,40 @@ function randomEventBody(i,e){
       <p class="small rand-preview">${esc(randOptText(o))}</p></div>`).join('')
   +`<button class="add" type="button" data-opt-add="${i}">＋ パターンを追加</button></div>`;
 }
+// 「予告」の編集欄：何ターン後か＋発動する効果（「何かが起こる」と同じ部品を使うので、中身は options[0] に入っている）
+const DELAY_NG_SUB=['randomEvent','delayedEffect','timeStop','transformRandom','custom'];
+function delayedEventBody(i,e){
+  const o=(e.data.options&&e.data.options[0])||(e.data.options=[{desc:'',effects:[]}])[0];
+  const t=activeTemplates.delayedEffect;
+  const subTpls=Object.entries(activeTemplates).filter(([k])=>!DELAY_NG_SUB.includes(k));
+  return `<div class="fields">${t.fields.map(f=>fieldHtml('active',i,f,e.data)).join('')}</div>
+  <div class="rand-ev"><p class="small">スキルを使ってから上のターン数が経つと、下の効果が発動します（バインド回復など、このスキルの他の効果は、いつも通りすぐ起こります）。スキル説明には「【○ターン後に発動】…」と出て、ゲーム内で青文字になります。同じ予告をもう一度使うと、重ならずに残りターンが最初に戻ります。</p>
+  <div class="rand-opt">`
+    +o.effects.map((x,k)=>{
+      const tt=activeTemplates[x.key]; const ex=`data-opt="0" data-sub="${k}"`;
+      const fields=tt.fields.map(f=>fieldHtml('active',i,f,x.data,ex)).join('');
+      return `<div class="effect"><div class="effect-top">
+        <select data-kind="active" data-i="${i}" ${ex} data-role="subkind">${subTpls.map(([kk,v])=>`<option value="${kk}"${kk===x.key?' selected':''}>${v.label}</option>`).join('')}${(!subTpls.some(([kk])=>kk===x.key))?`<option value="${x.key}" selected>${tt.label}</option>`:''}</select>
+        <button class="remove" type="button" data-sub-del="${i}:0:${k}">削除</button></div>${fields?`<div class="fields">${fields}</div>`:''}</div>`;
+    }).join('')
+    +`<button class="add" type="button" data-sub-add="${i}:0">＋ 発動する効果を追加</button>
+      <p class="small rand-preview">${esc(delayedPreviewText(e.data))}</p></div></div>`;
+}
+const delayedPreviewText=d=>{ const t=describeActive([cleanOne(d)]); return t?('説明文：'+t.replace(/\n/g,' ')):'（効果がありません）'; };
 const randOptText=o=>{ const t=describeActive((o.effects||[]).map(x=>cleanOne(x.data))).replace(/。\n/g,'、').replace(/。$/,''); return t?('ゲーム内メッセージ：'+t):'（効果がありません）'; };
-function refreshRandPreview(el){ const box=el.closest('.rand-opt'); if(!box) return; const o=getList('active')[+el.dataset.i].data.options[+el.dataset.opt]; const p=box.querySelector('.rand-preview'); if(p) p.textContent=randOptText(o); }
+function refreshRandPreview(el){
+  const eff=getList('active')[+el.dataset.i]; if(!eff) return;
+  if(eff.data.type==='delayedEffect'){ const top=el.closest('#activeEffects>.effect'); const p=top&&top.querySelector('.rand-preview'); if(p) p.textContent=delayedPreviewText(eff.data); return; }
+  const box=el.closest('.rand-opt'); if(!box||el.dataset.opt===undefined) return;
+  const o=eff.data.options[+el.dataset.opt]; const p=box.querySelector('.rand-preview'); if(p) p.textContent=randOptText(o);
+}
 // 保存用：{key,data} で持っている中身を、ゲームが読む元の形（空欄は除く）に戻す
 function cleanOne(d){
+  if(d&&d.type==='delayedEffect'){   // 予告：{type,turns,desc,effects}
+    const effects=((d.options&&d.options[0]&&d.options[0].effects)||[]).map(x=>cleanOne(x.data));
+    const desc=describeActive(effects).replace(/。\n/g,'、').replace(/。$/,'');
+    return {type:'delayedEffect',turns:Math.max(1,Math.floor(Number(d.turns)||1)),...(desc?{desc}:{}),effects};
+  }
   if(d&&d.type==='randomEvent') return {type:'randomEvent',options:(d.options||[]).map(o=>{ const effects=(o.effects||[]).map(x=>cleanOne(x.data)); const desc=describeActive(effects).replace(/。\n/g,'、').replace(/。$/,''); return {...(desc?{desc}:{}),effects}; })};
   return Object.fromEntries(Object.entries(d).filter(([k,v])=>v!==''&&!(v===false&&k.startsWith('orb_'))));
 }
@@ -679,9 +743,9 @@ function renderEffects(kind){
   const host = $({active:'activeEffects',leader:'leaderEffects',bulk:'blEffects'}[kind]);
   host.innerHTML = list.map((e,i)=>{
     const t = templates[e.key];
-    if(e.key==='randomEvent'&&kind==='active') return `<div class="effect"><div class="effect-top">
+    if((e.key==='randomEvent'||e.key==='delayedEffect')&&kind==='active') return `<div class="effect"><div class="effect-top">
       <select data-kind="${kind}" data-i="${i}" data-role="kind">${Object.entries(templates).map(([k,v])=>`<option value="${k}"${k===e.key?' selected':''}>${v.label}</option>`).join('')}</select>
-      <button class="remove" type="button" data-kind="${kind}" data-i="${i}" data-role="remove">削除</button></div>${randomEventBody(i,e)}</div>`;
+      <button class="remove" type="button" data-kind="${kind}" data-i="${i}" data-role="remove">削除</button></div>${e.key==='delayedEffect'?delayedEventBody(i,e):randomEventBody(i,e)}</div>`;
     const fields = t.fields.map(f=>fieldHtml(kind,i,f,e.data)).join('');
     return `<div class="effect"><div class="effect-top">
       <select data-kind="${kind}" data-i="${i}" data-role="kind">${Object.entries(templates).map(([k,v])=>`<option value="${k}"${k===e.key?' selected':''}>${v.label}</option>`).join('')}</select>
@@ -717,9 +781,22 @@ function buildMonster(){
   flushStage();
   const cleanActive = list=>list.map(e=>cleanOne(e.data));
   const s0 = stages[0];
-  m.skill = { name:s0.name, sp:Math.max(1,Math.floor(Number(s0.sp)||1)), desc:s0.desc, ...(s0.cutin?{cutin:true}:{}), ...(s0.yumekawa?{yumekawa:true}:{}), ...readSkillCond(), effects:cleanActive(s0.effects) };
-  if(stages.length>1) m.skill.stages = stages.slice(1).map(s=>({ ...(s.name?{name:s.name}:{}), ...((s.sp!==''&&s.sp!=null&&Number(s.sp)>=1)?{sp:Math.floor(Number(s.sp))}:{}), ...(s.cutin?{cutin:true}:{}), ...(s.yumekawa?{yumekawa:true}:{}), desc:s.desc, effects:cleanActive(s.effects) }));
+  m.skill = { name:s0.name, sp:Math.max(1,Math.floor(Number(s0.sp)||1)), desc:s0.desc, ...(s0.cutin?{cutin:true}:{}), ...(s0.yumekawa?{yumekawa:true}:{}), ...(s0.lace?{lace:true}:{}), ...readSkillCond(), effects:cleanActive(s0.effects) };
+  if(stages.length>1) m.skill.stages = stages.slice(1).map(s=>({ ...(s.name?{name:s.name}:{}), ...((s.sp!==''&&s.sp!=null&&Number(s.sp)>=1)?{sp:Math.floor(Number(s.sp))}:{}), ...(s.cutin?{cutin:true}:{}), ...(s.yumekawa?{yumekawa:true}:{}), ...(s.lace?{lace:true}:{}), desc:s.desc, effects:cleanActive(s.effects) }));
   m.leaderSkill = { name:$('lsName').value, desc:$('lsDesc').value, effects:leaderEffects.map(e=>cleanEff(e.data)) };
+  const soulUpgrades = {}; let soulConfigError='';
+  for(const [tier,descId,effectsId] of [[2,'lsSoul2Desc','lsSoul2Effects'],[5,'lsSoul5Desc','lsSoul5Effects']]){
+    const raw=$(effectsId).value.trim();
+    if(!raw) continue;
+    try {
+      const effects=JSON.parse(raw);
+      if(!Array.isArray(effects)) throw new Error('効果はJSON配列で入力してください');
+      soulUpgrades[tier]={desc:$(descId).value.trim()||describeLeader(effects),effects};
+    } catch(err) { soulConfigError=`${tier}個段階: ${err.message}`; }
+  }
+  $('lsSoulConfigError').textContent=soulConfigError;
+  if(soulConfigError && currentId!==null && db[currentId] && db[currentId].soulUpgrades) m.soulUpgrades=structuredClone(db[currentId].soulUpgrades);
+  else if(Object.keys(soulUpgrades).length) m.soulUpgrades=soulUpgrades;
   const evos = evolutions.filter(e=>e.to!==''&&e.to!=null).map(e=>({to:Number(e.to),materials:e.materials.filter(x=>x.item).map(x=>({item:x.item,count:Number(x.count)||1}))}));
   if(evos.length) m.evolutions = evos;
   if($('monBindImmune').checked) m.bindImmune = true;   // 隠し効果：バインド無効
@@ -745,6 +822,10 @@ function loadMonsterToForm(m){
   const sk = m.skill||{};
   const ls = m.leaderSkill||{};
   $('lsName').value = ls.name ?? ''; $('lsDesc').value = ls.desc ?? '';
+  const su=m.soulUpgrades||{}, su2=su[2]||su['2']||{}, su5=su[5]||su['5']||{};
+  $('lsSoul2Desc').value=su2.desc||''; $('lsSoul2Effects').value=su2.effects?JSON.stringify(su2.effects,null,2):'';
+  $('lsSoul5Desc').value=su5.desc||''; $('lsSoul5Effects').value=su5.effects?JSON.stringify(su5.effects,null,2):'';
+  $('lsSoulConfigError').textContent='';
   const toEff=(templates,e)=>{ e=templates===leaderTemplates?normLeaderEff(e):structuredClone(e); if(e.type==='damageSingle'){ e.type='damageAll'; e.target='single'; } if(e.type==='orbChangeRow'){ e={type:'orbChangeLine',dir:'row',index:e.row??0,count:1,attr:e.attr,...(e.message?{message:e.message}:{})}; } return {key:matchTemplate(templates,e),data:e}; };
   loadSkillToForm(sk);
   leaderEffects = (ls.effects||[]).map(e=>toEff(leaderTemplates,e));
@@ -801,6 +882,20 @@ function mergeLeaderEffs(effs){
       const idx=need.map(same);
       if(idx.every(k=>k>=0)){ idx.forEach(k=>used.add(k)); const m={type:'allStat',value:e.value}; if(e.condition) m.condition=e.condition; if(e.attr!==undefined) m.attr=e.attr; res.push(m); continue; }
     }
+    // 属性だけ違う同じ効果をまとめる（既存の書き方）：「水ドロップ/光ドロップの2コンボ以上で…」「火と木属性の攻撃1.4倍」
+    {
+      const mk = e.type==='atk' && ['attrCombos','eraseAttr','connectEach'].includes(e.condition) ? 'attr'
+        : e.type==='atk' && (e.condition==='cross'||e.condition==='lShapes') && e.shapeAttr ? 'shapeAttr'
+        : ['atk','hp','rec'].includes(e.type) && !e.condition && e.attr ? 'attr' : null;
+      if(mk && e[mk]){
+        const sig=x=>JSON.stringify(Object.keys(x).filter(k=>k!==mk&&k!=='_attrs').sort().map(k=>[k,x[k]]));
+        const idxs=list.map((x,k)=>k).filter(k=>k!==i&&!used.has(k)&&list[k].type===e.type&&(list[k].condition||null)===(e.condition||null)&&list[k][mk]&&list[k][mk]!==e[mk]&&sig(list[k])===sig(e));
+        if(idxs.length){
+          const attrs=[e[mk]]; idxs.forEach(k=>{ used.add(k); if(!attrs.includes(list[k][mk])) attrs.push(list[k][mk]); });
+          res.push({...e,_attrs:attrs}); continue;
+        }
+      }
+    }
     if(e.type==='atk'&&e.condition==='cross'&&!e.shapeAttr){
       const k=list.findIndex((x,n)=>!used.has(n)&&n!==i&&x.type==='atk'&&x.condition==='lShapes'&&!x.shapeAttr&&x.value===e.value&&!!x.exponential===!!e.exponential&&(x.reduce||0)===(e.reduce||0)&&(x.comboAdd||0)===(e.comboAdd||0)&&(x.recValue||0)===(e.recValue||0));
       if(k>=0){ used.add(k); res.push({...e,condition:'crossL'}); continue; }
@@ -816,6 +911,10 @@ function describeLeader(effs){
     const _n=out.length;
     const a = ATTR_NAME[e.attr]||e.attr||'';
     const mult = fmt(e.value)+'倍';
+    // まとめた属性（_attrs）の言い回し：ドロップ表記「水ドロップ/光ドロップ」／属性表記「火と木」
+    const _al = (e._attrs||[e.condition==='cross'||e.condition==='lShapes'?(e.shapeAttr||e.attr):e.attr]).filter(Boolean).map(x=>ATTR_NAME[x]||x);
+    const orbList = _al.map(x=>x+'ドロップ').join('/');
+    const attrJoin = _al.length>2 ? _al.join('・') : _al.join('と');
     switch(e.type){
       case 'noDrop': pre.push('【落ちコンなし】'); break;
       case 'spCapUp': { const v=Math.max(1,Math.min(10,Math.floor(Number(e.value)||0))); out.push(`SPの上限が${v}アップ（最大${10+v}）`); break; }
@@ -825,6 +924,7 @@ function describeLeader(effs){
       case 'moveTimeAdd': { const v=Number(e.value)||0; if(v) pre.push(`【操作時間${fmt(Math.abs(v))}秒${v>0?'延長':'短縮'}】`); break; }
       case 'hpRecovery': out.push(`ドロップを消すと最大HPの${pct(e.value)}回復`); break;
       case 'rarity': {
+        if(e.condition==='partyCount') break;   // 隠し効果：説明文は出さない
         const st=['hp','atk','rec'].filter(k=>e[k]);
         const nm={hp:'HP',atk:'攻撃力',rec:'回復力'};
         const what = (!st.length||st.length===3) ? '全パラメータ' : st.map(k=>nm[k]).join('と');
@@ -848,33 +948,34 @@ function describeLeader(effs){
       }
       case 'atk': case 'hp': case 'rec': {
         const w = {atk:'攻撃',hp:'HP',rec:'回復力'}[e.type];
-        const targ = e.condition==='type' ? `${e.attr}タイプの` : (e.attr&&!e.condition ? `${a}属性の` : (!e.condition ? '全属性の' : ''));
-        const shp = e.shapeAttr ? `${ATTR_NAME[e.shapeAttr]||e.shapeAttr}属性の` : '';
+        const targ = e.condition==='type' ? `${e.attr}タイプの` : (e.attr&&!e.condition ? `${attrJoin}属性の` : (!e.condition ? '全属性の' : ''));
+        const shp = e.shapeAttr ? `${orbList}の` : '';   // 例: 闇ドロップの十字消し／火ドロップ/闇ドロップの十字消し
         switch(e.condition){
-          case 'attrCombos': out.push(`${a}ドロップの${e.count}コンボ以上で${w}${mult}`); break;
+          case 'attrCombos': out.push(`${orbList}の${e.count}コンボ以上で${w}${mult}`); break;
           case 'combo': out.push(`${e.count}コンボ以上で${w}${mult}`); break;
-          case 'orbConnect': out.push(e.attr2?`${a}と${ATTR_NAME[e.attr2]||e.attr2}のドロップを同時に${e.count}個以上つなげて消すと${w}${mult}`:`${a}を${e.count}個以上つなげて消すと${w}${mult}`); break;
+          case 'orbConnect': out.push(e.attr2?`${a}と${ATTR_NAME[e.attr2]||e.attr2}ドロップを同時に${e.count}個以上つなげて消すと${w}${mult}`:`${a}を${e.count}個以上つなげて消すと${w}${mult}`); break;
           case 'hpAbove': out.push(e.threshold>=1 ? `HP満タン時、${w}${mult}` : `HP${pct(e.threshold)}以上で${w}${mult}`); break;
           case 'hpBelow': out.push(`HP${pct(e.threshold)}以下で${w}${mult}`); break;
           case 'hpFull': out.push(`HP満タン時、${w}${mult}`); break;
           case 'cross': out.push(`${shp}十字消し${e.exponential?'する度に':'をすると'}${w}${mult}`); break;
-          case 'crossL': out.push(`十字/L字消し${e.exponential?'する度に':'をすると'}${w}${mult}`); break;
+          case 'crossL': out.push(`十字/L字消し${e.exponential?'する度に':'すると'}${w}${mult}`); break;
           case 'lShapes': out.push(`${shp}L字消し${e.exponential?'する度に':'をすると'}${w}${mult}`); break;
           case 'fourColors': out.push(`4色以上同時に消すと${w}${mult}`); break;
           case 'colorCount': out.push(`${colorCountText(e)}同時に消すと${w}${mult}`); break;
           case 'colorCountHeal': out.push(`${colorHealText(e.count||5)}同時に消すと${w}${mult}`); break;
-          case 'colorRamp': { const hc=e.healCounts!==false, n=e.count||3;
-            out.push(`${hc?colorHealText(n):`${n}色以上`}同時に消すと${w}${mult}、色が増えるほど倍率が上がり、${hc?'5色＋回復':'5色'}で最大${fmt(e.maxValue||e.value)}倍`); break; }
+          case 'colorRamp': { const n=e.count||3, hc=e.healCounts!==false;
+            const cc = (hc&&n>=6) ? '5色＋回復を' : (n>=5 ? '5色' : n+'色以上');
+            out.push(`${cc}同時に消すと${w}倍率上昇、最大${fmt(e.maxValue||e.value)}倍`); break; }
           case 'remainingOrbs': out.push(`残りドロップ${e.threshold}個以下で${w}${mult}`); break;
           case 'skillUsed': out.push(`スキル使用時、${w}${mult}`); break;
           case 'poison': out.push(`毒ドロップを消すと${w}${mult}`); break;
-          case 'fireCombos': out.push(`火の${e.count}コンボ以上で${w}${mult}`); break;
-          case 'darkCombos': out.push(`闇の${e.count}コンボ以上で${w}${mult}`); break;
-          case 'healCombos': out.push(`回復の${e.count}コンボ以上で${w}${mult}`); break;
-          case 'exact4': out.push(`ドロップをちょうど4個消${e.exponential?'す度に':'すと'}${w}${mult}`); break;
-          case 'eraseAttr': out.push(`${a}ドロップを消す度に${w}${mult}`); break;
+          case 'fireCombos': out.push(`火ドロップの${e.count}コンボ以上で${w}${mult}`); break;
+          case 'darkCombos': out.push(`闇ドロップの${e.count}コンボ以上で${w}${mult}`); break;
+          case 'healCombos': out.push(`回復ドロップの${e.count}コンボ以上で${w}${mult}`); break;
+          case 'exact4': out.push(e.exponential?`ドロップをちょうど4個消す度に${w}${mult}`:`ちょうど4個消しで${w}${mult}`); break;
+          case 'eraseAttr': out.push(`${orbList}を消す度に${w}${mult}`); break;
           case 'eraseAny': out.push(`ドロップを消す度に${w}${mult}`); break;
-          case 'connectEach': out.push(`${a?a+'ドロップ':'ドロップ'}を${e.exact?'ちょうど'+e.count+'個':e.count+'個以上'}つなげて消${e.exponential?'す度に':'すと'}${w}${mult}`); break;
+          case 'connectEach': out.push(`${e.attr?orbList:'ドロップ'}を${e.exact?'ちょうど'+e.count+'個':e.count+'個以上'}つなげて消${e.exponential?'す度に':'すと'}${w}${mult}`); break;
           case 'exactCount': out.push(`${a}をちょうど${e.count}個消すと${w}${mult}`); break;
           case 'waterDarkConnect': out.push(`水と闇を5個以上つなげて消すと${w}${mult}`); break;
           default: out.push(`${targ}${w}${mult}`);
@@ -882,7 +983,7 @@ function describeLeader(effs){
         break;
       }
       case 'dmgReduction': {
-        const c = {hpFull:'HP満タン時、',hpAbove:e.threshold>=1?'HP満タン時、':`HP${pct(e.threshold)}以上で`,hpBelow:`HP${pct(e.threshold)}以下で`,fourColors:'4色以上同時に消すと',colorCount:`${colorCountText(e)}同時に消すと`,colorCountHeal:`${colorHealText(e.count||5)}同時に消すと`,remainingOrbs:`残りドロップ${e.threshold}個以下で`,cross:`${e.shapeAttr?(ATTR_NAME[e.shapeAttr]||e.shapeAttr)+'属性の':''}十字消し${e.exponential?'する度に':'をすると'}`}[e.condition]||'';
+        const c = {hpFull:'HP満タン時、',hpAbove:e.threshold>=1?'HP満タン時、':`HP${pct(e.threshold)}以上で`,hpBelow:`HP${pct(e.threshold)}以下で`,fourColors:'4色以上同時に消すと',colorCount:`${colorCountText(e)}同時に消すと`,colorCountHeal:`${colorHealText(e.count||5)}同時に消すと`,remainingOrbs:`残りドロップ${e.threshold}個以下で`,cross:`${e.shapeAttr?(ATTR_NAME[e.shapeAttr]||e.shapeAttr)+'ドロップの':''}十字消し${e.exponential?'する度に':'をすると'}`}[e.condition]||'';
         out.push(`${c}受けるダメージ${pct(e.value)}軽減`); break;
       }
     }
@@ -1036,6 +1137,12 @@ function describeActive(effs){
       if(hasNext) carry=t; else out.push(t);
       i++; continue;
     }
+    if(e.type==='delayedEffect'){   // 予告：「【3ターン後に発動】2ターンの間、属性吸収を無効化。」を独立した1文にする
+      const inner=describeActive(e.effects||[]).replace(/。\n/g,'、').replace(/。$/,'');
+      if(carry){ out.push(carry); carry=''; }
+      if(inner) out.push(`【${Math.max(1,Math.floor(Number(e.turns)||1))}ターン後に発動】${inner}`);
+      i++; continue;
+    }
     if(e.type==='randomEvent'){   // 「7ターンの間、回復力が3倍、さらに何か起こる」のように、前の効果の文につなげる
       if(carry) push('何かが起こる'); else if(out.length) out[out.length-1]+='、さらに何か起こる'; else out.push('何かが起こる');
       i++; continue;
@@ -1088,7 +1195,7 @@ function cmpKey(a,b){
   return 0;
 }
 // スキル：ダメージ系→属性変換系→回復→バフ…の順に、属性（火水木光闇回復）→名前
-const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','selfAtkBuff','attrChange','randomEvent','noFallBuff','absorbVoid','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
+const SK_TYPE_ORDER = ['damageAll','damageSingle','damageSelfAtkMult','selfDamage','orbChangeLine','orbChangeRow','orbChangeCross','orbChangeReverseL','orbChangeRandom','orbChangeMulti','orbChange5ColorHeal','orbConvert','orbUnlock','orbLock','heal','atkBuff','selfAtkBuff','attrChange','randomEvent','delayedEffect','noFallBuff','absorbVoid','allAttackBuff','orbSpawnBoost','orbSpawnBoost2','dmgReductionBuff','enemyDelay','defenseDown','timeStop'];
 function skillSortKey(sk){
   const e = (sk.effects||[])[0] || {};
   const i = SK_TYPE_ORDER.indexOf(e.type);
@@ -1228,7 +1335,8 @@ function updateCutinHint(){
   const h=$('skCutinHint'); if(!h) return;
   const id=$('monId').value||'?';
   const yume = $('skYume') && $('skYume').checked;
-  const style = yume ? '🎀 ゆめかわふわカットイン' : (Number(id) >= 5000 ? '新カットイン（ID5000以降）' : '通常カットイン');
+  const lace = $('skLace') && $('skLace').checked;
+  const style = yume ? '🎀 ゆめかわふわカットイン' : lace ? '🖼️ レース額縁カットイン' : (Number(id) >= 5000 ? '新カットイン（ID5000以降）' : '通常カットイン');
   h.textContent = $('skCutin').checked
     ? `${style} ／ 画像：mp${id}.png（無ければ通常の画像） ／ 効果音：オリジナル音声 ${id}.mp3（スキル発動音 skillgo.mp3 のあとに鳴ります。${id}.mp3 が無ければ cutin.mp3）`
     : `${style} ／ 画像：mp${id}.png（無ければ通常の画像） ／ 効果音：普通のカットイン音 cutin.mp3`;
@@ -1316,7 +1424,7 @@ document.addEventListener('input', e=>{
     else if(t.type==='number'){ eff.data[key]=t.value===''?0:Number(t.value); }
     else if(key==='attr2'&&t.value===''){ delete eff.data[key]; }
     else eff.data[key]=t.value;
-    if(t.dataset.sub!==undefined) refreshRandPreview(t);
+    if(t.dataset.kind==='active') refreshRandPreview(t);
   } else if(t.dataset.evo!==undefined){
     const ev=evolutions[+t.dataset.evo];
     if(t.dataset.mat!==undefined) ev.materials[+t.dataset.mat][t.dataset.f]=t.dataset.f==='count'?Number(t.value):t.value;
@@ -1337,6 +1445,9 @@ document.addEventListener('change', e=>{
     renderEffects('active'); dirty=true; update();
   } else if(t.dataset.field && t.type==='checkbox'){ /* input で処理済み */ }
 });
+// ゆめかわふわ／レース額縁カットインは、どちらか1つだけ（片方にチェックしたら、もう片方は外す）
+$('skYume').addEventListener('change',()=>{ if($('skYume').checked) $('skLace').checked=false; updateCutinHint(); });
+$('skLace').addEventListener('change',()=>{ if($('skLace').checked) $('skYume').checked=false; updateCutinHint(); });
 document.addEventListener('click', e=>{
   const t=e.target.closest('button'); if(!t) return;
   if(t.dataset.stage!==undefined){ showStage(+t.dataset.stage); return; }
@@ -1360,6 +1471,41 @@ document.addEventListener('click', e=>{
   else if(t.dataset.matRemove!==undefined){ const [i,j]=t.dataset.matRemove.split(':').map(Number); evolutions[i].materials.splice(j,1); renderEvos(); dirty=true; update(); }
 });
 $('autoLsDesc').onclick=()=>{ $('lsDesc').value=describeLeader(leaderEffects.map(e=>e.data)); dirty=true; update(); };
+// ソウル強化の効果JSONを読む（空欄なら null、不正なら例外）
+function readSoulEffects(tier){
+  const raw=$(tier==='2'?'lsSoul2Effects':'lsSoul5Effects').value.trim();
+  if(!raw) return null;
+  const effects=JSON.parse(raw);
+  if(!Array.isArray(effects)) throw new Error('効果はJSON配列で入力してください');
+  return effects;
+}
+document.querySelectorAll('[data-auto-soul]').forEach(btn=>btn.addEventListener('click',()=>{
+  const tier=btn.dataset.autoSoul;
+  try {
+    const effects=readSoulEffects(tier);
+    if(!effects){ $('lsSoulConfigError').textContent=`${tier}個段階: 効果JSONが空です。`; return; }
+    $(tier==='2'?'lsSoul2Desc':'lsSoul5Desc').value=describeLeader(effects);
+    $('lsSoulConfigError').textContent='';
+    dirty=true; update();
+  } catch(err) { $('lsSoulConfigError').textContent=`${tier}個段階: ${err.message}`; }
+}));
+document.querySelectorAll('[data-copy-soul="from2"]').forEach(btn=>btn.addEventListener('click',()=>{
+  try {
+    const effects=readSoulEffects('2');
+    if(!effects){ $('lsSoulConfigError').textContent='ジュエル2個の効果JSONが空です。先に2個段階を設定してください。'; return; }
+    $('lsSoul5Effects').value=$('lsSoul2Effects').value;
+    $('lsSoul5Desc').value=$('lsSoul2Desc').value.trim()||describeLeader(effects);
+    $('lsSoulConfigError').textContent='';
+    dirty=true; update();
+  } catch(err) { $('lsSoulConfigError').textContent=`2個段階: ${err.message}`; }
+}));
+document.querySelectorAll('[data-copy-soul="2"],[data-copy-soul="5"]').forEach(btn=>btn.addEventListener('click',()=>{
+  const target=btn.dataset.copySoul==='2'?'lsSoul2Effects':'lsSoul5Effects';
+  $(target).value=JSON.stringify(leaderEffects.map(e=>cleanEff(e.data)),null,2);
+  if(btn.dataset.copySoul==='2') $('lsSoul2Desc').value=$('lsDesc').value;
+  else $('lsSoul5Desc').value=$('lsDesc').value;
+  dirty=true; update();
+}));
 $('autoSkDesc').onclick=()=>{ $('skDesc').value=describeActive(activeEffects.map(e=>cleanOne(e.data))); flushStage(); applyChangeLines(); loadStageToForm(); dirty=true; update(); };
 $('fixChangeLines').onclick=()=>{ flushStage(); applyChangeLines(); loadStageToForm(); dirty=true; update(); say('各スキルの説明の末尾を「スキルXに変化。」に整えました。'); };
 

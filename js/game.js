@@ -8,20 +8,22 @@
   try {
     if (typeof MONSTER_DATA === 'undefined') return;
     for (const m of Object.values(MONSTER_DATA)) {
-      const effs = m && m.leaderSkill && m.leaderSkill.effects;
-      if (!Array.isArray(effs) || !effs.some(e => e && e.type === 'allStat')) continue;
-      const out = [];
-      for (const e of effs) {
-        if (e && e.type === 'allStat') {
-          for (const t of ['hp', 'atk', 'rec']) {
-            const x = { type: t, value: e.value };
-            if (e.condition) x.condition = e.condition;
-            if (e.attr !== undefined && e.attr !== '') x.attr = e.attr;
-            out.push(x);
-          }
-        } else out.push(e);
+      for (const ls of [m && m.leaderSkill, ...Object.values((m && m.soulUpgrades) || {})]) {
+        const effs = ls && ls.effects;
+        if (!Array.isArray(effs) || !effs.some(e => e && e.type === 'allStat')) continue;
+        const out = [];
+        for (const e of effs) {
+          if (e && e.type === 'allStat') {
+            for (const t of ['hp', 'atk', 'rec']) {
+              const x = { type: t, value: e.value };
+              if (e.condition) x.condition = e.condition;
+              if (e.attr !== undefined && e.attr !== '') x.attr = e.attr;
+              out.push(x);
+            }
+          } else out.push(e);
+        }
+        ls.effects = out;
       }
-      m.leaderSkill.effects = out;
     }
   } catch (err) { console.error('allStat expand error', err); }
 })();
@@ -33,28 +35,31 @@
 //   { type:'rarity', condition:'totalBelow', threshold:20, ... }             → チームの総レア度が20以下の時
 //   { type:'rarity', condition:'totalAbove', threshold:30, ... }             → チームの総レア度が30以上の時
 //   { type:'rarity', condition:'countAtLeast', rarity:5, count:3, ... }      → ★5が3体以上いる時
+//   { type:'rarity', condition:'partyCount', rarity:5, needAttr:'fire', needType:'かいふく', count:2, ... } → ★5・火属性・かいふくタイプ（書いたものだけが条件。全部満たす）が2体以上いる時（隠し効果：ゲーム内には表示しない）
 //   attr（属性）/ monType（タイプ）を書くと、そのモンスターだけ強化。hp/atk/rec のどれにも true が無ければ全パラメータ
 // ============================================================
-const RARITY_CONDS = ['allDiff', 'allSame', 'totalBelow', 'totalAbove', 'countAtLeast'];
+const RARITY_CONDS = ['allDiff', 'allSame', 'totalBelow', 'totalAbove', 'countAtLeast', 'partyCount'];
 (function expandRarityLeader() {
   try {
     if (typeof MONSTER_DATA === 'undefined') return;
     for (const m of Object.values(MONSTER_DATA)) {
-      const effs = m && m.leaderSkill && m.leaderSkill.effects;
-      if (!Array.isArray(effs) || !effs.some(e => e && e.type === 'rarity')) continue;
-      const out = [];
-      for (const e of effs) {
-        if (e && e.type === 'rarity') {
-          let stats = ['hp', 'atk', 'rec'].filter(t => e[t]);
-          if (!stats.length) stats = ['hp', 'atk', 'rec'];
-          for (const t of stats) {
-            const x = { type: t, value: e.value, condition: 'rarity_' + e.condition };
-            for (const k of ['threshold', 'rarity', 'count', 'attr', 'monType']) if (e[k] !== undefined && e[k] !== '') x[k] = e[k];
-            out.push(x);
-          }
-        } else out.push(e);
+      for (const ls of [m && m.leaderSkill, ...Object.values((m && m.soulUpgrades) || {})]) {
+        const effs = ls && ls.effects;
+        if (!Array.isArray(effs) || !effs.some(e => e && e.type === 'rarity')) continue;
+        const out = [];
+        for (const e of effs) {
+          if (e && e.type === 'rarity') {
+            let stats = ['hp', 'atk', 'rec'].filter(t => e[t]);
+            if (!stats.length) stats = ['hp', 'atk', 'rec'];
+            for (const t of stats) {
+              const x = { type: t, value: e.value, condition: 'rarity_' + e.condition };
+              for (const k of ['threshold', 'rarity', 'count', 'attr', 'monType', 'needAttr', 'needType']) if (e[k] !== undefined && e[k] !== '') x[k] = e[k];
+              out.push(x);
+            }
+          } else out.push(e);
+        }
+        ls.effects = out;
       }
-      m.leaderSkill.effects = out;
     }
   } catch (err) { console.error('rarity expand error', err); }
 })();
@@ -70,7 +75,26 @@ function teamRarities(uids) {
   }
   return rs;
 }
+// 隠し効果：チームに「レア度○・○属性・○タイプ」（書いたものだけ。全部満たす）のモンスターが count 体以上いるか
+//   rarity … レア度（空・0＝問わない） / needAttr … 属性（主属性か副属性が一致。空＝問わない） / needType … タイプ（空＝問わない） / count … 体数
+function teamPartyCountOk(eff, uids) {
+  const need = Math.max(1, Math.floor(Number(eff.count) || 1));
+  const rar = Number(eff.rarity) || 0;
+  let n = 0;
+  for (const uid of (uids || partyUids)) {
+    if (uid === null || uid === undefined) continue;
+    const en = box.find(b => b.uid === uid);
+    const mon = en && MONSTER_DATA[en.monsterId];
+    if (!mon) continue;
+    if (rar && (Number(mon.rarity) || 0) !== rar) continue;
+    if (eff.needAttr && !attrTargetOk(eff.needAttr, mon.attr, subAttrOf(mon))) continue;
+    if (eff.needType && eff.needType !== mon.type) continue;
+    n++;
+  }
+  return n >= need;
+}
 function teamRarityOk(eff, uids) {
+  if (String(eff.condition).slice(7) === 'partyCount') return teamPartyCountOk(eff, uids);
   const rs = [];
   for (const uid of (uids || partyUids)) {
     if (uid === null || uid === undefined) continue;
@@ -112,7 +136,17 @@ let buffNoFall = null;   // { turns }
 //   スキル側の書き方：{ type:'absorbVoid', turns:3 }   アイコンは zkm.png
 // ============================================================
 let buffAbsorbVoid = null;   // { turns }
-const ATTR_SHIFT_LIST = ['fire', 'water', 'wood', 'light', 'dark'];
+// ============================================================
+// ★ 予告スキル「【○ターン後に発動】…」 ★
+//   スキルを使うと、中身の効果はすぐには起こらず、○ターン経ってから発動する（バインド回復などの他の効果は、いつも通りすぐ起こる）。
+//   スキル側の書き方：{ type:'delayedEffect', turns:3, effects:[ { type:'absorbVoid', turns:2 } ], desc:'2ターンの間、属性吸収を無効化' }
+//     turns：何ターン後に発動するか　effects：発動する効果（ふつうのスキル効果をいくつでも）　desc：アイコンの説明に出す文章（省略可）
+//   ・使ったターンの終わりから数えて ○ターン目の終わりに発動する（「3ターンの間」の効果が切れる時と同じタイミング）。発動した効果は、その次のターンから効く
+//   ・同じ予告（同じモンスターの、同じターン数・同じ中身）をもう一度使うと、2つ目は増えずに、残りターンが ○ターン にリセットされるだけ
+//   ・ダンジョンを出る／始める時には消える。残りターンは右のエフェクト欄に、砂時計のアイコンと数字で出る
+// ============================================================
+let pendingDelayed = [];   // { key, uid, turns, effects, desc }
+const ATTR_SHIFT_LIST =['fire', 'water', 'wood', 'light', 'dark'];
 // ============================================================
 // ★ 属性変化・自己エンハンスの「対象」指定 ★
 //   スキル側の書き方：{ type:'selfAtkBuff', value:2, turns:1, target:'right' }（target を書かない／'self' なら従来どおり自分だけ）
@@ -428,8 +462,6 @@ function triggerGameOver() {
   dragging = false;
   const gameEl = document.getElementById('game');
   if (gameEl) gameEl.classList.add('game-over');   // パーティ・Menuの操作を止める
-  const lbl = document.getElementById('combo-label');
-  if (lbl) lbl.textContent = '';
   stopDungeonBGM();      // BGMを止めてゲームオーバー音だけにする
   stopGameOverSE();
   playGameOverSE();
@@ -1039,7 +1071,6 @@ function buildEnemyActionFn(skills, enemyRef) {
           e.exp = 0; e.coin = 0; e.drops = [];         // 念のため報酬データも空にする
           e.monsterDrop = { enabled: false, rate: 0 };
           e.hp = 0;                                    // 倒した判定（バトル終了判定・次のバトルへ進む）
-          showSkillMessage(`${e.name || '敵'}は にげだした！`, 1200);
           updateEnemyUI();                             // ゆっくり消滅
           break;
         }
@@ -1623,6 +1654,9 @@ let currentBattleIndex    = 0;
 let dungeonBGMAudio       = null;
 let enemyTurnProgress     = 0;
 let enemyList            = [];
+let captureBattleActive = false;
+let captureBattleTurns = 0;
+let bagActiveTab = 'items';
 let bindTimers           = {};
 let enemyRecDown          = null;  // 敵の回復力ダウン：{ value:倍率, turns }
 let enemyMoveFix          = null;  // 敵の操作時間固定：{ ms, turns }（何よりも優先）
@@ -1659,6 +1693,12 @@ const ICON_ABSORB_VOID_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   "<path d='M32 46V20M22 29L32 19L42 29' fill='none' stroke='#fff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/>" +
   "<circle cx='32' cy='32' r='24' fill='none' stroke='#3a0000' stroke-width='10'/><circle cx='32' cy='32' r='24' fill='none' stroke='#ff2f2f' stroke-width='6'/>" +
   "<path d='M15 49L49 15' stroke='#3a0000' stroke-width='10' stroke-linecap='round'/><path d='M15 49L49 15' stroke='#ff2f2f' stroke-width='6' stroke-linecap='round'/></svg>");
+// 予告スキルのアイコン（青い砂時計）。専用の画像を作ったら、ここのファイル名に差し替えられる（例: 'yokoku.png'）
+const ICON_DELAYED = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4aa8ff'/><stop offset='1' stop-color='#14418a'/></linearGradient></defs>" +
+  "<rect x='4' y='4' width='56' height='56' rx='13' fill='url(#g)' stroke='#d6ebff' stroke-width='3'/>" +
+  "<path d='M20 14H44M20 50H44M23 14C23 26 30 28 32 32C34 28 41 26 41 14M23 50C23 38 30 36 32 32C34 36 41 38 41 50' fill='none' stroke='#fff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/>" +
+  "<path d='M26 46C27 41 30 39 32 38C34 39 37 41 38 46Z' fill='#ffd84a'/></svg>");
 let ICON_SKILL_SEAL = 'shs.png';
 let ICON_NO_FALL = 'otc.png';
 let ICON_ABSORB_VOID = 'zkm.png';
@@ -1687,6 +1727,7 @@ let totalCoin            = 0;
 let totalExp             = 0;
 let droppedMonsters      = [];
 let droppedItems         = [];   // { item: ITEM_DATAのキー, count: 個数 }
+let droppedJewels        = 0;    // キャプチャーで手に入れたジュエルの数（ジュエルはその場で所持品に入るので、ドロップ表示の数だけに足す）
 // 敵を倒した攻撃が N コンボ以上なら、その敵のチップ(drops)のドロップが確定する
 const CHIP_GUARANTEE_COMBO = 10;   // （チップの設定が無い敵は、同じ条件でモンスターが確定ドロップ）
 // プレイヤーの攻撃フェーズ中だけ、そのターンのコンボ数が入る（スキルなどで倒したときは0）
@@ -1760,16 +1801,123 @@ function startDungeonBGM(file) {
   stopDungeonBGM();
   dungeonBGMFile = file;
   try {
-    dungeonBGMAudio = new Audio(file);
-    dungeonBGMAudio.loop = true;
-    dungeonBGMAudio.volume = DUNGEON_BGM_VOL;   // 道中・ボスBGMの音量
-    dungeonBGMAudio.play().catch(()=>{});
+    const a = new Audio(file);
+    dungeonBGMAudio = a;
+    a.loop = true;
+    a.volume = DUNGEON_BGM_VOL;   // 道中・ボスBGMの音量
+    applyCaptureBgmMuffle(captureBattleActive);
+    _bgmKick(a, file, _bgmGen, false);
   } catch(e) {}
 }
+// ── iPhone(Safari)対策：BGMが鳴らなかった時の立て直し ──────────────────────────────
+//   ・先読み(メモリ)に置けていない曲は、サーバーから直接ストリーミング再生される。iPhoneは
+//     「Range対応でない／Content-Typeが違う」などで、この直接再生だけ失敗することがある（Androidは平気）
+//   → エラー／3秒たっても始まらない場合は、ファイルを丸ごと読み込み、audio/mpeg のメモリ(blob)として鳴らし直す
+//   ・自動再生制限(NotAllowedError)で止められた場合は、次の画面タッチで鳴らし直す
+const _BGM_MIME = { mp3: 'audio/mpeg', m4a: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg' };
+const _bgmRescueUrls = new Map();      // file -> blob URL（最大2曲まで覚えておく）
+const _bgmRescuePending = new Map();   // file -> Promise
+function _bgmRescueUrl(file) {
+  if (_bgmRescueUrls.has(file)) return Promise.resolve(_bgmRescueUrls.get(file));
+  if (_bgmRescuePending.has(file)) return _bgmRescuePending.get(file);
+  const p = fetch(file)
+    .then(r => { if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+    .then(b => {
+      const ext = ((String(file).match(/\.([a-z0-9]+)$/i) || [])[1] || '').toLowerCase();
+      const url = URL.createObjectURL(new Blob([b], { type: _BGM_MIME[ext] || b.type || 'audio/mpeg' }));
+      _bgmRescueUrls.set(file, url);
+      while (_bgmRescueUrls.size > 2) {
+        const k = _bgmRescueUrls.keys().next().value;
+        try { URL.revokeObjectURL(_bgmRescueUrls.get(k)); } catch (e) {}
+        _bgmRescueUrls.delete(k);
+      }
+      return url;
+    });
+  const clear = () => { _bgmRescuePending.delete(file); };
+  p.then(clear, clear);
+  _bgmRescuePending.set(file, p);
+  return p;
+}
+function _bgmRetryOnTouch(a, gen, done) {
+  const evs = ['touchend', 'pointerup', 'click'];
+  const h = () => {
+    evs.forEach(e => document.removeEventListener(e, h, true));
+    if (done) done();
+    if (gen !== _bgmGen || dungeonBGMAudio !== a || !a.paused) return;
+    try { const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  };
+  evs.forEach(e => document.addEventListener(e, h, true));
+}
+function _bgmKick(a, file, gen, viaRescue) {
+  const mine = () => gen === _bgmGen && dungeonBGMAudio === a;
+  let ok = false, waiting = false;
+  const rescue = () => {
+    if (ok || waiting || !mine()) return;
+    if (viaRescue) { try { console.warn('[BGM] 再生できませんでした（ファイル自体がSafari非対応の可能性）:', file); } catch (e) {} return; }
+    _bgmRescueUrl(file).then(url => {
+      if (!mine()) return;
+      const na = new Audio(url);
+      na.loop = true;
+      na.volume = DUNGEON_BGM_VOL;
+      disposeCaptureBgmGraph(a);
+      try { a.pause(); a.removeAttribute('src'); a.load(); } catch (e) {}
+      dungeonBGMAudio = na;
+      applyCaptureBgmMuffle(captureBattleActive);
+      _bgmKick(na, file, gen, true);
+    }).catch(() => {});
+  };
+  a.addEventListener('playing', () => { ok = true; }, { once: true });
+  a.addEventListener('error', rescue, { once: true });
+  let p;
+  try { p = a.play(); } catch (e) { rescue(); return; }
+  if (p && p.catch) p.catch(err => {
+    if (!mine()) return;
+    if (err && err.name === 'NotAllowedError') { waiting = true; _bgmRetryOnTouch(a, gen, () => { waiting = false; }); }
+    else if (!err || err.name !== 'AbortError') rescue();
+  });
+  if (!viaRescue) setTimeout(() => { if (!ok && !waiting && mine() && a.readyState < 2) rescue(); }, 3000);
+}
 let _bgmGen = 0;   // stopDungeonBGM のたびに増える。登場演出の「あとでボスBGM」予約が、途中で抜けたときに鳴らないための目印
+let captureBgmAudioCtx = null;
+const captureBgmGraphs = new WeakMap();
+function applyCaptureBgmMuffle(active) {
+  const audio = dungeonBGMAudio;
+  if (!audio) return;
+  if (!active && !captureBgmGraphs.has(audio)) { audio.volume = DUNGEON_BGM_VOL; return; }
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!captureBgmAudioCtx) captureBgmAudioCtx = (window.AudioFast && AudioFast.ctx) || (AC ? new AC() : null);
+    if (!captureBgmAudioCtx) throw new Error('AudioContext unavailable');
+    let graph = captureBgmGraphs.get(audio);
+    if (!graph) {
+      const source = captureBgmAudioCtx.createMediaElementSource(audio);
+      const lowpass = captureBgmAudioCtx.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      const gain = captureBgmAudioCtx.createGain();
+      source.connect(lowpass); lowpass.connect(gain); gain.connect(captureBgmAudioCtx.destination);
+      graph = { source, lowpass, gain };
+      captureBgmGraphs.set(audio, graph);
+      audio.volume = 1;
+    }
+    const now = captureBgmAudioCtx.currentTime;
+    graph.lowpass.frequency.cancelScheduledValues(now);
+    graph.lowpass.frequency.setTargetAtTime(active ? 4200 : 22000, now, .18);
+    graph.gain.gain.cancelScheduledValues(now);
+    graph.gain.gain.setTargetAtTime(DUNGEON_BGM_VOL * (active ? .78 : 1), now, .18);
+    if (captureBgmAudioCtx.state === 'suspended') captureBgmAudioCtx.resume().catch(() => {});
+  } catch (e) {
+    audio.volume = DUNGEON_BGM_VOL * (active ? .7 : 1);
+  }
+}
+function disposeCaptureBgmGraph(audio) {
+  const graph = audio && captureBgmGraphs.get(audio);
+  if (!graph) return;
+  try { graph.source.disconnect(); graph.lowpass.disconnect(); graph.gain.disconnect(); } catch (e) {}
+  captureBgmGraphs.delete(audio);
+}
 function stopDungeonBGM() {
   _bgmGen++;
-  if (dungeonBGMAudio) { dungeonBGMAudio.pause(); dungeonBGMAudio.currentTime = 0; dungeonBGMAudio = null; }
+  if (dungeonBGMAudio) { disposeCaptureBgmGraph(dungeonBGMAudio); dungeonBGMAudio.pause(); dungeonBGMAudio.currentTime = 0; dungeonBGMAudio = null; }
   dungeonBGMFile = null;
 }
 
@@ -1885,6 +2033,7 @@ function toggleLockEnemy(i) {
 const ENEMY_ATTRS = ['fire', 'water', 'wood', 'light', 'dark'];
 function applyEnemyDualAttr(enemy, subAttr) {
   const main = enemy.attr;
+  if (ENEMY_ATTRS.includes(subAttr)) enemy._rawSubAttr = subAttr;   // 主属性が無(none)の敵は下で副属性を捨てるので、ジュエルの色決め用に控えておく
   if (!ENEMY_ATTRS.includes(subAttr) || !ENEMY_ATTRS.includes(main) || subAttr === main) { delete enemy.subAttr; return; }
   enemy.mainAttr = main;
   enemy.subAttr = subAttr;
@@ -1918,6 +2067,10 @@ function buildEnemyFromDef(e) {
 }
 
 async function loadBattle(battleData, autoStart = true) {
+  captureBattleActive = false;
+  captureBattleTurns = 0;
+  applyCaptureBgmMuffle(false);
+  document.getElementById('game')?.classList.remove('capture-mode');
   if (window.Ryuseki) Ryuseki.reset();   // 前のバトルの宝箱の状態を消す
   _defeatPending = [];
   lockedEnemy = null;
@@ -2280,6 +2433,12 @@ function renderEnemyUI(hideForAppear = false) {
     barWrap.appendChild(barWell);
     hpRow.appendChild(barWrap);
     enemy._hpRatioShown = 100;
+    const soulRow = document.createElement('div');
+    soulRow.className = 'enemy-soul-row';
+    // HPバーと同じ作り：左の丸い画像（属性アイコンの代わりに soul.png）＋ 鋼の枠 ＋ 溝 ＋ ゲージ（虹色）
+    soulRow.innerHTML = '<img class="enemy-attr-orb enemy-soul-orb" src="soul.png" alt="" onerror="this.style.display=\'none\'"><div class="enemy-hp-bar-wrap"><div class="ehp-well"><div class="enemy-soul-fill" id="enemy-soul-bar-' + i + '"></div></div></div>';
+    enemy._soulMax = Math.max(1, enemy.maxHp * 2);
+    enemy._soulDamage = Math.max(0, enemy._soulDamage || 0);
     enemy._shownAttr = enemy.attr;   // 2属性の敵：いま画面（属性アイコン）に出している属性。変わったら playEnemyAttrChanges で演出
 
     const imgWrap = document.createElement('div');
@@ -2292,6 +2451,11 @@ function renderEnemyUI(hideForAppear = false) {
     img.addEventListener('load', fitEnemyImagesSoon);   // 画像が読み込まれたら高さを測り直す（複数枚ぶんは1回にまとめる）
     if (hideForAppear) img.style.opacity = '0';   // 登場演出（playEnemyAppear）まで見えないようにしておく
     imgWrap.appendChild(img);
+    const captureAura = document.createElement('div');
+    captureAura.className = 'capture-aura-rings';
+    captureAura.setAttribute('aria-hidden', 'true');
+    captureAura.innerHTML = '<span class="capture-aura-ring ring-a"></span><span class="capture-aura-ring ring-b"></span><span class="capture-aura-ring ring-c"></span>';
+    imgWrap.appendChild(captureAura);
     const topLeft = document.createElement('div');      // 「あと〇」と状態アイコンを縦に並べる（重ならない）
     topLeft.className = 'enemy-top-left';
     topLeft.appendChild(turnPad);
@@ -2299,6 +2463,7 @@ function renderEnemyUI(hideForAppear = false) {
     if (hideForAppear) { hpRow.style.opacity = '0'; topLeft.style.opacity = '0'; }   // HPバー・あと〇も登場演出まで隠す
     imgWrap.appendChild(topLeft);
     unit.appendChild(imgWrap);
+    hpRow.appendChild(soulRow);   // ソウルゲージはHPバーの上に重ねる（高さを変えない）
     unit.appendChild(hpRow);   // パズドラ風：HPバーとカウントはモンスターの下
     if (window.EnemyAutoFit) EnemyAutoFit.attach(img, unit, enemy.img);   // 画像の透明な余白を自動で切って、敵エリアにぴったり合わせる
 
@@ -2340,6 +2505,16 @@ function updateEnemyUI() {
   for (let i = 0; i < enemyList.length; i++) {
     const enemy = enemyList[i];
     const bar = document.getElementById(`enemy-hp-bar-${i}`);
+    const soulBar = document.getElementById(`enemy-soul-bar-${i}`);
+    if (enemy._soulMax == null) enemy._soulMax = Math.max(1, enemy.maxHp * 2);
+    if (soulBar) {
+      const ready = isSoulTarget(enemy);
+      soulBar.closest('.enemy-soul-row').classList.toggle('ready', ready);
+      const soulPct = Math.min(100, Math.max(0, (enemy._soulDamage || 0) / enemy._soulMax * 100));
+      soulBar.style.clipPath = `inset(0 ${100 - soulPct}% 0 0)`;   // 虹色は全体に敷いておき、たまった分だけ見せる
+    }
+    const unit = document.querySelector(`#enemy-area .enemy-unit[data-enemy-index="${i}"]`);
+    if (unit) unit.classList.toggle('capture-ready-active', isSoulTarget(enemy));
     if (bar) {
       const ratio = enemy.hp <= 0 ? 0 : Math.max(0, (enemy.hp / enemy.maxHp) * 100);
       bar.style.width = ratio + '%';
@@ -2455,7 +2630,81 @@ function updateEnemyUI() {
   if (allDead && !enemyDefeatedHandled) {
     enemyDefeatedHandled = true;
   }
+  updateCaptureButton();
 }
+
+function captureEligible(enemy) {
+  return !!(enemy && enemy.hp > 0 && !enemy._chest && enemy.hp <= enemy.maxHp * 0.2 && getItemCount(soulItemIdForEnemy(enemy)) < 5);
+}
+// ソウルゲージが溜まる「キャプチャー対象」：キャプチャー開始時（と各ターンの終わり）に HP20%以下だった敵だけ。
+// 攻撃中に HP が20%以下まで減った敵は、そのターンはまだ対象にならない（ロックオンで別の敵に切り替えた攻撃でゲージが溜まるバグの対策）
+function isSoulTarget(enemy) {
+  return !!(captureBattleActive && enemy && enemy._captureArmed && captureEligible(enemy));
+}
+function armCaptureTargets() {
+  enemyList.forEach(e => { e._captureArmed = captureEligible(e); });
+}
+function updateCaptureButton() {
+  const btn = document.getElementById('capture-toggle');
+  if (!btn) return;
+  const available = enemyList.some(captureEligible);
+  const game = document.getElementById('game');
+  if (game) game.classList.toggle('capture-mode', captureBattleActive);
+  btn.hidden = !available && !captureBattleActive;
+  btn.classList.toggle('active', captureBattleActive);
+  btn.textContent = captureBattleActive ? `中止 ${Math.min(3, captureBattleTurns + 1)}/3` : 'キャプチャー';
+}
+function endCaptureBattle() {
+  captureBattleActive = false;
+  captureBattleTurns = 0;
+  enemyList.forEach(e => { e._soulTurnHit = false; e._captureArmed = false; });
+  applyCaptureBgmMuffle(false);
+  updateCaptureButton();
+  updateEnemyUI();
+}
+function addSoulDamage(enemy, amount, fromPuzzle = false) {
+  if (!isSoulTarget(enemy) || !(amount > 0)) return 0;
+  enemy._soulMax = Math.max(1, enemy.maxHp * 2);
+  const dealt = Math.min(amount, enemy._soulMax - (enemy._soulDamage || 0));
+  enemy._soulDamage = Math.min(enemy._soulMax, (enemy._soulDamage || 0) + dealt);
+  if (fromPuzzle && amount > 0) enemy._soulTurnHit = true;
+  updateEnemyUI();
+  return dealt;
+}
+function grantCapturedSoul(enemy) {
+  return grantSoulItem(soulMonsterIdForEnemy(enemy), 1, captureJewelAttr(enemy), enemy.name);
+}
+function resolveCaptureTurn() {
+  if (!captureBattleActive) return;
+  for (const enemy of enemyList) {
+    if (!isSoulTarget(enemy)) continue;
+    const charge = Math.max(0, enemy._soulDamage || 0);
+    if (enemy._soulTurnHit && charge > 0 && Math.random() < Math.min(1, charge / enemy._soulMax)) {
+      grantCapturedSoul(enemy);
+      enemy._capturedJewelImg = jewelImageForAttr(captureJewelAttr(enemy));   // チップと同じように、ジュエル画像（items/jjX.png）が落ちる
+      enemy.hp = 0;
+      enemy._soulTurnHit = false;
+      tryDrop(enemy);
+      continue;
+    }
+    enemy._soulDamage = Math.floor(charge / 2);
+    enemy._soulTurnHit = false;
+  }
+  captureBattleTurns++;
+  if (captureBattleTurns >= 3) endCaptureBattle();
+  else { armCaptureTargets(); updateEnemyUI(); }   // 次のターンの対象を決め直す（このターンで HP20%以下になった敵は、ここから対象）
+}
+document.getElementById('capture-toggle')?.addEventListener('click', () => {
+  if (captureBattleActive) { endCaptureBattle(); return; }
+  if (!enemyList.some(captureEligible)) return;
+  captureBattleActive = true;
+  captureBattleTurns = 0;
+  enemyList.forEach(e => { e._soulTurnHit = false; });
+  armCaptureTargets();   // この時点で HP20%以下の敵だけがキャプチャー対象
+  applyCaptureBgmMuffle(true);
+  updateCaptureButton();
+  updateEnemyUI();
+});
 
 // ============================================================
 // ★ 敵ドロップ処理 ★
@@ -2579,6 +2828,15 @@ function _tryDropImpl(enemy, silent = false) {   // silent=true：演出なし�
     }
   }
 
+  // キャプチャーで手に入れたジュエル：所持品にはすでに入っているので、ここでは「落ちた見た目」と音（下の reveal の chip.mp3）だけを出す
+  //   （チップ／タマゴの抽選には影響させないよう、抽選のあとで足す。画像は先頭に並べる）
+  if (enemy._capturedJewelImg) {
+    dropImgs.unshift({ src: enemy._capturedJewelImg });
+    droppedJewels++;
+    dropped = true;
+    enemy._capturedJewelImg = null;
+  }
+
   if (!dropped) return;
   updateDropCount();
   if (silent) return;
@@ -2661,7 +2919,7 @@ function grantChestReward(r) {
 
 function updateDropCount() {
   const el = document.getElementById('drop-count');
-  if (el) el.textContent = String(droppedMonsters.length + droppedItems.length);
+  if (el) el.textContent = String(droppedMonsters.length + droppedItems.length + droppedJewels);
 }
 
 // ── バトル演出ユーティリティ ──────────────────────────────
@@ -4139,6 +4397,7 @@ function resetPlayerBuffs() {
   atkBuffs = [];
   buffNoFall = null;
   buffAbsorbVoid = null;
+  pendingDelayed = [];   // 予告スキルもダンジョンの始めにリセット
   clearAttrShifts();   // 属性変化スキルの効果もダンジョンの始めにリセット
   clearSelfAtkBuffs();   // 自己エンハンスもリセット
   orbBoosts = [];
@@ -4189,6 +4448,27 @@ function tickPlayerBuffs() {
   for (const e of enemyList) if (e.defDown && --e.defDown.turns <= 0) delete e.defDown;
   if (typeof updateEnemyUI === 'function') updateEnemyUI();
   renderBuffIcons();
+}
+// 予告スキル：1ターン終わるごとに残りターンを減らし、0になった予告の中身を発動する（発動元のモンスターのスキルとして実行）
+async function tickDelayedEffects() {
+  if (!pendingDelayed.length) return;
+  const due = [];
+  for (const p of pendingDelayed) if (--p.turns <= 0) due.push(p);
+  if (!due.length) { renderBuffIcons(); return; }
+  pendingDelayed = pendingDelayed.filter(p => p.turns > 0);
+  for (const p of due) {
+    const entry = box.find(b => b.uid === p.uid) || null;
+    const mon = entry ? MONSTER_DATA[entry.monsterId] : null;
+    const slot = partyUids.indexOf(p.uid);
+    if (window.BattleLog) BattleLog.caster(slot);
+    try { runSkillEffects(p.effects, entry, mon); }
+    finally { if (window.BattleLog) BattleLog.caster(-1); }
+    try { await flushOrbSpawnFx(); } catch (err) {}   // ドロップを変える効果なら、その演出が終わるまで待つ
+    try { await runPendingTransforms(); } catch (err) {}
+  }
+  renderParty();
+  renderBuffIcons();
+  if (window.MultiShare) { try { MultiShare.fxGrid(); MultiShare.fx('en', { hp: enemyList.map(e => e.hp) }); } catch (err) {} }   // マルチ：発動で変わった盤面・敵のHPを相手の画面へ
 }
 // 現在の操作時間(ms)。固定→バフ(倍率→秒数)→敵の短縮 の順に反映。最短1秒
 function calcCurrentMoveMs() {
@@ -4624,6 +4904,7 @@ function grantDrops() {
   }
   droppedMonsters = [];
   droppedItems = [];
+  droppedJewels = 0;
   updateDropCount();
   saveGame();
   return n;
@@ -4933,8 +5214,6 @@ async function playDungeonClear(unlockedArea) {
   dragging = false;
   const gameEl = document.getElementById('game');
   if (gameEl) gameEl.classList.add('game-clear');   // パーティ・Menu・盤面の操作を止める
-  const lbl = document.getElementById('combo-label');
-  if (lbl) lbl.textContent = '';
 
   // 報酬（エナ・経験値・ドロップ）はここで確定して保存（リザルト画面は出さない）
   let rewards = { anyLevelUp: false, dropCount: 0, coin: 0, exp: 0 };
@@ -4993,8 +5272,6 @@ async function playSpectatorClear() {
   dragging = false;
   const gameEl = document.getElementById('game');
   if (gameEl) { gameEl.classList.add('game-clear'); gameEl.classList.remove('mt-spectate'); }
-  const lbl = document.getElementById('combo-label');
-  if (lbl) lbl.textContent = '';
   while (_defeatPending.length) { const list = _defeatPending; _defeatPending = []; await Promise.all(list); }
   await sleep(250);
   stopDungeonBGM();
@@ -5314,6 +5591,7 @@ function updateTeRarity() {
     const m = en && MONSTER_DATA[en.monsterId];
     for (const e of ((m && m.leaderSkill && m.leaderSkill.effects) || [])) {
       if (!e || !isRarityCond(e.condition)) continue;
+      if (String(e.condition).slice(7) === 'partyCount') continue;   // 隠し効果は表示しない
       const key = [e.condition, e.threshold, e.rarity, e.count].join('|');   // HP/攻撃/回復に展開された同じ条件は1つにまとめる
       if (seen.has(key)) continue;
       seen.add(key); effs.push(e);
@@ -6291,8 +6569,17 @@ function renderMonsterDetail() {
   }
   const lsNameEl = document.getElementById('md-ls-name');
   const lsDescEl = document.getElementById('md-ls-desc');
-  if (lsNameEl) lsNameEl.textContent = mon.leaderSkill ? mon.leaderSkill.name || '' : '';
-  if (lsDescEl) setSkillText(lsDescEl, mon.leaderSkill ? mon.leaderSkill.desc : '---');
+  // tier … 0=ふつう / 2=ソウル2個 / 5=ソウル5個。ソウル5個のときだけ名前が紫色に光る（名前の最後に S がつく）
+  const showLeaderSkill = (ls, tier) => {
+    if (lsNameEl) {
+      lsNameEl.textContent = ls ? ls.name || '' : '';
+      lsNameEl.classList.toggle('soul-max-glow', !!ls && tier >= 5);
+    }
+    if (lsDescEl) setSkillText(lsDescEl, ls ? ls.desc : '---');
+  };
+  showLeaderSkill(mon.leaderSkill, mon._soulLeaderTier);
+  // ソウルの数ごとのリーダースキル（ふつう / ソウル2個 / ソウル5個）を見られるタブ。ソウル用の設定があるモンスターだけ出る
+  buildSoulLsTabs(document.getElementById('md-soul-ls-tabs'), mon, showLeaderSkill);
   // 進化ボタン（進化先があり、バトル中でないときだけ表示）
   const evoBtn = document.getElementById('md-evolve-btn');
   if (evoBtn) evoBtn.style.display = (!detailPreview && detailFromScreen !== 'game' && getEvolutions(entry.monsterId).length) ? '' : 'none';
@@ -6371,6 +6658,109 @@ if (_saved && _saved.mail) {
   MAIL_DATA.forEach(m => { const sm = _saved.mail[m.id]; if (sm) { m.received = !!sm.received; m.unread = !!sm.unread; } });
 }
 function getItemCount(id) { return itemInventory[id] || 0; }
+function soulMonsterIdForEnemy(enemy) {
+  const imageId = /mp(\d+)/i.exec((enemy && enemy.img) || '');
+  return String((enemy && enemy.monsterId) || (imageId && imageId[1]) || (enemy && enemy.monsterDrop && enemy.monsterDrop.monsterId) || (enemy && enemy.name) || 'unknown');
+}
+function soulItemIdForEnemy(enemy) { return `soul_${soulMonsterIdForEnemy(enemy).replace(/[^a-zA-Z0-9_-]/g, '_')}`; }
+function soulSkillName(name) { const base = String(name || ''); return base.endsWith('S') ? base : `${base}S`; }
+// ソウル（ジュエル）の数ごとのリーダースキル。tier … 0=ふつう / 2=ソウル2個 / 5=ソウル5個（5個は未設定なら2個のものを使う）
+//   ステータス画面・図鑑の「ソウルごとのリーダースキル」切り替えと、実際のバトルで効くリーダースキルの両方がこれを使う
+function soulLeaderSkillForTier(mon, tier) {
+  const base = mon && (mon.__soulBaseLeaderSkill || mon.leaderSkill);
+  if (!base) return null;
+  const up = (mon && mon.soulUpgrades) || {};
+  const chosen = tier >= 5 ? (up[5] || up[2]) : tier >= 2 ? up[2] : null;
+  if (!chosen) return JSON.parse(JSON.stringify(base));
+  return {
+    ...base,
+    name: soulSkillName(base.name),
+    desc: chosen.desc || base.desc || '',
+    effects: Array.isArray(chosen.effects) ? chosen.effects : base.effects
+  };
+}
+// そのモンスターに「ソウルで強くなるリーダースキル」があるか（2個 or 5個の設定がある）
+function hasSoulLeaderSkills(mon) {
+  const up = mon && mon.soulUpgrades;
+  return !!(up && (up[2] || up[5]));
+}
+function updateSoulLeaderSkills() {
+  if (typeof MONSTER_DATA === 'undefined') return;
+  for (const [id, mon] of Object.entries(MONSTER_DATA)) {
+    if (!mon || !mon.leaderSkill) continue;
+    if (!mon.__soulBaseLeaderSkill) mon.__soulBaseLeaderSkill = JSON.parse(JSON.stringify(mon.leaderSkill));
+    const count = getItemCount(`soul_${String(mon.id || id).replace(/[^a-zA-Z0-9_-]/g, '_')}`);
+    const tier = count >= 5 ? 5 : count >= 2 ? 2 : 0;
+    mon.leaderSkill = soulLeaderSkillForTier(mon, tier);
+    mon._soulLeaderTier = tier;
+  }
+}
+// ソウルごとのリーダースキル切り替え（ふつう / ソウル2個 / ソウル5個）を tabsEl の中に作る。
+//   onPick(ls, tier) … 選んだタブのリーダースキルを受け取って、名前・説明を書き換える側が表示する
+//   いま持っているソウルの数に合うタブを最初に選んでおく（「いま」の印つき）
+function buildSoulLsTabs(tabsEl, mon, onPick) {
+  if (!tabsEl) return;
+  tabsEl.innerHTML = '';
+  if (!hasSoulLeaderSkills(mon)) { tabsEl.hidden = true; return; }
+  tabsEl.hidden = false;
+  const cur = mon._soulLeaderTier >= 5 ? 5 : mon._soulLeaderTier >= 2 ? 2 : 0;
+  const defs = [[0, 'ふつう'], [2, 'ソウル2個'], [5, 'ソウル5個']];
+  const btns = defs.map(([tier, label]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'soul-ls-tab tier' + tier + (tier === cur ? ' now' : '');
+    b.textContent = label;
+    b.addEventListener('click', () => select(tier));
+    tabsEl.appendChild(b);
+    return b;
+  });
+  function select(tier) {
+    btns.forEach((b, i) => b.classList.toggle('active', defs[i][0] === tier));
+    onPick(soulLeaderSkillForTier(mon, tier), tier);
+  }
+  select(cur);
+}
+function jewelImageForAttr(attr) {
+  const normalized = Array.isArray(attr) ? attr[0] : attr;
+  const imageIndex = ATTR_TO_IMG[String(normalized || 'dark').toLowerCase()];
+  return `items/jj${['1', '2', '3', '4', '5'].includes(String(imageIndex)) ? imageIndex : '5'}.png`;
+}
+// ジュエルの色（jj1〜jj5）に使う属性：主属性が有効ならそれ、無(none)なら副属性（タマゴの色と同じ考え方）
+function jewelAttrOfMonster(mon) {
+  if (!mon) return null;
+  const first = a => Array.isArray(a) ? a[0] : a;
+  const main = first(mon.attr), sub = first(mon.sub);
+  if (ENEMY_ATTRS.includes(main)) return main;
+  if (ENEMY_ATTRS.includes(sub)) return sub;
+  return main || null;
+}
+// キャプチャーした敵のジュエルの属性。ジュエルは「そのモンスターのもの」なので、バッグの表示（jewelAttrOfMonster）と同じ色にそろえる
+//   ① モンスターデータが無属性(none)なら、その副属性 ② 敵の属性 ③ 敵に設定された副属性（無属性の敵） ④ モンスターデータ ⑤ 闇
+function captureJewelAttr(enemy) {
+  const id = soulMonsterIdForEnemy(enemy);
+  const mon = MONSTER_DATA[id] || Object.values(MONSTER_DATA).find(m => String(m.id) === String(id));
+  const monAttr = jewelAttrOfMonster(mon);
+  const monMainValid = mon && ENEMY_ATTRS.includes(Array.isArray(mon.attr) ? mon.attr[0] : mon.attr);
+  if (mon && !monMainValid && ENEMY_ATTRS.includes(monAttr)) return monAttr;
+  const main = enemy.mainAttr || enemy.attr;
+  if (ENEMY_ATTRS.includes(main)) return main;
+  if (ENEMY_ATTRS.includes(enemy._rawSubAttr)) return enemy._rawSubAttr;
+  return (ENEMY_ATTRS.includes(monAttr) ? monAttr : null) || 'dark';
+}
+function grantSoulItem(monsterId, count = 1, attrOverride, nameOverride) {
+  const idValue = String(monsterId || 'unknown');
+  const key = `soul_${idValue.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+  const mon = MONSTER_DATA[monsterId] || Object.values(MONSTER_DATA).find(m => String(m.id) === idValue) || {};
+  const name = mon.name || nameOverride || 'モンスター';
+  const attr = ENEMY_ATTRS.includes(attrOverride) ? attrOverride : (jewelAttrOfMonster(mon) || attrOverride || 'dark');
+  ITEM_DATA[key] = { id: key, name: `${name}のジュエル`, kind: 'jewel', attr, img: jewelImageForAttr(attr) };
+  itemInventory[key] = getItemCount(key) + Math.max(1, Math.floor(Number(count) || 1));
+  updateSoulLeaderSkills();
+  saveGame();
+  if (typeof renderParty === 'function') { try { renderParty(); } catch (e) {} }
+  return ITEM_DATA[key].name;
+}
+updateSoulLeaderSkills();
 // 進化先の解放判定（areas.js の EVO_UNLOCK_DATA）。条件のダンジョンをクリアするまで、その進化先は出さない
 function isEvoUnlocked(toId) {
   const cond = typeof EVO_UNLOCK_DATA !== 'undefined' && EVO_UNLOCK_DATA[toId];
@@ -7418,7 +7808,7 @@ let partyMemory = 0; // パーティ共有の現在メモリ（0〜4）
 
 // ── 変化スキル（skill.stages）──
 //   スキル1（skill 本体）→ スキル2（stages[0]）→ … → 最後まで使うとスキル1に戻る。ダンジョンに入るたびにスキル1から。
-//   スキル2以降は、名前・必要SP・説明・効果・カットイン設定（cutin / yumekawa）を持つ（名前・必要SPを書かなければスキル1と同じ。発動条件はスキル1だけ）
+//   スキル2以降は、名前・必要SP・説明・効果・カットイン設定（cutin / yumekawa / lace）を持つ（名前・必要SPを書かなければスキル1と同じ。発動条件はスキル1だけ）
 let _skillStage = {};   // uid → 今のスキル番号（0=スキル1）
 function skillStageIndex(entry, mon) {
   const sk = mon && mon.skill, st = sk && sk.stages;
@@ -7431,8 +7821,8 @@ function curSkill(entry, mon) {
   const i = skillStageIndex(entry, mon);
   if (!sk || !i) return sk;
   const s = sk.stages[i - 1] || {};
-  const { stages, condition, cutin, yumekawa, ...base } = sk;   // カットイン／音声／ゆめかわは、スキルごとの設定だけを使う
-  return { ...base, ...(s.cutin === true ? { cutin: true } : {}), ...(s.yumekawa === true ? { yumekawa: true } : {}), name: s.name || sk.name, sp: (typeof s.sp === 'number' && s.sp >= 1) ? s.sp : sk.sp, desc: s.desc || '', effects: s.effects || [] };
+  const { stages, condition, cutin, yumekawa, lace, ...base } = sk;   // カットイン／音声／ゆめかわ／レース額縁は、スキルごとの設定だけを使う
+  return { ...base, ...(s.cutin === true ? { cutin: true } : {}), ...(s.yumekawa === true ? { yumekawa: true } : {}), ...(s.lace === true ? { lace: true } : {}), name: s.name || sk.name, sp: (typeof s.sp === 'number' && s.sp >= 1) ? s.sp : sk.sp, desc: s.desc || '', effects: s.effects || [] };
 }
 function advanceSkillStage(entry, mon) {
   const sk = mon && mon.skill, st = sk && sk.stages;
@@ -7552,16 +7942,16 @@ function updateSpGaugeUI() {
 
 function openSkillConfirm(uid) {
   if (busy || isUsingSkill) return;
-  if (isSkillSealed()) { showSkillMessage(`スキル使用不可！（あと${enemySkillSeal.turns}ターン）`, 1100); return; }
+  if (isSkillSealed()) return;
   const entry = box.find(b => b.uid === uid);
   if (!entry) return;
   const mon = MONSTER_DATA[entry.monsterId];
   if (!mon || !mon.skill) return;   // スキル未設定のモンスターは発動できない
-  if (isBound(uid)) { showSkillMessage(`バインド中はスキルが使えません！（あと${bindTimers[uid]}ターン）`, 1200); return; }
+  if (isBound(uid)) return;
   const requiredSp = getRequiredSp(entry, mon);
   if (partySp < requiredSp) return;
   const cs = curSkill(entry, mon);
-  if (!skillCondOk(cs)) { showSkillMessage('条件を満たしていません：' + skillCondText(cs.condition), 1600); return; }
+  if (!skillCondOk(cs)) return;
 
   skillTargetUid = uid;
   document.getElementById('sp-title').textContent = cs.name;
@@ -7635,20 +8025,6 @@ function generateCross(r, c, color) {
 // 新しい効果タイプを増やしたい場合は、下の runSkillEffect の switch に
 // case を1つ追加するだけでよい。
 // ============================================================
-// コンボ下のメッセージ（#combo-label）を出す。マルチでは、操作している人の画面と同じ文字を相手の画面にも流す（fx 'lb'）
-//   ms を渡すと、その時間のあと（まだ同じ文字なら）消す。相手の画面でも同じ時間で消える
-function setComboLabel(text, ms) {
-  const el = document.getElementById('combo-label');
-  if (el) {
-    el.textContent = text;
-    if (ms) setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, ms);
-  }
-  if (window.MultiShare) { try { MultiShare.fx('lb', ms ? { t: text, ms } : { t: text }); } catch (e) {} }
-}
-function showSkillMessage(text, ms) {
-  setComboLabel(text, ms || 1000);
-}
-
 // スキル1回の発動中、複数のorbChange系effectが同じ空きマスを取り合わないように
 // 共有する「今回すでに使ったマス」の集合。runSkillEffects開始時にリセットする。
 let _skillUsedCells = null;
@@ -7731,6 +8107,12 @@ function damageAllEnemies(rawDmg, attr, se = 'skilldamage', ignoreDef = false) {
     // 固定ダメージ(ignoreDef)は防御無視。それ以外も最低ダメージ1
     const gm = (attr && !ignoreDef) ? enemyAttrGuardMult(enemy, attr) : 1;   // 属性軽減
     const dmg2 = ignoreDef ? Math.max(1, finalDmgBase) : Math.max(1, Math.floor(finalDmgBase * gm) - getEnemyDef(enemy));
+    if (isSoulTarget(enemy)) {
+      const dealtSoul = addSoulDamage(enemy, dmg2, false);
+      const _u = enemyUnits[i];
+      if (_u && dealtSoul > 0) { const rect = _u.getBoundingClientRect(); showFloatingDamage(rect.left + rect.width / 2, rect.top + rect.height / 2, dealtSoul, attr, false); }
+      continue;
+    }
     if (window.BattleLog) BattleLog.skillNominal(enemy._chest ? 0 : dmg2);   // 履歴「瞬間最大ダメージ」：吸収される前の、味方側のダメージ
     if (attr && enemyAbsorbs(enemy, attr)) {   // 属性吸収中：ダメージの代わりにHPが回復する
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg2);
@@ -7762,6 +8144,13 @@ function damageSingleEnemy(rawDmg, attr, se = 'skilldamage', ignoreDef = false) 
   const finalDmgBase = Math.floor(rawDmg * attrMult);
   const gm = (attr && !ignoreDef) ? enemyAttrGuardMult(enemy, attr) : 1;   // 属性軽減
   const dmg2 = ignoreDef ? Math.max(1, finalDmgBase) : Math.max(1, Math.floor(finalDmgBase * gm) - getEnemyDef(enemy));
+  if (isSoulTarget(enemy)) {
+    const dealtSoul = addSoulDamage(enemy, dmg2, false);
+    const _u = document.querySelectorAll('#enemy-area .enemy-unit')[idx];
+    if (_u && dealtSoul > 0) { const rect = _u.getBoundingClientRect(); showFloatingDamage(rect.left + rect.width / 2, rect.top + rect.height / 2, dealtSoul, attr, false); }
+    updateEnemyUI();
+    return finalDmgBase;
+  }
   if (window.BattleLog) BattleLog.skillNominal(enemy._chest ? 0 : dmg2);   // 履歴「瞬間最大ダメージ」：吸収される前の、味方側のダメージ
   if (attr && enemyAbsorbs(enemy, attr)) {   // 属性吸収中：ダメージの代わりにHPが回復する
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + dmg2);
@@ -7799,7 +8188,6 @@ function runSkillEffect(eff, context) {
     // ── ダメージ系 ──
     case 'damageAll': { // 敵全体（target:'single' なら敵単体）に固定ダメージ
       if (eff.target === 'single') damageSingleEnemy(eff.value, eff.attr, 'skilldamage', true); else damageAllEnemies(eff.value, eff.attr, 'skilldamage', true);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'atkBuff': { // 属性/タイプ/全員の攻撃を ○ターン ○倍
@@ -7808,7 +8196,6 @@ function runSkillEffect(eff, context) {
       const same = atkBuffs.find(b => b.attr === nb.attr && b.monType === nb.monType);
       if (same) { same.value = nb.value; same.turns = nb.turns; } else atkBuffs.push(nb);
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'selfAtkBuff': { // 自分（target を指定すれば リーダー/フレンド/左隣/右隣/両隣/サブ全員）の攻撃力を ○ターン ○倍（属性エンハンスとは別枠）
@@ -7821,7 +8208,6 @@ function runSkillEffect(eff, context) {
       for (const te of tgts) selfAtkBuffs[te.uid] = { value, turns };   // すでに掛かっていれば新しい倍率・ターン数で上書き
       if (typeof renderParty === 'function' && document.getElementById('party-grid')) { try { renderParty(); } catch (err) {} }
       if (window.MultiShare) { try { MultiShare.fxStatus(); } catch (e) {} }
-      if (tgts.length) showSkillMessage(eff.message || `⬆ ${turns}ターンの間、${skillTargetLabel(eff.target, tgts, base.name, eff.includeSelf)}の攻撃力が${value}倍！`, 1400);
       break;
     }
     case 'defenseDown': { // 敵の防御力を ○ターンの間 ○% ダウン（target:'single' なら先頭の敵のみ、それ以外は敵全体）
@@ -7837,12 +8223,10 @@ function runSkillEffect(eff, context) {
         e.defDown = { value: cur ? Math.max(cur.value, rate) : rate, turns: cur ? Math.max(cur.turns, turns) : turns };
       }
       updateEnemyUI();
-      showSkillMessage(eff.message || `🛡️ ${turns}ターン 敵${eff.target === 'single' ? '単体' : '全体'}の防御力${Math.round(rate * 100)}%ダウン！`, 1200);
       break;
     }
     case 'damageSingle': { // 敵単体に固定ダメージ
       damageSingleEnemy(eff.value, eff.attr, 'skilldamage', true);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'damagePartyAtkMult':   // （旧）味方全員の攻撃力合計 × 倍率
@@ -7871,7 +8255,6 @@ function runSkillEffect(eff, context) {
         const rect = enemyFrame.getBoundingClientRect();
         createHitEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, eff.attr || 'fire');
       }
-      showSkillMessage(`🔥 ${label}${baseAtk.toLocaleString()} × ${eff.value || 1}倍 = ${finalDmg.toLocaleString()} ダメージ！`, 1800);
       break;
     }
     case 'damageHalfHp': { // 自分の現在HP半分を消費し、その分のダメージを敵全体へ
@@ -7881,7 +8264,6 @@ function runSkillEffect(eff, context) {
         updatePlayerHP();
         damageAllEnemies(halfHP, eff.attr);
       }
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
 
@@ -7897,7 +8279,6 @@ function runSkillEffect(eff, context) {
         playerCurrentHP = Math.max(1, playerCurrentHP - Math.floor(playerMaxHP * v));
       }
       updatePlayerHP();
-      showSkillMessage(eff.message || (eff.mode === 'toOne' ? '🩸 HPが1になった！' : `🩸 HPが${(before - playerCurrentHP).toLocaleString()}減少！`), 1000);
       break;
     }
 
@@ -7920,7 +8301,6 @@ function runSkillEffect(eff, context) {
       playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + heal);
       updatePlayerHP();
       if (window.BattleLog && context && context.entry) BattleLog.heal(partyUids.indexOf(context.entry.uid), playerCurrentHP - _hp0);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
 
@@ -7935,7 +8315,6 @@ function runSkillEffect(eff, context) {
       buffDamageReductionValue = v;
       buffDamageReductionTurns = eff.turns || 1;
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     // ○ターンの間、回復力が○倍（0なら回復力0）
@@ -7945,7 +8324,6 @@ function runSkillEffect(eff, context) {
       buffRecMultValue = Math.max(0, Number(eff.value) >= 0 ? Number(eff.value) : 1);
       buffRecMultTurns = eff.turns || 1;
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     // ○ターンの間、操作時間を○倍＋○秒（倍率<1・秒<0 で短縮）
@@ -7961,7 +8339,6 @@ function runSkillEffect(eff, context) {
         currentMoveMs = calcCurrentMoveMs();
       }
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     // ○ターンの間、全員の攻撃が敵全体に当たる
@@ -7969,7 +8346,6 @@ function runSkillEffect(eff, context) {
       buffAllAttack = true;
       buffAllAttackTurns = eff.turns || 1;
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
 
@@ -7978,7 +8354,6 @@ function runSkillEffect(eff, context) {
       addOrbBoost(eff.attr, eff.rate, eff.turns, 0.15);
       playSE('drop_up');
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     // ○ターンの間、2色のドロップが落ちやすくなる（2色目覚め。上昇率は色ごとに別々に決められる。初期値は両方10%）
@@ -7987,7 +8362,6 @@ function runSkillEffect(eff, context) {
       addOrbBoost(eff.attr2, eff.rate2, eff.turns, 0.10);
       playSE('drop_up');
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
 
@@ -7995,7 +8369,6 @@ function runSkillEffect(eff, context) {
     case 'orbChangeRow': { // 指定行を単色に変換
       playDropcOnce();
       for (let c = 0; c < COLS; c++) setOrb(eff.row, c, eff.attr);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbChangeLine': { // 横(row)/縦(col)の列を、index から count 列ぶん単色に変換
@@ -8008,21 +8381,18 @@ function runSkillEffect(eff, context) {
         if (isCol) { for (let r = 0; r < ROWS; r++) setOrb(r, i, eff.attr); }
         else { for (let c = 0; c < COLS; c++) setOrb(i, c, eff.attr); }
       }
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbChangeReverseL': { // 左上に逆L字を生成
       playDropcOnce();
       const shape = [[0,0],[0,1],[0,2],[1,0],[2,0]];
       for (const [r, c] of shape) if (r < ROWS && c < COLS) setOrb(r, c, eff.attr);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbChangeCross': { // 指定座標を中心に十字を生成
       playDropcOnce();
       const positions = [[eff.row, eff.col], [eff.row - 1, eff.col], [eff.row + 1, eff.col], [eff.row, eff.col - 1], [eff.row, eff.col + 1]];
       for (const [r, c] of positions) if (r >= 0 && r < ROWS && c >= 0 && c < COLS) setOrb(r, c, eff.attr);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbChangeRandom': { // 空きマス優先でランダムにcount個を指定属性に変換
@@ -8030,7 +8400,6 @@ function runSkillEffect(eff, context) {
       const cells = getEmptyCellsForSkill();
       const n = Math.min(eff.count || 1, cells.length);
       for (let i = 0; i < n; i++) setOrb(cells[i].r, cells[i].c, eff.attr);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbChangeAllRandom': { // 盤面全体を指定属性群からランダムに変換
@@ -8039,7 +8408,6 @@ function runSkillEffect(eff, context) {
         const t = eff.attrs[Math.floor(Math.random() * eff.attrs.length)];
         setOrb(r, c, t);
       }
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbChangeMulti':
@@ -8058,7 +8426,6 @@ function runSkillEffect(eff, context) {
       let ci = 0;
       for (const k of kinds) for (let n = 0; n < minEach; n++) { const [r, c] = cells[ci++]; setOrb(r, c, k); }
       while (ci < cells.length) { const [r, c] = cells[ci++]; setOrb(r, c, kinds[Math.floor(Math.random() * kinds.length)]); }
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbConvert': { // 盤面上のfrom属性をto属性に一括変換
@@ -8066,7 +8433,6 @@ function runSkillEffect(eff, context) {
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
         if (grid[r][c] === eff.from) setOrb(r, c, eff.to);
       }
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
 
@@ -8080,7 +8446,6 @@ function runSkillEffect(eff, context) {
         if (t && !isOrbLocked(r, c) && (!kinds || kinds.includes(t))) targets.push([r, c]);
       }
       lockFx(targets);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'orbUnlock': { // 全ドロップ／選んだ色のドロップのロックを解除する
@@ -8091,7 +8456,6 @@ function runSkillEffect(eff, context) {
         if (t && isOrbLocked(r, c) && (!kinds || kinds.includes(t))) targets.push([r, c]);
       }
       unlockFx(targets);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
 
@@ -8100,7 +8464,6 @@ function runSkillEffect(eff, context) {
       addPartySp(1);
       updateSpGaugeUI();
       renderParty();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'enemyDelay': { // 敵全体（target:'single' なら先頭の敵のみ）の行動を指定ターン遅らせる
@@ -8114,7 +8477,6 @@ function runSkillEffect(eff, context) {
       enemyTurnProgress = 0;
       updateEnemyTurnBadge();
       updateEnemyUI();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'timeStop': { // 時を止める（seconds で秒数指定。省略時は5秒）
@@ -8130,26 +8492,34 @@ function runSkillEffect(eff, context) {
       }
       renderParty();
       renderBuffIcons();
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'roulette': { // 味方スキル：○ターンの間、ルーレットを○つ生成（sec: 2=低速 / 1=標準 / 0.5=高速 / 0.2=超高速）
       spawnRoulettes(Number(eff.count) || 1, Number(eff.turns) || 1, Number(eff.sec) || 1);
-      if (eff.message) showSkillMessage(eff.message, 1000);
       break;
     }
     case 'noFallBuff': { // ○ターンの間、落ちコンなし（すでに掛かっていれば、残りターンの多い方を採用）
       const t = Math.max(1, Math.floor(Number(eff.turns) || 1));
       buffNoFall = { turns: Math.max(t, buffNoFall ? buffNoFall.turns : 0) };
       renderBuffIcons();
-      showSkillMessage(eff.message || `⬇ ${t}ターンの間、落ちコンなし！`, 1200);
       break;
     }
     case 'absorbVoid': { // ○ターンの間、属性吸収を無効化（すでに掛かっていれば、残りターンの多い方を採用）
       const t = Math.max(1, Math.floor(Number(eff.turns) || 1));
       buffAbsorbVoid = { turns: Math.max(t, buffAbsorbVoid ? buffAbsorbVoid.turns : 0) };
       renderBuffIcons();
-      showSkillMessage(eff.message || `🛡 ${t}ターンの間、属性吸収を無効化！`, 1200);
+      break;
+    }
+    case 'delayedEffect': { // 予告：○ターン後に、中身の効果が発動する（同じ予告をもう一度使うと、増えずに残りターンがリセットされる）
+      const inner = Array.isArray(eff.effects) ? eff.effects.filter(Boolean) : [];
+      if (!inner.length) break;
+      const turns = Math.max(1, Math.floor(Number(eff.turns) || 1));
+      const uid = context && context.entry ? context.entry.uid : null;
+      const key = uid + '|' + turns + '|' + JSON.stringify(inner);
+      const ex = pendingDelayed.find(p => p.key === key);
+      if (ex) { ex.turns = turns; }   // すでに予告中：2つ目は作らず、残りターンを最初に戻す
+      else pendingDelayed.push({ key, uid, turns, effects: inner, desc: eff.desc || '' });
+      renderBuffIcons();
       break;
     }
     case 'attrChange': { // ○ターンの間、自分（target を指定すれば リーダー/フレンド/左隣/右隣/両隣/サブ全員）の属性が○属性に変化。副属性は消えて単属性になる
@@ -8175,11 +8545,9 @@ function runSkillEffect(eff, context) {
       if (typeof renderParty === 'function' && document.getElementById('party-grid')) { try { renderParty(); } catch (err) {} }   // 他のモンスターに掛けた時も枠をすぐ出す
       if (window.MultiShare) { try { MultiShare.fxStatus(); } catch (e) {} }   // マルチ：属性変化を、その瞬間に相手の画面へ
       const sameTo = toList.every(a => a === toList[0]);
-      showSkillMessage(eff.message || `✨ ${turns}ターンの間、${skillTargetLabel(eff.target, tgts, base.name, eff.includeSelf)}が${sameTo ? (ATTR_NAME_JP[toList[0]] || toList[0]) + '属性' : '別々の属性'}に変化！`, 1400);
       break;
     }
     case 'eventMessage': {   // 「何かが起こる」で選ばれた効果の内容を知らせる
-      if (eff.message) showSkillMessage(eff.message, 1800);
       break;
     }
     case 'note': {
@@ -8206,6 +8574,7 @@ function restoreTransforms() {
   _pendingTransforms.length = 0;
   buffNoFall = null;
   buffAbsorbVoid = null;
+  pendingDelayed = [];   // 予告スキルもダンジョンの外には持ち出さない
   clearAttrShifts();   // 属性変化もダンジョンの外には持ち出さない
   clearSelfAtkBuffs();   // 自己エンハンスも持ち出さない
   let changed = false;
@@ -8236,7 +8605,7 @@ async function runPendingTransforms() {
     renderBuffIcons();
     // 敵の⚠️技と同じカットイン（変身後の姿を大きく出す）
     // 画像は mp{id}.png（無ければ通常の画像）
-    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, sub: newMon.sub, img: `mp${newMon.id}.png`, imgFallback: monsterImg(newMon) }, newMon.name + 'に へんしん！', { face: true, id: newMon.id, yume: !!(newMon.skill && newMon.skill.yumekawa) }); } catch (err) {}
+    try { if (window.EnemyCutIn) await window.EnemyCutIn.show({ attr: newMon.attr, sub: newMon.sub, img: `mp${newMon.id}.png`, imgFallback: monsterImg(newMon) }, newMon.name + 'に へんしん！', { face: true, id: newMon.id, yume: !!(newMon.skill && newMon.skill.yumekawa), lace: !!(newMon.skill && newMon.skill.lace) }); } catch (err) {}
   }
 }
 
@@ -8315,7 +8684,6 @@ async function confirmSkill() {
   updateSpGaugeUI();
   renderParty();
   renderBuffIcons();
-  setComboLabel('スキル発動！', 800);
   await orbSpawnFx;   // ドロップ生成の演出が終わるまで待つ（busy のままなので、この間は盤面を動かせない）
   isUsingSkill = false;
 
@@ -8581,6 +8949,7 @@ function buildBuffItems() {
   if (buffNoFall) items.push({ icon: ICON_NO_FALL, turns: buffNoFall.turns, name:'落ちコンなし', text:'スキルの効果で、ドロップを消しても新しいドロップが降ってこない（消し終わってから補充される）' });
   if (enemyNoFall) items.push({ icon: ICON_NO_FALL, turns: enemyNoFall.turns, name:'落ちコンなし', text:'敵の効果で、ドロップを消しても新しいドロップが降ってこない（消し終わってから補充される）' });
   if (buffAbsorbVoid) items.push({ icon: ICON_ABSORB_VOID, turns: buffAbsorbVoid.turns, name:'属性吸収無効', text:'スキルの効果で、敵の属性吸収を受けない（吸収される属性で攻撃しても、ふつうにダメージを与えられる）' });
+  for (const p of pendingDelayed) items.push({ icon: ICON_DELAYED, turns: p.turns, name: '予告', text: p.desc ? `${p.turns}ターン後に「${p.desc}」が発動する` : '予告していた効果が、残りターンが0になった時に発動する' });
   if (buffMoveTimeShort && !moveTimeFixed) items.push({ icon:'j4.png', turns: buffMoveTimeShortTurns, name:'操作時間ダウン', text:'敵の効果でドロップ操作時間が1秒短くなる' });
   // 光・闇など複数属性の攻撃力ダウンは、同じ割合・同じ残りターンなら1つのアイコンにまとめる
   const enemyDownGroups = [];
@@ -9156,7 +9525,15 @@ function attackAnimation(slotIndex, damage, attr, enemyIndex, sub = null) {
       const enemy = enemyList[enemyIndex];
       if (enemy && enemy.hp > 0) {
         playAttrHitSE(attr);   // 攻撃が敵に当たった瞬間の効果音
-        const hit = calcHitDamage(enemy, damage, attr, sub);   // 主属性＋副属性（属性軽減・最低ダメージ1も含む）
+      const hit = calcHitDamage(enemy, damage, attr, sub);   // 主属性＋副属性（属性軽減・最低ダメージ1も含む）
+      if (isSoulTarget(enemy)) {
+        const soulHit = addSoulDamage(enemy, hit.main + hit.sub, true);
+        if (soulHit > 0) showFloatingDamage(endX, endY - 10, soulHit, attr, false);
+        spawnAttrImpact(attr, endX, endY, false);
+        updateEnemyUI();
+        resolve();
+        return;
+      }
         if (window.BattleLog) BattleLog.nominal(slotIndex, enemy._chest ? 0 : hit.main + hit.sub + (hit.heal || 0));   // 履歴「瞬間最大ダメージ」：吸収・無効化される前の、味方側のダメージ
         const attrMult = hit.attrMult;
         let finalDmg = hit.main + hit.sub, dealtSub = 0;
@@ -10086,6 +10463,7 @@ async function startGameFromHome() {
   totalExp = 0;
   droppedMonsters = [];
   droppedItems = [];
+  droppedJewels = 0;
   updateCoinDisplay();
   updateDropCount();
 
@@ -10876,7 +11254,6 @@ function init() {
   setTimerRatio(1);
   timerStarted = false;
   damageElements.forEach(el => { if (el) { el.textContent = ''; el.classList.remove('show', 'pop'); } });
-  setComboLabel('');
   renderBuffIcons();
   if (timeStopActive) abortTimeStop();
 }
@@ -11658,7 +12035,6 @@ async function _evaluateInner() {
     if (totalCombo > 0) {
       const _boundChest = new Set(Object.keys(bindTimers).filter(k => bindTimers[k] > 0));   // この操作の開始時にバインドされていたモンスター（回復力0）
       updateSkillTurnsNormal(totalCombo);   // スキルのターン・SPは通常どおり進む
-      setComboLabel(totalCombo + ' コンボ');
       turn++;
 
       // 回復ドロップ：宝箱バトルでも通常どおり回復する（回復力×ドロップ数ボーナス×コンボ補正。リーダー／フレンドの回復力倍率も有効）
@@ -11713,7 +12089,6 @@ async function _evaluateInner() {
           playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + healAmount);
           updatePlayerHP(playerCurrentHP - prevHPc);
           if (window.BattleLog) BattleLog.healShare(_recBy, playerCurrentHP - prevHPc);
-          setComboLabel(`❤️ ${healAmount} 回復！`);
           await sleep(800);
         }
       }
@@ -11816,7 +12191,6 @@ async function _evaluateInner() {
       if (seg) { seg.classList.remove('preview'); setTimeout(() => { seg.style.opacity = '0'; }, 500); }
       const pel = document.getElementById('hp-delta');
       if (pel) pel._timer = setTimeout(() => { pel.style.display = 'none'; }, 1700);
-      setComboLabel(`☠️ 毒 ${poisonDmg} ダメージ！`);
       await sleep(900);
     } else {
       hidePoisonPreview();
@@ -11877,7 +12251,6 @@ async function _evaluateInner() {
         playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + healAmount);
         updatePlayerHP(playerCurrentHP - prevHP2);
         if (window.BattleLog) BattleLog.healShare(_recBy, playerCurrentHP - prevHP2);
-        setComboLabel(`❤️ ${healAmount} 回復！`);
         // 攻撃がある場合は回復SEの少し後に攻撃開始、回復のみなら従来通り余韻を残す
         await sleep(finalDamages.some(d => d > 0) ? 350 : 800);
       }
@@ -11966,6 +12339,7 @@ async function _evaluateInner() {
       }
       if (window.DamageTotal) DamageTotal.finish();   // 全員の攻撃が終わった：合計は0.3秒残ってから、上がって消える
       if (attackTargets.length) await sleep(350);   // 最後の数字を読んでから敵の番へ
+      resolveCaptureTurn();
     } finally {
       attackPhaseCombo = 0;
       clearFiredSuperGut();   // 超根性：発動していたら、このターンの攻撃が終わった時点で消滅
@@ -12002,13 +12376,11 @@ async function _evaluateInner() {
       playerCurrentHP = Math.min(playerMaxHP, playerCurrentHP + rec);
       updatePlayerHP(playerCurrentHP - prevHP4);
       if (window.BattleLog) BattleLog.heal(_hslot, playerCurrentHP - prevHP4);
-      setComboLabel(`💚 ${rec} 回復！`);
       await sleep(600);
     }
 
     _poisonNet = null;
     totalDmg += finalDamages.reduce((a,b) => a + b, 0);
-    setComboLabel(totalCombo + ' コンボ');
     turn++;
   }
 
@@ -12059,6 +12431,7 @@ async function _evaluateInner() {
   }
 
   tickPlayerBuffs();
+  await tickDelayedEffects();   // 予告スキル：残りターンを減らし、0になったものを発動（ふつうのバフのターン消費のあとなので、発動した効果は丸々そのターン数ぶん続く）
   currentMoveMs = calcCurrentMoveMs();
   if (window.MultiShare) MultiShare.fxStatus();
 
@@ -12335,10 +12708,13 @@ function consumeItem(id, n) {
 function grantMonsterToBox(monsterId) {
   if (!MONSTER_DATA[monsterId]) return null;
   const isNew = !(window.Zukan && Zukan.isOwned(monsterId)) && !box.some(b => b.monsterId === monsterId);
+  const priorCopies = box.filter(b => b && Number(b.monsterId) === Number(monsterId)).length;
   const uid = nextUid++;
   box.push({ uid, monsterId, level: 1, exp: 0, sp: 0, memory: 0, plusHp: 0, plusAtk: 0, plusRec: 0 });
+  const soulCount = priorCopies > 0 && priorCopies % 2 === 1 ? 1 : 0;
+  if (soulCount) grantSoulItem(monsterId, soulCount);
   saveGame();
-  return { uid, isNew };
+  return { uid, isNew, soulCount };
 }
 // ガチャ用：所持エナ（ホーム左上のエナ）の数／つかう（足りなければ false を返して何もしない）
 function gachaGetEna() { return playerCoin; }
@@ -12473,9 +12849,15 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 function renderBag() {
   const grid = document.getElementById('bag-grid');
   grid.innerHTML = '';
-  const ids = Object.keys(ITEM_DATA).filter(id => getItemCount(id) > 0);
+  // セーブから読み戻したジュエルも、モンスター図鑑データを使って一覧に復元する。
+  Object.keys(itemInventory || {}).filter(id => id.startsWith('soul_') && !ITEM_DATA[id]).forEach(id => {
+    const mid = id.slice(5);
+    const mon = MONSTER_DATA[mid] || Object.values(MONSTER_DATA).find(m => String(m.id) === mid);
+    if (mon) ITEM_DATA[id] = { id, name: `${mon.name}のジュエル`, kind: 'jewel', attr: jewelAttrOfMonster(mon) || 'dark', img: jewelImageForAttr(jewelAttrOfMonster(mon) || 'dark') };
+  });
+  const ids = Object.keys(ITEM_DATA).filter(id => getItemCount(id) > 0 && (bagActiveTab === 'jewel' ? ITEM_DATA[id].kind === 'jewel' : ITEM_DATA[id].kind !== 'jewel'));
   document.getElementById('bag-total').textContent = `${ids.length}種類`;
-  if (!ids.length) { grid.innerHTML = '<div class="bag-empty">チップを持っていません</div>'; return; }
+  if (!ids.length) { grid.innerHTML = `<div class="bag-empty">${bagActiveTab === 'jewel' ? 'ジュエルを持っていません' : 'アイテムを持っていません'}</div>`; return; }
   ids.forEach(id => {
     const def = ITEM_DATA[id];
     const cell = document.createElement('div');
@@ -12485,9 +12867,16 @@ function renderBag() {
   });
 }
 document.getElementById('bag-open-btn').addEventListener('click', () => {
+  bagActiveTab = 'items';
+  document.querySelectorAll('.bag-tab').forEach(b => b.classList.toggle('active', b.dataset.kind === bagActiveTab));
   renderBag();
   document.getElementById('bag-screen').style.display = 'flex';
 });
+document.querySelectorAll('.bag-tab').forEach(btn => btn.addEventListener('click', () => {
+  bagActiveTab = btn.dataset.kind;
+  document.querySelectorAll('.bag-tab').forEach(b => b.classList.toggle('active', b === btn));
+  renderBag();
+}));
 document.getElementById('bag-close-btn').addEventListener('click', () => {
   document.getElementById('bag-screen').style.display = 'none';
 });
