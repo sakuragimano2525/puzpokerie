@@ -54804,7 +54804,7 @@ const DUNGEON_DATA = {
                   },
                   {
                     "type": "skill_seal",
-                    "turn": 4
+                    "turn": 3
                   },
                   {
                     "type": "board_change",
@@ -54920,8 +54920,8 @@ const DUNGEON_DATA = {
                     "target": "random",
                     "countMin": 6,
                     "countMax": 6,
-                    "turnMin": 4,
-                    "turnMax": 4
+                    "turnMin": 3,
+                    "turnMax": 3
                   },
                   {
                     "type": "no_fall",
